@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files"/>
+    <Filter Include="Source Files"/>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AkDefaultIOHookBlocking.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AkFileHelpers.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AkFileLocationBase.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AkSoundEngineExports.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudAlloc.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudConfig.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudConstants.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudEmitter.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudEmitterMulti.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudEmitterPersisted.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudEventCurve.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudEventKey.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudGameObjResource.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Audio2.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudJukebox.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudListener.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudLowLevelIO.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudManager.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudMp3Info.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudParameter.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudPlaylistItem.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudPosition.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudResource.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudSettings.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudSettingsRegistrar.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AudUIPlayer.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="autoversion.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IAudLowLevelIO.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LogBridge.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Mutex.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Semaphore.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector3.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="version.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClCompile Include="AkDefaultIOHookBlocking.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AkFileLocationBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudConfig.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudConfig_Blue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudConstants.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudEmitter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudEmitterMulti.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudEmitterMulti_Blue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudEmitterPersisted.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudEmitterPersisted_Blue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudEmitter_Blue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudEventCurve.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudEventCurve_Blue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudEventKey.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudEventKey_Blue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudGameObjResource.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudGameObjResource_Blue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="audio2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudJukebox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudJukebox_Blue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudListener_Blue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudLowLevelIO.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudLowLevelIO_Blue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudManager_Blue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudMp3Info.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudMp3Info_Blue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudParameter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudParameter_Blue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudPlaylistItem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudPlaylistItem_Blue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudPosition.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudPosition_Blue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudResource.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudSettings_Blue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudUIPlayer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudUIPlayer_Blue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IAudLowLevelIO_Blue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LogBridge.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Mutex.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Semaphore.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ResourceCompile Include="audio2.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

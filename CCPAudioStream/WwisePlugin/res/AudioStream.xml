@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright (C) 2006 Audiokinetic Inc. -->
+<PluginModule>
+  <SourcePlugin Name="Audio Stream" CompanyID="0" PluginID="223">
+    <PluginInfo>
+      <PlatformSupport>
+        <Platform Name="Windows"></Platform>
+      </PlatformSupport>
+    </PluginInfo>
+    <Properties>
+      <Property Name="AudioStreamInput" Type="int32">
+        <DefaultValue>0</DefaultValue>
+        <AudioEnginePropertyID>0</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="int32">
+              <Min>0</Min>
+              <Max>15</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>
+      <Property Name="AudioStreamGain" Type="Real32" SupportRTPCType="Exclusive" DataMeaning="Decibels">
+        <DefaultValue>-12</DefaultValue>
+        <AudioEnginePropertyID>1</AudioEnginePropertyID>
+        <Restrictions>
+          <ValueRestriction>
+            <Range Type="Real32">
+              <Min>-96.3</Min>
+              <Max>0</Max>
+            </Range>
+          </ValueRestriction>
+        </Restrictions>
+      </Property>
+    </Properties>
+  </SourcePlugin>
+</PluginModule>

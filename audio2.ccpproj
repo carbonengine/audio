@@ -1,0 +1,203 @@
+SourceFolders:
+- .
+
+ExcludeFolders:
+- CCPAudioStream
+- MP3
+
+ProjectGuid: 2C3F44E3-0435-478D-9A14-CB1E2572F9BB
+Imports:
+- ../core_project.yaml
+- ../manifests/manifests.props
+
+# Settings from the General section, for all configurations
+General:
+  ConfigurationType: DynamicLibrary
+  UseOfMfc: false
+
+  # Compiler settings for all configurations
+ClCompile:
+  EnableEnhancedInstructionSet: StreamingSIMDExtensions2
+  PreprocessorDefinitions: 
+  # This is to prevent warnings from std::copy
+  - _SCL_SECURE_NO_WARNINGS
+  - WWISE_EXPORTS
+  - AKSOUNDENGINE_STATIC
+  - AKSOUNDENGINEDLL_EXPORTS
+  - BLUE_OVERRIDE_VECTOR_TYPES=1
+  PrecompiledHeader: Use
+  PrecompiledHeaderFile: stdafx.h
+  PrecompiledHeaderOutputFile: $(IntDir)$(ProjectName).pch
+  WarningLevel: Level3
+  TreatWarningAsError: true
+  BufferSecurityCheck: false
+  AdditionalIncludeDirectories:
+  - $(CcpSdkPath)\wwise\v2013.1.3-build4687\include
+
+# Linker settings for all configurations
+Link:
+  GenerateDebugInformation: true
+  ProgramDatabaseFile: $(TargetDir)$(TargetName).pdb
+  
+  AdditionalLibraryDirectories:
+  - MP3\soundengineplugin\lib
+  - CCPAudioStream\AudioEngineFX\lib
+  - $(CcpSdkPath)\directx\february2010\lib\x86
+
+  AdditionalDependencies:
+  - AkSoundEngine.lib
+  - AkMusicEngine.lib
+  - AkMemoryMgr.lib
+  - AkMeterFX.lib
+  - AkPeakLimiterFX.lib
+  - AkStreamMgr.lib
+  - AkVorbisDecoder.lib
+  - AkCompressorFX.lib
+  - AkParametricEQFX.lib
+  - AkSilenceSource.lib
+  - AkRoomVerbFX.lib
+  - AkMatrixReverbFX.lib
+  - AkFlangerFX.lib
+  - dxguid.lib
+  - msacm32.lib
+
+
+# Resource compiler settings - used for version info for the dll
+ResourceCompile:
+  PreprocessorDefinitions:
+  - TARGET_NAME=$(TargetName)
+  - TARGET_FILENAME=$(TargetFileName)
+  AdditionalIncludeDirectories:
+  - ..
+
+# Here come the different configurations
+Configurations:
+  Debug|Win32,x64:
+    Imports:
+    - ../blue/uses_blue.yaml
+    General:
+      TargetName: _$(ProjectName)_d
+      LinkIncremental: true
+    UserMacros:
+      CcpConfigType: Debug
+    ClCompile:
+      PreprocessorDefinitions:
+      - _DEBUG
+      - BLUE_DLL_NAME=_$(ProjectName)
+      Optimization: Disabled
+      RuntimeLibrary: MultiThreadedDebugDLL
+      DebugInformationFormat: EditAndContinue
+    Link:
+      AdditionalLibraryDirectories:
+      - $(CcpSdkPath)\wwise\v2013.1.3-build4687\$(Platform)_vc100\Debug\lib
+
+      AdditionalDependencies:
+      - CCPAudioStreamSource_d.lib
+      - mp3_soundengineplugin_d.lib
+      - CommunicationCentral.lib
+      - wsock32.lib
+  
+  Release|Win32,x64:
+    Imports:
+    - ../blue/uses_blue.yaml
+    General:
+      TargetName: _$(ProjectName)
+      LinkIncremental: false
+    UserMacros:
+      CcpConfigType: Release
+    ClCompile:
+      PreprocessorDefinitions:
+      - NDEBUG
+      - CCP_ASSERT_ENABLED=1
+      - AK_OPTIMIZED
+      - BLUE_DLL_NAME=$(TargetName)
+      Optimization: MaxSpeed
+      RuntimeLibrary: MultiThreadedDLL
+      DebugInformationFormat: ProgramDatabase
+      WholeProgramOptimization: true
+    Link:
+      LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
+      AdditionalLibraryDirectories:
+      - $(CcpSdkPath)\wwise\v2013.1.3-build4687\$(Platform)_vc100\Release\lib
+      AdditionalDependencies:
+      - CCPAudioStreamSource.lib
+      - mp3_soundengineplugin.lib
+
+  Dev|Win32,x64:
+    Imports:
+    - ../blue/uses_blue.yaml
+    General:
+      TargetName: _$(ProjectName)_dev
+      LinkIncremental: false
+    UserMacros:
+      CcpConfigType: Release
+    ClCompile:
+      PreprocessorDefinitions:
+      - NDEBUG
+      - CCP_ASSERT_ENABLED=1
+      - BLUE_DLL_NAME=$(TargetName)
+      Optimization: Disabled
+      RuntimeLibrary: MultiThreadedDLL
+      DebugInformationFormat: ProgramDatabase
+      WholeProgramOptimization: true
+    Link:
+      LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
+      AdditionalLibraryDirectories:
+      - $(CcpSdkPath)\wwise\v2013.1.3-build4687\$(Platform)_vc100\Profile\lib
+      AdditionalDependencies:
+      - CCPAudioStreamSource.lib
+      - mp3_soundengineplugin.lib
+      - CommunicationCentral.lib
+      - wsock32.lib
+
+  Release_26|Win32,x64:
+    Imports:
+    - ../blue/uses_blue_26.yaml
+    General:
+      TargetName: _$(ProjectName)
+      LinkIncremental: false
+    UserMacros:
+      CcpConfigType: Release
+    ClCompile:
+      PreprocessorDefinitions:
+      - NDEBUG
+      - CCP_ASSERT_ENABLED=1
+      - AK_OPTIMIZED
+      - BLUE_DLL_NAME=$(TargetName)
+      Optimization: MaxSpeed
+      RuntimeLibrary: MultiThreadedDLL
+      DebugInformationFormat: ProgramDatabase
+      WholeProgramOptimization: true
+    Link:
+      LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
+      AdditionalLibraryDirectories:
+      - $(CcpSdkPath)\wwise\v2013.1.3-build4687\$(Platform)_vc100\Release\lib
+      AdditionalDependencies:
+      - CCPAudioStreamSource.lib
+      - mp3_soundengineplugin.lib
+
+  Release_27|Win32,x64:
+    Imports:
+    - ../blue/uses_blue_27.yaml
+    General:
+      TargetName: _$(ProjectName)
+      LinkIncremental: false
+    UserMacros:
+      CcpConfigType: Release
+    ClCompile:
+      PreprocessorDefinitions:
+      - NDEBUG
+      - CCP_ASSERT_ENABLED=1
+      - AK_OPTIMIZED
+      - BLUE_DLL_NAME=$(TargetName)
+      Optimization: MaxSpeed
+      RuntimeLibrary: MultiThreadedDLL
+      DebugInformationFormat: ProgramDatabase
+      WholeProgramOptimization: true
+    Link:
+      LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
+      AdditionalLibraryDirectories:
+      - $(CcpSdkPath)\wwise\v2013.1.3-build4687\$(Platform)_vc100\Release\lib
+      AdditionalDependencies:
+      - CCPAudioStreamSource.lib
+      - mp3_soundengineplugin.lib
