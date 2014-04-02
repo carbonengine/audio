@@ -4,6 +4,7 @@
 
 
 #include "AudEventKey.h"
+#include "blue/Include/IBluePlacementObserver.h"
 #include "trinity/include/ITriFunction.h"
 #include "trinity/include/ITriCurveLength.h"
 #include "blue/include/IBlueEventListener.h"
