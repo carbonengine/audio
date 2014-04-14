@@ -60,6 +60,13 @@ typedef std::vector<std::wstring> BankVector;
 typedef std::vector<AkGameObjectID> GameObjIDVector;
 typedef std::set<AudEmitterMulti*> EmitterMultiSet;
 
+struct WaitingEvent 
+{
+	AkUniqueID			eventID;
+	AkGameObjectID		gameObjectID;
+	AkUInt32			numRetries;
+};
+
 BLUE_CLASS( AudManager ) : public IRoot, public IBlueEvents
 {
 public:
@@ -103,6 +110,12 @@ public:
 	// Exposing loaded sound banks to python
 	std::vector<std::wstring> GetLoadedSoundBanks();
 
+	// Add a Failed event to the waiting events vector
+	void AddWaitingEvent( AkUniqueID eventID, AkGameObjectID gameObjID );
+
+	// Run throught the list once and try to resend the events to the gameObjects.
+	void ProcessWaitingEvents( );
+
 
 private:
 	// Please note these inits need to be done in this order!
@@ -126,6 +139,8 @@ private:
 	#endif
 
 	BankVector m_loadedBanks;
+
+	std::vector<WaitingEvent> m_waitingEvents;
 };
 
 TYPEDEF_BLUECLASS( AudManager );
