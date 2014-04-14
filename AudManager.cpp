@@ -101,7 +101,6 @@ bool AudManager::Init()
 	{
 		return false;
 	}
-
 	return true;
 }
 
@@ -260,35 +259,35 @@ bool AudManager::InitPlugin()
 				CreateMatrixReverbFXParams );
 
 	AK::SoundEngine::RegisterPlugin( AkPluginTypeSource, 
-								 AKCOMPANYID_AUDIOKINETIC, 
-								 CCPSOURCEID_AUDIOSTREAM,
-								 CreateAudioStreamSource,
-								 CreateAudioStreamSourceParams );
+				AKCOMPANYID_AUDIOKINETIC, 
+				CCPSOURCEID_AUDIOSTREAM,
+				CreateAudioStreamSource,
+				CreateAudioStreamSourceParams );
 
 	// Create and register MP3 Plugin
 	AK::SoundEngine::RegisterPlugin( AkPluginTypeSource, 
-									 AKCOMPANYID_CCP, 
-									 CCPSOURCEID_MP3,
-									 CreateCCPMP3Source,
-									 CreateCCPMP3SourceParams );
+				AKCOMPANYID_CCP, 
+				CCPSOURCEID_MP3,
+				CreateCCPMP3Source,
+				CreateCCPMP3SourceParams );
 
 	AK::SoundEngine::RegisterPlugin( AkPluginTypeEffect,
-										AKCOMPANYID_AUDIOKINETIC,
-										AKEFFECTID_METER,
-										CreateMeterFX,
-										CreateMeterFXParams);
+				AKCOMPANYID_AUDIOKINETIC,
+				AKEFFECTID_METER,
+				CreateMeterFX,
+				CreateMeterFXParams);
 
 	AK::SoundEngine::RegisterPlugin( AkPluginTypeEffect,
-										AKCOMPANYID_AUDIOKINETIC,
-										AKEFFECTID_PEAKLIMITER,
-										CreatePeakLimiterFX,
-										CreatePeakLimiterFXParams);
+				AKCOMPANYID_AUDIOKINETIC,
+				AKEFFECTID_PEAKLIMITER,
+				CreatePeakLimiterFX,
+				CreatePeakLimiterFXParams);
 
 	AK::SoundEngine::RegisterPlugin( AkPluginTypeEffect,
-										AKCOMPANYID_AUDIOKINETIC,
-										AKEFFECTID_FLANGER,
-										CreateFlangerFX,
-										CreateFlangerFXParams);
+				AKCOMPANYID_AUDIOKINETIC,
+				AKEFFECTID_FLANGER,
+				CreateFlangerFX,
+				CreateFlangerFXParams);
 
 
 	return true;
@@ -407,6 +406,8 @@ void AudManager::LoadBank( const std::wstring& name )
 		CCP_LOG( "AK::SoundEngine::LoadBank scheduled for %S", name.c_str() );
 		
 		WaitForLoadUnload( status );
+
+		ProcessWaitingEvents( );
 		
 		CCP_DELETE status;
 		CCP_LOG( "AK::SoundEngine::LoadBank done for %S", name.c_str() );
@@ -468,4 +469,39 @@ AudSettings& AudManager::GetSettings()
 std::vector<std::wstring> AudManager::GetLoadedSoundBanks()
 {
 	return m_loadedBanks;
+}
+
+void AudManager::AddWaitingEvent( AkUniqueID eventID, AkGameObjectID gameObjID )
+{
+	WaitingEvent failedEvent = { eventID, gameObjID, 0 };
+	WaitingEvent currentEvent;
+	for (std::vector<WaitingEvent>::iterator it = m_waitingEvents.begin() ; it != m_waitingEvents.end(); ++it)
+	{
+		currentEvent = *it;
+		if ((currentEvent.eventID == failedEvent.eventID) && (currentEvent.gameObjectID == failedEvent.gameObjectID))
+		{
+			// Return early if same event-gameobjectID combo is already in the list.
+			return;
+		}
+	}
+	m_waitingEvents.push_back(failedEvent);
+}
+
+void AudManager::ProcessWaitingEvents()
+{
+	WaitingEvent currentEvent;
+	for (std::vector<WaitingEvent>::iterator it = m_waitingEvents.begin() ; it != m_waitingEvents.end();)
+	{
+		currentEvent = *it;
+		AkInt32 playback_ID = AK::SoundEngine::PostEvent( currentEvent.eventID, currentEvent.gameObjectID );
+		currentEvent.numRetries += 1;
+		if ((playback_ID != AK_INVALID_PLAYING_ID) || currentEvent.numRetries > 5)
+		{
+			it = m_waitingEvents.erase( it );
+		}
+		else 
+		{
+			++it;
+		}
+	}
 }
