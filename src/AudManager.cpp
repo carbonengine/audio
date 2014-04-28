@@ -38,7 +38,8 @@ static void WwiseAssertHook(const char* in_pszExpression,const char* in_pszFileN
 static GameObjIDVector s_gameObjectsToBeDestroyed;
 
 AudManager::AudManager( IRoot* lockobj ) :
-	m_tickInterval( 10 )
+	m_tickInterval( 10 ),
+	m_waitingEventsMutex( "AudManager", "m_waitingEventsMutex" )
 {
 	s_gameObjectsToBeDestroyed.push_back( 0 );
 }
@@ -473,6 +474,8 @@ std::vector<std::wstring> AudManager::GetLoadedSoundBanks()
 
 void AudManager::AddWaitingEvent( AkUniqueID eventID, AkGameObjectID gameObjID )
 {
+	CcpAutoMutex guard( m_waitingEventsMutex );
+
 	WaitingEvent failedEvent = { eventID, gameObjID, 0 };
 	WaitingEvent currentEvent;
 	for (std::vector<WaitingEvent>::iterator it = m_waitingEvents.begin() ; it != m_waitingEvents.end(); ++it)
@@ -489,6 +492,8 @@ void AudManager::AddWaitingEvent( AkUniqueID eventID, AkGameObjectID gameObjID )
 
 void AudManager::ProcessWaitingEvents()
 {
+	CcpAutoMutex guard( m_waitingEventsMutex );
+
 	WaitingEvent currentEvent;
 	for (std::vector<WaitingEvent>::iterator it = m_waitingEvents.begin() ; it != m_waitingEvents.end();)
 	{
