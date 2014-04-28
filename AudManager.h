@@ -38,6 +38,8 @@
 	#include <AK/Comm/AkCommunication.h>
 #endif
 
+#include "CcpCore/include/CcpMutex.h"
+
 //-----------------------------------------------------------------------------
 // Forward declarations
 //-----------------------------------------------------------------------------
@@ -141,6 +143,8 @@ private:
 	BankVector m_loadedBanks;
 
 	std::vector<WaitingEvent> m_waitingEvents;
+
+	CcpMutex m_waitingEventsMutex;
 };
 
 TYPEDEF_BLUECLASS( AudManager );

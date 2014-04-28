@@ -61,20 +61,21 @@ unsigned int AudGameObjResource::SendEvent( const std::wstring& name )
 {
 	if( g_audioInitialized )
 	{
+		std::wstring eventName;
 		if (m_eventPrefix != L"")
 		{
-			m_playEvent = std::wstring(m_eventPrefix) + std::wstring(name);
+			eventName = std::wstring(m_eventPrefix) + std::wstring(name);
 		}
 		else
 		{
-			m_playEvent = name;
+			eventName = name;
 		}
 
 		CCP_LOG_CH( s_ch, "Sending event: %S to game object %d (%s)", name.c_str(), m_ID, m_name.c_str());
-		m_playID = AK::SoundEngine::PostEvent( m_playEvent.c_str(), m_ID );
+		m_playID = AK::SoundEngine::PostEvent( eventName.c_str(), m_ID );
 		if (m_playID == AK_INVALID_PLAYING_ID)
 		{
-			AkUniqueID eventID = AK::SoundEngine::GetIDFromString(m_playEvent.c_str());
+			AkUniqueID eventID = AK::SoundEngine::GetIDFromString(eventName.c_str());
 			g_audioManager->AddWaitingEvent(eventID, m_ID);
 		}
 		return m_playID;
