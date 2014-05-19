@@ -477,11 +477,9 @@ void AudManager::AddWaitingEvent( AkUniqueID eventID, AkGameObjectID gameObjID )
 	CcpAutoMutex guard( m_waitingEventsMutex );
 
 	WaitingEvent failedEvent = { eventID, gameObjID, 0 };
-	WaitingEvent currentEvent;
 	for (std::vector<WaitingEvent>::iterator it = m_waitingEvents.begin() ; it != m_waitingEvents.end(); ++it)
 	{
-		currentEvent = *it;
-		if ((currentEvent.eventID == failedEvent.eventID) && (currentEvent.gameObjectID == failedEvent.gameObjectID))
+		if ((it->eventID == failedEvent.eventID) && (it->gameObjectID == failedEvent.gameObjectID))
 		{
 			// Return early if same event-gameobjectID combo is already in the list.
 			return;
@@ -494,13 +492,11 @@ void AudManager::ProcessWaitingEvents()
 {
 	CcpAutoMutex guard( m_waitingEventsMutex );
 
-	WaitingEvent currentEvent;
 	for (std::vector<WaitingEvent>::iterator it = m_waitingEvents.begin() ; it != m_waitingEvents.end();)
 	{
-		currentEvent = *it;
-		AkInt32 playback_ID = AK::SoundEngine::PostEvent( currentEvent.eventID, currentEvent.gameObjectID );
-		currentEvent.numRetries += 1;
-		if ((playback_ID != AK_INVALID_PLAYING_ID) || currentEvent.numRetries > 5)
+		AkInt32 playback_ID = AK::SoundEngine::PostEvent( it->eventID, it->gameObjectID );
+		it->numRetries += 1;
+		if ((playback_ID != AK_INVALID_PLAYING_ID) || it->numRetries > 5)
 		{
 			it = m_waitingEvents.erase( it );
 		}
