@@ -35,3 +35,4 @@
 #include <list>
 
 #include "BlueExposure/include/BlueExposure.h"
+#include "blue/include/IBluePaths.h"
