@@ -39,7 +39,8 @@ static GameObjIDVector s_gameObjectsToBeDestroyed;
 
 AudManager::AudManager( IRoot* lockobj ) :
 	m_tickInterval( 10 ),
-	m_waitingEventsMutex( "AudManager", "m_waitingEventsMutex" )
+	m_waitingEventsMutex( "AudManager", "m_waitingEventsMutex" ),
+	m_multiEmitterMutex( "AudManager", "m_multiEmitterMutex")
 {
 	s_gameObjectsToBeDestroyed.push_back( 0 );
 }
@@ -56,6 +57,8 @@ void AudManager::Process()
 {
 	if( g_audioInitialized )
 	{
+		ProcessMultiEmitterList();
+
 		// Process bank requests, events, positions, RTPC, etc.
 		AK::SoundEngine::RenderAudio();
 
@@ -503,6 +506,72 @@ void AudManager::ProcessWaitingEvents()
 		else 
 		{
 			++it;
+		}
+	}
+}
+
+AudEmitterMulti* AudManager::GetEmitterForEventID(AkUniqueID eventID)
+{
+	CcpAutoMutex guard( m_multiEmitterMutex );
+
+	for (EmitterMultiSet::iterator it = m_multiEmitters.begin() ; it != m_multiEmitters.end(); ++it)
+	{
+		AudEmitterMulti* aem = *it;
+		if (aem->m_eventID == eventID)
+		{
+			return aem;
+		}
+	}
+	return NULL;
+}
+
+void AudManager::AddMultiEmitterToList(AudEmitterMulti* emitter)
+{
+	CcpAutoMutex guard( m_multiEmitterMutex );
+	m_multiEmitters.insert(emitter);
+}
+
+void AudManager::RemoveMultiEmitterFromList(AudEmitterMulti* emitter)
+{
+	CcpAutoMutex guard( m_multiEmitterMutex );
+	m_multiEmitters.erase(emitter);
+}
+
+void AudManager::ProcessMultiEmitterList()
+{
+	CcpAutoMutex guard( m_multiEmitterMutex );
+
+	for (EmitterMultiSet::iterator it = m_multiEmitters.begin() ; it != m_multiEmitters.end(); ++it)
+	{
+		AudEmitterMulti* aem = *it;
+		aem->ProcessPlacementList();
+	}
+}
+
+Be::Result<std::string> AudManager::GetEmitterForEventName( const std::wstring& eventName, AudEmitterMulti** out )
+{
+	AkUniqueID eventID = AK::SoundEngine::GetIDFromString( eventName.c_str() );
+
+	AudEmitterMulti* multi = g_audioManager->GetEmitterForEventID( eventID );
+	if( multi )
+	{
+		reinterpret_cast<IRoot*>( multi )->Lock();
+		*out = multi;
+		return Be::Result<std::string>();
+	}
+	else
+	{
+		AudEmitterMulti* p = new OAudEmitterMulti();
+		if( !p )
+		{
+			*out = nullptr;
+			return Be::Result<std::string>( "Could not create an instance of AudEmitterMulti" );
+		}
+		else
+		{
+			p->Initialize( eventName );
+			*out = p;
+			return Be::Result<std::string>();
 		}
 	}
 }
