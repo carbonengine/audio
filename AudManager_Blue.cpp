@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "AudManager.h"
+#include "AudEmitterMulti.h"
 
 #include <AK/SoundEngine/Common/AkSoundEngine.h>				// Sound Engine
 #include "CCPAudioStream/include/CCPAudioStreamSourceFactory.h"
@@ -49,6 +50,17 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 							 "Parameters:\n"
 							 "\tNone"
 						   )
+		MAP_METHOD_AND_WRAP( "GetEmitterForEventName", 
+							GetEmitterForEventName, 
+							"Description:\n"
+							"\tGets the AudEmitterMulti for a given event name if it exists.\n"
+							"\tIf it does not exist it will create a new one for the given event name.\n"
+							"Signature:\n"
+							"\tGetEmitterForEventName( eventName ) -> AudEmitterMulti or Raise a RuntimeError\n"
+							"Parameters:\n"
+							"\teventName -- Name (unicode) of the event you wish to get an emitter for."
+	)
+
 	EXPOSURE_END()
 }
 
@@ -69,6 +81,7 @@ void AudManager::AddConstantsToModule( PyObject* module )
 // NOTE: This is NOT a memory leak, we explicitly delete them in BlueClientStop in audio2.cpp
 AudManager* g_audioManager = NULL;
 BluePythonObject* g_audioManagerWrapper = NULL;
+
 static PyObject* PyGetAudManager( PyObject* self, PyObject* args )
 {
 	if( !g_audioManagerWrapper )

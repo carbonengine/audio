@@ -1,17 +1,11 @@
-/* 
+/*
 	*************************************************************************************
-
-	AudEmitterMulti.h
-
-	Author:    Andri Mar
-	Created:   June 2010
-	OS:        Win32
-	Project:   Audio2
-
 	Description:   
 
 		An audio entity in game. Can stream one source to multiple positions.
-
+		It is never created directly from python code but created or returned
+		from the 
+			AudManagaer::GetEmitterForEventName
 
 	Dependencies:
 
@@ -39,7 +33,7 @@
 
 struct Vector3;
 
-BLUE_CLASS( AudEmitterMulti ) :	public IBlueMultiPlacementObserver
+BLUE_CLASS( AudEmitterMulti ) :	public IBluePlacementObserver
 							  , public AudGameObjResource
 {
 public:
@@ -48,8 +42,17 @@ public:
 
 	EXPOSE_TO_BLUE();
 	
-	void Py__init__( const std::string& name );
-	virtual void UpdatePlacements( const PositionDescriptionVector& positions );
+	void Initialize( const std::wstring& eventName );
+	virtual void UpdatePlacement(  const Vector3& front, const Vector3& top, const Vector3& pos );
+	void ProcessPlacementList();
+	void SetMaximumLocations( const unsigned int numberOfLocations );
+
+	AkUniqueID m_eventID;
+	unsigned int m_maximumLocations;
+
+private:
+	std::vector<AkSoundPosition> m_positionVector;
+
 };
 
 TYPEDEF_BLUECLASS( AudEmitterMulti );

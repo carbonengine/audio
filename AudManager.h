@@ -118,6 +118,9 @@ public:
 	// Run throught the list once and try to resend the events to the gameObjects.
 	void ProcessWaitingEvents( );
 
+	// Gets an AudEmitterMulti for a given event name or creates it if it does not exist.
+	Be::Result<std::string> GetEmitterForEventName( const std::wstring& eventName, AudEmitterMulti** out );
+
 
 private:
 	// Please note these inits need to be done in this order!
@@ -129,6 +132,21 @@ private:
 	void RegisterForTicks();
 
 	void Process(); // Tick handler.
+
+	// Get an emitter for an event that is already playing
+	AudEmitterMulti* GetEmitterForEventID(AkUniqueID eventID);
+
+	// Adds an AudEmitterMulti to the m_multiEmitters list.
+	void AddMultiEmitterToList(AudEmitterMulti* multiEmitter);
+
+	// Removes an AudEmitterMulti from the m_multiEmitters list. 
+	void RemoveMultiEmitterFromList(AudEmitterMulti* multiEmitter);
+
+	// Takes care of updating the location for all AudEmitterMulti on each tick.
+	void ProcessMultiEmitterList();
+
+	friend class AudEmitterMulti;
+	friend class AudEmitter;
 
 	int m_tickInterval;
 	Be::Time m_Time;
@@ -143,8 +161,9 @@ private:
 	BankVector m_loadedBanks;
 
 	std::vector<WaitingEvent> m_waitingEvents;
-
+	EmitterMultiSet m_multiEmitters;
 	CcpMutex m_waitingEventsMutex;
+	CcpMutex m_multiEmitterMutex;
 };
 
 TYPEDEF_BLUECLASS( AudManager );
