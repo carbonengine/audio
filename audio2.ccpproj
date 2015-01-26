@@ -143,7 +143,7 @@ Configurations:
     Link:
       LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
       AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\v2014.1.2-build5195\$(Platform)_vc100\Profile\lib
+      - $(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Profile\lib
       AdditionalDependencies:
       - CCPAudioStreamSource.lib
       - mp3_soundengineplugin.lib
@@ -171,7 +171,7 @@ Configurations:
     Link:
       LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
       AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\v2014.1.2-build5195\$(Platform)_vc100\Release\lib
+      - $(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Release\lib
       AdditionalDependencies:
       - CCPAudioStreamSource.lib
       - mp3_soundengineplugin.lib
@@ -197,7 +197,7 @@ Configurations:
     Link:
       LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
       AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\v2014.1.2-build5195\$(Platform)_vc100\Release\lib
+      - $(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Release\lib
       AdditionalDependencies:
       - CCPAudioStreamSource.lib
       - mp3_soundengineplugin.lib
