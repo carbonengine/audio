@@ -76,7 +76,7 @@ AKRESULT CCCPFXSrcAudioStream::Init(	AK::IAkPluginMemAlloc *			in_pAllocator,   
 	m_pSourceFXContext = in_pSourceFXContext;
 
 	// Output format set to stereo to support ccp bink video format
-	io_rFormat.uChannelMask = AK_SPEAKER_SETUP_STEREO;
+	io_rFormat.channelConfig = AK_SPEAKER_SETUP_STEREO;
 	m_uNumChannels = io_rFormat.GetNumChannels();
 
     // Set parameters access

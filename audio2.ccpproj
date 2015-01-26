@@ -32,7 +32,7 @@ ClCompile:
   TreatWarningAsError: true
   BufferSecurityCheck: false
   AdditionalIncludeDirectories:
-  - $(CcpSdkPath)\wwise\v2013.1.3-build4687\include
+  - $(CcpSdkPath)\wwise\v2014.1.2-build5195\include
 
 # Linker settings for all configurations
 Link:
@@ -89,7 +89,7 @@ Configurations:
       DebugInformationFormat: EditAndContinue
     Link:
       AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2013.1.3-build4687\$(Platform)_vc100\Debug\lib
+      - $(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Debug\lib
 
       AdditionalDependencies:
       - CCPAudioStreamSource_d.lib
@@ -118,7 +118,7 @@ Configurations:
     Link:
       LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
       AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2013.1.3-build4687\$(Platform)_vc100\Release\lib
+      - $(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Release\lib
       AdditionalDependencies:
       - CCPAudioStreamSource.lib
       - mp3_soundengineplugin.lib
@@ -143,7 +143,7 @@ Configurations:
     Link:
       LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
       AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2013.1.3-build4687\$(Platform)_vc100\Profile\lib
+      - $(CcpSdkPath)\v2014.1.2-build5195\v2014.1.2-build5195\$(Platform)_vc100\Profile\lib
       AdditionalDependencies:
       - CCPAudioStreamSource.lib
       - mp3_soundengineplugin.lib
@@ -171,7 +171,7 @@ Configurations:
     Link:
       LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
       AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2013.1.3-build4687\$(Platform)_vc100\Release\lib
+      - $(CcpSdkPath)\v2014.1.2-build5195\v2014.1.2-build5195\$(Platform)_vc100\Release\lib
       AdditionalDependencies:
       - CCPAudioStreamSource.lib
       - mp3_soundengineplugin.lib
@@ -197,7 +197,7 @@ Configurations:
     Link:
       LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
       AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2013.1.3-build4687\$(Platform)_vc100\Release\lib
+      - $(CcpSdkPath)\v2014.1.2-build5195\v2014.1.2-build5195\$(Platform)_vc100\Release\lib
       AdditionalDependencies:
       - CCPAudioStreamSource.lib
       - mp3_soundengineplugin.lib

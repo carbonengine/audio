@@ -17,7 +17,7 @@ static LPCTSTR szAudioStreamInput       = L"AudioStreamInput";
 static LPCTSTR szAudioStreamGain        = L"AudioStreamGain";
 
 class AudioStreamPlugin
-	: public AK::Wwise::IAudioPlugin
+	: public AK::Wwise::DefaultAudioPluginImplementation
 {
 public:
 	AudioStreamPlugin();
