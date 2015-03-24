@@ -4,8 +4,23 @@
 
 		An audio entity in game. Can stream one source to multiple positions.
 		It is never created directly from python code but created or returned
-		from the 
+		from the; 
 			AudManagaer::GetEmitterForEventName
+
+		Its using the;
+			AK::SoundEngine::MultiPositionType_MultiSources
+
+		implementation which means that if too many locations are allowed then
+		there is a danger of volume stacking is all locations are really near
+		or if the attenuation settings is really big for the given event.
+
+		If less then m_maximumLocations objects send their position they will
+		all be added to the list and then processed on the next frame and the
+		locations of the multiemitter then updated. If more then m_maximumLocations
+		are used, on each new add it will find the biggest distance in the list
+			O(n-1) n=m_maximumLocations
+		and if depending on the new location, either deleted the biggest distance
+		and replace it with the new location, or simply just discard it.
 
 	Dependencies:
 
@@ -32,6 +47,13 @@
 #include <vector>
 
 struct Vector3;
+struct DistancePosition {
+	AkReal32 distance;
+	AkSoundPosition wwisePos;
+	DistancePosition( AkReal32 dist, AkSoundPosition pos ) : distance( dist ), wwisePos( pos ) {}
+};
+typedef std::vector<DistancePosition> DistancePositionVector;
+typedef std::vector<AkSoundPosition> PositionVector;
 
 BLUE_CLASS( AudEmitterMulti ) :	public IBluePlacementObserver
 							  , public AudGameObjResource
@@ -51,8 +73,8 @@ public:
 	unsigned int m_maximumLocations;
 
 private:
-	std::vector<AkSoundPosition> m_positionVector;
-
+	DistancePositionVector m_distancePositionVector;
+	PositionVector m_positionVector;
 };
 
 TYPEDEF_BLUECLASS( AudEmitterMulti );
