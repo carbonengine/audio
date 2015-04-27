@@ -66,7 +66,7 @@ void AudEmitterMulti::UpdatePlacement( const Vector3& front, const Vector3& top,
 
 void AudEmitterMulti::ProcessPlacementList() {
 
-	if( m_positionVector.size() > 0 )
+	if( m_distancePositionVector.size() > 0 )
 	{
 		for( DistancePositionVector::iterator it = m_distancePositionVector.begin(); it != m_distancePositionVector.end(); ++it)
 		{
