@@ -544,6 +544,7 @@
     <ClInclude Include="AudConfig.h"/>
     <ClInclude Include="AudConstants.h"/>
     <ClInclude Include="AudEmitter.h"/>
+    <ClInclude Include="AudEmitterDoppler.h"/>
     <ClInclude Include="AudEmitterMulti.h"/>
     <ClInclude Include="AudEmitterPersisted.h"/>
     <ClInclude Include="AudEventCurve.h"/>
@@ -580,6 +581,8 @@
     <ClCompile Include="AudConfig_Blue.cpp"/>
     <ClCompile Include="AudConstants.cpp"/>
     <ClCompile Include="AudEmitter.cpp"/>
+    <ClCompile Include="AudEmitterDoppler.cpp"/>
+    <ClCompile Include="AudEmitterDoppler_Blue.cpp"/>
     <ClCompile Include="AudEmitterMulti.cpp"/>
     <ClCompile Include="AudEmitterMulti_Blue.cpp"/>
     <ClCompile Include="AudEmitterPersisted.cpp"/>

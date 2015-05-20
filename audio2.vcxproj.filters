@@ -29,6 +29,9 @@
     <ClInclude Include="AudEmitter.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="AudEmitterDoppler.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
     <ClInclude Include="AudEmitterMulti.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -129,6 +132,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="AudEmitter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudEmitterDoppler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudEmitterDoppler_Blue.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="AudEmitterMulti.cpp">
