@@ -17,6 +17,7 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		MAP_INTERFACE( AudManager )
 
 		MAP_ATTRIBUTE( "config", m_initConfig, "Configuration struct used in the initialization of audio2.", Be::READWRITE )
+		MAP_ATTRIBUTE( "useDoppler", m_useDoppler, "A flag for deciding if we use the doppler calculations.", Be::READWRITE )
 
 		MAP_METHOD_AND_WRAP( "SetEnabled", SetEnabled,
 							 "Description:\n"

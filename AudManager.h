@@ -147,6 +147,7 @@ private:
 
 	friend class AudEmitterMulti;
 	friend class AudEmitter;
+	friend class AudEmitterDoppler;
 
 	int m_tickInterval;
 	Be::Time m_Time;
@@ -164,6 +165,7 @@ private:
 	EmitterMultiSet m_multiEmitters;
 	CcpMutex m_waitingEventsMutex;
 	CcpMutex m_multiEmitterMutex;
+	bool m_useDoppler;
 };
 
 TYPEDEF_BLUECLASS( AudManager );
