@@ -332,6 +332,9 @@ void AudManager::SetEnabled( bool newStatus )
 	}
 	else
 	{
+		CcpAutoMutex guard( m_waitingEventsMutex );
+		m_waitingEvents.clear();
+
 		//Unload all resources
 		AK::SoundEngine::StopAll();
 		AK::SoundEngine::UnregisterAllGameObj();
