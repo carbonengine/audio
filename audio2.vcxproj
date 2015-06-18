@@ -254,7 +254,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PreprocessorDefinitions>_DEBUG;BLUE_DLL_NAME=_$(ProjectName);CCP_STACKLESS=1;BLUE_WITH_PYTHON=1;_SCL_SECURE_NO_WARNINGS;WWISE_EXPORTS;AKSOUNDENGINE_STATIC;AKSOUNDENGINEDLL_EXPORTS;BLUE_OVERRIDE_VECTOR_TYPES=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>..\..\..\carbon\src\stackless\pc;..\..\..\carbon\src\stackless\include;..\..\..\carbon\src\stackless\stackless;$(CcpSdkPath)\telemetry\2.0n\include;.;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)\wwise\v2014.1.2-build5195\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\carbon\src\stackless\pc;..\..\..\carbon\src\stackless\include;..\..\..\carbon\src\stackless\stackless;$(CcpSdkPath)\telemetry\2.1A3\include;.;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)\wwise\v2014.1.2-build5195\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>True</MultiProcessorCompilation>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <TreatWarningAsError>True</TreatWarningAsError>
@@ -267,7 +267,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>True</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Debug\lib;..\..\..\carbon\autobuild\stackless\$(Platform);$(CcpSdkPath)\telemetry\2.0n\lib;../../../carbon/autobuild/blue/exefile/$(Platform)/$(PlatformToolset)/;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Debug\lib;..\..\..\carbon\autobuild\stackless\$(Platform);$(CcpSdkPath)\telemetry\2.1A3\lib;../../../carbon/autobuild/blue/exefile/$(Platform)/$(PlatformToolset)/;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
       <AdditionalDependencies>CCPAudioStreamSource_d.lib;mp3_soundengineplugin_d.lib;CommunicationCentral.lib;wsock32.lib;blue_d.lib;python27_d.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
@@ -281,7 +281,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PreprocessorDefinitions>NDEBUG;CCP_ASSERT_ENABLED=1;AK_OPTIMIZED;BLUE_DLL_NAME=$(TargetName);BLUE_WITH_PYTHON=1;_SCL_SECURE_NO_WARNINGS;WWISE_EXPORTS;AKSOUNDENGINE_STATIC;AKSOUNDENGINEDLL_EXPORTS;BLUE_OVERRIDE_VECTOR_TYPES=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(CcpSdkPath)\telemetry\2.0n\include;$(CcpSdkPath)\Python\27\include;.;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)\wwise\v2014.1.2-build5195\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CcpSdkPath)\telemetry\2.1A3\include;$(CcpSdkPath)\Python\27\include;.;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)\wwise\v2014.1.2-build5195\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>True</MultiProcessorCompilation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <WholeProgramOptimization>True</WholeProgramOptimization>
@@ -296,7 +296,7 @@
     <Link>
       <GenerateDebugInformation>True</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Release\lib;$(CcpSdkPath)\telemetry\2.0n\lib;../../../carbon/autobuild/blue/python_27/$(Platform)/$(PlatformToolset)/;$(CcpSdkPath)\Python\27\libs;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Release\lib;$(CcpSdkPath)\telemetry\2.1A3\lib;../../../carbon/autobuild/blue/python_27/$(Platform)/$(PlatformToolset)/;$(CcpSdkPath)\Python\27\libs;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
       <AdditionalDependencies>CCPAudioStreamSource.lib;mp3_soundengineplugin.lib;blue.lib;python27.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
@@ -310,7 +310,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PreprocessorDefinitions>NDEBUG;CCP_ASSERT_ENABLED=1;AK_OPTIMIZED;BLUE_DLL_NAME=$(TargetName);CCP_STACKLESS=1;BLUE_WITH_PYTHON=1;_SCL_SECURE_NO_WARNINGS;WWISE_EXPORTS;AKSOUNDENGINE_STATIC;AKSOUNDENGINEDLL_EXPORTS;BLUE_OVERRIDE_VECTOR_TYPES=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>..\..\..\carbon\src\stackless\pc;..\..\..\carbon\src\stackless\include;..\..\..\carbon\src\stackless\stackless;$(CcpSdkPath)\telemetry\2.0n\include;.;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)\wwise\v2014.1.2-build5195\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\carbon\src\stackless\pc;..\..\..\carbon\src\stackless\include;..\..\..\carbon\src\stackless\stackless;$(CcpSdkPath)\telemetry\2.1A3\include;.;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)\wwise\v2014.1.2-build5195\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>True</MultiProcessorCompilation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <WholeProgramOptimization>True</WholeProgramOptimization>
@@ -325,7 +325,7 @@
     <Link>
       <GenerateDebugInformation>True</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Release\lib;..\..\..\carbon\autobuild\stackless\$(Platform);$(CcpSdkPath)\telemetry\2.0n\lib;../../../carbon/autobuild/blue/exefile/$(Platform)/$(PlatformToolset)/;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Release\lib;..\..\..\carbon\autobuild\stackless\$(Platform);$(CcpSdkPath)\telemetry\2.1A3\lib;../../../carbon/autobuild/blue/exefile/$(Platform)/$(PlatformToolset)/;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
       <AdditionalDependencies>CCPAudioStreamSource.lib;mp3_soundengineplugin.lib;blue.lib;python27.lib;telemetry64.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
@@ -339,7 +339,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PreprocessorDefinitions>NDEBUG;CCP_ASSERT_ENABLED=1;AK_OPTIMIZED;BLUE_DLL_NAME=$(TargetName);BLUE_WITH_PYTHON=1;_SCL_SECURE_NO_WARNINGS;WWISE_EXPORTS;AKSOUNDENGINE_STATIC;AKSOUNDENGINEDLL_EXPORTS;BLUE_OVERRIDE_VECTOR_TYPES=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(CcpSdkPath)\telemetry\2.0n\include;$(CcpSdkPath)\Python\27_64\include;.;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)\wwise\v2014.1.2-build5195\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CcpSdkPath)\telemetry\2.1A3\include;$(CcpSdkPath)\Python\27_64\include;.;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)\wwise\v2014.1.2-build5195\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>True</MultiProcessorCompilation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <WholeProgramOptimization>True</WholeProgramOptimization>
@@ -354,7 +354,7 @@
     <Link>
       <GenerateDebugInformation>True</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Release\lib;$(CcpSdkPath)\telemetry\2.0n\lib;../../../carbon/autobuild/blue/python_27/$(Platform)/$(PlatformToolset)/;$(CcpSdkPath)\Python\27_64\libs;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Release\lib;$(CcpSdkPath)\telemetry\2.1A3\lib;../../../carbon/autobuild/blue/python_27/$(Platform)/$(PlatformToolset)/;$(CcpSdkPath)\Python\27_64\libs;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
       <AdditionalDependencies>CCPAudioStreamSource.lib;mp3_soundengineplugin.lib;blue.lib;python27.lib;telemetry64.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
@@ -368,7 +368,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PreprocessorDefinitions>NDEBUG;CCP_ASSERT_ENABLED=1;BLUE_DLL_NAME=$(TargetName);CCP_STACKLESS=1;BLUE_WITH_PYTHON=1;_SCL_SECURE_NO_WARNINGS;WWISE_EXPORTS;AKSOUNDENGINE_STATIC;AKSOUNDENGINEDLL_EXPORTS;BLUE_OVERRIDE_VECTOR_TYPES=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>..\..\..\carbon\src\stackless\pc;..\..\..\carbon\src\stackless\include;..\..\..\carbon\src\stackless\stackless;$(CcpSdkPath)\telemetry\2.0n\include;.;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)\wwise\v2014.1.2-build5195\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\carbon\src\stackless\pc;..\..\..\carbon\src\stackless\include;..\..\..\carbon\src\stackless\stackless;$(CcpSdkPath)\telemetry\2.1A3\include;.;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)\wwise\v2014.1.2-build5195\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>True</MultiProcessorCompilation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <WholeProgramOptimization>True</WholeProgramOptimization>
@@ -383,7 +383,7 @@
     <Link>
       <GenerateDebugInformation>True</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Profile\lib;..\..\..\carbon\autobuild\stackless\$(Platform);$(CcpSdkPath)\telemetry\2.0n\lib;../../../carbon/autobuild/blue/exefile/$(Platform)/$(PlatformToolset)/;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Profile\lib;..\..\..\carbon\autobuild\stackless\$(Platform);$(CcpSdkPath)\telemetry\2.1A3\lib;../../../carbon/autobuild/blue/exefile/$(Platform)/$(PlatformToolset)/;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
       <AdditionalDependencies>CCPAudioStreamSource.lib;mp3_soundengineplugin.lib;CommunicationCentral.lib;wsock32.lib;blue.lib;python27.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
@@ -397,7 +397,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PreprocessorDefinitions>NDEBUG;CCP_ASSERT_ENABLED=1;BLUE_DLL_NAME=$(TargetName);CCP_STACKLESS=1;BLUE_WITH_PYTHON=1;_SCL_SECURE_NO_WARNINGS;WWISE_EXPORTS;AKSOUNDENGINE_STATIC;AKSOUNDENGINEDLL_EXPORTS;BLUE_OVERRIDE_VECTOR_TYPES=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>..\..\..\carbon\src\stackless\pc;..\..\..\carbon\src\stackless\include;..\..\..\carbon\src\stackless\stackless;$(CcpSdkPath)\telemetry\2.0n\include;.;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)\wwise\v2014.1.2-build5195\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\carbon\src\stackless\pc;..\..\..\carbon\src\stackless\include;..\..\..\carbon\src\stackless\stackless;$(CcpSdkPath)\telemetry\2.1A3\include;.;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)\wwise\v2014.1.2-build5195\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>True</MultiProcessorCompilation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <WholeProgramOptimization>True</WholeProgramOptimization>
@@ -412,7 +412,7 @@
     <Link>
       <GenerateDebugInformation>True</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Profile\lib;..\..\..\carbon\autobuild\stackless\$(Platform);$(CcpSdkPath)\telemetry\2.0n\lib;../../../carbon/autobuild/blue/exefile/$(Platform)/$(PlatformToolset)/;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Profile\lib;..\..\..\carbon\autobuild\stackless\$(Platform);$(CcpSdkPath)\telemetry\2.1A3\lib;../../../carbon/autobuild/blue/exefile/$(Platform)/$(PlatformToolset)/;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
       <AdditionalDependencies>CCPAudioStreamSource.lib;mp3_soundengineplugin.lib;CommunicationCentral.lib;wsock32.lib;blue.lib;python27.lib;telemetry64.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
@@ -426,7 +426,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PreprocessorDefinitions>NDEBUG;CCP_ASSERT_ENABLED=1;AK_OPTIMIZED;BLUE_DLL_NAME=$(TargetName);BLUE_WITH_PYTHON=1;_SCL_SECURE_NO_WARNINGS;WWISE_EXPORTS;AKSOUNDENGINE_STATIC;AKSOUNDENGINEDLL_EXPORTS;BLUE_OVERRIDE_VECTOR_TYPES=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(CcpSdkPath)\telemetry\2.0n\include;$(CcpSdkPath)\Python\26\include;.;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)\wwise\v2014.1.2-build5195\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CcpSdkPath)\telemetry\2.1A3\include;$(CcpSdkPath)\Python\26\include;.;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)\wwise\v2014.1.2-build5195\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>True</MultiProcessorCompilation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <WholeProgramOptimization>True</WholeProgramOptimization>
@@ -441,7 +441,7 @@
     <Link>
       <GenerateDebugInformation>True</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Release\lib;$(CcpSdkPath)\telemetry\2.0n\lib;../../blue/python_26/$(Platform)/$(PlatformToolset);../../../carbon/autobuild/blue/python_26/$(Platform)/$(PlatformToolset);$(CcpSdkPath)\Python\26\libs;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Release\lib;$(CcpSdkPath)\telemetry\2.1A3\lib;../../blue/python_26/$(Platform)/$(PlatformToolset);../../../carbon/autobuild/blue/python_26/$(Platform)/$(PlatformToolset);$(CcpSdkPath)\Python\26\libs;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
       <AdditionalDependencies>CCPAudioStreamSource.lib;mp3_soundengineplugin.lib;blue.lib;python26.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
@@ -455,7 +455,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PreprocessorDefinitions>_DEBUG;BLUE_DLL_NAME=_$(ProjectName);CCP_STACKLESS=1;BLUE_WITH_PYTHON=1;_SCL_SECURE_NO_WARNINGS;WWISE_EXPORTS;AKSOUNDENGINE_STATIC;AKSOUNDENGINEDLL_EXPORTS;BLUE_OVERRIDE_VECTOR_TYPES=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>..\..\..\carbon\src\stackless\pc;..\..\..\carbon\src\stackless\include;..\..\..\carbon\src\stackless\stackless;$(CcpSdkPath)\telemetry\2.0n\include;.;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)\wwise\v2014.1.2-build5195\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\carbon\src\stackless\pc;..\..\..\carbon\src\stackless\include;..\..\..\carbon\src\stackless\stackless;$(CcpSdkPath)\telemetry\2.1A3\include;.;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)\wwise\v2014.1.2-build5195\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>True</MultiProcessorCompilation>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <TreatWarningAsError>True</TreatWarningAsError>
@@ -468,7 +468,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>True</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Debug\lib;..\..\..\carbon\autobuild\stackless\$(Platform);$(CcpSdkPath)\telemetry\2.0n\lib;../../../carbon/autobuild/blue/exefile/$(Platform)/$(PlatformToolset)/;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Debug\lib;..\..\..\carbon\autobuild\stackless\$(Platform);$(CcpSdkPath)\telemetry\2.1A3\lib;../../../carbon/autobuild/blue/exefile/$(Platform)/$(PlatformToolset)/;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
       <AdditionalDependencies>CCPAudioStreamSource_d.lib;mp3_soundengineplugin_d.lib;CommunicationCentral.lib;wsock32.lib;blue_d.lib;python27_d.lib;telemetry64.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
@@ -482,7 +482,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PreprocessorDefinitions>NDEBUG;CCP_ASSERT_ENABLED=1;AK_OPTIMIZED;BLUE_DLL_NAME=$(TargetName);BLUE_WITH_PYTHON=1;_SCL_SECURE_NO_WARNINGS;WWISE_EXPORTS;AKSOUNDENGINE_STATIC;AKSOUNDENGINEDLL_EXPORTS;BLUE_OVERRIDE_VECTOR_TYPES=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(CcpSdkPath)\telemetry\2.0n\include;$(CcpSdkPath)\Python\26_64\include;.;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)\wwise\v2014.1.2-build5195\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CcpSdkPath)\telemetry\2.1A3\include;$(CcpSdkPath)\Python\26_64\include;.;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)\wwise\v2014.1.2-build5195\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>True</MultiProcessorCompilation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <WholeProgramOptimization>True</WholeProgramOptimization>
@@ -497,7 +497,7 @@
     <Link>
       <GenerateDebugInformation>True</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Release\lib;$(CcpSdkPath)\telemetry\2.0n\lib;../../blue/python_26/$(Platform)/$(PlatformToolset);../../../carbon/autobuild/blue/python_26/$(Platform)/$(PlatformToolset);$(CcpSdkPath)\Python\26_64\libs;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Release\lib;$(CcpSdkPath)\telemetry\2.1A3\lib;../../blue/python_26/$(Platform)/$(PlatformToolset);../../../carbon/autobuild/blue/python_26/$(Platform)/$(PlatformToolset);$(CcpSdkPath)\Python\26_64\libs;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
       <AdditionalDependencies>CCPAudioStreamSource.lib;mp3_soundengineplugin.lib;blue.lib;python26.lib;telemetry64.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
@@ -511,7 +511,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PreprocessorDefinitions>NDEBUG;CCP_ASSERT_ENABLED=1;AK_OPTIMIZED;BLUE_DLL_NAME=$(TargetName);CCP_STACKLESS=1;BLUE_WITH_PYTHON=1;_SCL_SECURE_NO_WARNINGS;WWISE_EXPORTS;AKSOUNDENGINE_STATIC;AKSOUNDENGINEDLL_EXPORTS;BLUE_OVERRIDE_VECTOR_TYPES=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>..\..\..\carbon\src\stackless\pc;..\..\..\carbon\src\stackless\include;..\..\..\carbon\src\stackless\stackless;$(CcpSdkPath)\telemetry\2.0n\include;.;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)\wwise\v2014.1.2-build5195\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\carbon\src\stackless\pc;..\..\..\carbon\src\stackless\include;..\..\..\carbon\src\stackless\stackless;$(CcpSdkPath)\telemetry\2.1A3\include;.;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)\wwise\v2014.1.2-build5195\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>True</MultiProcessorCompilation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <WholeProgramOptimization>True</WholeProgramOptimization>
@@ -526,7 +526,7 @@
     <Link>
       <GenerateDebugInformation>True</GenerateDebugInformation>
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Release\lib;..\..\..\carbon\autobuild\stackless\$(Platform);$(CcpSdkPath)\telemetry\2.0n\lib;../../../carbon/autobuild/blue/exefile/$(Platform)/$(PlatformToolset)/;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Release\lib;..\..\..\carbon\autobuild\stackless\$(Platform);$(CcpSdkPath)\telemetry\2.1A3\lib;../../../carbon/autobuild/blue/exefile/$(Platform)/$(PlatformToolset)/;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
       <AdditionalDependencies>CCPAudioStreamSource.lib;mp3_soundengineplugin.lib;blue.lib;python27.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
