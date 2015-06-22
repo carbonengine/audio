@@ -14,7 +14,10 @@ AudEmitterDoppler::AudEmitterDoppler( IRoot* lockobj ) : AudEmitter( lockobj )
 
 AudEmitterDoppler::~AudEmitterDoppler()
 {
-	AK::SoundEngine::StopAll( m_ID );
+	if (g_audioInitialized)
+	{
+    	AK::SoundEngine::StopAll( m_ID );
+    }
 }
 
 void AudEmitterDoppler::UpdatePlacement(const Vector3& front, const Vector3& top, const Vector3& pos )
