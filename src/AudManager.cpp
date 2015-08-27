@@ -18,6 +18,7 @@
 #include <AK/Plugin/AkMeterFXFactory.h>
 #include <AK/Plugin/AkPeakLimiterFXFactory.h>
 #include <AK/Plugin/AkFlangerFXFactory.h>
+#include <AK/Plugin/AkGuitarDistortionFXFactory.h>
 
 #include "AudManager.h"
 #include "AudSettingsRegistrar.h"
@@ -293,6 +294,12 @@ bool AudManager::InitPlugin()
 				CreateFlangerFX,
 				CreateFlangerFXParams);
 
+	AK::SoundEngine::RegisterPlugin(
+				AkPluginTypeEffect,
+				AKCOMPANYID_AUDIOKINETIC,
+				AKEFFECTID_GUITARDISTORTION,
+				CreateGuitarDistortionFX,
+				CreateGuitarDistortionFXParams);
 
 	return true;
 }
