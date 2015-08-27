@@ -66,6 +66,16 @@ void AudEventCurve::UpdateValue( double time )
 	}
 }
 
+// --------------------------------------------------------------------------------
+// Description:
+//   This funtion is called prior to starting a curve playback. The EventCurve
+//   needs to act upon it by reseting internal pointers
+// --------------------------------------------------------------------------------
+void AudEventCurve::Reset()
+{
+	m_currentKeyIt = m_keys.begin();
+}
+
 static bool CompareKeys( IRoot* context, AudEventKey* a, AudEventKey* b )
 {
 	return a->m_time < b->m_time;
