@@ -72,7 +72,7 @@ void AudEmitterMulti::ProcessPlacementList() {
 		{
 			m_positionVector.push_back(it->wwisePos);
 		}
-		AK::SoundEngine::SetMultiplePositions( m_ID, &m_positionVector[0], (AkUInt16) m_positionVector.size(), AK::SoundEngine::MultiPositionType_MultiSources ); // Multi directions is default
+		AK::SoundEngine::SetMultiplePositions( m_ID, &m_positionVector[0], (AkUInt16) m_positionVector.size(), AK::SoundEngine::MultiPositionType_MultiDirections ); // Multi directions is default
 		m_positionVector.clear();
 		m_distancePositionVector.clear();
 	}

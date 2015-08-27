@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -75,7 +75,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <PlatformToolset>v100</PlatformToolset>
   </PropertyGroup>
-  <Import Project="$(VCTargetsPath)/Microsoft.Cpp.Default.props"/>
+  <Import Project="$(VCTargetsPath)/Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <UseOfMfc>False</UseOfMfc>
     <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/</IntDir>
@@ -126,7 +126,7 @@
     <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/</IntDir>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
   </PropertyGroup>
-  <Import Project="$(VCTargetsPath)/Microsoft.Cpp.props"/>
+  <Import Project="$(VCTargetsPath)/Microsoft.Cpp.props" />
   <PropertyGroup Label="UserMacros">
     <CcpSdkPath>../../../../../../sdk</CcpSdkPath>
     <CcpSharedToolsPath>../../../../../../shared_tools</CcpSharedToolsPath>
@@ -176,36 +176,36 @@
       <Value>$(CcpConfigType)</Value>
     </BuildMacro>
   </ItemGroup>
-  <ImportGroup Label="ExtensionSettings"/>
+  <ImportGroup Label="ExtensionSettings" />
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
-    <Import Project="../manifests/manifests.props"/>
+    <Import Project="../manifests/manifests.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release_27|Win32'" Label="PropertySheets">
-    <Import Project="../manifests/manifests.props"/>
+    <Import Project="../manifests/manifests.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
-    <Import Project="../manifests/manifests.props"/>
+    <Import Project="../manifests/manifests.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release_27|x64'" Label="PropertySheets">
-    <Import Project="../manifests/manifests.props"/>
+    <Import Project="../manifests/manifests.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Dev|Win32'" Label="PropertySheets">
-    <Import Project="../manifests/manifests.props"/>
+    <Import Project="../manifests/manifests.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Dev|x64'" Label="PropertySheets">
-    <Import Project="../manifests/manifests.props"/>
+    <Import Project="../manifests/manifests.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release_26|Win32'" Label="PropertySheets">
-    <Import Project="../manifests/manifests.props"/>
+    <Import Project="../manifests/manifests.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
-    <Import Project="../manifests/manifests.props"/>
+    <Import Project="../manifests/manifests.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release_26|x64'" Label="PropertySheets">
-    <Import Project="../manifests/manifests.props"/>
+    <Import Project="../manifests/manifests.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
-    <Import Project="../manifests/manifests.props"/>
+    <Import Project="../manifests/manifests.props" />
   </ImportGroup>
   <PropertyGroup>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.dll</TargetExt>
@@ -269,7 +269,7 @@
       <GenerateDebugInformation>True</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Debug\lib;..\..\..\carbon\autobuild\stackless\$(Platform);$(CcpSdkPath)\telemetry\2.1A3\lib;../../../carbon/autobuild/blue/exefile/$(Platform)/$(PlatformToolset)/;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
-      <AdditionalDependencies>CCPAudioStreamSource_d.lib;mp3_soundengineplugin_d.lib;CommunicationCentral.lib;wsock32.lib;blue_d.lib;python27_d.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>CCPAudioStreamSource_d.lib;mp3_soundengineplugin_d.lib;CommunicationCentral.lib;wsock32.lib;blue_d.lib;python27_d.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>TARGET_NAME=$(TargetName);TARGET_FILENAME=$(TargetFileName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -298,7 +298,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Release\lib;$(CcpSdkPath)\telemetry\2.1A3\lib;../../../carbon/autobuild/blue/python_27/$(Platform)/$(PlatformToolset)/;$(CcpSdkPath)\Python\27\libs;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
-      <AdditionalDependencies>CCPAudioStreamSource.lib;mp3_soundengineplugin.lib;blue.lib;python27.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>CCPAudioStreamSource.lib;mp3_soundengineplugin.lib;blue.lib;python27.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>TARGET_NAME=$(TargetName);TARGET_FILENAME=$(TargetFileName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -385,7 +385,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Profile\lib;..\..\..\carbon\autobuild\stackless\$(Platform);$(CcpSdkPath)\telemetry\2.1A3\lib;../../../carbon/autobuild/blue/exefile/$(Platform)/$(PlatformToolset)/;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
-      <AdditionalDependencies>CCPAudioStreamSource.lib;mp3_soundengineplugin.lib;CommunicationCentral.lib;wsock32.lib;blue.lib;python27.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>CCPAudioStreamSource.lib;mp3_soundengineplugin.lib;CommunicationCentral.lib;wsock32.lib;blue.lib;python27.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>TARGET_NAME=$(TargetName);TARGET_FILENAME=$(TargetFileName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -443,7 +443,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Release\lib;$(CcpSdkPath)\telemetry\2.1A3\lib;../../blue/python_26/$(Platform)/$(PlatformToolset);../../../carbon/autobuild/blue/python_26/$(Platform)/$(PlatformToolset);$(CcpSdkPath)\Python\26\libs;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
-      <AdditionalDependencies>CCPAudioStreamSource.lib;mp3_soundengineplugin.lib;blue.lib;python26.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>CCPAudioStreamSource.lib;mp3_soundengineplugin.lib;blue.lib;python26.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>TARGET_NAME=$(TargetName);TARGET_FILENAME=$(TargetFileName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -528,7 +528,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Release\lib;..\..\..\carbon\autobuild\stackless\$(Platform);$(CcpSdkPath)\telemetry\2.1A3\lib;../../../carbon/autobuild/blue/exefile/$(Platform)/$(PlatformToolset)/;MP3\soundengineplugin\lib;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
-      <AdditionalDependencies>CCPAudioStreamSource.lib;mp3_soundengineplugin.lib;blue.lib;python27.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>CCPAudioStreamSource.lib;mp3_soundengineplugin.lib;blue.lib;python27.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>TARGET_NAME=$(TargetName);TARGET_FILENAME=$(TargetFileName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -536,96 +536,96 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AkDefaultIOHookBlocking.h"/>
-    <ClInclude Include="AkFileHelpers.h"/>
-    <ClInclude Include="AkFileLocationBase.h"/>
-    <ClInclude Include="AkSoundEngineExports.h"/>
-    <ClInclude Include="AudAlloc.h"/>
-    <ClInclude Include="AudConfig.h"/>
-    <ClInclude Include="AudConstants.h"/>
-    <ClInclude Include="AudEmitter.h"/>
-    <ClInclude Include="AudEmitterDoppler.h"/>
-    <ClInclude Include="AudEmitterMulti.h"/>
-    <ClInclude Include="AudEmitterPersisted.h"/>
-    <ClInclude Include="AudEventCurve.h"/>
-    <ClInclude Include="AudEventKey.h"/>
-    <ClInclude Include="AudGameObjResource.h"/>
-    <ClInclude Include="Audio2.h"/>
-    <ClInclude Include="AudJukebox.h"/>
-    <ClInclude Include="AudListener.h"/>
-    <ClInclude Include="AudLowLevelIO.h"/>
-    <ClInclude Include="AudManager.h"/>
-    <ClInclude Include="AudMp3Info.h"/>
-    <ClInclude Include="AudParameter.h"/>
-    <ClInclude Include="AudPlaylistItem.h"/>
-    <ClInclude Include="AudPosition.h"/>
-    <ClInclude Include="AudResource.h"/>
-    <ClInclude Include="AudSettings.h"/>
-    <ClInclude Include="AudSettingsRegistrar.h"/>
-    <ClInclude Include="AudUIPlayer.h"/>
-    <ClInclude Include="autoversion.h"/>
-    <ClInclude Include="IAudLowLevelIO.h"/>
-    <ClInclude Include="LogBridge.h"/>
-    <ClInclude Include="Mutex.h"/>
-    <ClInclude Include="resource.h"/>
-    <ClInclude Include="Semaphore.h"/>
-    <ClInclude Include="stdafx.h"/>
-    <ClInclude Include="Utilities.h"/>
-    <ClInclude Include="Vector3.h"/>
-    <ClInclude Include="version.h"/>
+    <ClInclude Include="AkDefaultIOHookBlocking.h" />
+    <ClInclude Include="AkFileHelpers.h" />
+    <ClInclude Include="AkFileLocationBase.h" />
+    <ClInclude Include="AkSoundEngineExports.h" />
+    <ClInclude Include="AudAlloc.h" />
+    <ClInclude Include="AudConfig.h" />
+    <ClInclude Include="AudConstants.h" />
+    <ClInclude Include="AudEmitter.h" />
+    <ClInclude Include="AudEmitterDoppler.h" />
+    <ClInclude Include="AudEmitterMulti.h" />
+    <ClInclude Include="AudEmitterPersisted.h" />
+    <ClInclude Include="AudEventCurve.h" />
+    <ClInclude Include="AudEventKey.h" />
+    <ClInclude Include="AudGameObjResource.h" />
+    <ClInclude Include="Audio2.h" />
+    <ClInclude Include="AudJukebox.h" />
+    <ClInclude Include="AudListener.h" />
+    <ClInclude Include="AudLowLevelIO.h" />
+    <ClInclude Include="AudManager.h" />
+    <ClInclude Include="AudMp3Info.h" />
+    <ClInclude Include="AudParameter.h" />
+    <ClInclude Include="AudPlaylistItem.h" />
+    <ClInclude Include="AudPosition.h" />
+    <ClInclude Include="AudResource.h" />
+    <ClInclude Include="AudSettings.h" />
+    <ClInclude Include="AudSettingsRegistrar.h" />
+    <ClInclude Include="AudUIPlayer.h" />
+    <ClInclude Include="autoversion.h" />
+    <ClInclude Include="IAudLowLevelIO.h" />
+    <ClInclude Include="LogBridge.h" />
+    <ClInclude Include="Mutex.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="Semaphore.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="Utilities.h" />
+    <ClInclude Include="Vector3.h" />
+    <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AkDefaultIOHookBlocking.cpp"/>
-    <ClCompile Include="AkFileLocationBase.cpp"/>
-    <ClCompile Include="AudConfig.cpp"/>
-    <ClCompile Include="AudConfig_Blue.cpp"/>
-    <ClCompile Include="AudConstants.cpp"/>
-    <ClCompile Include="AudEmitter.cpp"/>
-    <ClCompile Include="AudEmitterDoppler.cpp"/>
-    <ClCompile Include="AudEmitterDoppler_Blue.cpp"/>
-    <ClCompile Include="AudEmitterMulti.cpp"/>
-    <ClCompile Include="AudEmitterMulti_Blue.cpp"/>
-    <ClCompile Include="AudEmitterPersisted.cpp"/>
-    <ClCompile Include="AudEmitterPersisted_Blue.cpp"/>
-    <ClCompile Include="AudEmitter_Blue.cpp"/>
-    <ClCompile Include="AudEventCurve.cpp"/>
-    <ClCompile Include="AudEventCurve_Blue.cpp"/>
-    <ClCompile Include="AudEventKey.cpp"/>
-    <ClCompile Include="AudEventKey_Blue.cpp"/>
-    <ClCompile Include="AudGameObjResource.cpp"/>
-    <ClCompile Include="AudGameObjResource_Blue.cpp"/>
-    <ClCompile Include="audio2.cpp"/>
-    <ClCompile Include="AudJukebox.cpp"/>
-    <ClCompile Include="AudJukebox_Blue.cpp"/>
-    <ClCompile Include="AudListener.cpp"/>
-    <ClCompile Include="AudListener_Blue.cpp"/>
-    <ClCompile Include="AudLowLevelIO.cpp"/>
-    <ClCompile Include="AudLowLevelIO_Blue.cpp"/>
-    <ClCompile Include="AudManager.cpp"/>
-    <ClCompile Include="AudManager_Blue.cpp"/>
-    <ClCompile Include="AudMp3Info.cpp"/>
-    <ClCompile Include="AudMp3Info_Blue.cpp"/>
-    <ClCompile Include="AudParameter.cpp"/>
-    <ClCompile Include="AudParameter_Blue.cpp"/>
-    <ClCompile Include="AudPlaylistItem.cpp"/>
-    <ClCompile Include="AudPlaylistItem_Blue.cpp"/>
-    <ClCompile Include="AudPosition.cpp"/>
-    <ClCompile Include="AudPosition_Blue.cpp"/>
-    <ClCompile Include="AudResource.cpp"/>
-    <ClCompile Include="AudSettings_Blue.cpp"/>
-    <ClCompile Include="AudUIPlayer.cpp"/>
-    <ClCompile Include="AudUIPlayer_Blue.cpp"/>
-    <ClCompile Include="IAudLowLevelIO_Blue.cpp"/>
-    <ClCompile Include="LogBridge.cpp"/>
-    <ClCompile Include="Mutex.cpp"/>
-    <ClCompile Include="Semaphore.cpp"/>
+    <ClCompile Include="AkDefaultIOHookBlocking.cpp" />
+    <ClCompile Include="AkFileLocationBase.cpp" />
+    <ClCompile Include="AudConfig.cpp" />
+    <ClCompile Include="AudConfig_Blue.cpp" />
+    <ClCompile Include="AudConstants.cpp" />
+    <ClCompile Include="AudEmitter.cpp" />
+    <ClCompile Include="AudEmitterDoppler.cpp" />
+    <ClCompile Include="AudEmitterDoppler_Blue.cpp" />
+    <ClCompile Include="AudEmitterMulti.cpp" />
+    <ClCompile Include="AudEmitterMulti_Blue.cpp" />
+    <ClCompile Include="AudEmitterPersisted.cpp" />
+    <ClCompile Include="AudEmitterPersisted_Blue.cpp" />
+    <ClCompile Include="AudEmitter_Blue.cpp" />
+    <ClCompile Include="AudEventCurve.cpp" />
+    <ClCompile Include="AudEventCurve_Blue.cpp" />
+    <ClCompile Include="AudEventKey.cpp" />
+    <ClCompile Include="AudEventKey_Blue.cpp" />
+    <ClCompile Include="AudGameObjResource.cpp" />
+    <ClCompile Include="AudGameObjResource_Blue.cpp" />
+    <ClCompile Include="audio2.cpp" />
+    <ClCompile Include="AudJukebox.cpp" />
+    <ClCompile Include="AudJukebox_Blue.cpp" />
+    <ClCompile Include="AudListener.cpp" />
+    <ClCompile Include="AudListener_Blue.cpp" />
+    <ClCompile Include="AudLowLevelIO.cpp" />
+    <ClCompile Include="AudLowLevelIO_Blue.cpp" />
+    <ClCompile Include="AudManager.cpp" />
+    <ClCompile Include="AudManager_Blue.cpp" />
+    <ClCompile Include="AudMp3Info.cpp" />
+    <ClCompile Include="AudMp3Info_Blue.cpp" />
+    <ClCompile Include="AudParameter.cpp" />
+    <ClCompile Include="AudParameter_Blue.cpp" />
+    <ClCompile Include="AudPlaylistItem.cpp" />
+    <ClCompile Include="AudPlaylistItem_Blue.cpp" />
+    <ClCompile Include="AudPosition.cpp" />
+    <ClCompile Include="AudPosition_Blue.cpp" />
+    <ClCompile Include="AudResource.cpp" />
+    <ClCompile Include="AudSettings_Blue.cpp" />
+    <ClCompile Include="AudUIPlayer.cpp" />
+    <ClCompile Include="AudUIPlayer_Blue.cpp" />
+    <ClCompile Include="IAudLowLevelIO_Blue.cpp" />
+    <ClCompile Include="LogBridge.cpp" />
+    <ClCompile Include="Mutex.cpp" />
+    <ClCompile Include="Semaphore.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="audio2.rc"/>
+    <ResourceCompile Include="audio2.rc" />
   </ItemGroup>
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
-  <ImportGroup Label="ExtensionTargets"/>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
 </Project>
