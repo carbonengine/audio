@@ -148,6 +148,15 @@ static PyObject* PyGetDirectSoundPtr( PyObject* module, PyObject* args )
 }
 MAP_FUNCTION( "GetDirectSoundPtr", PyGetDirectSoundPtr, "Get a pointer to the direct sound interface." );
 
+static PyObject* PyGetStreamPositionPtr( PyObject* module, PyObject* args )
+{
+	return PyLong_FromVoidPtr( (void *) &GetAudioStreamPosition );
+}
+MAP_FUNCTION( 
+	"GetStreamPositionPtr", 
+	PyGetStreamPositionPtr, 
+	"Get a pointer to the function returning the number of samples consumed by WWise for the given stream" );
+
 
 static PyObject* PyStopAll( PyObject* self, PyObject* args )
 {
