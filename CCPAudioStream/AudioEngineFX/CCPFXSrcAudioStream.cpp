@@ -21,7 +21,8 @@ struct AudioStreamStream
 	AkReal32 *m_pData;
 	AkUInt32  m_uDataSize;
 	AkUInt32  m_curWritePos;
-	AudioStreamStream() : m_pData(NULL), m_uDataSize(0){}
+	AkUInt32  m_consumedSamples;
+	AudioStreamStream() : m_pData(NULL), m_uDataSize(0), m_consumedSamples(0) {}
 };
 
 // This is the global list of audio inputs that will be used by the 
@@ -180,6 +181,7 @@ void CCCPFXSrcAudioStream::Execute(	AkAudioBuffer *							io_pBufferOut		// Outp
 			{
 				m_uAudioPosition = 0;
 			}
+			g_InputStreams[m_uAudioInput].m_consumedSamples += 2;
 		}
 
 		AkUInt32 validSamples = io_pBufferOut->uValidFrames * 2;
@@ -239,6 +241,22 @@ AkUInt32 __stdcall SetAudioStreamData(AkReal32 *const data , AkUInt32 const data
 
 	return result;
 }
+
+//--------------------------------------------------------------------------------------------------------
+// Get number of samples submitted to WWise engine. Can be used for syncronization
+//--------------------------------------------------------------------------------------------------------
+AkUInt32 __stdcall GetAudioStreamPosition( int const input )
+{
+	AkUInt32 result = 0;
+
+	if ((input >= 0) && (input < INPUT_MAX_INPUTS))
+	{
+		result = g_InputStreams[input].m_consumedSamples;
+	}
+
+	return result;
+}
+
 
 //--------------------------------------------------------------------------------------------------------
 // Get maximum inputs This is declared public in AkAudioStreamSourceFactory (since we do not declare the 

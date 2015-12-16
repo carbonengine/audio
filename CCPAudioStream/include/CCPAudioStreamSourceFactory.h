@@ -52,6 +52,9 @@ AkUInt32 __stdcall SetAudioStreamData(
 	AkUInt32 const dataSize,						///< Size of data
 	int const input									///< Input to set the data to 
 	);
+AkUInt32 __stdcall GetAudioStreamPosition(
+	int const input									///< Input to set the data to 
+	);
 }
 
 /// Get the number of available input channels. The current set size for the maximum number of inputs is 16. 
