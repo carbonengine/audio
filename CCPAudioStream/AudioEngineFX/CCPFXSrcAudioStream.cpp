@@ -83,8 +83,11 @@ AKRESULT CCCPFXSrcAudioStream::Init(	AK::IAkPluginMemAlloc *			in_pAllocator,   
     // Set parameters access
     m_pSharedParams = reinterpret_cast<CCCPFxSrcAudioStreamParams*>(in_pParams);
 
+	// Point to the correct input stream
+	m_uAudioInput = m_pSharedParams->GetInput();
+
 	// Save audio format internally
-	io_rFormat.uSampleRate = 44100;
+	io_rFormat.uSampleRate = m_uAudioInput < 4 ? 48000 : 44100;
 	m_uSampleRate = io_rFormat.uSampleRate;
 	
 	// Reset the position to 0
@@ -93,9 +96,6 @@ AKRESULT CCCPFXSrcAudioStream::Init(	AK::IAkPluginMemAlloc *			in_pAllocator,   
 	// Gain ramp initialization
 	AkReal32 fGainIncrement = 1.f/(RAMPMAXTIME*m_uSampleRate);
 	m_GainRamp.RampSetup( fGainIncrement, m_pSharedParams->GetGain() );
-
-	// Point to the correct input stream
-	m_uAudioInput = m_pSharedParams->GetInput();
 
 	g_InputStreams[m_uAudioInput].m_uDataSize = 0;
 
