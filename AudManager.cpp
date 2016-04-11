@@ -509,7 +509,7 @@ void AudManager::ProcessWaitingEvents()
 	{
 		AkInt32 playback_ID = AK::SoundEngine::PostEvent( it->eventID, it->gameObjectID );
 		it->numRetries += 1;
-		if ((playback_ID != AK_INVALID_PLAYING_ID) || it->numRetries > 5)
+		if ((playback_ID != AK_INVALID_PLAYING_ID) || it->numRetries > 7)
 		{
 			it = m_waitingEvents.erase( it );
 		}
