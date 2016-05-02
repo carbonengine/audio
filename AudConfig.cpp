@@ -55,6 +55,12 @@ AudConfig::AudConfig( IRoot *lockobj )
 	AK::SoundEngine::GetDefaultPlatformInitSettings( m_platformInitSettings );
 
 	AK::MusicEngine::GetDefaultInitSettings( m_musicSettings );
+
+	m_initSettings.uMonitorPoolSize = 32 * 1024 * 1024;
+	m_initSettings.uDefaultPoolSize = 24 * 1024 * 1024;
+	m_initSettings.uCommandQueueSize = 512 * 1024;
+	m_platformInitSettings.uLEngineDefaultPoolSize = 24 * 1024 * 1024;
+
 }
 
 AudConfig::~AudConfig()
