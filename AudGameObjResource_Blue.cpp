@@ -20,6 +20,7 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 		MAP_ATTRIBUTE( "eventName", m_playEvent, "Name of event last played or you want played on loading from red file.", Be::READWRITE | Be::PERSIST )
 		MAP_ATTRIBUTE( "playOnLoad", m_playOnLoad, "True: Play on creation/loading from red file.\nFalse: you get the idea!", Be::READWRITE | Be::PERSIST )
 		MAP_ATTRIBUTE( "eventPrefix", m_eventPrefix, "A string that will be prefixed to all events using this emitter", Be::READWRITE )
+		MAP_ATTRIBUTE( "scalingFactor", m_scalingFactor, "The scaling factor of the attenuation used for the sounds played using this emitter", Be::READ )
 
 		MAP_METHOD_AND_WRAP( "SendEvent", SendEvent,
 							 "Description:\n"

@@ -78,6 +78,7 @@ protected:
 	bool				m_playOnLoad;
 	PAudParameterVector m_parameters;
 	std::wstring		m_eventPrefix;
+	float				m_scalingFactor;
 };
 
 TYPEDEF_BLUECLASS( AudGameObjResource );

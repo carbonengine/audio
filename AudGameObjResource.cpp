@@ -25,6 +25,7 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 														 , m_playEvent(L"")
 														 , m_playOnLoad( false )
 														 , m_eventPrefix(L"")
+														 , m_scalingFactor( 1.0 )
 {
 	m_ID = GenerateEntityID();
 	m_parameters.SetNotify( this );
@@ -87,6 +88,7 @@ int AudGameObjResource::SetAttenuationScalingFactor( float value )
 {
 	if( g_audioInitialized )
 	{
+		m_scalingFactor = value;
 		return AK::SoundEngine::SetAttenuationScalingFactor( m_ID, value );
 	}
 	return AK_InvalidParameter;
