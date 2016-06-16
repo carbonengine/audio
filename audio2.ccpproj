@@ -32,7 +32,7 @@ ClCompile:
   TreatWarningAsError: true
   BufferSecurityCheck: false
   AdditionalIncludeDirectories:
-  - $(CcpSdkPath)\wwise\v2014.1.2-build5195\include
+  - $(CcpSdkPath)\wwise\v2016.1.0-build5775\include
 
 # Linker settings for all configurations
 Link:
@@ -40,7 +40,6 @@ Link:
   ProgramDatabaseFile: $(TargetDir)$(TargetName).pdb
   
   AdditionalLibraryDirectories:
-  - MP3\soundengineplugin\lib
   - CCPAudioStream\AudioEngineFX\lib
   - $(CcpSdkPath)\directx\february2010\lib\x86
 
@@ -90,11 +89,10 @@ Configurations:
       DebugInformationFormat: EditAndContinue
     Link:
       AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Debug\lib
+      - $(CcpSdkPath)\wwise\v2016.1.0-build5775\$(Platform)_vc100\Debug\lib
 
       AdditionalDependencies:
       - CCPAudioStreamSource_d.lib
-      - mp3_soundengineplugin_d.lib
       - CommunicationCentral.lib
       - wsock32.lib
   
@@ -119,10 +117,9 @@ Configurations:
     Link:
       LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
       AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Release\lib
+      - $(CcpSdkPath)\wwise\v2016.1.0-build5775\$(Platform)_vc100\Release\lib
       AdditionalDependencies:
       - CCPAudioStreamSource.lib
-      - mp3_soundengineplugin.lib
 
   Dev|Win32,x64:
     Imports:
@@ -144,10 +141,9 @@ Configurations:
     Link:
       LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
       AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Profile\lib
+      - $(CcpSdkPath)\wwise\v2016.1.0-build5775\$(Platform)_vc100\Profile\lib
       AdditionalDependencies:
       - CCPAudioStreamSource.lib
-      - mp3_soundengineplugin.lib
       - CommunicationCentral.lib
       - wsock32.lib
 
@@ -172,10 +168,9 @@ Configurations:
     Link:
       LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
       AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Release\lib
+      - $(CcpSdkPath)\wwise\v2016.1.0-build5775\$(Platform)_vc100\Release\lib
       AdditionalDependencies:
       - CCPAudioStreamSource.lib
-      - mp3_soundengineplugin.lib
 
   Release_27|Win32,x64:
     Imports:
@@ -198,7 +193,6 @@ Configurations:
     Link:
       LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
       AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2014.1.2-build5195\$(Platform)_vc100\Release\lib
+      - $(CcpSdkPath)\wwise\v2016.1.0-build5775\$(Platform)_vc100\Release\lib
       AdditionalDependencies:
       - CCPAudioStreamSource.lib
-      - mp3_soundengineplugin.lib

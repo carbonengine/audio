@@ -1,0 +1,1 @@
+AK_STATIC_LINK_PLUGIN(CCPAudioStreamSource)

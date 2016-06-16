@@ -24,20 +24,16 @@ void AudEmitterMulti::UpdatePlacement( const Vector3& front, const Vector3& top,
 {
 	if( g_audioInitialized )
 	{
-		AkSoundPosition wwisePos;
-
-		//RH 2 LH conversion
-		wwisePos.Position = pos;
-		wwisePos.Position.Z *= -1.f;
-		wwisePos.Orientation = front;
-		wwisePos.Orientation.Z *= -1.f;
+		AkSoundPosition posLH, posRH;
+		posRH.Set(pos, front, top);
+		RH2LH::convertEmitter( &posLH, &posRH );
 
 		AkListenerPosition listener;
 		unsigned int default_listener = 0;
 		AK::SoundEngine::Query::GetListenerPosition( default_listener, listener );
-		AkReal32 x = pow( ( listener.Position.X - pos.X ), 2 );
-		AkReal32 y = pow( ( listener.Position.Y - pos.Y ), 2 );
-		AkReal32 z = pow( ( listener.Position.Z - pos.Z ), 2 );
+		AkReal32 x = pow( ( listener.Position().X - pos.X ), 2 );
+		AkReal32 y = pow( ( listener.Position().Y - pos.Y ), 2 );
+		AkReal32 z = pow( ( listener.Position().Z - pos.Z ), 2 );
 		AkReal32 distanceSquared = x+y+z;
 
 		if( m_distancePositionVector.size() > m_maximumLocations )
@@ -53,13 +49,13 @@ void AudEmitterMulti::UpdatePlacement( const Vector3& front, const Vector3& top,
 			if (max->distance > distanceSquared ) 
 			{
 				m_distancePositionVector.erase( max );
-				m_distancePositionVector.push_back( DistancePosition( distanceSquared, wwisePos) );
+				m_distancePositionVector.push_back( DistancePosition( distanceSquared, posLH) );
 			}
 			
 		}
 		else
 		{
-			m_distancePositionVector.push_back( DistancePosition( distanceSquared, wwisePos) );
+			m_distancePositionVector.push_back( DistancePosition( distanceSquared, posLH) );
 		}	
 	}
 }
@@ -80,7 +76,7 @@ void AudEmitterMulti::ProcessPlacementList() {
 	{
 		Vector3 initpos( WISE_INIT_POSITION, WISE_INIT_POSITION, WISE_INIT_POSITION );
 		AkSoundPosition tmp;
-		tmp.Orientation = tmp.Position = initpos;
+		tmp.Set(initpos, initpos, initpos);
 		SetPositionHelper( tmp );
 	}
 }

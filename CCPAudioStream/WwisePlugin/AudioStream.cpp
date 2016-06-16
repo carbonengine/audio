@@ -84,6 +84,7 @@ CAudioStreamApp theApp;
 // CAudioInputApp initialization
 BOOL CAudioStreamApp::InitInstance()
 {
+	AK::Wwise::RegisterWwisePlugin();
 	CWinApp::InitInstance();
 
 	// Init the online help
@@ -163,3 +164,4 @@ bool __stdcall AkGetSoundEngineCallbacks( unsigned short in_usCompanyID, unsigne
 
 /// Dummy assert hook for Wwise plug-ins using AKASSERT (cassert used by default).
 DEFINEDUMMYASSERTHOOK;
+DEFINE_PLUGIN_REGISTER_HOOK;

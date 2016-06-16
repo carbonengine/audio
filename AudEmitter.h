@@ -51,7 +51,7 @@ public:
 	virtual void UpdatePlacement( const Vector3& front, const Vector3& top, const Vector3& pos );
 
 	void Py__init__( const std::string& name );
-	virtual int SetPosition( const Vector3& front, const Vector3& pos );
+	virtual int SetPosition( const Vector3& front, const Vector3& top, const Vector3& pos );
 
 protected:
 	PAudPosition m_position;

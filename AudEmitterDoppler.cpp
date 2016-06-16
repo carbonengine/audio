@@ -26,8 +26,7 @@ void AudEmitterDoppler::UpdatePlacement(const Vector3& front, const Vector3& top
 	{
 		AkSoundPosition tmp;
 		AkSoundPosition posLH;
-		tmp.Orientation = front;
-		tmp.Position = pos;
+		tmp.Set(pos, front, top);
 		RH2LH::convertEmitter( &posLH, &tmp );
 		if( g_audioManager->m_useDoppler )
 		{
@@ -35,9 +34,9 @@ void AudEmitterDoppler::UpdatePlacement(const Vector3& front, const Vector3& top
 			AkUInt32 defaultListener = 0;
 			AK::SoundEngine::Query::GetListenerPosition( defaultListener, listener );
 
-			AkReal32 x = pow( ( listener.Position.X - posLH.Position.X ), 2 );
-			AkReal32 y = pow( ( listener.Position.Y - posLH.Position.Y ), 2 );
-			AkReal32 z = pow( ( listener.Position.Z - posLH.Position.Z ), 2 );
+			AkReal32 x = pow( ( listener.Position().X - posLH.Position().X ), 2 );
+			AkReal32 y = pow( ( listener.Position().Y - posLH.Position().Y ), 2 );
+			AkReal32 z = pow( ( listener.Position().Z - posLH.Position().Z ), 2 );
 			AkReal32 distanceSq = x+y+z;
 
 			AkReal32 deltaDistance = m_lastKnowDistanceSq - distanceSq;

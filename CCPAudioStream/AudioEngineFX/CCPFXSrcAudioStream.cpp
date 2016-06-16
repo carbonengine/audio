@@ -14,7 +14,7 @@
 
 #include "stdio.h"
 #include "CCPMemory.h"
-
+#include "..\include\CCPAudioStreamSourceFactory.h"
 // Holds audio input information
 struct AudioStreamStream
 {
@@ -77,7 +77,8 @@ AKRESULT CCCPFXSrcAudioStream::Init(	AK::IAkPluginMemAlloc *			in_pAllocator,   
 	m_pSourceFXContext = in_pSourceFXContext;
 
 	// Output format set to stereo to support ccp bink video format
-	io_rFormat.channelConfig = AK_SPEAKER_SETUP_STEREO;
+	//io_rFormat.channelConfig = AK_SPEAKER_SETUP_STEREO;
+	io_rFormat.channelConfig = AkChannelConfig(2, AK_SPEAKER_SETUP_STEREO);
 	m_uNumChannels = io_rFormat.GetNumChannels();
 
     // Set parameters access
@@ -130,6 +131,7 @@ AKRESULT CCCPFXSrcAudioStream::GetPluginInfo( AkPluginInfo & out_rPluginInfo )
     out_rPluginInfo.eType = AkPluginTypeSource;
 	out_rPluginInfo.bIsInPlace = true;
 	out_rPluginInfo.bIsAsynchronous = false;
+	out_rPluginInfo.uBuildVersion = AK_WWISESDK_VERSION_COMBINED;
     return AK_Success;
 }
 
@@ -267,3 +269,5 @@ AkUInt32 GetMaxAudioInputs()
 {
 	return INPUT_MAX_INPUTS;
 }
+
+AK::PluginRegistration CCPAudioStreamSourceRegistration(AkPluginTypeSource, 0, 223, CreateAudioStreamSource, CreateAudioStreamSourceParams);

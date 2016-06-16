@@ -22,10 +22,14 @@
     <ProjectName>AudioStream</ProjectName>
     <ProjectGuid>{6F86F90E-C2C5-4369-B720-0152AA9498D0}</ProjectGuid>
     <RootNamespace>AudioInput</RootNamespace>
-    <SccProjectName>SAK</SccProjectName>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccLocalPath>SAK</SccLocalPath>
-    <SccProvider>SAK</SccProvider>
+    <SccProjectName>
+    </SccProjectName>
+    <SccAuxPath>
+    </SccAuxPath>
+    <SccLocalPath>
+    </SccLocalPath>
+    <SccProvider>
+    </SccProvider>
     <Keyword>MFCDLLProj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -100,7 +104,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\..\..\..\..\..\sdk\wwise\v2014.1.2-build5195\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\..\..\..\..\..\sdk\wwise\v2016.1.0-build5775\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <MinimalRebuild>true</MinimalRebuild>
@@ -117,7 +121,7 @@
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x0409</Culture>
-      <AdditionalIncludeDirectories>$(IntDir);..\..\..\..\..\..\..\..\sdk\wwise\v2014.1.2-build5195\include;..\..\..\..\..\..\..\..\sdk\wwise\v2014.1.2-build5195\samples\Common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(IntDir);..\..\..\..\..\..\..\..\sdk\wwise\v2016.1.0-build5775\include;..\..\..\..\..\..\..\..\sdk\wwise\v2016.1.0-build5775\samples\Common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ResourceOutputFileName>$(IntDir)AudioStream.res</ResourceOutputFileName>
     </ResourceCompile>
     <Link>
@@ -193,7 +197,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Full</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\..\..\..\..\..\sdk\wwise\v2014.1.2-build5195\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\..\..\..\..\..\sdk\wwise\v2016.1.0-build5775\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
@@ -208,7 +212,7 @@
     <ResourceCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <Culture>0x0409</Culture>
-      <AdditionalIncludeDirectories>$(IntDir);..\..\..\..\..\..\..\..\sdk\wwise\v2014.1.2-build5195\include;..\..\..\..\..\..\..\..\sdk\wwise\v2014.1.2-build5195\samples\Common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(IntDir);..\..\..\..\..\..\..\..\sdk\wwise\v2016.1.0-build5775\include;..\..\..\..\..\..\..\..\sdk\wwise\v2016.1.0-build5775\samples\Common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ResourceOutputFileName>$(IntDir)AudioStream.res</ResourceOutputFileName>
     </ResourceCompile>
     <Link>
