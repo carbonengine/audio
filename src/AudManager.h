@@ -106,9 +106,6 @@ public:
 	// filled with runtime changeable settings as is.
 	static AudSettings& GetSettings();
 
-	// Exposing wwise constants to python
-	static void AddConstantsToModule( PyObject* module );
-
 	// Exposing loaded sound banks to python
 	std::vector<std::wstring> GetLoadedSoundBanks();
 
@@ -128,7 +125,6 @@ private:
 	bool InitCommunication();
 	bool InitSound();
 	bool InitMusic();
-	bool InitPlugin();
 	void RegisterForTicks();
 
 	void Process(); // Tick handler.

@@ -147,7 +147,7 @@ bool AudGameObjResource::Initialize()
 	CreateWwiseObject();
 	Vector3 initpos( WISE_INIT_POSITION, WISE_INIT_POSITION, WISE_INIT_POSITION );
 	AkSoundPosition tmp;
-	tmp.Orientation = tmp.Position = initpos;
+	tmp.Set(initpos, initpos, initpos);
 	SetPositionHelper( tmp );
 
 	//Start playing on loading from a red file.

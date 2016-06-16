@@ -13,8 +13,7 @@ AudPosition::~AudPosition()
 
 void AudPosition::UpdatePlacement( const Vector3& front, const Vector3& top, const Vector3& pos )
 {
-	m_value.Orientation = front;
-	m_value.Position = pos;
+	m_value.Set(pos, front, top);
 }
 
 bool AudPosition::OnModified( Be::Var* value )

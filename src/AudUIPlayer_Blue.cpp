@@ -25,10 +25,9 @@ const Be::ClassInfo* AudUIPlayer::ExposeToBlue()
 static BluePythonObject* obj = NULL;
 static PyObject* PyGetUIPlayer( PyObject* self, PyObject* args )
 {
-	AudUIPlayer* uip;
 	if( !obj )
 	{
-		uip = new OAudUIPlayer;
+		AudUIPlayer* uip = new OAudUIPlayer;
 		obj = PyOS->WrapBlueObject( uip->GetRawRoot() );
 		uip->GetRawRoot()->Unlock();
 	}

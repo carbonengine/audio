@@ -20,14 +20,12 @@ const Be::ClassInfo* AudEmitter::ExposeToBlue()
 
 		MAP_METHOD_AND_WRAP( "__init__", Py__init__, "Takes in a name of the emitter created as a string")
 		MAP_METHOD_AND_WRAP( "SetPosition", SetPosition,
-							 "Description:\n"	
-							 "\tSet the postion and forward direction of the emitter.\n"
-							 "\tReturns, always returns AK_Success\n"
-							 "Signature:\n"
-							 "\tSetPosition( front, pos ) -> AK_Success"
-							 "Parameters:\n"
-							 "\tfront -- 3-tuple representing the orientation of the object.\n"
-							 "\tpos -- 3-tuple representing the world position ."
+							 "\tUpdates the entities orientation and position of an entity.\n"
+							 "\tTakes 3 arguments but is not using the \"top\" vector as is.\n"
+							 "Arguments:\n"
+							 "\tfront -- Vector3 representing the orientation of the object.\n"
+							 "\ttop -- Vector3 representing the up vector of the object\n"
+							 "\tposition -- Vector3 representing the world position .\n"
 						   )
 	EXPOSURE_CHAINTO( AudGameObjResource )
 }

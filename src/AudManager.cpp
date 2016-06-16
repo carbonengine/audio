@@ -7,14 +7,14 @@
 #include <AK/SoundEngine/Common/AkModule.h>						// Default memory and stream managers
 #include <AK/SoundEngine/Common/AkQueryParameters.h>
 
-#include <AK/Plugin/AkVorbisFactory.h>
+#include <AK/Plugin/AkVorbisDecoderFactory.h>
 #include <AK/Plugin/AkCompressorFXFactory.h>
 #include <AK/Plugin/AkSilenceSourceFactory.h>
 #include <AK/Plugin/AkParametricEQFXFactory.h>
 #include <AK/Plugin/AkRoomVerbFXFactory.h>
 #include <AK/Plugin/AkMatrixReverbFXFactory.h>
 #include "CCPAudioStream/include/CCPAudioStreamSourceFactory.h"
-#include "MP3/include/CCPMP3SourceFactory.h"
+#include "CCPAudioStream/AudioEngineFX/CCPFXSrcAudioStreamSourceFactory.h"
 #include <AK/Plugin/AkMeterFXFactory.h>
 #include <AK/Plugin/AkPeakLimiterFXFactory.h>
 #include <AK/Plugin/AkFlangerFXFactory.h>
@@ -98,11 +98,6 @@ bool AudManager::Init()
 	}
 
 	if( !InitMusic() )
-	{
-		return false;
-	}
-
-	if( !InitPlugin() )
 	{
 		return false;
 	}
@@ -221,85 +216,6 @@ bool AudManager::InitMusic()
 	{
 		return false;
 	}
-
-	return true;
-}
-
-bool AudManager::InitPlugin()
-{
-	// Register ogg/vorbis codec
-	AK::SoundEngine::RegisterCodec( AKCOMPANYID_AUDIOKINETIC, 
-				AKCODECID_VORBIS, 
-				CreateVorbisFilePlugin, 
-				CreateVorbisBankPlugin );
-
-	AK::SoundEngine::RegisterPlugin( AkPluginTypeEffect, 
-				AKCOMPANYID_AUDIOKINETIC, 
-				AKEFFECTID_COMPRESSOR, 
-				CreateCompressorFX, 
-				CreateCompressorFXParams );
-
-	AK::SoundEngine::RegisterPlugin( AkPluginTypeEffect, 
-				AKCOMPANYID_AUDIOKINETIC, 
-				AKEFFECTID_PARAMETRICEQ, 
-				CreateParametricEQFX, 
-				CreateParametricEQFXParams);
-
-	AK::SoundEngine::RegisterPlugin( AkPluginTypeSource, 
-				AKCOMPANYID_AUDIOKINETIC, 
-				AKSOURCEID_SILENCE,
-				CreateSilenceSource,
-				CreateSilenceSourceParams );
-
-	AK::SoundEngine::RegisterPlugin( AkPluginTypeEffect,
-				AKCOMPANYID_AUDIOKINETIC,
-				AKEFFECTID_ROOMVERB,
-				CreateRoomVerbFX,
-				CreateRoomVerbFXParams );
-
-	AK::SoundEngine::RegisterPlugin( AkPluginTypeEffect,
-				AKCOMPANYID_AUDIOKINETIC,
-				AKEFFECTID_MATRIXREVERB,
-				CreateMatrixReverbFX,
-				CreateMatrixReverbFXParams );
-
-	AK::SoundEngine::RegisterPlugin( AkPluginTypeSource, 
-				AKCOMPANYID_AUDIOKINETIC, 
-				CCPSOURCEID_AUDIOSTREAM,
-				CreateAudioStreamSource,
-				CreateAudioStreamSourceParams );
-
-	// Create and register MP3 Plugin
-	AK::SoundEngine::RegisterPlugin( AkPluginTypeSource, 
-				AKCOMPANYID_CCP, 
-				CCPSOURCEID_MP3,
-				CreateCCPMP3Source,
-				CreateCCPMP3SourceParams );
-
-	AK::SoundEngine::RegisterPlugin( AkPluginTypeEffect,
-				AKCOMPANYID_AUDIOKINETIC,
-				AKEFFECTID_METER,
-				CreateMeterFX,
-				CreateMeterFXParams);
-
-	AK::SoundEngine::RegisterPlugin( AkPluginTypeEffect,
-				AKCOMPANYID_AUDIOKINETIC,
-				AKEFFECTID_PEAKLIMITER,
-				CreatePeakLimiterFX,
-				CreatePeakLimiterFXParams);
-
-	AK::SoundEngine::RegisterPlugin( AkPluginTypeEffect,
-				AKCOMPANYID_AUDIOKINETIC,
-				AKEFFECTID_FLANGER,
-				CreateFlangerFX,
-				CreateFlangerFXParams);
-
-	AK::SoundEngine::RegisterPlugin(
-				AkPluginTypeEffect,
-				AKCOMPANYID_AUDIOKINETIC,
-				AKEFFECTID_GUITARDISTORTION,
-				CreateGuitarDistortionFX,
-				CreateGuitarDistortionFXParams);
 
 	return true;
 }

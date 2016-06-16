@@ -72,13 +72,6 @@ void AudManager::RemovePythonReference()
 	Py_XDECREF( tmp );
 }
 
-void AudManager::AddConstantsToModule( PyObject* module )
-{
-	// Collect all wWise constants.
-	PyObject* dict = PyModule_GetDict( module );
-	
-}
-
 // NOTE: This is NOT a memory leak, we explicitly delete them in BlueClientStop in audio2.cpp
 AudManager* g_audioManager = NULL;
 BluePythonObject* g_audioManagerWrapper = NULL;
