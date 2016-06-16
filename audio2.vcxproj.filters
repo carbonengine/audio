@@ -50,9 +50,6 @@
     <ClInclude Include="Audio2.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="AudJukebox.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="AudListener.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -62,13 +59,7 @@
     <ClInclude Include="AudManager.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="AudMp3Info.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="AudParameter.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AudPlaylistItem.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="AudPosition.h">
@@ -176,12 +167,6 @@
     <ClCompile Include="audio2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AudJukebox.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AudJukebox_Blue.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="AudListener.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -200,22 +185,10 @@
     <ClCompile Include="AudManager_Blue.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AudMp3Info.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AudMp3Info_Blue.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="AudParameter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="AudParameter_Blue.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AudPlaylistItem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AudPlaylistItem_Blue.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="AudPosition.cpp">
