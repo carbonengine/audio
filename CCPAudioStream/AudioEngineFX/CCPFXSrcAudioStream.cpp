@@ -20,7 +20,6 @@ struct AudioStreamStream
 {
 	AkReal32 *m_pData;
 	AkUInt32  m_uDataSize;
-	AkUInt32  m_curWritePos;
 	AkUInt32  m_consumedSamples;
 	AudioStreamStream() : m_pData(NULL), m_uDataSize(0), m_consumedSamples(0) {}
 };
@@ -232,6 +231,11 @@ AkUInt32 __stdcall SetAudioStreamData(AkReal32 *const data , AkUInt32 const data
 			return 0;
 		if ( data == NULL && dataSize == 0 )
 			return maxDataSize - g_InputStreams[input].m_uDataSize;
+		if( dataSize == AkUInt32( -1 ) )
+		{
+			g_InputStreams[input].m_uDataSize = 0;
+			return maxDataSize;
+		}
 		if (g_InputStreams[input].m_uDataSize + dataSize <= maxDataSize)
 		{	// TODO: This will be much faster as a circular buffer
 			memmove(g_InputStreams[input].m_pData + g_InputStreams[input].m_uDataSize, data, dataSize*sizeof(AkReal32));
