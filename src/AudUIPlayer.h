@@ -25,6 +25,7 @@
 
 #include "Audio2.h"
 #include "AudGameObjResource.h"
+#include <AK/SoundEngine/Common/AkCallback.h>
 
 BLUE_CLASS( AudUIPlayer ) : public AudGameObjResource
 {
@@ -35,6 +36,13 @@ public:
 	EXPOSE_TO_BLUE();
 
 	virtual unsigned int SendEvent( const std::wstring& name );
+	virtual unsigned int SendEventWithCallback( const std:: wstring& name );
+	virtual void Callback( std::wstring eventName );
+
+protected:
+	BlueScriptCallback	m_callback;
+	std::wstring		m_callbackEventName;
+
 };
 
 TYPEDEF_BLUECLASS( AudUIPlayer );
