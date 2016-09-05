@@ -19,19 +19,34 @@ const Be::ClassInfo* AudUIPlayer::ExposeToBlue()
 							"Returns:\n"
 							"\tunsigned int representing the playing id of that request."
 							)
+
+							MAP_METHOD_AND_WRAP( "SendEventWithCallback", SendEventWithCallback,
+							"Description:\n"
+							"\tSends an event to Wwise and associates it with this entity.\n"
+							"\tWhen event has finished a callback will be made to the m_callback function.\n"
+							"Signature:\n"
+							"\tSendEvent( eventname ) -> unsigned int\n"
+							"Arguments:\n"
+							"\teventname -- Name of the event to be sent. UNICODE!"
+							"Returns:\n"
+							"\tunsigned int representing the playing id of that request."
+							)
+#if BLUE_WITH_PYTHON
+							MAP_ATTRIBUTE( "eventSenderCallback", m_callback, "", Be::READWRITE )
+#endif
 	EXPOSURE_END()
 }
 
-static BluePythonObject* obj = NULL;
+static BluePythonObject* s_audUIPlayer = NULL;
 static PyObject* PyGetUIPlayer( PyObject* self, PyObject* args )
 {
-	if( !obj )
+	if( !s_audUIPlayer )
 	{
 		AudUIPlayer* uip = new OAudUIPlayer;
-		obj = PyOS->WrapBlueObject( uip->GetRawRoot() );
+		s_audUIPlayer = PyOS->WrapBlueObject( uip->GetRawRoot() );
 		uip->GetRawRoot()->Unlock();
 	}
-	return obj;
+	return s_audUIPlayer;
 }
 MAP_FUNCTION( "GetUIPlayer", PyGetUIPlayer,
 			 "Description:\n"
