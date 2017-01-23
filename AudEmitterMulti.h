@@ -51,6 +51,7 @@ struct DistancePosition {
 	AkReal32 distance;
 	AkSoundPosition wwisePos;
 	DistancePosition( AkReal32 dist, AkSoundPosition pos ) : distance( dist ), wwisePos( pos ) {}
+	DistancePosition() : distance( 0.f ) {}
 };
 typedef std::vector<DistancePosition> DistancePositionVector;
 typedef std::vector<AkSoundPosition> PositionVector;
@@ -73,6 +74,7 @@ public:
 	unsigned int m_maximumLocations;
 
 private:
+	CcpAtomic<uint32_t> m_currentIndex;
 	DistancePositionVector m_distancePositionVector;
 	PositionVector m_positionVector;
 };
