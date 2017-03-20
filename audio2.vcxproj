@@ -269,7 +269,7 @@
       <GenerateDebugInformation>True</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2016.1.1-build5823\$(Platform)_vc100\Debug\lib;..\..\..\carbon\autobuild\stackless\$(Platform);$(CcpSdkPath)\telemetry\2.1A3\lib;../../../carbon/autobuild/blue/exefile/$(Platform)/$(PlatformToolset)/;..\..\..\carbon\autobuild\stackless\$(Platform);CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
-      <AdditionalDependencies>CCPAudioStreamSource_d.lib;CommunicationCentral.lib;wsock32.lib;blue_d.lib;python27_d.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>CCPAudioStreamSource_d.lib;CommunicationCentral.lib;wsock32.lib;blue_d.lib;python27_d.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;AkHarmonizerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>TARGET_NAME=$(TargetName);TARGET_FILENAME=$(TargetFileName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -302,7 +302,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2016.1.1-build5823\$(Platform)_vc100\Release\lib;$(CcpSdkPath)\telemetry\2.1A3\lib;../../../carbon/autobuild/blue/python_27/$(Platform)/$(PlatformToolset)/;$(CcpSdkPath)\Python\27\libs;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
-      <AdditionalDependencies>CCPAudioStreamSource.lib;blue.lib;python27.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>CCPAudioStreamSource.lib;blue.lib;python27.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;AkHarmonizerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>TARGET_NAME=$(TargetName);TARGET_FILENAME=$(TargetFileName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -335,7 +335,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2016.1.1-build5823\$(Platform)_vc100\Release\lib;..\..\..\carbon\autobuild\stackless\$(Platform);$(CcpSdkPath)\telemetry\2.1A3\lib;../../../carbon/autobuild/blue/exefile/$(Platform)/$(PlatformToolset)/;..\..\..\carbon\autobuild\stackless\$(Platform);CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
-      <AdditionalDependencies>CCPAudioStreamSource.lib;blue.lib;python27.lib;telemetry64.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>CCPAudioStreamSource.lib;blue.lib;python27.lib;telemetry64.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;AkHarmonizerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>TARGET_NAME=$(TargetName);TARGET_FILENAME=$(TargetFileName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -368,7 +368,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2016.1.1-build5823\$(Platform)_vc100\Release\lib;$(CcpSdkPath)\telemetry\2.1A3\lib;../../../carbon/autobuild/blue/python_27/$(Platform)/$(PlatformToolset)/;$(CcpSdkPath)\Python\27_64\libs;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
-      <AdditionalDependencies>CCPAudioStreamSource.lib;blue.lib;python27.lib;telemetry64.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>CCPAudioStreamSource.lib;blue.lib;python27.lib;telemetry64.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;AkHarmonizerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>TARGET_NAME=$(TargetName);TARGET_FILENAME=$(TargetFileName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -401,7 +401,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2016.1.1-build5823\$(Platform)_vc100\Profile\lib;..\..\..\carbon\autobuild\stackless\$(Platform);$(CcpSdkPath)\telemetry\2.1A3\lib;../../../carbon/autobuild/blue/exefile/$(Platform)/$(PlatformToolset)/;..\..\..\carbon\autobuild\stackless\$(Platform);CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
-      <AdditionalDependencies>CCPAudioStreamSource.lib;CommunicationCentral.lib;wsock32.lib;blue.lib;python27.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>CCPAudioStreamSource.lib;CommunicationCentral.lib;wsock32.lib;blue.lib;python27.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;AkHarmonizerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>TARGET_NAME=$(TargetName);TARGET_FILENAME=$(TargetFileName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -434,7 +434,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2016.1.1-build5823\$(Platform)_vc100\Profile\lib;..\..\..\carbon\autobuild\stackless\$(Platform);$(CcpSdkPath)\telemetry\2.1A3\lib;../../../carbon/autobuild/blue/exefile/$(Platform)/$(PlatformToolset)/;..\..\..\carbon\autobuild\stackless\$(Platform);CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
-      <AdditionalDependencies>CCPAudioStreamSource.lib;CommunicationCentral.lib;wsock32.lib;blue.lib;python27.lib;telemetry64.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>CCPAudioStreamSource.lib;CommunicationCentral.lib;wsock32.lib;blue.lib;python27.lib;telemetry64.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;AkHarmonizerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>TARGET_NAME=$(TargetName);TARGET_FILENAME=$(TargetFileName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -467,7 +467,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2016.1.1-build5823\$(Platform)_vc100\Release\lib;$(CcpSdkPath)\telemetry\2.1A3\lib;../../blue/python_26/$(Platform)/$(PlatformToolset);../../../carbon/autobuild/blue/python_26/$(Platform)/$(PlatformToolset);$(CcpSdkPath)\Python\26\libs;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
-      <AdditionalDependencies>CCPAudioStreamSource.lib;blue.lib;python26.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>CCPAudioStreamSource.lib;blue.lib;python26.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;AkHarmonizerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>TARGET_NAME=$(TargetName);TARGET_FILENAME=$(TargetFileName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -498,7 +498,7 @@
       <GenerateDebugInformation>True</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2016.1.1-build5823\$(Platform)_vc100\Debug\lib;..\..\..\carbon\autobuild\stackless\$(Platform);$(CcpSdkPath)\telemetry\2.1A3\lib;../../../carbon/autobuild/blue/exefile/$(Platform)/$(PlatformToolset)/;..\..\..\carbon\autobuild\stackless\$(Platform);CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
-      <AdditionalDependencies>CCPAudioStreamSource_d.lib;CommunicationCentral.lib;wsock32.lib;blue_d.lib;python27_d.lib;telemetry64.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>CCPAudioStreamSource_d.lib;CommunicationCentral.lib;wsock32.lib;blue_d.lib;python27_d.lib;telemetry64.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;AkHarmonizerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>TARGET_NAME=$(TargetName);TARGET_FILENAME=$(TargetFileName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -531,7 +531,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2016.1.1-build5823\$(Platform)_vc100\Release\lib;$(CcpSdkPath)\telemetry\2.1A3\lib;../../blue/python_26/$(Platform)/$(PlatformToolset);../../../carbon/autobuild/blue/python_26/$(Platform)/$(PlatformToolset);$(CcpSdkPath)\Python\26_64\libs;CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
-      <AdditionalDependencies>CCPAudioStreamSource.lib;blue.lib;python26.lib;telemetry64.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>CCPAudioStreamSource.lib;blue.lib;python26.lib;telemetry64.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;AkHarmonizerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>TARGET_NAME=$(TargetName);TARGET_FILENAME=$(TargetFileName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -564,7 +564,7 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>$(CcpSdkPath)\wwise\v2016.1.1-build5823\$(Platform)_vc100\Release\lib;..\..\..\carbon\autobuild\stackless\$(Platform);$(CcpSdkPath)\telemetry\2.1A3\lib;../../../carbon/autobuild/blue/exefile/$(Platform)/$(PlatformToolset)/;..\..\..\carbon\autobuild\stackless\$(Platform);CCPAudioStream\AudioEngineFX\lib;$(CcpSdkPath)\directx\february2010\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
-      <AdditionalDependencies>CCPAudioStreamSource.lib;blue.lib;python27.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>CCPAudioStreamSource.lib;blue.lib;python27.lib;telemetry32.link.lib;AkSoundEngine.lib;AkMusicEngine.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkPeakLimiterFX.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;AkCompressorFX.lib;AkParametricEQFX.lib;AkSilenceSource.lib;AkRoomVerbFX.lib;AkMatrixReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;AkHarmonizerFX.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>TARGET_NAME=$(TargetName);TARGET_FILENAME=$(TargetFileName);%(PreprocessorDefinitions)</PreprocessorDefinitions>

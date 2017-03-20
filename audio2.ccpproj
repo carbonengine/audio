@@ -58,6 +58,7 @@ Link:
   - AkMatrixReverbFX.lib
   - AkFlangerFX.lib
   - AkGuitarDistortionFX.lib
+  - AkHarmonizerFX.lib
   - dxguid.lib
   - msacm32.lib
 
