@@ -32,7 +32,7 @@ ClCompile:
   TreatWarningAsError: true
   BufferSecurityCheck: false
   AdditionalIncludeDirectories:
-  - $(CcpSdkPath)\wwise\v2016.1.1-build5823\include
+  - $(CcpSdkPath)\wwise\v2016.2.3-build6077\include
 
 # Linker settings for all configurations
 Link:
@@ -90,7 +90,7 @@ Configurations:
       DebugInformationFormat: EditAndContinue
     Link:
       AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2016.1.1-build5823\$(Platform)_vc100\Debug\lib
+      - $(CcpSdkPath)\wwise\v2016.2.3-build6077\$(Platform)_vc100\Debug\lib
 
       AdditionalDependencies:
       - CCPAudioStreamSource_d.lib
@@ -118,7 +118,7 @@ Configurations:
     Link:
       LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
       AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2016.1.1-build5823\$(Platform)_vc100\Release\lib
+      - $(CcpSdkPath)\wwise\v2016.2.3-build6077\$(Platform)_vc100\Release\lib
       AdditionalDependencies:
       - CCPAudioStreamSource.lib
 
@@ -142,7 +142,7 @@ Configurations:
     Link:
       LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
       AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2016.1.1-build5823\$(Platform)_vc100\Profile\lib
+      - $(CcpSdkPath)\wwise\v2016.2.3-build6077\$(Platform)_vc100\Profile\lib
       AdditionalDependencies:
       - CCPAudioStreamSource.lib
       - CommunicationCentral.lib
@@ -169,7 +169,7 @@ Configurations:
     Link:
       LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
       AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2016.1.1-build5823\$(Platform)_vc100\Release\lib
+      - $(CcpSdkPath)\wwise\v2016.2.3-build6077\$(Platform)_vc100\Release\lib
       AdditionalDependencies:
       - CCPAudioStreamSource.lib
 
@@ -194,6 +194,6 @@ Configurations:
     Link:
       LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
       AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2016.1.1-build5823\$(Platform)_vc100\Release\lib
+      - $(CcpSdkPath)\wwise\v2016.2.3-build6077\$(Platform)_vc100\Release\lib
       AdditionalDependencies:
       - CCPAudioStreamSource.lib
