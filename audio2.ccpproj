@@ -75,7 +75,7 @@ ResourceCompile:
 Configurations:
   Debug|Win32,x64:
     Imports:
-    - ../blue/uses_blue.yaml
+    - ../blue/Include/uses_blue.yaml
     General:
       TargetName: _$(ProjectName)_d
       LinkIncremental: true
@@ -99,7 +99,7 @@ Configurations:
   
   Release|Win32,x64:
     Imports:
-    - ../blue/uses_blue.yaml
+    - ../blue/Include/uses_blue.yaml
     General:
       TargetName: _$(ProjectName)
       LinkIncremental: false
@@ -124,7 +124,7 @@ Configurations:
 
   Dev|Win32,x64:
     Imports:
-    - ../blue/uses_blue.yaml
+    - ../blue/Include/uses_blue.yaml
     General:
       TargetName: _$(ProjectName)_dev
       LinkIncremental: false
@@ -150,7 +150,7 @@ Configurations:
 
   Release_26|Win32,x64:
     Imports:
-    - ../blue/uses_blue_26.yaml
+    - ../blue/Include/uses_blue_26.yaml
     General:
       TargetName: _$(ProjectName)
       LinkIncremental: false
@@ -175,7 +175,7 @@ Configurations:
 
   Release_27|Win32,x64:
     Imports:
-    - ../blue/uses_blue_27.yaml
+    - ../blue/Include/uses_blue_27.yaml
     General:
       TargetName: _$(ProjectName)
       LinkIncremental: false
