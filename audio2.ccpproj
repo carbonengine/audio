@@ -44,7 +44,7 @@ Link:
   - $(CcpSdkPath)\directx\february2010\lib\x86
 
   AdditionalDependencies:
-#  - AkSoundEngine.lib
+  - AkSoundEngine.lib
   - AkMusicEngine.lib
   - AkMemoryMgr.lib
   - AkMeterFX.lib
