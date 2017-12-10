@@ -25,6 +25,7 @@ ClCompile:
   - AKSOUNDENGINE_STATIC
   - AKSOUNDENGINEDLL_EXPORTS
   - BLUE_OVERRIDE_VECTOR_TYPES=1
+  - NICK_TEST_ONE
   PrecompiledHeader: Use
   PrecompiledHeaderFile: stdafx.h
   PrecompiledHeaderOutputFile: $(IntDir)$(ProjectName).pch
