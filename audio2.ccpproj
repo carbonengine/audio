@@ -40,8 +40,8 @@ Link:
   ProgramDatabaseFile: $(TargetDir)$(TargetName).pdb
   
   AdditionalLibraryDirectories:
-  - CCPAudioStream\AudioEngineFX\lib
-  - $(CcpSdkPath)\directx\february2010\lib\x86
+  - CCPAudioStream\AudioEngineFX\lib\$(PlatformName)
+  - $(CcpSdkPath)\directx\february2010\lib\$(PlatformName)
 
   AdditionalDependencies:
   - AkSoundEngine.lib
