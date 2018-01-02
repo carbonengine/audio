@@ -24,6 +24,9 @@
 #endif
 
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
+
+#define NOMINMAX //don't want that evil microsoft macro
+
 // Windows Header Files:
 #include <windows.h>
 
