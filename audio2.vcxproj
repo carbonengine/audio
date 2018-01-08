@@ -75,7 +75,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <PlatformToolset>v100</PlatformToolset>
   </PropertyGroup>
-  <Import Project="$(VCTargetsPath)/Microsoft.Cpp.Default.props" />
+  <Import Project="$(VCTargetsPath)/Microsoft.Cpp.Default.props"/>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <UseOfMfc>False</UseOfMfc>
     <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/</IntDir>
@@ -126,7 +126,7 @@
     <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/</IntDir>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
   </PropertyGroup>
-  <Import Project="$(VCTargetsPath)/Microsoft.Cpp.props" />
+  <Import Project="$(VCTargetsPath)/Microsoft.Cpp.props"/>
   <PropertyGroup Label="UserMacros">
     <CcpSdkPath>../../../../../../sdk</CcpSdkPath>
     <CcpSharedToolsPath>../../../../../../shared_tools</CcpSharedToolsPath>
@@ -176,36 +176,36 @@
       <Value>$(CcpConfigType)</Value>
     </BuildMacro>
   </ItemGroup>
-  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="ExtensionSettings"/>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
-    <Import Project="../manifests/manifests.props" />
+    <Import Project="../manifests/manifests.props"/>
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release_27|Win32'" Label="PropertySheets">
-    <Import Project="../manifests/manifests.props" />
+    <Import Project="../manifests/manifests.props"/>
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
-    <Import Project="../manifests/manifests.props" />
+    <Import Project="../manifests/manifests.props"/>
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release_27|x64'" Label="PropertySheets">
-    <Import Project="../manifests/manifests.props" />
+    <Import Project="../manifests/manifests.props"/>
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Dev|Win32'" Label="PropertySheets">
-    <Import Project="../manifests/manifests.props" />
+    <Import Project="../manifests/manifests.props"/>
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Dev|x64'" Label="PropertySheets">
-    <Import Project="../manifests/manifests.props" />
+    <Import Project="../manifests/manifests.props"/>
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release_26|Win32'" Label="PropertySheets">
-    <Import Project="../manifests/manifests.props" />
+    <Import Project="../manifests/manifests.props"/>
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
-    <Import Project="../manifests/manifests.props" />
+    <Import Project="../manifests/manifests.props"/>
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release_26|x64'" Label="PropertySheets">
-    <Import Project="../manifests/manifests.props" />
+    <Import Project="../manifests/manifests.props"/>
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
-    <Import Project="../manifests/manifests.props" />
+    <Import Project="../manifests/manifests.props"/>
   </ImportGroup>
   <PropertyGroup>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.dll</TargetExt>
@@ -275,10 +275,10 @@
       <PreprocessorDefinitions>TARGET_FILENAME=$(TargetFileName);TARGET_NAME=$(TargetName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
-    <Manifest />
-    <PreBuildEvent />
-    <PreLinkEvent />
-    <PostBuildEvent />
+    <Manifest/>
+    <PreBuildEvent/>
+    <PreLinkEvent/>
+    <PostBuildEvent/>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_27|Win32'">
     <ClCompile>
@@ -308,10 +308,10 @@
       <PreprocessorDefinitions>TARGET_FILENAME=$(TargetFileName);TARGET_NAME=$(TargetName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
-    <Manifest />
-    <PreBuildEvent />
-    <PreLinkEvent />
-    <PostBuildEvent />
+    <Manifest/>
+    <PreBuildEvent/>
+    <PreLinkEvent/>
+    <PostBuildEvent/>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -341,10 +341,10 @@
       <PreprocessorDefinitions>TARGET_FILENAME=$(TargetFileName);TARGET_NAME=$(TargetName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
-    <Manifest />
-    <PreBuildEvent />
-    <PreLinkEvent />
-    <PostBuildEvent />
+    <Manifest/>
+    <PreBuildEvent/>
+    <PreLinkEvent/>
+    <PostBuildEvent/>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_27|x64'">
     <ClCompile>
@@ -374,10 +374,10 @@
       <PreprocessorDefinitions>TARGET_FILENAME=$(TargetFileName);TARGET_NAME=$(TargetName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
-    <Manifest />
-    <PreBuildEvent />
-    <PreLinkEvent />
-    <PostBuildEvent />
+    <Manifest/>
+    <PreBuildEvent/>
+    <PreLinkEvent/>
+    <PostBuildEvent/>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Dev|Win32'">
     <ClCompile>
@@ -407,10 +407,10 @@
       <PreprocessorDefinitions>TARGET_FILENAME=$(TargetFileName);TARGET_NAME=$(TargetName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
-    <Manifest />
-    <PreBuildEvent />
-    <PreLinkEvent />
-    <PostBuildEvent />
+    <Manifest/>
+    <PreBuildEvent/>
+    <PreLinkEvent/>
+    <PostBuildEvent/>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Dev|x64'">
     <ClCompile>
@@ -440,10 +440,10 @@
       <PreprocessorDefinitions>TARGET_FILENAME=$(TargetFileName);TARGET_NAME=$(TargetName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
-    <Manifest />
-    <PreBuildEvent />
-    <PreLinkEvent />
-    <PostBuildEvent />
+    <Manifest/>
+    <PreBuildEvent/>
+    <PreLinkEvent/>
+    <PostBuildEvent/>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_26|Win32'">
     <ClCompile>
@@ -473,10 +473,10 @@
       <PreprocessorDefinitions>TARGET_FILENAME=$(TargetFileName);TARGET_NAME=$(TargetName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
-    <Manifest />
-    <PreBuildEvent />
-    <PreLinkEvent />
-    <PostBuildEvent />
+    <Manifest/>
+    <PreBuildEvent/>
+    <PreLinkEvent/>
+    <PostBuildEvent/>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -504,10 +504,10 @@
       <PreprocessorDefinitions>TARGET_FILENAME=$(TargetFileName);TARGET_NAME=$(TargetName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
-    <Manifest />
-    <PreBuildEvent />
-    <PreLinkEvent />
-    <PostBuildEvent />
+    <Manifest/>
+    <PreBuildEvent/>
+    <PreLinkEvent/>
+    <PostBuildEvent/>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_26|x64'">
     <ClCompile>
@@ -537,10 +537,10 @@
       <PreprocessorDefinitions>TARGET_FILENAME=$(TargetFileName);TARGET_NAME=$(TargetName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
-    <Manifest />
-    <PreBuildEvent />
-    <PreLinkEvent />
-    <PostBuildEvent />
+    <Manifest/>
+    <PreBuildEvent/>
+    <PreLinkEvent/>
+    <PostBuildEvent/>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -570,93 +570,93 @@
       <PreprocessorDefinitions>TARGET_FILENAME=$(TargetFileName);TARGET_NAME=$(TargetName);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
-    <Manifest />
-    <PreBuildEvent />
-    <PreLinkEvent />
-    <PostBuildEvent />
+    <Manifest/>
+    <PreBuildEvent/>
+    <PreLinkEvent/>
+    <PostBuildEvent/>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AkDefaultIOHookBlocking.h" />
-    <ClInclude Include="AkFileHelpers.h" />
-    <ClInclude Include="AkFileLocationBase.h" />
-    <ClInclude Include="AkSoundEngineExports.h" />
-    <ClInclude Include="AudAlloc.h" />
-    <ClInclude Include="AudConfig.h" />
-    <ClInclude Include="AudConstants.h" />
-    <ClInclude Include="AudEmitter.h" />
-    <ClInclude Include="AudEmitterDoppler.h" />
-    <ClInclude Include="AudEmitterMulti.h" />
-    <ClInclude Include="AudEmitterPersisted.h" />
-    <ClInclude Include="AudEventCurve.h" />
-    <ClInclude Include="AudEventKey.h" />
-    <ClInclude Include="AudGameObjResource.h" />
-    <ClInclude Include="Audio2.h" />
-    <ClInclude Include="AudListener.h" />
-    <ClInclude Include="AudLowLevelIO.h" />
-    <ClInclude Include="AudManager.h" />
-    <ClInclude Include="AudParameter.h" />
-    <ClInclude Include="AudPosition.h" />
-    <ClInclude Include="AudResource.h" />
-    <ClInclude Include="AudSettings.h" />
-    <ClInclude Include="AudSettingsRegistrar.h" />
-    <ClInclude Include="AudUIPlayer.h" />
-    <ClInclude Include="autoversion.h" />
-    <ClInclude Include="IAudLowLevelIO.h" />
-    <ClInclude Include="LogBridge.h" />
-    <ClInclude Include="Mutex.h" />
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="Semaphore.h" />
-    <ClInclude Include="stdafx.h" />
-    <ClInclude Include="Utilities.h" />
-    <ClInclude Include="Vector3.h" />
-    <ClInclude Include="version.h" />
+    <ClInclude Include="AkDefaultIOHookBlocking.h"/>
+    <ClInclude Include="AkFileHelpers.h"/>
+    <ClInclude Include="AkFileLocationBase.h"/>
+    <ClInclude Include="AkSoundEngineExports.h"/>
+    <ClInclude Include="AudAlloc.h"/>
+    <ClInclude Include="AudConfig.h"/>
+    <ClInclude Include="AudConstants.h"/>
+    <ClInclude Include="AudEmitter.h"/>
+    <ClInclude Include="AudEmitterDoppler.h"/>
+    <ClInclude Include="AudEmitterMulti.h"/>
+    <ClInclude Include="AudEmitterPersisted.h"/>
+    <ClInclude Include="AudEventCurve.h"/>
+    <ClInclude Include="AudEventKey.h"/>
+    <ClInclude Include="AudGameObjResource.h"/>
+    <ClInclude Include="Audio2.h"/>
+    <ClInclude Include="AudListener.h"/>
+    <ClInclude Include="AudLowLevelIO.h"/>
+    <ClInclude Include="AudManager.h"/>
+    <ClInclude Include="AudParameter.h"/>
+    <ClInclude Include="AudPosition.h"/>
+    <ClInclude Include="AudResource.h"/>
+    <ClInclude Include="AudSettings.h"/>
+    <ClInclude Include="AudSettingsRegistrar.h"/>
+    <ClInclude Include="AudUIPlayer.h"/>
+    <ClInclude Include="autoversion.h"/>
+    <ClInclude Include="IAudLowLevelIO.h"/>
+    <ClInclude Include="LogBridge.h"/>
+    <ClInclude Include="Mutex.h"/>
+    <ClInclude Include="resource.h"/>
+    <ClInclude Include="Semaphore.h"/>
+    <ClInclude Include="stdafx.h"/>
+    <ClInclude Include="Utilities.h"/>
+    <ClInclude Include="Vector3.h"/>
+    <ClInclude Include="version.h"/>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AkDefaultIOHookBlocking.cpp" />
-    <ClCompile Include="AkFileLocationBase.cpp" />
-    <ClCompile Include="AudConfig.cpp" />
-    <ClCompile Include="AudConfig_Blue.cpp" />
-    <ClCompile Include="AudConstants.cpp" />
-    <ClCompile Include="AudEmitter.cpp" />
-    <ClCompile Include="AudEmitterDoppler.cpp" />
-    <ClCompile Include="AudEmitterDoppler_Blue.cpp" />
-    <ClCompile Include="AudEmitterMulti.cpp" />
-    <ClCompile Include="AudEmitterMulti_Blue.cpp" />
-    <ClCompile Include="AudEmitterPersisted.cpp" />
-    <ClCompile Include="AudEmitterPersisted_Blue.cpp" />
-    <ClCompile Include="AudEmitter_Blue.cpp" />
-    <ClCompile Include="AudEventCurve.cpp" />
-    <ClCompile Include="AudEventCurve_Blue.cpp" />
-    <ClCompile Include="AudEventKey.cpp" />
-    <ClCompile Include="AudEventKey_Blue.cpp" />
-    <ClCompile Include="AudGameObjResource.cpp" />
-    <ClCompile Include="AudGameObjResource_Blue.cpp" />
-    <ClCompile Include="audio2.cpp" />
-    <ClCompile Include="AudListener.cpp" />
-    <ClCompile Include="AudListener_Blue.cpp" />
-    <ClCompile Include="AudLowLevelIO.cpp" />
-    <ClCompile Include="AudLowLevelIO_Blue.cpp" />
-    <ClCompile Include="AudManager.cpp" />
-    <ClCompile Include="AudManager_Blue.cpp" />
-    <ClCompile Include="AudParameter.cpp" />
-    <ClCompile Include="AudParameter_Blue.cpp" />
-    <ClCompile Include="AudPosition.cpp" />
-    <ClCompile Include="AudPosition_Blue.cpp" />
-    <ClCompile Include="AudResource.cpp" />
-    <ClCompile Include="AudSettings_Blue.cpp" />
-    <ClCompile Include="AudUIPlayer.cpp" />
-    <ClCompile Include="AudUIPlayer_Blue.cpp" />
-    <ClCompile Include="IAudLowLevelIO_Blue.cpp" />
-    <ClCompile Include="LogBridge.cpp" />
-    <ClCompile Include="Mutex.cpp" />
-    <ClCompile Include="Semaphore.cpp" />
+    <ClCompile Include="AkDefaultIOHookBlocking.cpp"/>
+    <ClCompile Include="AkFileLocationBase.cpp"/>
+    <ClCompile Include="AudConfig.cpp"/>
+    <ClCompile Include="AudConfig_Blue.cpp"/>
+    <ClCompile Include="AudConstants.cpp"/>
+    <ClCompile Include="AudEmitter.cpp"/>
+    <ClCompile Include="AudEmitterDoppler.cpp"/>
+    <ClCompile Include="AudEmitterDoppler_Blue.cpp"/>
+    <ClCompile Include="AudEmitterMulti.cpp"/>
+    <ClCompile Include="AudEmitterMulti_Blue.cpp"/>
+    <ClCompile Include="AudEmitterPersisted.cpp"/>
+    <ClCompile Include="AudEmitterPersisted_Blue.cpp"/>
+    <ClCompile Include="AudEmitter_Blue.cpp"/>
+    <ClCompile Include="AudEventCurve.cpp"/>
+    <ClCompile Include="AudEventCurve_Blue.cpp"/>
+    <ClCompile Include="AudEventKey.cpp"/>
+    <ClCompile Include="AudEventKey_Blue.cpp"/>
+    <ClCompile Include="AudGameObjResource.cpp"/>
+    <ClCompile Include="AudGameObjResource_Blue.cpp"/>
+    <ClCompile Include="audio2.cpp"/>
+    <ClCompile Include="AudListener.cpp"/>
+    <ClCompile Include="AudListener_Blue.cpp"/>
+    <ClCompile Include="AudLowLevelIO.cpp"/>
+    <ClCompile Include="AudLowLevelIO_Blue.cpp"/>
+    <ClCompile Include="AudManager.cpp"/>
+    <ClCompile Include="AudManager_Blue.cpp"/>
+    <ClCompile Include="AudParameter.cpp"/>
+    <ClCompile Include="AudParameter_Blue.cpp"/>
+    <ClCompile Include="AudPosition.cpp"/>
+    <ClCompile Include="AudPosition_Blue.cpp"/>
+    <ClCompile Include="AudResource.cpp"/>
+    <ClCompile Include="AudSettings_Blue.cpp"/>
+    <ClCompile Include="AudUIPlayer.cpp"/>
+    <ClCompile Include="AudUIPlayer_Blue.cpp"/>
+    <ClCompile Include="IAudLowLevelIO_Blue.cpp"/>
+    <ClCompile Include="LogBridge.cpp"/>
+    <ClCompile Include="Mutex.cpp"/>
+    <ClCompile Include="Semaphore.cpp"/>
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="audio2.rc" />
+    <ResourceCompile Include="audio2.rc"/>
   </ItemGroup>
-  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
+  <ImportGroup Label="ExtensionTargets"/>
 </Project>
