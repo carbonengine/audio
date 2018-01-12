@@ -37,7 +37,7 @@ AudGameObjResource::~AudGameObjResource()
 	{
 		// Silence the game object and put it on death row!
 		AK::SoundEngine::PostEvent( L"fade_out", m_ID );
-		g_audioManager->AddToDestructionVector( m_ID );
+		AK::SoundEngine::UnregisterGameObj(m_ID);
 	}
 }
 
@@ -89,7 +89,7 @@ int AudGameObjResource::SetAttenuationScalingFactor( float value )
 	if( g_audioInitialized )
 	{
 		m_scalingFactor = value;
-		return AK::SoundEngine::SetAttenuationScalingFactor( m_ID, value );
+		return AK::SoundEngine::SetScalingFactor(m_ID, value);
 	}
 	return AK_InvalidParameter;
 }

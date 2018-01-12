@@ -37,14 +37,11 @@ static void WwiseAssertHook(const char* in_pszExpression,const char* in_pszFileN
 	CCP_LOGWARN_CH( s_ch, "Assert expression failed: %s in file %s at line %d", in_pszExpression, in_pszFileName, in_lineNumber);
 }
 
-static GameObjIDVector s_gameObjectsToBeDestroyed;
-
 AudManager::AudManager( IRoot* lockobj ) :
 	m_tickInterval( 10 ),
 	m_waitingEventsMutex( "AudManager", "m_waitingEventsMutex" ),
 	m_multiEmitterMutex( "AudManager", "m_multiEmitterMutex")
 {
-	s_gameObjectsToBeDestroyed.push_back( 0 );
 }
 
 AudManager::~AudManager()
@@ -66,18 +63,6 @@ void AudManager::Process()
 
 		//Update main thread queue
 		g_mainThreadQueue->Update();
-
-		// Executing gameobjects on death row....culling it you might say!
-		// Resist the urge to cache the end pointer here - since we are erasing from the list, end can change and must
-		// therefore be queried on every iteration of the loop! <halldor>
-		for( GameObjIDVector::iterator it = s_gameObjectsToBeDestroyed.begin(); it != s_gameObjectsToBeDestroyed.end(); ++it )
-		{
-			AKRESULT result = AK::SoundEngine::UnregisterGameObj( *it );
-			if( result == AK_Success )
-			{
-				it = s_gameObjectsToBeDestroyed.erase( it );
-			}
-		}
 	}
 }
 
@@ -383,12 +368,6 @@ void AudManager::UnloadBank( const std::wstring& name )
 		CCP_DELETE status;
 		CCP_LOG( "AK::SoundEngine::UnloadBank done for %S", name.c_str() );
 	}
-}
-
-void AudManager::AddToDestructionVector( AkGameObjectID gameObjID )
-{
-	//s_gameObjectsToBeDestroyed.push_back( gameObjID );
-	s_gameObjectsToBeDestroyed.insert( s_gameObjectsToBeDestroyed.end() - 1, gameObjID );
 }
 
 AudSettings& AudManager::GetSettings()
