@@ -31,6 +31,7 @@
 #include "AudEmitterMulti.h"
 
 static CcpLogChannel_t s_ch = CCP_LOG_DEFINE_CHANNEL( "WwiseAssert" );
+static GameObjIDVector s_gameObjectsToBeDestroyed;
 
 static void WwiseAssertHook(const char* in_pszExpression,const char* in_pszFileName,int in_lineNumber)
 {
@@ -40,8 +41,10 @@ static void WwiseAssertHook(const char* in_pszExpression,const char* in_pszFileN
 AudManager::AudManager( IRoot* lockobj ) :
 	m_tickInterval( 10 ),
 	m_waitingEventsMutex( "AudManager", "m_waitingEventsMutex" ),
-	m_multiEmitterMutex( "AudManager", "m_multiEmitterMutex")
+	m_multiEmitterMutex( "AudManager", "m_multiEmitterMutex"),
+	m_useDoppler( false )
 {
+	//s_gameObjectsToBeDestroyed.push_back(0);
 }
 
 AudManager::~AudManager()
@@ -63,6 +66,18 @@ void AudManager::Process()
 
 		//Update main thread queue
 		g_mainThreadQueue->Update();
+
+		// Executing gameobjects on death row....culling it you might say!
+		// Resist the urge to cache the end pointer here - since we are erasing from the list, end can change and must
+		// therefore be queried on every iteration of the loop! <halldor>
+		for (GameObjIDVector::iterator it = s_gameObjectsToBeDestroyed.begin(); it != s_gameObjectsToBeDestroyed.end(); ++it)
+		{
+			AKRESULT result = AK::SoundEngine::UnregisterGameObj(*it);
+			if (result == AK_Success)
+			{
+				it = s_gameObjectsToBeDestroyed.erase(it);
+			}
+		}
 	}
 }
 
@@ -160,7 +175,7 @@ bool AudManager::InitLowLevel()
     // Create default IO device.
 //-----------------------------------------------------------------------------
 	// Device settings
-	AudLowLevelIOPtr tmp = (AudLowLevelIO*)m_initConfig->m_lowLevelIO.p;
+	AudLowLevelIOPtr tmp = reinterpret_cast<AudLowLevelIO*>(m_initConfig->m_lowLevelIO.p);
 	if ( tmp->Init( m_initConfig->m_deviceSettings, m_initConfig->m_asyncFileOpen ) != AK_Success )
     {
         return false;
