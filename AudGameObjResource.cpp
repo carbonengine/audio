@@ -37,7 +37,7 @@ AudGameObjResource::~AudGameObjResource()
 	{
 		// Silence the game object and put it on death row!
 		AK::SoundEngine::PostEvent( L"fade_out", m_ID );
-		AK::SoundEngine::UnregisterGameObj(m_ID);
+		//AK::SoundEngine::UnregisterGameObj(m_ID);
 	}
 }
 
