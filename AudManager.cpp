@@ -44,7 +44,6 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_multiEmitterMutex( "AudManager", "m_multiEmitterMutex"),
 	m_useDoppler( false )
 {
-	//s_gameObjectsToBeDestroyed.push_back(0);
 }
 
 AudManager::~AudManager()
@@ -70,12 +69,16 @@ void AudManager::Process()
 		// Executing gameobjects on death row....culling it you might say!
 		// Resist the urge to cache the end pointer here - since we are erasing from the list, end can change and must
 		// therefore be queried on every iteration of the loop! <halldor>
-		for (GameObjIDVector::iterator it = s_gameObjectsToBeDestroyed.begin(); it != s_gameObjectsToBeDestroyed.end(); ++it)
+		for (GameObjIDVector::iterator it = s_gameObjectsToBeDestroyed.begin(); it != s_gameObjectsToBeDestroyed.end(); )
 		{
 			AKRESULT result = AK::SoundEngine::UnregisterGameObj(*it);
 			if (result == AK_Success)
 			{
 				it = s_gameObjectsToBeDestroyed.erase(it);
+			}
+			else
+			{
+				++it;
 			}
 		}
 	}
@@ -318,7 +321,7 @@ void AudManager::LoadBank( const std::wstring& name )
 		if( result != end )
 		{
 			return;
-		}
+			}
 
 		m_loadedBanks.push_back( name );
 	}
@@ -331,8 +334,8 @@ void AudManager::LoadBank( const std::wstring& name )
 		if( result == AK_Fail )
 		{
 			CCP_LOGERR( "AK::SoundEngine::LoadBank failed for %S", name.c_str() );
-			return;
-		}
+				return;
+			}
 
 		CCP_LOG( "AK::SoundEngine::LoadBank scheduled for %S", name.c_str() );
 		
@@ -340,7 +343,7 @@ void AudManager::LoadBank( const std::wstring& name )
 
 		ProcessWaitingEvents( );
 		
-		CCP_DELETE status;
+			CCP_DELETE status;
 		CCP_LOG( "AK::SoundEngine::LoadBank done for %S", name.c_str() );
 	}
 }
@@ -384,6 +387,12 @@ void AudManager::UnloadBank( const std::wstring& name )
 		CCP_LOG( "AK::SoundEngine::UnloadBank done for %S", name.c_str() );
 	}
 }
+
+void AudManager::AddToDestructionVector(AkGameObjectID gameObjID)
+{
+	s_gameObjectsToBeDestroyed.push_back( gameObjID );
+}
+
 
 AudSettings& AudManager::GetSettings()
 {

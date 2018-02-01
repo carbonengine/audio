@@ -34,10 +34,11 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 AudGameObjResource::~AudGameObjResource()
 {
 	if( g_audioInitialized )
-	{
+        {
 		// Silence the game object and put it on death row!
 		AK::SoundEngine::PostEvent( L"fade_out", m_ID );
-		//AK::SoundEngine::UnregisterGameObj(m_ID);
+		
+		g_audioManager->AddToDestructionVector( m_ID );
 	}
 }
 
@@ -173,3 +174,4 @@ void AudGameObjResource::OnListModified( long event, ssize_t key, ssize_t key2, 
 		}
 	}
 }
+	

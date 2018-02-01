@@ -48,8 +48,11 @@ void AudListener::CreateWwiseObject()
 {
 	if (g_audioInitialized)
 	{
-		AK::SoundEngine::RegisterGameObj(m_ID);
-		AK::SoundEngine::AddDefaultListener(m_ID);
+		// Register the main listener.
+		AK::SoundEngine::RegisterGameObj( m_ID, "Listener" );
+
+		// Set one listener as the default.
+		AK::SoundEngine::SetDefaultListeners( &m_ID, 1 );
 	}
 }
 
