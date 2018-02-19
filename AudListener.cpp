@@ -14,7 +14,6 @@ AudListener::AudListener( IRoot* lockobj ) :
 
 AudListener::~AudListener()
 {
-	AK::SoundEngine::RemoveDefaultListener(m_ID);
 }
 
 void AudListener::Initialize()
@@ -39,20 +38,16 @@ int AudListener::SetPosition( const Vector3& front, const Vector3& top, const Ve
 		// all vectors come in RH, but WWISE is LH, so convert
 		RH2LH::convertListener( &listenerLH, &listenerRH );
 
-		return AK::SoundEngine::SetPosition( m_ID, listenerLH );
+		AK::SoundEngine::SetListenerPosition( listenerLH, m_ID );
 	}
 	return AK_Success;
 }
 
 void AudListener::CreateWwiseObject()
 {
-	if (g_audioInitialized)
+	if( g_audioInitialized )
 	{
-		// Register the main listener.
-		AK::SoundEngine::RegisterGameObj( m_ID, "Listener" );
-
-		// Set one listener as the default.
-		AK::SoundEngine::SetDefaultListeners( &m_ID, 1 );
+		AK::SoundEngine::SetListenerPipeline( m_ID, true, false );
 	}
 }
 
