@@ -51,7 +51,7 @@ public:
 
 	virtual int SetPosition( const Vector3& front, const Vector3& top, const Vector3& pos );
 
-	AkGameObjectID m_ID;
+	AkUInt32 m_ID;
 protected:
 	virtual void CreateWwiseObject();
 	virtual void LogInfo();

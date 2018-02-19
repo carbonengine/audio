@@ -90,7 +90,7 @@ int AudGameObjResource::SetAttenuationScalingFactor( float value )
 	if( g_audioInitialized )
 	{
 		m_scalingFactor = value;
-		return AK::SoundEngine::SetScalingFactor(m_ID, value);
+		return AK::SoundEngine::SetAttenuationScalingFactor( m_ID, value );
 	}
 	return AK_InvalidParameter;
 }

@@ -31,12 +31,13 @@
 #include "AudEmitterMulti.h"
 
 static CcpLogChannel_t s_ch = CCP_LOG_DEFINE_CHANNEL( "WwiseAssert" );
-static GameObjIDVector s_gameObjectsToBeDestroyed;
 
 static void WwiseAssertHook(const char* in_pszExpression,const char* in_pszFileName,int in_lineNumber)
 {
 	CCP_LOGWARN_CH( s_ch, "Assert expression failed: %s in file %s at line %d", in_pszExpression, in_pszFileName, in_lineNumber);
 }
+
+static GameObjIDVector s_gameObjectsToBeDestroyed;
 
 AudManager::AudManager( IRoot* lockobj ) :
 	m_tickInterval( 10 ),
@@ -44,6 +45,7 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_multiEmitterMutex( "AudManager", "m_multiEmitterMutex"),
 	m_useDoppler( false )
 {
+	s_gameObjectsToBeDestroyed.push_back( 0 );
 }
 
 AudManager::~AudManager()
@@ -321,7 +323,7 @@ void AudManager::LoadBank( const std::wstring& name )
 		if( result != end )
 		{
 			return;
-			}
+		}
 
 		m_loadedBanks.push_back( name );
 	}
@@ -334,8 +336,8 @@ void AudManager::LoadBank( const std::wstring& name )
 		if( result == AK_Fail )
 		{
 			CCP_LOGERR( "AK::SoundEngine::LoadBank failed for %S", name.c_str() );
-				return;
-			}
+			return;
+		}
 
 		CCP_LOG( "AK::SoundEngine::LoadBank scheduled for %S", name.c_str() );
 		
@@ -343,7 +345,7 @@ void AudManager::LoadBank( const std::wstring& name )
 
 		ProcessWaitingEvents( );
 		
-			CCP_DELETE status;
+		CCP_DELETE status;
 		CCP_LOG( "AK::SoundEngine::LoadBank done for %S", name.c_str() );
 	}
 }
@@ -392,7 +394,6 @@ void AudManager::AddToDestructionVector(AkGameObjectID gameObjID)
 {
 	s_gameObjectsToBeDestroyed.push_back( gameObjID );
 }
-
 
 AudSettings& AudManager::GetSettings()
 {
