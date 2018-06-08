@@ -18,7 +18,9 @@ const Be::ClassInfo* AudEmitter::ExposeToBlue()
 		MAP_INTERFACE( AudGameObjResource )
 		MAP_INTERFACE( AudEmitter )
 
-		MAP_METHOD_AND_WRAP( "__init__", Py__init__, "Takes in a name of the emitter created as a string")
+		MAP_METHOD_AND_WRAP_OPTIONAL_ARGS("__init__", Py__init__, 1, 
+			"Takes in a name of the emitter created as a string.\n"
+			":param name: Name of Audio Emitter. Defaults to empty string.")
 		MAP_METHOD_AND_WRAP( "SetPosition", SetPosition,
 							 "\tUpdates the entities orientation and position of an entity.\n"
 							 "\tTakes 3 arguments but is not using the \"top\" vector as is.\n"
