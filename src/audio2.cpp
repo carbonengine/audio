@@ -3,7 +3,7 @@
 
 #include "stdafx.h"
 
-#include <Blue/Include/BlueId.cxx>
+#include <Blue/Include/Blue.cxx>
 #include <BlueExposure/include/InterfaceDefinitions.cxx>
 
 #include "LogBridge.h"
