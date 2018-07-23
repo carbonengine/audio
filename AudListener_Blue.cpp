@@ -57,7 +57,7 @@ static PyObject* PyGetAudListener( PyObject* self, PyObject* args )
 	if( listeners[id] == NULL )
 	{
 		alp.p = new OAudListener();
-		alp->m_ID = id;
+		alp->m_ID = id + START_LISTENER_GAME_OBJ_COUNT;
 		alp->Initialize();
 		listeners[id] = alp;
 	}

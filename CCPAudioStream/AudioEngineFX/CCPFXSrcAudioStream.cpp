@@ -129,7 +129,6 @@ AKRESULT CCCPFXSrcAudioStream::GetPluginInfo( AkPluginInfo & out_rPluginInfo )
 {
     out_rPluginInfo.eType = AkPluginTypeSource;
 	out_rPluginInfo.bIsInPlace = true;
-	out_rPluginInfo.bIsAsynchronous = false;
 	out_rPluginInfo.uBuildVersion = AK_WWISESDK_VERSION_COMBINED;
     return AK_Success;
 }
