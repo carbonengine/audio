@@ -1,5 +1,7 @@
 #include "stdafx.h"
 
+#include <sstream>
+
 #include "AudListener.h"
 #include "Vector3.h"
 #include "Utilities.h"
@@ -8,12 +10,14 @@
 
 
 AudListener::AudListener( IRoot* lockobj ) :
-	m_ID( 0 )
+	m_ID(0)
 {
 }
 
 AudListener::~AudListener()
 {
+	AK::SoundEngine::RemoveDefaultListener(m_ID);
+	AK::SoundEngine::UnregisterGameObj(m_ID);
 }
 
 void AudListener::Initialize()
@@ -38,7 +42,7 @@ int AudListener::SetPosition( const Vector3& front, const Vector3& top, const Ve
 		// all vectors come in RH, but WWISE is LH, so convert
 		RH2LH::convertListener( &listenerLH, &listenerRH );
 
-		AK::SoundEngine::SetListenerPosition( listenerLH, m_ID );
+		AK::SoundEngine::SetPosition(m_ID, listenerLH);
 	}
 	return AK_Success;
 }
@@ -47,7 +51,13 @@ void AudListener::CreateWwiseObject()
 {
 	if( g_audioInitialized )
 	{
-		AK::SoundEngine::SetListenerPipeline( m_ID, true, false );
+		auto userFacingID = m_ID - START_LISTENER_GAME_OBJ_COUNT;
+
+		std::ostringstream listenerName;
+		listenerName << "Listener_" << userFacingID;
+
+		AK::SoundEngine::RegisterGameObj(m_ID, listenerName.str().c_str());
+		AK::SoundEngine::AddDefaultListener(m_ID);
 	}
 }
 
