@@ -37,12 +37,15 @@ BLUE_DECLARE( AudPosition );
 // Blue headers specific to this file
 #include <blue/include/IBluePlacementObserver.h>
 #include <blue/include/IBlueEventListener.h>
+#include "trinity/Include/ITr2SoundEmitter.h"
+
 
 struct Vector3;
 
 BLUE_CLASS( AudGameObjResource ) : public IBlueEventListener
 								 , public IInitialize
 								 , public IListNotify
+								 , public ITr2SoundEmitter
 								 , public AudResource
 {
 public:
@@ -65,6 +68,9 @@ public:
 	virtual int SetAttenuationScalingFactor( float value );
 	virtual int SetObstructionAndOcclusion( unsigned int listenerID, float obstruction, float occlusion );
 	virtual int SetSwitch( const wchar_t* groupName, const wchar_t* switchName );
+
+	void Initialize( const char* name, const wchar_t* prefix ) override;
+	void SendSoundEvent( const wchar_t* eventName ) override;
 
 protected:
 	virtual void CreateWwiseObject();
