@@ -175,3 +175,14 @@ void AudGameObjResource::OnListModified( long event, ssize_t key, ssize_t key2, 
 	}
 }
 	
+void AudGameObjResource::Initialize( const char* name, const wchar_t* prefix )
+{
+	m_name = name;
+	m_eventPrefix = prefix;
+	Initialize();
+}
+
+void AudGameObjResource::SendSoundEvent( const wchar_t* eventName )
+{
+	SendEvent( eventName );
+}

@@ -3,6 +3,8 @@
 
 #include <AK/SoundEngine/Common/AkSoundEngine.h>
 
+BLUE_DEFINE_INTERFACE( ITr2SoundEmitter );
+
 BLUE_DEFINE_ABSTRACT( AudGameObjResource );
 
 const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
@@ -12,6 +14,7 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 		MAP_INTERFACE( IBlueEventListener )
 		MAP_INTERFACE( IInitialize )
 		MAP_INTERFACE( IListNotify )
+		MAP_INTERFACE( ITr2SoundEmitter )
 		MAP_INTERFACE( AudGameObjResource )
 
 		MAP_ATTRIBUTE( "ID", m_ID, "ID number of emitter.", Be::READ )
