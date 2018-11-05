@@ -21,7 +21,7 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 		MAP_ATTRIBUTE( "name", m_name, "Logical name of emitter. Does NOT have to be unique.", Be::READWRITE | Be::PERSIST )
 		MAP_ATTRIBUTE( "parameters", m_parameters, "List of RTPC parameters associated with this emitter.", Be::READWRITE | Be::PERSIST )
 		MAP_ATTRIBUTE( "eventName", m_playEvent, "Name of event last played.", Be::READ )
-		MAP_ATTRIBUTE( "eventPrefix", m_eventPrefix, "A string that will be prefixed to all events using this emitter", Be::READWRITE )
+		MAP_ATTRIBUTE( "eventPrefix", m_eventPrefix, "A string that will be prefixed to all events using this emitter", Be::READWRITE | Be::PERSIST )
 		MAP_ATTRIBUTE( "scalingFactor", m_scalingFactor, "The scaling factor of the attenuation used for the sounds played using this emitter", Be::READ )
 
 		MAP_METHOD_AND_WRAP( "SendEvent", SendEvent,
