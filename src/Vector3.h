@@ -20,16 +20,13 @@
 
 #include <AK/SoundEngine/Common/AkTypes.h>
 
-struct Vector3 : public AkVector
+inline AkVector MakeAkVector( const Vector3& v )
 {
-	Vector3()
-	{}
-	Vector3(float x, float y, float z)
-	{
-		X = x;
-		Y = y;
-		Z = z;
-	}
-};
+	AkVector r;
+	r.X = v.x;
+	r.Y = v.y;
+	r.Z = v.z;
+	return r;
+}
 
 #endif
