@@ -38,7 +38,7 @@ int AudListener::SetPosition( const Vector3& front, const Vector3& top, const Ve
 	if( g_audioInitialized )
 	{
 		AkListenerPosition listenerRH, listenerLH;
-		listenerRH.Set(pos, front, top);
+		listenerRH.Set( MakeAkVector(pos), MakeAkVector(front), MakeAkVector(top) );
 		// all vectors come in RH, but WWISE is LH, so convert
 		RH2LH::convertListener( &listenerLH, &listenerRH );
 

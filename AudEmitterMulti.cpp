@@ -33,15 +33,15 @@ void AudEmitterMulti::UpdatePlacement( const Vector3& front, const Vector3& top,
 	if( g_audioInitialized )
 	{
 		AkSoundPosition posLH, posRH;
-		posRH.Set(pos, front, top);
+		posRH.Set( MakeAkVector(pos), MakeAkVector(front), MakeAkVector(top) );
 		RH2LH::convertEmitter( &posLH, &posRH );
 
 		AkListenerPosition listener;
 		unsigned int default_listener = 0;
 		AK::SoundEngine::Query::GetListenerPosition( default_listener, listener );
-		AkReal32 x = pow( ( listener.Position().X - pos.X ), 2 );
-		AkReal32 y = pow( ( listener.Position().Y - pos.Y ), 2 );
-		AkReal32 z = pow( ( listener.Position().Z - pos.Z ), 2 );
+		AkReal32 x = pow( ( listener.Position().X - pos.x ), 2 );
+		AkReal32 y = pow( ( listener.Position().Y - pos.y ), 2 );
+		AkReal32 z = pow( ( listener.Position().Z - pos.z ), 2 );
 		AkReal32 distanceSquared = x+y+z;
 
 		uint32_t index = m_currentIndex++;
@@ -77,7 +77,7 @@ void AudEmitterMulti::ProcessPlacementList() {
 	}
 	else
 	{
-		Vector3 initpos( WISE_INIT_POSITION, WISE_INIT_POSITION, WISE_INIT_POSITION );
+		AkVector initpos = MakeAkVector( Vector3( WISE_INIT_POSITION, WISE_INIT_POSITION, WISE_INIT_POSITION ) );
 		AkSoundPosition tmp;
 		tmp.Set(initpos, initpos, initpos);
 		SetPositionHelper( tmp );

@@ -9,6 +9,7 @@ ProjectGuid: 2C3F44E3-0435-478D-9A14-CB1E2572F9BB
 Imports:
 - ../core_project/core_project.yaml
 - ../manifests/manifests.props
+- ../CcpMath/uses_CcpMath.yaml
 
 # Settings from the General section, for all configurations
 General:
