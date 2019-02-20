@@ -9,8 +9,6 @@
 #include "AudManager.h"
 #include "AudPosition.h"
 
-static CcpLogChannel_t s_ch = CCP_LOG_DEFINE_CHANNEL( "Events" );
-
 //-----------------------------------------------------------------------------
 // Helper function to distribute ID's
 //-----------------------------------------------------------------------------
@@ -73,7 +71,6 @@ unsigned int AudGameObjResource::SendEvent( const std::wstring& name )
 			eventName = name;
 		}
 
-		CCP_LOG_CH( s_ch, "Sending event: %S to game object %d (%s)", name.c_str(), m_ID, m_name.c_str());
 		m_playID = AK::SoundEngine::PostEvent( eventName.c_str(), m_ID );
 		if (m_playID == AK_INVALID_PLAYING_ID)
 		{
@@ -146,7 +143,7 @@ bool AudGameObjResource::Initialize()
 	// after the first update loop
 
 	CreateWwiseObject();
-	Vector3 initpos( WISE_INIT_POSITION, WISE_INIT_POSITION, WISE_INIT_POSITION );
+	AkVector initpos = MakeAkVector( Vector3( WISE_INIT_POSITION, WISE_INIT_POSITION, WISE_INIT_POSITION ) );
 	AkSoundPosition tmp;
 	tmp.Set(initpos, initpos, initpos);
 	SetPositionHelper( tmp );

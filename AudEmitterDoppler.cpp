@@ -26,7 +26,7 @@ void AudEmitterDoppler::UpdatePlacement(const Vector3& front, const Vector3& top
 	{
 		AkSoundPosition tmp;
 		AkSoundPosition posLH;
-		tmp.Set(pos, front, top);
+		tmp.Set( MakeAkVector(pos), MakeAkVector(front), MakeAkVector(top) );
 		RH2LH::convertEmitter( &posLH, &tmp );
 		if( g_audioManager->m_useDoppler )
 		{
