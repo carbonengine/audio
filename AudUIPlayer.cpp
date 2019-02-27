@@ -6,6 +6,8 @@
 #include <AK/SoundEngine/Common/AkTypes.h>
 #include <AK/SoundEngine/Common/AkSoundEngine.h>
 
+#include "AudManager.h"
+
 static void EventFinishedCallback(AkCallbackType in_eType, AkCallbackInfo* in_pCallbackInfo);
 static void PropagateCallback( void* callbackCookie );
 
@@ -31,6 +33,7 @@ unsigned int AudUIPlayer::SendEvent( const std::wstring& name )
 	{
 		m_playEvent = name;
 		m_playID = AK::SoundEngine::PostEvent( name.c_str(), m_ID );
+		g_audioManager->SetDebugEventName( name );
 		return m_playID;
 	}
 	return 0;
@@ -47,6 +50,7 @@ unsigned int AudUIPlayer::SendEventWithCallback( const std:: wstring& name )
 			cookie->uiPlayer = this;
 			cookie->eventName = m_callbackEventName;
 			m_playID = AK::SoundEngine::PostEvent( name.c_str(), m_ID, AK_EndOfEvent, EventFinishedCallback, cookie);
+			g_audioManager->SetDebugEventName( name );
 		}
 		else 
 		{

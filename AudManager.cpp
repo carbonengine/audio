@@ -43,7 +43,8 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_tickInterval( 10 ),
 	m_waitingEventsMutex( "AudManager", "m_waitingEventsMutex" ),
 	m_multiEmitterMutex( "AudManager", "m_multiEmitterMutex"),
-	m_useDoppler( false )
+	m_useDoppler( false ),
+	m_debugLastPlayedEventMutex( "AudManager", "debugLastPlayedEventMutex")
 {
 	s_gameObjectsToBeDestroyed.push_back( 0 );
 }
@@ -82,6 +83,12 @@ void AudManager::Process()
 			{
 				++it;
 			}
+		}
+
+		if ( m_debugEventCallback && !m_debugLastPlayedEvent.empty() )
+		{
+			m_debugEventCallback.CallVoid( m_debugLastPlayedEvent );
+			m_debugLastPlayedEvent = L"";
 		}
 	}
 }
@@ -505,4 +512,20 @@ Be::Result<std::string> AudManager::GetEmitterForEventName( const std::wstring& 
 			return Be::Result<std::string>();
 		}
 	}
+}
+
+void AudManager::RegisterDebugEventCallback( BlueScriptCallback callback )
+{
+	m_debugEventCallback = callback;
+}
+
+void AudManager::SetDebugEventName( const std::wstring& eventName )
+{
+	if ( !m_debugEventCallback )
+	{
+		return;
+	}
+
+	CcpAutoMutex mutex( m_debugLastPlayedEventMutex );
+	m_debugLastPlayedEvent = eventName;
 }
