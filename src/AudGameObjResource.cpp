@@ -72,6 +72,9 @@ unsigned int AudGameObjResource::SendEvent( const std::wstring& name )
 		}
 
 		m_playID = AK::SoundEngine::PostEvent( eventName.c_str(), m_ID );
+
+		g_audioManager->SetDebugEventName( eventName );
+
 		if (m_playID == AK_INVALID_PLAYING_ID)
 		{
 			AkUniqueID eventID = AK::SoundEngine::GetIDFromString(eventName.c_str());

@@ -60,8 +60,12 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 							"\tGetEmitterForEventName( eventName ) -> AudEmitterMulti or Raise a RuntimeError\n"
 							"Parameters:\n"
 							"\teventName -- Name (unicode) of the event you wish to get an emitter for."
-	)
-
+							)
+		MAP_METHOD_AND_WRAP( "RegisterDebugEventCallback",
+							RegisterDebugEventCallback,
+							"Registers a python function be called when an audio event is sent to the sound engine\n"
+							":param callback: An instance of a python function to be executed"
+						   )
 	EXPOSURE_END()
 }
 

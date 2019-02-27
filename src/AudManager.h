@@ -118,6 +118,9 @@ public:
 	// Gets an AudEmitterMulti for a given event name or creates it if it does not exist.
 	Be::Result<std::string> GetEmitterForEventName( const std::wstring& eventName, AudEmitterMulti** out );
 
+	void RegisterDebugEventCallback( BlueScriptCallback callback );
+
+	void SetDebugEventName( const std::wstring& eventName );
 
 private:
 	// Please note these inits need to be done in this order!
@@ -162,6 +165,11 @@ private:
 	CcpMutex m_waitingEventsMutex;
 	CcpMutex m_multiEmitterMutex;
 	bool m_useDoppler;
+
+	//Debug
+	BlueScriptCallback m_debugEventCallback;
+	std::wstring m_debugLastPlayedEvent;
+	CcpMutex m_debugLastPlayedEventMutex;
 };
 
 TYPEDEF_BLUECLASS( AudManager );
