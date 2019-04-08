@@ -79,52 +79,52 @@
   <Import Project="$(VCTargetsPath)/Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <UseOfMfc>False</UseOfMfc>
-    <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/</IntDir>
+    <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/$(PlatformToolset)/</IntDir>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_27|Win32'">
     <UseOfMfc>False</UseOfMfc>
-    <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/</IntDir>
+    <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/$(PlatformToolset)/</IntDir>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <UseOfMfc>False</UseOfMfc>
-    <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/</IntDir>
+    <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/$(PlatformToolset)/</IntDir>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_27|x64'">
     <UseOfMfc>False</UseOfMfc>
-    <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/</IntDir>
+    <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/$(PlatformToolset)/</IntDir>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dev|Win32'">
     <UseOfMfc>False</UseOfMfc>
-    <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/</IntDir>
+    <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/$(PlatformToolset)/</IntDir>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dev|x64'">
     <UseOfMfc>False</UseOfMfc>
-    <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/</IntDir>
+    <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/$(PlatformToolset)/</IntDir>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_26|Win32'">
     <UseOfMfc>False</UseOfMfc>
-    <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/</IntDir>
+    <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/$(PlatformToolset)/</IntDir>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <UseOfMfc>False</UseOfMfc>
-    <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/</IntDir>
+    <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/$(PlatformToolset)/</IntDir>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_26|x64'">
     <UseOfMfc>False</UseOfMfc>
-    <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/</IntDir>
+    <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/$(PlatformToolset)/</IntDir>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <UseOfMfc>False</UseOfMfc>
-    <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/</IntDir>
+    <IntDir>../../autobuild/temp/$(ProjectName)/$(Platform)/$(Configuration)/$(PlatformToolset)/</IntDir>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)/Microsoft.Cpp.props" />
