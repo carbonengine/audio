@@ -32,7 +32,7 @@ AudConfig::AudConfig( IRoot *lockobj )
 	// Set all the default values.
 	m_memSettings.uMaxNumPools = 20;
 
-	m_streamMgrSettings.uMemorySize = 32*1024;
+	m_streamMgrSettings.uMemorySize = 64*1024;
 
 	m_threadProperties.nPriority = AK_THREAD_PRIORITY_ABOVE_NORMAL;
     m_threadProperties.dwAffinityMask = 0;
