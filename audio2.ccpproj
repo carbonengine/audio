@@ -33,7 +33,7 @@ ClCompile:
   TreatWarningAsError: true
   BufferSecurityCheck: false
   AdditionalIncludeDirectories:
-  - $(CcpSdkPath)\wwise\v2017.2.5-build6619\include
+  - $(CcpSdkPath)\wwise\v2017.2.10.6745\include
 
 # Linker settings for all configurations
 Link:
@@ -91,7 +91,7 @@ Configurations:
       DebugInformationFormat: EditAndContinue
     Link:
       AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2017.2.5-build6619\$(Platform)_vc100\Debug\lib
+      - $(CcpSdkPath)\wwise\v2017.2.10.6745\$(Platform)_vc100\Debug\lib
 
       AdditionalDependencies:
       - CCPAudioStreamSource_d.lib
@@ -119,7 +119,7 @@ Configurations:
     Link:
       LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
       AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2017.2.5-build6619\$(Platform)_vc100\Release\lib
+      - $(CcpSdkPath)\wwise\v2017.2.10.6745\$(Platform)_vc100\Release\lib
       AdditionalDependencies:
       - CCPAudioStreamSource.lib
 
@@ -143,7 +143,7 @@ Configurations:
     Link:
       LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
       AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2017.2.5-build6619\$(Platform)_vc100\Profile\lib
+      - $(CcpSdkPath)\wwise\v2017.2.10.6745\$(Platform)_vc100\Profile\lib
       AdditionalDependencies:
       - CCPAudioStreamSource_dev.lib
       - CommunicationCentral.lib
@@ -170,7 +170,7 @@ Configurations:
     Link:
       LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
       AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2017.2.5-build6619\$(Platform)_vc100\Release\lib
+      - $(CcpSdkPath)\wwise\v2017.2.10.6745\$(Platform)_vc100\Release\lib
       AdditionalDependencies:
       - CCPAudioStreamSource.lib
 
@@ -195,6 +195,6 @@ Configurations:
     Link:
       LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
       AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2017.2.5-build6619\$(Platform)_vc100\Release\lib
+      - $(CcpSdkPath)\wwise\v2017.2.10.6745\$(Platform)_vc100\Release\lib
       AdditionalDependencies:
       - CCPAudioStreamSource.lib
