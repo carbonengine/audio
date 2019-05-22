@@ -14,8 +14,7 @@ AudEmitter::~AudEmitter()
 
 int AudEmitter::SetPosition( const Vector3& front, const Vector3& top, const Vector3& pos )
 {
-	m_position.m_value.Set( MakeAkVector(pos), MakeAkVector(front), MakeAkVector(top) );
-	return SetPositionHelper( m_position.m_value );
+	return SetPositionHelper( front, top, pos );
 }
 
 //----------------------------------
@@ -23,7 +22,5 @@ int AudEmitter::SetPosition( const Vector3& front, const Vector3& top, const Vec
 //----------------------------------
 void AudEmitter::UpdatePlacement(const Vector3& front, const Vector3& top, const Vector3& pos )
 {
-	AkSoundPosition tmp;
-	tmp.Set( MakeAkVector(pos), MakeAkVector(front), MakeAkVector(top) );
-	SetPositionHelper( tmp );	//g_audioInitialized is checked in SetPositionHelper
+	SetPositionHelper( front, top, pos );	//g_audioInitialized is checked in SetPositionHelper
 }

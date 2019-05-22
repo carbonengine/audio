@@ -113,13 +113,19 @@ int AudGameObjResource::SetSwitch( const wchar_t* groupName, const wchar_t* swit
 	return AK_Success;
 }
 
-int AudGameObjResource::SetPositionHelper( const AkSoundPosition& position )
+int AudGameObjResource::SetPositionHelper( const Vector3& front, const Vector3& top, const Vector3& position )
 {
 	if( g_audioInitialized )
 	{
+		AkSoundPosition tmp;
+		Vector3 correctFront = Normalize( front );
+		Vector3 correctUp = Normalize( top );
+		correctUp = Normalize( Cross( Cross( correctFront, correctUp ), correctFront ) );
+		tmp.Set( MakeAkVector(position), MakeAkVector(correctFront), MakeAkVector(correctUp) );
+
 		// all vectors come in RH, but WWISE is LH, so convert
 		AkSoundPosition soundPosLH;
-		RH2LH::convertEmitter( &soundPosLH, &position );
+		RH2LH::convertEmitter( &soundPosLH, &tmp);
 
 		AK::SoundEngine::SetPosition( m_ID, soundPosLH );
 	}
@@ -146,10 +152,8 @@ bool AudGameObjResource::Initialize()
 	// after the first update loop
 
 	CreateWwiseObject();
-	AkVector initpos = MakeAkVector( Vector3( WISE_INIT_POSITION, WISE_INIT_POSITION, WISE_INIT_POSITION ) );
-	AkSoundPosition tmp;
-	tmp.Set(initpos, initpos, initpos);
-	SetPositionHelper( tmp );
+	Vector3 initpos = Vector3( WISE_INIT_POSITION, WISE_INIT_POSITION, WISE_INIT_POSITION );
+	SetPositionHelper( Vector3(1,0,0), Vector3(0,1,0), initpos );
 
 	//Start playing on loading from a red file.
 	if( m_playOnLoad )
