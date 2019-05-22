@@ -39,5 +39,5 @@ void AudioEmitter::SetTransform( const Matrix& worldTransform )
 	up = TransformNormal( Vector3( 0.0f, 1.0f, 0.0f ), worldTransform );
 
 	m_position.Set( MakeAkVector( position ), MakeAkVector( front ), MakeAkVector( up ) );
-	SetPositionHelper( m_position );
+	SetPositionHelper( front, up, position );
 }

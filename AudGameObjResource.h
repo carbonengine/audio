@@ -75,7 +75,7 @@ public:
 protected:
 	virtual void CreateWwiseObject();
 	virtual void LogInfo();
-	virtual int SetPositionHelper( const AkSoundPosition& position );
+	virtual int SetPositionHelper( const Vector3& front, const Vector3& top, const Vector3& position );
 
 	AkGameObjectID		m_ID;
 	std::string			m_name;

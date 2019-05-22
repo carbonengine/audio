@@ -77,10 +77,8 @@ void AudEmitterMulti::ProcessPlacementList() {
 	}
 	else
 	{
-		AkVector initpos = MakeAkVector( Vector3( WISE_INIT_POSITION, WISE_INIT_POSITION, WISE_INIT_POSITION ) );
-		AkSoundPosition tmp;
-		tmp.Set(initpos, initpos, initpos);
-		SetPositionHelper( tmp );
+		Vector3 initpos = Vector3( WISE_INIT_POSITION, WISE_INIT_POSITION, WISE_INIT_POSITION );
+		SetPositionHelper( Vector3( 1,0,0 ), Vector3( 0,1,0 ), initpos);
 	}
 }
 
