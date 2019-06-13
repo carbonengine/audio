@@ -33,7 +33,7 @@
 //-----------------------------------------------------------------------------
 #include <AK/SoundEngine/Common/AkTypes.h>
 
-// Communication
+// Communication (AKA remote Wwise debugging)
 #ifndef AK_OPTIMIZED
 	#include <AK/Comm/AkCommunication.h>
 #endif
@@ -144,6 +144,9 @@ private:
 	// Takes care of updating the location for all AudEmitterMulti on each tick.
 	void ProcessMultiEmitterList();
 
+	// Sets the Wwise application name when remote debugging.
+	void SetApplicationName(std::string applicationName);
+
 	friend class AudEmitterMulti;
 	friend class AudEmitter;
 	friend class AudEmitterDoppler;
@@ -170,6 +173,7 @@ private:
 	BlueScriptCallback m_debugEventCallback;
 	std::wstring m_debugLastPlayedEvent;
 	CcpMutex m_debugLastPlayedEventMutex;
+	std::string m_applicationName;
 };
 
 TYPEDEF_BLUECLASS( AudManager );
