@@ -44,9 +44,11 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_waitingEventsMutex( "AudManager", "m_waitingEventsMutex" ),
 	m_multiEmitterMutex( "AudManager", "m_multiEmitterMutex"),
 	m_useDoppler( false ),
-	m_debugLastPlayedEventMutex( "AudManager", "debugLastPlayedEventMutex")
+	m_debugLastPlayedEventMutex( "AudManager", "debugLastPlayedEventMutex"),
+	m_applicationName( "EVE Audio" )
 {
 	s_gameObjectsToBeDestroyed.push_back( 0 );
+	SetApplicationName( m_applicationName );
 }
 
 AudManager::~AudManager()
@@ -198,8 +200,13 @@ bool AudManager::InitLowLevel()
 
 bool AudManager::InitCommunication()
 {
+//-----------------------------------------------------------------------------
+	// Only used if audio dev is enabled. Initializes remote communication with
+	// Wwise to allow for remote debugging.
+//-----------------------------------------------------------------------------
 	#ifndef AK_OPTIMIZED
 	AK::Comm::GetDefaultInitSettings( m_commSettings );
+	AKPLATFORM::SafeStrCpy(&m_commSettings.szAppNetworkName[0], m_applicationName.c_str(), AK_COMM_SETTINGS_MAX_STRING_SIZE);
 	if( AK::Comm::Init( m_commSettings ) != AK_Success )
 	{
 		assert( ! "Audio2: Could not init communication lib" );
@@ -528,4 +535,9 @@ void AudManager::SetDebugEventName( const std::wstring& eventName )
 
 	CcpAutoMutex mutex( m_debugLastPlayedEventMutex );
 	m_debugLastPlayedEvent = eventName;
+}
+
+void AudManager::SetApplicationName( std::string applicationName )
+{
+	m_applicationName = applicationName;
 }

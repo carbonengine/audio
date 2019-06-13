@@ -65,6 +65,11 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 							RegisterDebugEventCallback,
 							"Registers a python function be called when an audio event is sent to the sound engine\n"
 							":param callback: An instance of a python function to be executed"
+						   )		
+		MAP_METHOD_AND_WRAP( "SetApplicationName",
+							SetApplicationName,
+							"Sets the application name to be used when remote debugging with Wwise."
+							":param applicationName: A string defining the name of the application audio2 is running inside."
 						   )
 	EXPOSURE_END()
 }
