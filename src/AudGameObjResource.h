@@ -67,10 +67,10 @@ public:
 	virtual unsigned int SendEvent( const std::wstring& name );
 	virtual int SetAttenuationScalingFactor( float value );
 	virtual int SetObstructionAndOcclusion( unsigned int listenerID, float obstruction, float occlusion );
-	virtual int SetSwitch( const wchar_t* groupName, const wchar_t* switchName );
 
 	void Initialize( const char* name, const wchar_t* prefix ) override;
 	void SendSoundEvent( const wchar_t* eventName ) override;
+	void SetSwitch( const wchar_t* switchGroup, const wchar_t* switchState ) override;
 
 protected:
 	virtual void CreateWwiseObject();

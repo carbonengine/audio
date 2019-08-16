@@ -104,15 +104,6 @@ int AudGameObjResource::SetObstructionAndOcclusion( unsigned int listenerID, flo
 	return AK_Success;
 }
 
-int AudGameObjResource::SetSwitch( const wchar_t* groupName, const wchar_t* switchName )
-{
-	if( g_audioInitialized )
-	{
-		AK::SoundEngine::SetSwitch( groupName, switchName, m_ID );
-	}
-	return AK_Success;
-}
-
 int AudGameObjResource::SetPositionHelper( const Vector3& front, const Vector3& top, const Vector3& position )
 {
 	if( g_audioInitialized )
@@ -189,4 +180,12 @@ void AudGameObjResource::Initialize( const char* name, const wchar_t* prefix )
 void AudGameObjResource::SendSoundEvent( const wchar_t* eventName )
 {
 	SendEvent( eventName );
+}
+
+void AudGameObjResource::SetSwitch( const wchar_t* switchGroup, const wchar_t* switchState )
+{
+	if ( g_audioInitialized ) 
+	{
+		AK::SoundEngine::SetSwitch( switchGroup, switchState, m_ID );
+	}
 }
