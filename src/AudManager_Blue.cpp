@@ -43,6 +43,12 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 							 "Parameters:\n"
 							 "\tname -- Name of the soundbank to unload. UNICODE!"
 						   )
+		MAP_METHOD_AND_WRAP( "ClearBanks", ClearBanks, 
+							 "Description:\n"
+							 "\tUnloads all currently loaded banks in Wwise.\n"
+							 "Signature:\n"
+							 "\tClearBanks() -> None\n"
+						   )
 		MAP_METHOD_AND_WRAP( "GetLoadedSoundBanks", GetLoadedSoundBanks, 
 							 "Description:\n"
 							 "\tGets a list of loaded sound banks.\n"

@@ -98,6 +98,7 @@ public:
 	// Bank loading
 	void LoadBank( const std::wstring& name );
 	void UnloadBank( const std::wstring& name );
+	void ClearBanks();
 
 	// Game object destruction
 	void AddToDestructionVector( AkGameObjectID gameObjID );
