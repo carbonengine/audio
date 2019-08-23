@@ -404,6 +404,24 @@ void AudManager::UnloadBank( const std::wstring& name )
 	}
 }
 
+void AudManager::ClearBanks()
+{
+	// Unloads all banks currently loaded in Wwise.
+	if( g_audioEnabled )
+	{
+		AKRESULT result = AK::SoundEngine::ClearBanks();
+		if( result == AK_Fail )
+		{
+			CCP_LOGERR( "AK::SoundEngine::ClearBanks failed" );
+			return;
+		}
+
+		m_loadedBanks.clear();
+
+		CCP_LOG( "All banks unloaded in Wwise" );
+	}
+}
+
 void AudManager::AddToDestructionVector(AkGameObjectID gameObjID)
 {
 	s_gameObjectsToBeDestroyed.push_back( gameObjID );
