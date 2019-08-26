@@ -30,7 +30,7 @@ AudConfig::AudConfig( IRoot *lockobj )
     , m_asyncFileOpen( false )
 {
 	// Set all the default values.
-	m_memSettings.uMaxNumPools = 20;
+	m_memSettings.uMaxNumPools = 32;
 
 	m_streamMgrSettings.uMemorySize = 64*1024;
 
