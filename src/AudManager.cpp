@@ -42,9 +42,10 @@ static GameObjIDVector s_gameObjectsToBeDestroyed;
 AudManager::AudManager( IRoot* lockobj ) :
 	m_tickInterval( 10 ),
 	m_waitingEventsMutex( "AudManager", "m_waitingEventsMutex" ),
-	m_multiEmitterMutex( "AudManager", "m_multiEmitterMutex"),
+	m_multiEmitterMutex( "AudManager", "m_multiEmitterMutex" ),
 	m_useDoppler( false ),
-	m_debugLastPlayedEventMutex( "AudManager", "debugLastPlayedEventMutex"),
+	m_debugLastPlayedEventMutex( "AudManager", "debugLastPlayedEventMutex" ),
+	m_debugLastSwitchMutex( "AudManager", "debugLastSwitchMutex" ),
 	m_applicationName( "EVE Audio" )
 {
 	s_gameObjectsToBeDestroyed.push_back( 0 );
@@ -91,6 +92,12 @@ void AudManager::Process()
 		{
 			m_debugEventCallback.CallVoid( m_debugLastPlayedEvent );
 			m_debugLastPlayedEvent = L"";
+		}
+
+		if ( m_debugSwitchCallback && !m_debugLastSwitch.empty() )
+		{
+			m_debugSwitchCallback.CallVoid( m_debugLastSwitch);
+			m_debugLastSwitch = L"";
 		}
 	}
 }
@@ -544,6 +551,11 @@ void AudManager::RegisterDebugEventCallback( BlueScriptCallback callback )
 	m_debugEventCallback = callback;
 }
 
+void AudManager::RegisterDebugSwitchCallback( BlueScriptCallback callback )
+{
+	m_debugSwitchCallback = callback;
+}
+
 void AudManager::SetDebugEventName( const std::wstring& eventName )
 {
 	if ( !m_debugEventCallback )
@@ -553,6 +565,17 @@ void AudManager::SetDebugEventName( const std::wstring& eventName )
 
 	CcpAutoMutex mutex( m_debugLastPlayedEventMutex );
 	m_debugLastPlayedEvent = eventName;
+}
+
+void AudManager::SetDebugSwitch( const std::wstring& switchGroup, const std::wstring& switchName )
+{
+	if ( !m_debugSwitchCallback)
+	{
+		return;
+	}
+
+	CcpAutoMutex mutex( m_debugLastSwitchMutex );
+	m_debugLastSwitch = switchGroup + L" -- " + switchName;
 }
 
 void AudManager::SetApplicationName( std::string applicationName )

@@ -120,8 +120,10 @@ public:
 	Be::Result<std::string> GetEmitterForEventName( const std::wstring& eventName, AudEmitterMulti** out );
 
 	void RegisterDebugEventCallback( BlueScriptCallback callback );
+	void RegisterDebugSwitchCallback( BlueScriptCallback callback );
 
 	void SetDebugEventName( const std::wstring& eventName );
+	void SetDebugSwitch( const std::wstring& switchGroup, const std::wstring& switchName );
 
 private:
 	// Please note these inits need to be done in this order!
@@ -174,6 +176,11 @@ private:
 	BlueScriptCallback m_debugEventCallback;
 	std::wstring m_debugLastPlayedEvent;
 	CcpMutex m_debugLastPlayedEventMutex;
+
+	BlueScriptCallback m_debugSwitchCallback;
+	std::wstring m_debugLastSwitch;
+	CcpMutex m_debugLastSwitchMutex;
+
 	std::string m_applicationName;
 };
 

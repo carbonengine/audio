@@ -187,5 +187,6 @@ void AudGameObjResource::SetSwitch( const wchar_t* switchGroup, const wchar_t* s
 	if ( g_audioInitialized ) 
 	{
 		AK::SoundEngine::SetSwitch( switchGroup, switchState, m_ID );
+		g_audioManager->SetDebugSwitch( switchGroup, switchState );
 	}
 }
