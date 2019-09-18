@@ -190,3 +190,11 @@ void AudGameObjResource::SetSwitch( const wchar_t* switchGroup, const wchar_t* s
 		g_audioManager->SetDebugSwitch( switchGroup, switchState );
 	}
 }
+
+void AudGameObjResource::SetRTPC( const wchar_t* rtpcName, float rtpcValue )
+{
+	if ( g_audioInitialized )
+	{
+		AK::SoundEngine::SetRTPCValue( rtpcName, AkRtpcValue(rtpcValue), m_ID );
+	}
+}

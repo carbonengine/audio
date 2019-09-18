@@ -66,6 +66,14 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 							 "\tgroupName -- Switch group string name.\n"
 							 "\tswitchName -- Switch name to enable\n"
 						   )
+		MAP_METHOD_AND_WRAP( "SetRTPC", 
+							 SetRTPC,
+						     "Set an RTPC value on the game object.\n"
+							 ":type rtpcName: str\n"
+							 ":param rtpcName: The name of the RTPC you wish to set on the game object.\n"
+							 ":type rtpcValue: float\n"
+							 ":param rtpcValue: The value you wish to set the RTPC to on the game object.\n"
+						   )
 
 	EXPOSURE_END()
 }
