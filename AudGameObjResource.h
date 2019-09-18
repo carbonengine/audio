@@ -71,6 +71,7 @@ public:
 	void Initialize( const char* name, const wchar_t* prefix ) override;
 	void SendSoundEvent( const wchar_t* eventName ) override;
 	void SetSwitch( const wchar_t* switchGroup, const wchar_t* switchState ) override;
+	void SetRTPC( const wchar_t* rtpcName, float rtpcValue ) override;
 
 protected:
 	virtual void CreateWwiseObject();
