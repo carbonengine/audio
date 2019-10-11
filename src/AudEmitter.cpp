@@ -77,10 +77,10 @@ void AudEmitter::RenderDebugInfo( ITr2DebugRenderer2& renderer )
 	while ( numSpheresController < volumeValue )
 	{
 		float rand1 = 0.1f + static_cast< float >( rand() / double( RAND_MAX ) ) * 0.2f * volumeValue; // random float between 0.1 and 0.3 multiplied by vV
-		float rand2 = static_cast< float >( rand() / double( RAND_MAX ) ) * 0.15f * volumeValue; // random float between 0.0 and 0.15 multiplied by vV
+		float rand2 = static_cast< float >( rand() / double( RAND_MAX ) ) * 0.15f; // random float between 0.0 and 0.15 multiplied by vV
 
-		Tr2DebugColor debugColor = Color( volumeValue, 0.5f * reversedVV * reversedVV + rand1,
-										  numSpheresController * volumeValue * 0.5f, 0.6f + 0.4f * reversedVV );
+		Tr2DebugColor debugColor = Color(volumeValue, 0.5f * reversedVV * reversedVV + rand1,
+		                                 volumeValue * (numSpheresController * 0.5f + rand2), 0.6f + 0.4f * reversedVV);
 
 		// a random offset based on volume intensity
 		Vector3 varianceVector = Vector3(
