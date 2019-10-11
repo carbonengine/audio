@@ -9,7 +9,7 @@
 #include "trinity/include/ITriCurveLength.h"
 #include "blue/include/IBlueEventListener.h"
 #include "CcpMath/include/Vector3.h"
-#include "trinity/TriObserverLocal.h"
+#include "trinity/include/ITriObserverLocal.h"
 
 BLUE_DECLARE( AudEventCurve );
 
