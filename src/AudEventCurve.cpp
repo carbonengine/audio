@@ -2,7 +2,6 @@
 #include "AudEventCurve.h"
 #include "AudEmitter.h"
 #include "CcpMath/include/Vector3.h"
-#include "trinity/TriObserverLocal.h"
 
 BLUE_DEFINE_INTERFACE( ITriObserverLocal );
 
