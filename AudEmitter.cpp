@@ -3,8 +3,14 @@
 #include "Vector3.h"
 
 #include <AK/SoundEngine/Common/AkSoundEngine.h>
+#include <AK/SoundEngine/Common/AkQueryParameters.h>
 
-AudEmitter::AudEmitter( IRoot* lockobj ) : AudGameObjResource( lockobj ), PARENTLOCK( m_position ), m_TEMP_testShitVariable( 0.f ), m_TEMP_testShitVariable2( true )
+AudEmitter::AudEmitter( IRoot* lockobj ) : 
+	AudGameObjResource( lockobj ), 
+	PARENTLOCK( m_position ), 
+	m_debugPosition(0, 0, 0), 
+	m_TEMP_testShitVariable( 0.f ), 
+	m_TEMP_testShitVariable2( true )
 {
 }
 
@@ -61,7 +67,7 @@ void AudEmitter::RenderDebugInfo( ITr2DebugRenderer2& renderer )
 	}
 	//-------------------- not temp ------------
 
-	const float emitterRange = 20000.f;							// @Eric : replace this with the emitter range
+	const float emitterRange = AK::SoundEngine::Query::GetMaxRadius(m_ID);							// @Eric : replace this with the emitter range
 	const float VolumeNormalized = m_TEMP_testShitVariable;		// @Eric :replace this with a normalize of the volume ( loudness scale from 0 to 1 )
 
 
