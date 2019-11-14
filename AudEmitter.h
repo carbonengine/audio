@@ -64,9 +64,7 @@ public:
 protected:
 	PAudPosition m_position;
 	Vector3 m_debugPosition;
-
-	float m_TEMP_testShitVariable;
-	bool m_TEMP_testShitVariable2;
+	Color m_debugColor;
 };
 
 TYPEDEF_BLUECLASS( AudEmitter );
