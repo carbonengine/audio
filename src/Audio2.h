@@ -23,6 +23,7 @@ const float WISE_INIT_POSITION = 1.0e+7F;
 
 extern bool g_audioEnabled;
 extern bool g_audioInitialized;
+extern bool g_debugDisplayAllEmitters;
 
 extern IBlueCallbackManPtr g_mainThreadQueue;
 

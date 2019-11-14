@@ -28,6 +28,7 @@ const char* g_moduleName = "audio2";
 HINSTANCE gInstance = NULL;
 bool g_audioEnabled = false;
 bool g_audioInitialized = false;
+bool g_debugDisplayAllEmitters = false;
 
 IBlueCallbackManPtr g_mainThreadQueue;
 

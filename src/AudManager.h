@@ -96,7 +96,7 @@ public:
 	static void RemovePythonReference();
 
 	// Bank loading
-	void LoadBank( const std::wstring& name );
+	bool LoadBank( const std::wstring& name );
 	void UnloadBank( const std::wstring& name );
 	void ClearBanks();
 
@@ -124,6 +124,10 @@ public:
 
 	void SetDebugEventName( const std::wstring& eventName );
 	void SetDebugSwitch( const std::wstring& switchGroup, const std::wstring& switchName );
+
+	void EnableDebugDisplayAllEmitters();
+	void DisableDebugDisplayAllEmitters();
+	bool GetDebugDisplayAllEmitters();
 
 private:
 	// Please note these inits need to be done in this order!

@@ -333,7 +333,7 @@ namespace
 	}
 }
 
-void AudManager::LoadBank( const std::wstring& name )
+bool AudManager::LoadBank( const std::wstring& name )
 {
 	{
 		// Ensure iterators go out of scope before we call WaitForLoadUnload below
@@ -343,9 +343,8 @@ void AudManager::LoadBank( const std::wstring& name )
 		BankVector::iterator result = std::find( m_loadedBanks.begin(), end, name );
 		if( result != end )
 		{
-			return;
+			return false;
 		}
-
 		m_loadedBanks.push_back( name );
 	}
 
@@ -356,8 +355,8 @@ void AudManager::LoadBank( const std::wstring& name )
 		AKRESULT result = AK::SoundEngine::LoadBank( name.c_str(), BankLoadUnloadCb, status, AK_DEFAULT_POOL_ID, tmp );
 		if( result == AK_Fail )
 		{
-			CCP_LOGERR( "AK::SoundEngine::LoadBank failed for %S", name.c_str() );
-			return;
+			CCP_LOGERR( "AK::SoundEngine::LoadBank failed scheduling for %S", name.c_str() );
+			return false;
 		}
 
 		CCP_LOG( "AK::SoundEngine::LoadBank scheduled for %S", name.c_str() );
@@ -365,9 +364,18 @@ void AudManager::LoadBank( const std::wstring& name )
 		WaitForLoadUnload( status );
 
 		ProcessWaitingEvents( );
+
+		if ( status->result == AK_Fail )
+		{
+			return false;
+		}
 		
 		CCP_DELETE status;
 		CCP_LOG( "AK::SoundEngine::LoadBank done for %S", name.c_str() );
+		return true;
+	}
+	else {
+		return false;
 	}
 }
 
@@ -581,4 +589,19 @@ void AudManager::SetDebugSwitch( const std::wstring& switchGroup, const std::wst
 void AudManager::SetApplicationName( std::string applicationName )
 {
 	m_applicationName = applicationName;
+}
+
+void AudManager::EnableDebugDisplayAllEmitters()
+{
+	g_debugDisplayAllEmitters = true;
+}
+
+void AudManager::DisableDebugDisplayAllEmitters()
+{
+	g_debugDisplayAllEmitters = false;
+}
+
+bool AudManager::GetDebugDisplayAllEmitters()
+{
+	return g_debugDisplayAllEmitters;
 }
