@@ -28,12 +28,9 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 							 "\tnewStatus -- Boolean that dictates the status of Wwise."
 						   )
 		MAP_METHOD_AND_WRAP( "LoadBank", LoadBank,
-							 "Description:\n"
-							 "\tLoads a sound bank from disk.\n"
-							 "Signature:\n"
-							 "\tLoadBank( name ) -> None\n"
-							 "Parameters:\n"
-							 "\tname -- Name of the soundbank to load. UNICODE!"
+							 "Loads a sound bank from disk."
+							 ":param: name -- Name of the soundbank to load. UNICODE!"
+							 ":return: True or False depending on if the call to LoadBank failed or not."
 						   )
 		MAP_METHOD_AND_WRAP( "UnloadBank", UnloadBank, 
 							 "Description:\n"
@@ -81,6 +78,18 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 							SetApplicationName,
 							"Sets the application name to be used when remote debugging with Wwise."
 							":param applicationName: A string defining the name of the application audio2 is running inside."
+						   )
+		MAP_METHOD_AND_WRAP("EnableDebugDisplayAllEmitters",
+							EnableDebugDisplayAllEmitters,
+							"Forces all AudEmitter's to render their debug info on screen."
+						   )
+		MAP_METHOD_AND_WRAP("DisableDebugDisplayAllEmitters",
+							DisableDebugDisplayAllEmitters,
+							"Stops the displaying of all AudEmitter debug info on screen."
+						   )
+		MAP_METHOD_AND_WRAP("GetDebugDisplayAllEmitters",
+							GetDebugDisplayAllEmitters,
+							"Return the value of debugDisplayAllEmitters."
 						   )
 	EXPOSURE_END()
 }
