@@ -19,7 +19,7 @@ General:
   # Compiler settings for all configurations
 ClCompile:
   EnableEnhancedInstructionSet: StreamingSIMDExtensions2
-  PreprocessorDefinitions: 
+  PreprocessorDefinitions:
   # This is to prevent warnings from std::copy
   - _SCL_SECURE_NO_WARNINGS
   - WWISE_EXPORTS
@@ -39,7 +39,7 @@ ClCompile:
 Link:
   GenerateDebugInformation: true
   ProgramDatabaseFile: $(TargetDir)$(TargetName).pdb
-  
+
   AdditionalLibraryDirectories:
   - CCPAudioStream\AudioEngineFX\lib\$(PlatformName)\$(PlatformToolset)
   - $(CcpSdkPath)\directx\february2010\lib\$(PlatformName)
@@ -60,6 +60,7 @@ Link:
   - AkFlangerFX.lib
   - AkGuitarDistortionFX.lib
   - AkHarmonizerFX.lib
+  - AkConvolutionReverbFX.lib
   - dxguid.lib
   - msacm32.lib
 
@@ -97,7 +98,7 @@ Configurations:
       - CCPAudioStreamSource_d.lib
       - CommunicationCentral.lib
       - wsock32.lib
-  
+
   Release|Win32,x64:
     Imports:
     - ../blue/Include/uses_blue.yaml
