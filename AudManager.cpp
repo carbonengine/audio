@@ -20,7 +20,6 @@
 #include <AK/Plugin/AkFlangerFXFactory.h>
 #include <AK/Plugin/AkGuitarDistortionFXFactory.h>
 #include <AK/Plugin/AkHarmonizerFXFactory.h>
-#include <AK/Plugin/AkConvolutionReverbFXFactory.h>
 
 #include "AudManager.h"
 #include "AudSettingsRegistrar.h"
