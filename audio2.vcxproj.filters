@@ -50,9 +50,6 @@
     <ClInclude Include="Audio2.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="AudioEmitter.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="AudListener.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -168,12 +165,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="audio2.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AudioEmitter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AudioEmitter_Blue.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="AudListener.cpp">
