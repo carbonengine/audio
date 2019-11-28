@@ -18,12 +18,13 @@ static AkGameObjectID GenerateEntityID()
 	return s_currentID++;
 }
 
-AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_parameters )
-														 , m_playID( 0 )
-														 , m_playEvent(L"")
-														 , m_playOnLoad( false )
-														 , m_eventPrefix(L"")
-														 , m_scalingFactor( 1.0 )
+AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_parameters ),
+														 m_playID( 0 ),
+														 m_playEvent(L""),
+														 m_playOnLoad( false ),
+														 m_eventPrefix(L""),
+														 m_scalingFactor( 1.0 ),
+														 m_position( 1.0e+7F, 1.0e+7F, 1.0e+7F ) // WWISE INIT POSITION
 {
 	m_ID = GenerateEntityID();
 	m_parameters.SetNotify( this );
@@ -143,8 +144,7 @@ bool AudGameObjResource::Initialize()
 	// after the first update loop
 
 	CreateWwiseObject();
-	Vector3 initpos = Vector3( WISE_INIT_POSITION, WISE_INIT_POSITION, WISE_INIT_POSITION );
-	SetPositionHelper( Vector3(1,0,0), Vector3(0,1,0), initpos );
+	SetPositionHelper( Vector3(1,0,0), Vector3(0,1,0), m_position );
 
 	//Start playing on loading from a red file.
 	if( m_playOnLoad )
@@ -170,10 +170,11 @@ void AudGameObjResource::OnListModified( long event, ssize_t key, ssize_t key2, 
 	}
 }
 	
-void AudGameObjResource::Initialize( const char* name, const wchar_t* prefix )
+void AudGameObjResource::Initialize( const char* name, const wchar_t* prefix, Vector3 position )
 {
 	m_name = name;
 	m_eventPrefix = prefix;
+	m_position = position;
 	Initialize();
 }
 

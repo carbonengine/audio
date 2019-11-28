@@ -68,7 +68,7 @@ public:
 	virtual int SetAttenuationScalingFactor( float value );
 	virtual int SetObstructionAndOcclusion( unsigned int listenerID, float obstruction, float occlusion );
 
-	void Initialize( const char* name, const wchar_t* prefix ) override;
+	void Initialize( const char* name, const wchar_t* prefix, Vector3 position) override;
 	void SendSoundEvent( const wchar_t* eventName ) override;
 	void SetSwitch( const wchar_t* switchGroup, const wchar_t* switchState ) override;
 	void SetRTPC( const wchar_t* rtpcName, float rtpcValue ) override;
@@ -86,6 +86,7 @@ protected:
 	PAudParameterVector m_parameters;
 	std::wstring		m_eventPrefix;
 	float				m_scalingFactor;
+	Vector3				m_position;
 };
 
 TYPEDEF_BLUECLASS( AudGameObjResource );
