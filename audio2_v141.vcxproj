@@ -593,7 +593,6 @@
     <ClInclude Include="AudEventKey.h" />
     <ClInclude Include="AudGameObjResource.h" />
     <ClInclude Include="Audio2.h" />
-    <ClInclude Include="AudioEmitter.h" />
     <ClInclude Include="AudListener.h" />
     <ClInclude Include="AudLowLevelIO.h" />
     <ClInclude Include="AudManager.h" />
@@ -635,8 +634,6 @@
     <ClCompile Include="AudGameObjResource.cpp" />
     <ClCompile Include="AudGameObjResource_Blue.cpp" />
     <ClCompile Include="audio2.cpp" />
-    <ClCompile Include="AudioEmitter.cpp" />
-    <ClCompile Include="AudioEmitter_Blue.cpp" />
     <ClCompile Include="AudListener.cpp" />
     <ClCompile Include="AudListener_Blue.cpp" />
     <ClCompile Include="AudLowLevelIO.cpp" />
