@@ -8,9 +8,9 @@
 															// You can use AkMalloc if you don't open files with FILE_FLAG_NO_BUFFERING flag in the Low-Level IO,
 															// and/or if your I/O hooks call your own high-level scheduler.
 
-// Note that the I/O pool is a FixedSizedBlock-style pool and it has no lock: all allocations have 
+// Note that the I/O pool is a FixedSizedBlock-style pool and it has no lock: all allocations have
 // the same size, which makes it very efficient. System memory alignment depends on the allocation
-// hook. Otherwise, all allocations are aligned to multiples of the granularity. 
+// hook. Otherwise, all allocations are aligned to multiples of the granularity.
 
 #define AK_REQUIRED_IO_POOL_ALIGNMENT		(4)				// No requirement. If granularity is not a multiple of 2 KB, I/O data will be buffered by the system.
 
@@ -22,7 +22,7 @@ AudConfig::AudConfig( IRoot *lockobj )
 	: m_deviceSettings()
 	, m_initSettings()
 	, m_memSettings()
-	, m_musicSettings() 
+	, m_musicSettings()
 	, m_platformInitSettings()
 	, m_streamMgrSettings()
 	, m_threadProperties()
@@ -32,14 +32,14 @@ AudConfig::AudConfig( IRoot *lockobj )
 	// Set all the default values.
 	m_memSettings.uMaxNumPools = 32;
 
-	m_streamMgrSettings.uMemorySize = 64*1024;
+	m_streamMgrSettings.uMemorySize = 128*1024;
 
 	m_threadProperties.nPriority = AK_THREAD_PRIORITY_ABOVE_NORMAL;
     m_threadProperties.dwAffinityMask = 0;
 	m_threadProperties.uStackSize = AK_DEFAULT_STACK_SIZE;
-    
-    // IMPORTANT NOTICE: This mus define ALL device settings since we 
-    // cannot call Ak::StreamMgr::GetDefaultDeviceSettings() here, 
+
+    // IMPORTANT NOTICE: This mus define ALL device settings since we
+    // cannot call Ak::StreamMgr::GetDefaultDeviceSettings() here,
     // as the prebuilt binary contains generated SSE code to fill the FP value.
 	m_deviceSettings.pIOMemory		    = NULL;
 	m_deviceSettings.uIOMemoryAlignment	= AK_REQUIRED_IO_POOL_ALIGNMENT;
