@@ -1,4 +1,4 @@
-/* 
+/*
 	*************************************************************************************
 
 	AudEmitter.h
@@ -8,7 +8,7 @@
 	OS:        Win32
 	Project:   Audio2
 
-	Description:   
+	Description:
 
 		An audio entity ingame. Wrapper for the GameObject concept in Wwise.
 
@@ -34,13 +34,16 @@
 
 #include "CcpMath/include/CcpMath.h"
 #include "trinity/Include/ITr2DebugRenderer2.h"
+#include "trinity/Audio/ITr2AudEmitter.h"
 
 
 struct Vector3;
 
-BLUE_CLASS( AudEmitter ) : public IBluePlacementObserver
-						 , public AudGameObjResource
-						 , public ITr2DebugRenderable
+BLUE_CLASS( AudEmitter ) :
+	public IBluePlacementObserver,
+	public AudGameObjResource,
+	public ITr2DebugRenderable,
+	public ITr2AudEmitter
 {
 public:
 	AudEmitter( IRoot* lockobj = NULL );
@@ -53,9 +56,12 @@ public:
 	//--------------------------
 	// IBluePlacementObserver
 	virtual void UpdatePlacement( const Vector3& front, const Vector3& top, const Vector3& pos );
-
 	void Py__init__( const std::string& name );
+
+	//ITr2AudEmitter
+	void SetName( const std::string name );
 	virtual int SetPosition( const Vector3& front, const Vector3& top, const Vector3& pos );
+	unsigned int SendEvent( const std::wstring& name );
 
 	// Debug
 	virtual	void GetDebugOptions( Tr2DebugRendererOptions& options );

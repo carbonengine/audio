@@ -4,6 +4,7 @@
 #include "Vector3.h"
 
 BLUE_DEFINE( AudEmitter );
+BLUE_DEFINE_INTERFACE( ITr2AudEmitter );
 
 void AudEmitter::Py__init__( const std::string& name )
 {
@@ -17,6 +18,7 @@ const Be::ClassInfo* AudEmitter::ExposeToBlue()
 		MAP_INTERFACE( IBluePlacementObserver )
 		MAP_INTERFACE( AudGameObjResource )
 		MAP_INTERFACE( AudEmitter )
+		MAP_INTERFACE( ITr2AudEmitter )
 
 		MAP_METHOD_AND_WRAP_OPTIONAL_ARGS("__init__", Py__init__, 1, 
 			"Takes in a name of the emitter created as a string.\n"

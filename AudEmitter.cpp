@@ -5,9 +5,9 @@
 #include <AK/SoundEngine/Common/AkSoundEngine.h>
 #include <AK/SoundEngine/Common/AkQueryParameters.h>
 
-AudEmitter::AudEmitter( IRoot* lockobj ) : 
-	AudGameObjResource( lockobj ), 
-	PARENTLOCK( m_position ), 
+AudEmitter::AudEmitter( IRoot* lockobj ) :
+	AudGameObjResource( lockobj ),
+	PARENTLOCK( m_position ),
 	m_debugPosition(0, 0, 0),
 	m_debugColor()
 {
@@ -17,19 +17,28 @@ AudEmitter::~AudEmitter()
 {
 }
 
+void AudEmitter::SetName( const std::string name )
+{
+	m_name = name;
+}
+
 int AudEmitter::SetPosition( const Vector3& front, const Vector3& top, const Vector3& pos )
 {
 	m_debugPosition = pos;
 	return SetPositionHelper( front, top, pos );
 }
 
+unsigned int AudEmitter::SendEvent( const std::wstring& name )
+{
+	return AudGameObjResource::SendEvent( name );
+}
+
 //----------------------------------
-// Blue Interfaces
+// Needed for IBluePlacementObserver interface.
 //----------------------------------
 void AudEmitter::UpdatePlacement(const Vector3& front, const Vector3& top, const Vector3& pos )
 {
-	m_debugPosition = pos;
-	SetPositionHelper( front, top, pos );	//g_audioInitialized is checked in SetPositionHelper
+	SetPosition( front, top, pos );
 }
 
 // Debug
