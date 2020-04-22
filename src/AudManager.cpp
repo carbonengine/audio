@@ -88,16 +88,24 @@ void AudManager::Process()
 			}
 		}
 
-		if ( m_debugEventCallback && !m_debugLastPlayedEvent.empty() )
+		CcpAutoMutex eventMutex ( m_debugLastPlayedEventMutex ); //Releases when variable is out of scope.
+		if ( m_debugEventCallback && !m_debugLastPlayedEvents.empty() )
 		{
-			m_debugEventCallback.CallVoid( m_debugLastPlayedEvent );
-			m_debugLastPlayedEvent = L"";
+			while ( !m_debugLastPlayedEvents.empty() )
+			{
+				m_debugEventCallback.CallVoid( m_debugLastPlayedEvents.front() );
+				m_debugLastPlayedEvents.pop();
+			}
 		}
 
-		if ( m_debugSwitchCallback && !m_debugLastSwitch.empty() )
+		CcpAutoMutex switchMutex( m_debugLastSwitchMutex );
+		if ( m_debugSwitchCallback && !m_debugLastSwitches.empty() )
 		{
-			m_debugSwitchCallback.CallVoid( m_debugLastSwitch);
-			m_debugLastSwitch = L"";
+			while ( !m_debugLastSwitches.empty() )
+			{
+				m_debugSwitchCallback.CallVoid( m_debugLastSwitches.front() );
+				m_debugLastSwitches.pop();
+			}
 		}
 	}
 }
@@ -136,22 +144,22 @@ void AudManager::Terminate()
 	// Terminate the music engine
 	//
 	AK::MusicEngine::Term();
-	
+
 	//Terminate sound engine.
 	if ( AK::SoundEngine::IsInitialized() )
-	{	
+	{
 		// Terminate the sound engine
 		AK::SoundEngine::Term();
 	}
-	
+
 	// Terminate the streaming manager
     if ( AK::IAkStreamMgr::Get() )
-    {   
+    {
         AK::IAkStreamMgr::Get()->Destroy();
     }
 
     //m_pLowLevelIO.p->Term();
-	
+
 	// Terminate the Memory Manager
 	AK::MemoryMgr::Term();
 
@@ -161,7 +169,7 @@ void AudManager::Terminate()
 void AudManager::OnTick( Be::Time realTime, Be::Time simTime, void* cookie )
 {
 	Process();
-	
+
 	BeOS->NextScheduledEvent(m_tickInterval);
 }
 
@@ -220,7 +228,7 @@ bool AudManager::InitCommunication()
 		return false;
 	}
 	#endif
-	
+
 	return true;
 }
 
@@ -360,7 +368,7 @@ bool AudManager::LoadBank( const std::wstring& name )
 		}
 
 		CCP_LOG( "AK::SoundEngine::LoadBank scheduled for %S", name.c_str() );
-		
+
 		WaitForLoadUnload( status );
 
 		ProcessWaitingEvents( );
@@ -369,7 +377,7 @@ bool AudManager::LoadBank( const std::wstring& name )
 		{
 			return false;
 		}
-		
+
 		CCP_DELETE status;
 		CCP_LOG( "AK::SoundEngine::LoadBank done for %S", name.c_str() );
 		return true;
@@ -481,7 +489,7 @@ void AudManager::ProcessWaitingEvents()
 		{
 			it = m_waitingEvents.erase( it );
 		}
-		else 
+		else
 		{
 			++it;
 		}
@@ -572,7 +580,7 @@ void AudManager::SetDebugEventName( const std::wstring& eventName )
 	}
 
 	CcpAutoMutex mutex( m_debugLastPlayedEventMutex );
-	m_debugLastPlayedEvent = eventName;
+	m_debugLastPlayedEvents.push(eventName);
 }
 
 void AudManager::SetDebugSwitch( const std::wstring& switchGroup, const std::wstring& switchName )
@@ -583,7 +591,7 @@ void AudManager::SetDebugSwitch( const std::wstring& switchGroup, const std::wst
 	}
 
 	CcpAutoMutex mutex( m_debugLastSwitchMutex );
-	m_debugLastSwitch = switchGroup + L" -- " + switchName;
+	m_debugLastSwitches.push(switchGroup + L" -- " + switchName);
 }
 
 void AudManager::SetApplicationName( std::string applicationName )

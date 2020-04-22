@@ -1,4 +1,4 @@
-/* 
+/*
 	*************************************************************************************
 
 	AudManager.h
@@ -8,7 +8,7 @@
 	OS:        Win32
 	Project:   Audio2
 
-	Description:   
+	Description:
 
 		TBA
 
@@ -26,6 +26,7 @@
 #ifndef _AUDMANAGER_H_
 #define _AUDMANAGER_H_
 
+#include <queue>
 #include "Audio2.h"
 
 //-----------------------------------------------------------------------------
@@ -62,7 +63,7 @@ typedef std::vector<std::wstring> BankVector;
 typedef std::vector<AkGameObjectID> GameObjIDVector;
 typedef std::set<AudEmitterMulti*> EmitterMultiSet;
 
-struct WaitingEvent 
+struct WaitingEvent
 {
 	AkUniqueID			eventID;
 	AkGameObjectID		gameObjectID;
@@ -74,7 +75,7 @@ BLUE_CLASS( AudManager ) : public IRoot, public IBlueEvents
 public:
 	AudManager( IRoot* lockobj = 0 );
 	~AudManager();
-	
+
 	EXPOSE_TO_BLUE();
 
 	//-----------------------------------------------------------------------------
@@ -89,7 +90,7 @@ public:
 
 	bool Init();
 	void Terminate();
-	
+
 	// Decrefs the static AudManager in AudManager_Blue.cpp
 	// for correct shutdown of python. Called in PythonClientStop
 	// in audio2.cpp
@@ -145,7 +146,7 @@ private:
 	// Adds an AudEmitterMulti to the m_multiEmitters list.
 	void AddMultiEmitterToList(AudEmitterMulti* multiEmitter);
 
-	// Removes an AudEmitterMulti from the m_multiEmitters list. 
+	// Removes an AudEmitterMulti from the m_multiEmitters list.
 	void RemoveMultiEmitterFromList(AudEmitterMulti* multiEmitter);
 
 	// Takes care of updating the location for all AudEmitterMulti on each tick.
@@ -163,7 +164,7 @@ private:
 
 	//Exposed attributes
 	AudConfigPtr m_initConfig;
-	
+
 	#ifndef AK_OPTIMIZED
 		AkCommSettings m_commSettings;
 	#endif
@@ -178,11 +179,11 @@ private:
 
 	//Debug
 	BlueScriptCallback m_debugEventCallback;
-	std::wstring m_debugLastPlayedEvent;
+	std::queue<std::wstring> m_debugLastPlayedEvents;
 	CcpMutex m_debugLastPlayedEventMutex;
 
 	BlueScriptCallback m_debugSwitchCallback;
-	std::wstring m_debugLastSwitch;
+	std::queue<std::wstring> m_debugLastSwitches;
 	CcpMutex m_debugLastSwitchMutex;
 
 	std::string m_applicationName;
