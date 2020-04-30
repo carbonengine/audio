@@ -37,7 +37,6 @@ BLUE_DECLARE( AudPosition );
 // Blue headers specific to this file
 #include <blue/include/IBluePlacementObserver.h>
 #include <blue/include/IBlueEventListener.h>
-#include "trinity/Include/ITr2SoundEmitter.h"
 
 
 struct Vector3;
@@ -45,7 +44,6 @@ struct Vector3;
 BLUE_CLASS( AudGameObjResource ) : public IBlueEventListener
 								 , public IInitialize
 								 , public IListNotify
-								 , public ITr2SoundEmitter
 								 , public AudResource
 {
 public:
@@ -58,20 +56,20 @@ public:
 	// Blue interfaces
 	//--------------------------
 	// IBlueEventListener
-	virtual void HandleEvent( const wchar_t* evtName );
+	virtual void HandleEvent( const wchar_t* evtName ) override;
 	// IInitialized
-	virtual bool Initialize();
+	virtual bool Initialize() override;
 	// IListNotify
-	virtual void OnListModified( long event, ssize_t key, ssize_t key2, IRoot* value, const IList* theList );
+	virtual void OnListModified( long event, ssize_t key, ssize_t key2, IRoot* value, const IList* theList ) override;
 
 	virtual unsigned int SendEvent( const std::wstring& name );
 	virtual int SetAttenuationScalingFactor( float value );
 	virtual int SetObstructionAndOcclusion( unsigned int listenerID, float obstruction, float occlusion );
 
-	void Initialize( const char* name, const wchar_t* prefix, Vector3 position) override;
-	void SendSoundEvent( const wchar_t* eventName ) override;
-	void SetSwitch( const wchar_t* switchGroup, const wchar_t* switchState ) override;
-	void SetRTPC( const wchar_t* rtpcName, float rtpcValue ) override;
+	void Initialize( const std::string& name, const std::wstring& prefix, const Vector3& position );
+	void SendSoundEvent( const wchar_t* eventName );
+	void SetSwitch( const std::wstring& switchGroup, const std::wstring& switchState );
+	void SetRTPC( const std::wstring& rtpcName, float rtpcValue );
 
 protected:
 	virtual void CreateWwiseObject();

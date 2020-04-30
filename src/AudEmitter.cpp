@@ -11,13 +11,24 @@ AudEmitter::AudEmitter( IRoot* lockobj ) :
 	m_debugPosition(0, 0, 0),
 	m_debugColor()
 {
+	Initialize();
 }
 
 AudEmitter::~AudEmitter()
 {
 }
 
-void AudEmitter::SetName( const std::string name )
+bool AudEmitter::Initialize()
+{
+	return AudGameObjResource::Initialize();
+}
+
+void AudEmitter::Initialize( const std::string& name, const std::wstring& prefix, const Vector3& position )
+{
+	AudGameObjResource::Initialize( name, prefix, position );
+}
+
+void AudEmitter::SetName( const std::string& name )
 {
 	m_name = name;
 }
@@ -31,6 +42,22 @@ int AudEmitter::SetPosition( const Vector3& front, const Vector3& top, const Vec
 unsigned int AudEmitter::SendEvent( const std::wstring& name )
 {
 	return AudGameObjResource::SendEvent( name );
+}
+
+std::string AudEmitter::GetName()
+{
+	return m_name;
+}
+
+void AudEmitter::SetSwitch( const std::wstring& switchGroup, const std::wstring& switchState )
+{
+	AudGameObjResource::SetSwitch( switchGroup, switchState );
+}
+
+
+void AudEmitter::SetRTPC( const std::wstring& rtpcName, float rtpcValue )
+{
+	AudGameObjResource::SetRTPC( rtpcName, rtpcValue );
 }
 
 //----------------------------------
