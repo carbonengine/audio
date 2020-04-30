@@ -170,7 +170,7 @@ void AudGameObjResource::OnListModified( long event, ssize_t key, ssize_t key2, 
 	}
 }
 	
-void AudGameObjResource::Initialize( const char* name, const wchar_t* prefix, Vector3 position )
+void AudGameObjResource::Initialize( const std::string& name, const std::wstring& prefix, const Vector3& position )
 {
 	m_name = name;
 	m_eventPrefix = prefix;
@@ -183,19 +183,19 @@ void AudGameObjResource::SendSoundEvent( const wchar_t* eventName )
 	SendEvent( eventName );
 }
 
-void AudGameObjResource::SetSwitch( const wchar_t* switchGroup, const wchar_t* switchState )
+void AudGameObjResource::SetSwitch( const std::wstring& switchGroup, const std::wstring& switchState )
 {
 	if ( g_audioInitialized ) 
 	{
-		AK::SoundEngine::SetSwitch( switchGroup, switchState, m_ID );
+		AK::SoundEngine::SetSwitch( switchGroup.c_str(), switchState.c_str(), m_ID );
 		g_audioManager->SetDebugSwitch( switchGroup, switchState );
 	}
 }
 
-void AudGameObjResource::SetRTPC( const wchar_t* rtpcName, float rtpcValue )
+void AudGameObjResource::SetRTPC( const std::wstring& rtpcName, float rtpcValue )
 {
 	if ( g_audioInitialized )
 	{
-		AK::SoundEngine::SetRTPCValue( rtpcName, AkRtpcValue(rtpcValue), m_ID );
+		AK::SoundEngine::SetRTPCValue( rtpcName.c_str(), AkRtpcValue(rtpcValue), m_ID );
 	}
 }

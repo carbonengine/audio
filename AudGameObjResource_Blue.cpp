@@ -14,7 +14,6 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 		MAP_INTERFACE( IBlueEventListener )
 		MAP_INTERFACE( IInitialize )
 		MAP_INTERFACE( IListNotify )
-		MAP_INTERFACE( ITr2SoundEmitter )
 		MAP_INTERFACE( AudGameObjResource )
 
 		MAP_ATTRIBUTE( "ID", m_ID, "ID number of emitter.", Be::READ )
@@ -28,7 +27,7 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 							 "Description:\n"
 							 "\tSends an event to the audio system and returns an ID for\n"
 							 "\tthe playing stream or AK_INVALID_PLAYING_ID if it is unable\n"
-							 "\tto play it.\n" 
+							 "\tto play it.\n"
 							 "Signature:\n"
 							 "\tSendEvent( eventName ) -> playingID\n"
 							 "Parameters:\n"
@@ -39,7 +38,7 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 							 "\tSet the scaling factor of a game object. Modify the attenuation computations\n"
 							 "\ton this game object to simulate sounds with a a larger or smaller area of effect.\n"
 							 "\tReturns AK_Success if successful, AK_InvalidParameter if the scaling factor\n"
-							 "\tspecified was 0 or negative.\n" 
+							 "\tspecified was 0 or negative.\n"
 							 "Signature:\n"
 							 "\tUpdateParameter( value ) -> success/fail code\n"
 							 "Parameters:\n"
@@ -66,7 +65,7 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 							 "\tgroupName -- Switch group string name.\n"
 							 "\tswitchName -- Switch name to enable\n"
 						   )
-		MAP_METHOD_AND_WRAP( "SetRTPC", 
+		MAP_METHOD_AND_WRAP( "SetRTPC",
 							 SetRTPC,
 						     "Set an RTPC value on the game object.\n"
 							 ":type rtpcName: str\n"
