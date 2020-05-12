@@ -57,15 +57,15 @@ public:
 	// IBluePlacementObserver
 	virtual void UpdatePlacement( const Vector3& front, const Vector3& top, const Vector3& pos );
 	void Py__init__( const std::string& name );
-	
+
 	// IInitialized
 	bool Initialize();
 
 	//ITr2AudEmitter
 	void Initialize( const std::string& name, const std::wstring& prefix, const Vector3& position ) override;
+	unsigned int SendEvent( const std::wstring& name, bool bypassPrefix = false ) override;
 	int SetPosition( const Vector3& front, const Vector3& top, const Vector3& pos ) override;
 	void SetName( const std::string& name ) override;
-	unsigned int SendEvent( const std::wstring& name ) override;
 	void SetSwitch( const std::wstring& switchGroup, const std::wstring& switchState ) override;
 	void SetRTPC( const std::wstring& rtpcName, float rtpcValue ) override;
 	std::string GetName() override;
