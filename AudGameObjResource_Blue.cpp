@@ -23,16 +23,15 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 		MAP_ATTRIBUTE( "eventPrefix", m_eventPrefix, "A string that will be prefixed to all events using this emitter", Be::READWRITE | Be::PERSIST )
 		MAP_ATTRIBUTE( "scalingFactor", m_scalingFactor, "The scaling factor of the attenuation used for the sounds played using this emitter", Be::READ )
 
-		MAP_METHOD_AND_WRAP( "SendEvent", SendEvent,
-							 "Description:\n"
-							 "\tSends an event to the audio system and returns an ID for\n"
-							 "\tthe playing stream or AK_INVALID_PLAYING_ID if it is unable\n"
-							 "\tto play it.\n"
-							 "Signature:\n"
-							 "\tSendEvent( eventName ) -> playingID\n"
-							 "Parameters:\n"
-							 "\teventName -- Name of the event the sound engine should execute. UNICODE!"
-						   )
+		MAP_METHOD_AND_WRAP_OPTIONAL_ARGS
+		( 
+			"SendEvent", 
+			SendEvent, 
+			1,
+		    "Sends an event to the audio system and returns an ID for the playing stream.\n"
+			":param eventName: The name of the event to send to the sound engine\n"
+			":param bypassPrefix: An optional argument that bypasses the audio emitters defined prefix if set to True."
+		)
 		MAP_METHOD_AND_WRAP( "SetAttenuationScalingFactor", SetAttenuationScalingFactor,
 							 "Description:\n"
 							 "\tSet the scaling factor of a game object. Modify the attenuation computations\n"
