@@ -36,7 +36,7 @@ AudGameObjResource::~AudGameObjResource()
         {
 		// Silence the game object and put it on death row!
 		AK::SoundEngine::PostEvent( L"fade_out", m_ID );
-		
+
 		g_audioManager->AddToDestructionVector( m_ID );
 	}
 }
@@ -58,27 +58,18 @@ void AudGameObjResource::LogInfo()
 	//}
 }
 
-unsigned int AudGameObjResource::SendEvent( const std::wstring& name )
+unsigned int AudGameObjResource::SendEvent( const std::wstring& name, bool bypassPrefix )
 {
 	if( g_audioInitialized )
 	{
-		std::wstring eventName;
-		if (m_eventPrefix != L"")
-		{
-			eventName = std::wstring(m_eventPrefix) + std::wstring(name);
-		}
-		else
-		{
-			eventName = name;
-		}
+		const wchar_t* eventName = PrepareEvent( name, bypassPrefix );
 
-		m_playID = AK::SoundEngine::PostEvent( eventName.c_str(), m_ID );
-
+		m_playID = AK::SoundEngine::PostEvent( eventName, m_ID );
 		g_audioManager->SetDebugEventName( eventName );
 
 		if (m_playID == AK_INVALID_PLAYING_ID)
 		{
-			AkUniqueID eventID = AK::SoundEngine::GetIDFromString(eventName.c_str());
+			AkUniqueID eventID = AK::SoundEngine::GetIDFromString(eventName);
 			g_audioManager->AddWaitingEvent(eventID, m_ID);
 		}
 		return m_playID;
@@ -140,7 +131,7 @@ bool AudGameObjResource::Initialize()
 	// starts playing, an update loop occurs and it gets put to it's correct place
 	// in world space.
 	// What this does it that it takes the entity and places it as far away as it
-	// can during this initial phase and then it get placed to its correct place 
+	// can during this initial phase and then it get placed to its correct place
 	// after the first update loop
 
 	CreateWwiseObject();
@@ -169,7 +160,7 @@ void AudGameObjResource::OnListModified( long event, ssize_t key, ssize_t key2, 
 		}
 	}
 }
-	
+
 void AudGameObjResource::Initialize( const std::string& name, const std::wstring& prefix, const Vector3& position )
 {
 	m_name = name;
@@ -185,7 +176,7 @@ void AudGameObjResource::SendSoundEvent( const wchar_t* eventName )
 
 void AudGameObjResource::SetSwitch( const std::wstring& switchGroup, const std::wstring& switchState )
 {
-	if ( g_audioInitialized ) 
+	if ( g_audioInitialized )
 	{
 		AK::SoundEngine::SetSwitch( switchGroup.c_str(), switchState.c_str(), m_ID );
 		g_audioManager->SetDebugSwitch( switchGroup, switchState );
@@ -198,4 +189,22 @@ void AudGameObjResource::SetRTPC( const std::wstring& rtpcName, float rtpcValue 
 	{
 		AK::SoundEngine::SetRTPCValue( rtpcName.c_str(), AkRtpcValue(rtpcValue), m_ID );
 	}
+}
+
+// Formats events to be sent to Wwise. bypassPrefix determines whether or not to apply the prefix
+// defined on the emitter to the event.
+const wchar_t* AudGameObjResource::PrepareEvent( const std::wstring& event, bool bypassPrefix )
+{
+	std::wstring eventName;
+	if ( m_eventPrefix != L"" && bypassPrefix == false )
+	{
+		eventName = std::wstring(m_eventPrefix) + std::wstring(event);
+	}
+	else
+	{
+		eventName = event;
+	}
+
+
+	return eventName.c_str();
 }

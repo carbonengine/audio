@@ -39,9 +39,9 @@ int AudEmitter::SetPosition( const Vector3& front, const Vector3& top, const Vec
 	return SetPositionHelper( front, top, pos );
 }
 
-unsigned int AudEmitter::SendEvent( const std::wstring& name )
+unsigned int AudEmitter::SendEvent( const std::wstring& name, bool bypassPrefix )
 {
-	return AudGameObjResource::SendEvent( name );
+	return AudGameObjResource::SendEvent( name, bypassPrefix );
 }
 
 std::string AudEmitter::GetName()

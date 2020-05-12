@@ -1,4 +1,4 @@
-/* 
+/*
 	*************************************************************************************
 
 	AudGameObjResource.h
@@ -8,7 +8,7 @@
 	OS:        Win32
 	Project:   Audio2
 
-	Description:   
+	Description:
 
 		Audio2 resource for game objects and derivatives.
 
@@ -23,8 +23,6 @@
 */
 
 #pragma once
-#ifndef _AUDGAMEOBJRESOURCE_H_
-#define _AUDGAMEOBJRESOURCE_H_
 
 #include "Audio2.h"
 #include "AudResource.h"
@@ -62,7 +60,7 @@ public:
 	// IListNotify
 	virtual void OnListModified( long event, ssize_t key, ssize_t key2, IRoot* value, const IList* theList ) override;
 
-	virtual unsigned int SendEvent( const std::wstring& name );
+	virtual unsigned int SendEvent( const std::wstring& name, bool bypassPrefix = false );
 	virtual int SetAttenuationScalingFactor( float value );
 	virtual int SetObstructionAndOcclusion( unsigned int listenerID, float obstruction, float occlusion );
 
@@ -85,8 +83,9 @@ protected:
 	std::wstring		m_eventPrefix;
 	float				m_scalingFactor;
 	Vector3				m_position;
+	bool				bypassPrefix;
+private:
+	const wchar_t* PrepareEvent( const std::wstring& event, bool bypassPrefix );
 };
 
 TYPEDEF_BLUECLASS( AudGameObjResource );
-
-#endif
