@@ -10,6 +10,7 @@ Imports:
 - ../core_project/core_project.yaml
 - ../manifests/manifests.props
 - ../CcpMath/uses_CcpMath.yaml
+- ../../../vendor/wwise/v2017.2.10.6745/wwise.yaml
 
 # Settings from the General section, for all configurations
 General:
@@ -32,8 +33,6 @@ ClCompile:
   WarningLevel: Level3
   TreatWarningAsError: true
   BufferSecurityCheck: false
-  AdditionalIncludeDirectories:
-  - $(CcpSdkPath)\wwise\v2017.2.10.6745\include
 
 # Linker settings for all configurations
 Link:
@@ -75,30 +74,6 @@ ResourceCompile:
 
 # Here come the different configurations
 Configurations:
-  Debug|Win32,x64:
-    Imports:
-    - ../blue/Include/uses_blue.yaml
-    General:
-      TargetName: _$(ProjectName)_d
-      LinkIncremental: true
-    UserMacros:
-      CcpConfigType: Debug
-    ClCompile:
-      PreprocessorDefinitions:
-      - _DEBUG
-      - BLUE_DLL_NAME=_$(ProjectName)
-      Optimization: Disabled
-      RuntimeLibrary: MultiThreadedDebugDLL
-      DebugInformationFormat: EditAndContinue
-    Link:
-      AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2017.2.10.6745\$(Platform)_vc100\Debug\lib
-
-      AdditionalDependencies:
-      - CCPAudioStreamSource_d.lib
-      - CommunicationCentral.lib
-      - wsock32.lib
-
   Release|Win32,x64:
     Imports:
     - ../blue/Include/uses_blue.yaml
@@ -119,8 +94,6 @@ Configurations:
       WholeProgramOptimization: true
     Link:
       LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
-      AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2017.2.10.6745\$(Platform)_vc100\Release\lib
       AdditionalDependencies:
       - CCPAudioStreamSource.lib
 
@@ -143,8 +116,6 @@ Configurations:
       WholeProgramOptimization: true
     Link:
       LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
-      AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2017.2.10.6745\$(Platform)_vc100\Profile\lib
       AdditionalDependencies:
       - CCPAudioStreamSource_dev.lib
       - CommunicationCentral.lib
@@ -170,8 +141,6 @@ Configurations:
       WholeProgramOptimization: true
     Link:
       LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
-      AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2017.2.10.6745\$(Platform)_vc100\Release\lib
       AdditionalDependencies:
       - CCPAudioStreamSource.lib
 
@@ -195,7 +164,5 @@ Configurations:
       WholeProgramOptimization: true
     Link:
       LinkTimeCodeGeneration: UseLinkTimeCodeGeneration
-      AdditionalLibraryDirectories:
-      - $(CcpSdkPath)\wwise\v2017.2.10.6745\$(Platform)_vc100\Release\lib
       AdditionalDependencies:
       - CCPAudioStreamSource.lib
