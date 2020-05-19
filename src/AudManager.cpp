@@ -573,13 +573,18 @@ void AudManager::StopAll()
 
 void AudManager::RegisterAudEmitter( AudEmitter* emitter )
 {
-	m_audioEmitters.push_back( emitter );
+	if ( g_audioInitialized )
+	{
+		m_audioEmitters.push_back( emitter );
+	}
 }
 
 void AudManager::UnregisterAudEmitter( AudEmitter* emitter )
 {
-	m_audioEmitters.erase( std::remove( m_audioEmitters.begin(), m_audioEmitters.end(), emitter ), m_audioEmitters.end() );
-
+	if ( g_audioInitialized )
+	{
+		m_audioEmitters.erase( std::remove( m_audioEmitters.begin(), m_audioEmitters.end(), emitter ), m_audioEmitters.end() );
+	}
 }
 
 void AudManager::RegisterDebugEventCallback( BlueScriptCallback callback )
