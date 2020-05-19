@@ -36,7 +36,6 @@
 #include "trinity/Include/ITr2DebugRenderer2.h"
 #include "trinity/Audio/ITr2AudEmitter.h"
 
-
 struct Vector3;
 
 BLUE_CLASS( AudEmitter ) :
@@ -68,16 +67,24 @@ public:
 	void SetName( const std::string& name ) override;
 	void SetSwitch( const std::wstring& switchGroup, const std::wstring& switchState ) override;
 	void SetRTPC( const std::wstring& rtpcName, float rtpcValue ) override;
+	int SetAttenuationScalingFactor( const float scalingFactor ) override;
 	std::string GetName() override;
 
 	// Debug
 	virtual	void GetDebugOptions( Tr2DebugRendererOptions& options );
 	virtual	void RenderDebugInfo( ITr2DebugRenderer2& renderer );
 
+	// AudEmitter
+	void StopAll(); // Stop all sounds on this audio emitter.
+	void StopSound( AkPlayingID playingID ); // Stop sounds by Wwise PlayID.
+	bool StopEvent( std::wstring eventName ); // Stop all sounds associated with an event.
+
 protected:
 	PAudPosition m_position;
 	Vector3 m_debugPosition;
 	Color m_debugColor;
+private:
+	std::map<std::wstring, unsigned int> m_playingEvents;
 };
 
 TYPEDEF_BLUECLASS( AudEmitter );

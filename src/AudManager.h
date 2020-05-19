@@ -49,6 +49,7 @@ BLUE_DECLARE( AudSettings );
 BLUE_DECLARE( AudConfig );
 BLUE_DECLARE( AudLowLevelIO );
 BLUE_DECLARE( AudEmitterMulti );
+BLUE_DECLARE( AudEmitter );
 
 //Audio communication settings
 #ifndef AK_OPTIMIZED
@@ -130,6 +131,10 @@ public:
 	void DisableDebugDisplayAllEmitters();
 	bool GetDebugDisplayAllEmitters();
 
+	void RegisterAudEmitter( AudEmitter* emitter );
+	void UnregisterAudEmitter( AudEmitter* emitter );
+	void StopAll();
+
 private:
 	// Please note these inits need to be done in this order!
 	bool InitLowLevel();
@@ -176,6 +181,8 @@ private:
 	CcpMutex m_waitingEventsMutex;
 	CcpMutex m_multiEmitterMutex;
 	bool m_useDoppler;
+
+	std::vector<AudEmitter*> m_audioEmitters;
 
 	//Debug
 	BlueScriptCallback m_debugEventCallback;

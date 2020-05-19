@@ -73,6 +73,7 @@ protected:
 	virtual void CreateWwiseObject();
 	virtual void LogInfo();
 	virtual int SetPositionHelper( const Vector3& front, const Vector3& top, const Vector3& position );
+	const wchar_t* PrepareEvent( const std::wstring& event, bool bypassPrefix );
 
 	AkGameObjectID		m_ID;
 	std::string			m_name;
@@ -84,8 +85,6 @@ protected:
 	float				m_scalingFactor;
 	Vector3				m_position;
 	bool				bypassPrefix;
-private:
-	const wchar_t* PrepareEvent( const std::wstring& event, bool bypassPrefix );
 };
 
 TYPEDEF_BLUECLASS( AudGameObjResource );
