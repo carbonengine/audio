@@ -29,6 +29,7 @@
 #include "AudConfig.h"
 #include "AudLowLevelIO.h"
 #include "AudEmitterMulti.h"
+#include "AudEmitter.h"
 
 static CcpLogChannel_t s_ch = CCP_LOG_DEFINE_CHANNEL( "WwiseAssert" );
 
@@ -560,6 +561,25 @@ Be::Result<std::string> AudManager::GetEmitterForEventName( const std::wstring& 
 			return Be::Result<std::string>();
 		}
 	}
+}
+
+void AudManager::StopAll()
+{
+	for ( auto it = m_audioEmitters.begin(); it != m_audioEmitters.end(); ++it)
+	{
+		( *it )->StopAll();
+	}
+}
+
+void AudManager::RegisterAudEmitter( AudEmitter* emitter )
+{
+	m_audioEmitters.push_back( emitter );
+}
+
+void AudManager::UnregisterAudEmitter( AudEmitter* emitter )
+{
+	m_audioEmitters.erase( std::remove( m_audioEmitters.begin(), m_audioEmitters.end(), emitter ), m_audioEmitters.end() );
+
 }
 
 void AudManager::RegisterDebugEventCallback( BlueScriptCallback callback )

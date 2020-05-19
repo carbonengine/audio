@@ -193,7 +193,7 @@
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Dev|x64'">.dll</TargetExt>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Dev|x64'">../../autobuild/$(ProjectName)/exefile/$(Platform)/$(PlatformToolset)/</OutDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Dev|x64'">_$(ProjectName)_dev</TargetName>
-    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Dev|x64'">False</LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Dev|x64'">true</LinkIncremental>
     <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release_26|Win32'">.pyd</TargetExt>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release_26|Win32'">../../autobuild/$(ProjectName)/python_26/$(Platform)/$(PlatformToolset)/</OutDir>
     <TargetName Condition="'$(Configuration)|$(Platform)'=='Release_26|Win32'">_$(ProjectName)</TargetName>
@@ -346,8 +346,8 @@
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <AdditionalIncludeDirectories>$(CcpSdkPath)\telemetry\3.0.1.1719\include;..\..\..\carbon\src\stackless\include;..\..\..\carbon\src\stackless\pc;..\..\..\carbon\src\stackless\stackless;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)/wwise/v2017.2.10.6745/include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>True</MultiProcessorCompilation>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-      <WholeProgramOptimization>True</WholeProgramOptimization>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
       <TreatWarningAsError>True</TreatWarningAsError>
       <PrecompiledHeaderOutputFile>$(IntDir)$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <BufferSecurityCheck>False</BufferSecurityCheck>
@@ -355,10 +355,14 @@
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <Optimization>Disabled</Optimization>
       <WarningLevel>Level3</WarningLevel>
+      <MinimalRebuild>false</MinimalRebuild>
+      <FunctionLevelLinking>
+      </FunctionLevelLinking>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>True</GenerateDebugInformation>
-      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration>
+      </LinkTimeCodeGeneration>
       <AdditionalLibraryDirectories>$(CcpSdkPath)/wwise/v2017.2.10.6745/lib/$(Platform)/Profile/$(PlatformToolset);$(CcpSdkPath)\telemetry\3.0.1.1719\lib;../../../carbon/autobuild/blue/exefile/$(Platform)/$(PlatformToolset)/;..\..\..\carbon\autobuild\stackless\$(Platform)\$(PlatformToolset);$(CcpSdkPath)\directx\february2010\lib\$(PlatformName);../../../carbon/autobuild/CcpMath/$(Platform)/$(PlatformToolset)/;CCPAudioStream\AudioEngineFX\lib\$(PlatformName)\$(PlatformToolset);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ProgramDatabaseFile>$(TargetDir)$(TargetName).pdb</ProgramDatabaseFile>
       <AdditionalDependencies>CCPAudioStreamSource_dev.lib;CcpMath.lib;CommunicationCentral.lib;blue.lib;python27.lib;rad_tm_win64.lib;wsock32.lib;AkCompressorFX.lib;AkConvolutionReverbFX.lib;AkFlangerFX.lib;AkGuitarDistortionFX.lib;AkHarmonizerFX.lib;AkMatrixReverbFX.lib;AkMemoryMgr.lib;AkMeterFX.lib;AkMusicEngine.lib;AkParametricEQFX.lib;AkPeakLimiterFX.lib;AkRoomVerbFX.lib;AkSilenceSource.lib;AkSoundEngine.lib;AkStreamMgr.lib;AkVorbisDecoder.lib;dxguid.lib;msacm32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -497,6 +501,7 @@
     <ClInclude Include="AudSettingsRegistrar.h" />
     <ClInclude Include="AudUIPlayer.h" />
     <ClInclude Include="autoversion.h" />
+    <ClInclude Include="DebugUtilities.h" />
     <ClInclude Include="IAudLowLevelIO.h" />
     <ClInclude Include="LogBridge.h" />
     <ClInclude Include="Mutex.h" />
@@ -542,6 +547,7 @@
     <ClCompile Include="AudSettings_Blue.cpp" />
     <ClCompile Include="AudUIPlayer.cpp" />
     <ClCompile Include="AudUIPlayer_Blue.cpp" />
+    <ClCompile Include="DebugUtilities.cpp" />
     <ClCompile Include="IAudLowLevelIO_Blue.cpp" />
     <ClCompile Include="LogBridge.cpp" />
     <ClCompile Include="Mutex.cpp" />

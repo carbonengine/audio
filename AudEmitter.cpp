@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "AudEmitter.h"
+#include "AudManager.h"
+#include "DebugUtilities.h"
 #include "Vector3.h"
 
 #include <AK/SoundEngine/Common/AkSoundEngine.h>
@@ -16,10 +18,12 @@ AudEmitter::AudEmitter( IRoot* lockobj ) :
 
 AudEmitter::~AudEmitter()
 {
+	g_audioManager->UnregisterAudEmitter( this );
 }
 
 bool AudEmitter::Initialize()
 {
+	g_audioManager->RegisterAudEmitter( this );
 	return AudGameObjResource::Initialize();
 }
 
@@ -41,7 +45,14 @@ int AudEmitter::SetPosition( const Vector3& front, const Vector3& top, const Vec
 
 unsigned int AudEmitter::SendEvent( const std::wstring& name, bool bypassPrefix )
 {
-	return AudGameObjResource::SendEvent( name, bypassPrefix );
+	unsigned int playingID = AudGameObjResource::SendEvent( name, bypassPrefix );
+	if ( playingID != 0 ) // 0 means the sending of the event failed
+	{
+		std::wstring eventName = PrepareEvent( name, false );
+		m_playingEvents.insert({eventName, playingID});
+	}
+
+	return playingID;
 }
 
 std::string AudEmitter::GetName()
@@ -60,12 +71,42 @@ void AudEmitter::SetRTPC( const std::wstring& rtpcName, float rtpcValue )
 	AudGameObjResource::SetRTPC( rtpcName, rtpcValue );
 }
 
+int AudEmitter::SetAttenuationScalingFactor( const float scalingFactor )
+{
+	m_debugColor = 0xaaff0000; // Emitter's whose attenuation is affected by code will always show red in debug.
+	return AudGameObjResource::SetAttenuationScalingFactor( scalingFactor );
+}
+
 //----------------------------------
 // Needed for IBluePlacementObserver interface.
 //----------------------------------
 void AudEmitter::UpdatePlacement(const Vector3& front, const Vector3& top, const Vector3& pos )
 {
 	SetPosition( front, top, pos );
+}
+
+void AudEmitter::StopAll()
+{
+	m_playingEvents.clear();
+	AK::SoundEngine::StopAll( m_ID );
+}
+
+void AudEmitter::StopSound( AkPlayingID playingID )
+{
+	AK::SoundEngine::StopPlayingID( playingID );
+}
+
+bool AudEmitter::StopEvent( std::wstring eventName )
+{
+	std::wstring fullEventName = PrepareEvent( eventName, false );
+	if ( m_playingEvents.count(fullEventName) > 0 )
+	{
+		AkPlayingID playingID = m_playingEvents.find( fullEventName )->second;
+		StopSound(playingID);
+		m_playingEvents.erase( fullEventName );
+		return true;
+	}
+	return false;
 }
 
 // Debug
@@ -90,14 +131,10 @@ void AudEmitter::RenderDebugInfo( ITr2DebugRenderer2& renderer )
 		{
 			float minRange = 0.4f;
 			float maxRange = 0.9f;
-			float rand1 = static_cast<float>(minRange + (rand() / double( RAND_MAX )) * (maxRange - minRange));
-			float rand2 = static_cast<float>(minRange + (rand() / double( RAND_MAX )) * (maxRange - minRange));
-			float rand3 = static_cast<float>(minRange + (rand() / double( RAND_MAX )) * (maxRange - minRange));
-			m_debugColor = Color( rand1, rand2, rand3, 1.0f );
+			m_debugColor = DebugUtilities::GenerateDebugColor( minRange, maxRange );
 		}
 
 		const float emitterRange = AK::SoundEngine::Query::GetMaxRadius( m_ID );
-
 		uint32_t debugSphereSegments = static_cast<uint32_t>(8.f + emitterRange / 5000.f);
 		debugSphereSegments = (debugSphereSegments < 25) ? debugSphereSegments : 25; // limit segment growth to 25
 

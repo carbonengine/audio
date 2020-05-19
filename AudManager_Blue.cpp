@@ -32,7 +32,7 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 							 ":param: name -- Name of the soundbank to load. UNICODE!"
 							 ":return: True or False depending on if the call to LoadBank failed or not."
 						   )
-		MAP_METHOD_AND_WRAP( "UnloadBank", UnloadBank, 
+		MAP_METHOD_AND_WRAP( "UnloadBank", UnloadBank,
 							 "Description:\n"
 							 "\tUnloads a sound bank.\n"
 							 "Signature:\n"
@@ -40,13 +40,13 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 							 "Parameters:\n"
 							 "\tname -- Name of the soundbank to unload. UNICODE!"
 						   )
-		MAP_METHOD_AND_WRAP( "ClearBanks", ClearBanks, 
+		MAP_METHOD_AND_WRAP( "ClearBanks", ClearBanks,
 							 "Description:\n"
 							 "\tUnloads all currently loaded banks in Wwise.\n"
 							 "Signature:\n"
 							 "\tClearBanks() -> None\n"
 						   )
-		MAP_METHOD_AND_WRAP( "GetLoadedSoundBanks", GetLoadedSoundBanks, 
+		MAP_METHOD_AND_WRAP( "GetLoadedSoundBanks", GetLoadedSoundBanks,
 							 "Description:\n"
 							 "\tGets a list of loaded sound banks.\n"
 							 "Signature:\n"
@@ -54,8 +54,8 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 							 "Parameters:\n"
 							 "\tNone"
 						   )
-		MAP_METHOD_AND_WRAP( "GetEmitterForEventName", 
-							GetEmitterForEventName, 
+		MAP_METHOD_AND_WRAP( "GetEmitterForEventName",
+							GetEmitterForEventName,
 							"Description:\n"
 							"\tGets the AudEmitterMulti for a given event name if it exists.\n"
 							"\tIf it does not exist it will create a new one for the given event name.\n"
@@ -64,16 +64,20 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 							"Parameters:\n"
 							"\teventName -- Name (unicode) of the event you wish to get an emitter for."
 							)
+		MAP_METHOD_AND_WRAP( "StopAll",
+							 StopAll,
+							 "Stops all sounds currently playing."
+						   )
 		MAP_METHOD_AND_WRAP( "RegisterDebugEventCallback",
 							RegisterDebugEventCallback,
 							"Registers a python function be called when an audio event is sent to the sound engine\n"
 							":param callback: An instance of a python function to be executed"
-						   )		
+						   )
 		MAP_METHOD_AND_WRAP( "RegisterDebugSwitchCallback",
 							RegisterDebugSwitchCallback,
 							"Registers a python function be called when an audio switch is set in the sound engine\n"
 							":param callback: An instance of a python function to be executed"
-						   )		
+						   )
 		MAP_METHOD_AND_WRAP( "SetApplicationName",
 							SetApplicationName,
 							"Sets the application name to be used when remote debugging with Wwise."
@@ -122,7 +126,7 @@ static PyObject* PyGetAudManager( PyObject* self, PyObject* args )
 		}
 		g_audioManagerWrapper = PyOS->WrapBlueObject( g_audioManager );
 	}
-	
+
 	Py_INCREF( g_audioManagerWrapper );
 	return g_audioManagerWrapper;
 }
@@ -174,15 +178,7 @@ static PyObject* PyGetStreamPositionPtr( PyObject* module, PyObject* args )
 {
 	return PyLong_FromVoidPtr( (void *) &GetAudioStreamPosition );
 }
-MAP_FUNCTION( 
-	"GetStreamPositionPtr", 
-	PyGetStreamPositionPtr, 
+MAP_FUNCTION(
+	"GetStreamPositionPtr",
+	PyGetStreamPositionPtr,
 	"Get a pointer to the function returning the number of samples consumed by WWise for the given stream" );
-
-
-static PyObject* PyStopAll( PyObject* self, PyObject* args )
-{
-	AK::SoundEngine::StopAll();
-	Py_RETURN_NONE;
-}
-MAP_FUNCTION( "StopAll", PyStopAll, "Stops all sounds currently playing.");
