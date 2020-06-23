@@ -62,15 +62,15 @@ unsigned int AudGameObjResource::SendEvent( const std::wstring& name, bool bypas
 {
 	if( g_audioInitialized )
 	{
-		const wchar_t* eventName = PrepareEvent( name, bypassPrefix );
+		std::wstring eventName = PrepareEvent( name, bypassPrefix );
 
-		m_playID = AK::SoundEngine::PostEvent( eventName, m_ID );
+		m_playID = AK::SoundEngine::PostEvent( eventName.c_str(), m_ID );
 		g_audioManager->SetDebugEventName( eventName );
 
 		if (m_playID == AK_INVALID_PLAYING_ID)
 		{
-			AkUniqueID eventID = AK::SoundEngine::GetIDFromString(eventName);
-			g_audioManager->AddWaitingEvent(eventID, m_ID);
+			AkUniqueID eventID = AK::SoundEngine::GetIDFromString( eventName.c_str() );
+			g_audioManager->AddWaitingEvent( eventID, m_ID );
 		}
 		return m_playID;
 	}
@@ -193,7 +193,7 @@ void AudGameObjResource::SetRTPC( const std::wstring& rtpcName, float rtpcValue 
 
 // Formats events to be sent to Wwise. bypassPrefix determines whether or not to apply the prefix
 // defined on the emitter to the event.
-const wchar_t* AudGameObjResource::PrepareEvent( const std::wstring& event, bool bypassPrefix )
+std::wstring AudGameObjResource::PrepareEvent( const std::wstring& event, bool bypassPrefix )
 {
 	std::wstring eventName;
 	if ( m_eventPrefix != L"" && bypassPrefix == false )
@@ -205,6 +205,5 @@ const wchar_t* AudGameObjResource::PrepareEvent( const std::wstring& event, bool
 		eventName = event;
 	}
 
-
-	return eventName.c_str();
+	return eventName;
 }
