@@ -565,9 +565,12 @@ Be::Result<std::string> AudManager::GetEmitterForEventName( const std::wstring& 
 
 void AudManager::StopAll()
 {
-	for ( auto it = m_audioEmitters.begin(); it != m_audioEmitters.end(); ++it)
+	if ( g_audioInitialized )
 	{
-		( *it )->StopAll();
+		for ( auto it = m_audioEmitters.begin(); it != m_audioEmitters.end(); ++it)
+		{
+			( *it )->StopAll();
+		}
 	}
 }
 
