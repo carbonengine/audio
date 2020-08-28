@@ -1,11 +1,14 @@
 #include "stdafx.h"
 
-#include <AK/SoundEngine/Common/AkSoundEngine.h>				// Sound Engine
+#include <AK/AkWwiseSDKVersion.h>
 #include <AK/MusicEngine/Common/AkMusicEngine.h>				// Interactive music engine
+#include <AK/SoundEngine/Common/AkSoundEngine.h>				// Sound Engine
 #include <AK/SoundEngine/Common/AkMemoryMgr.h>					// Memory Manager
+#include <AK/SoundEngine/Common/AkStreamMgrModule.h>			// AkDeviceSettings, AkStreamMgrSettings
 #include <AK/SoundEngine/Common/IAkStreamMgr.h>					// Streaming Manager
 #include <AK/SoundEngine/Common/AkModule.h>						// Default memory and stream managers
 #include <AK/SoundEngine/Common/AkQueryParameters.h>
+#include <AK/Tools/Common/AkPlatformFuncs.h>
 
 #include <AK/Plugin/AkVorbisDecoderFactory.h>
 #include <AK/Plugin/AkCompressorFXFactory.h>
@@ -13,26 +16,32 @@
 #include <AK/Plugin/AkParametricEQFXFactory.h>
 #include <AK/Plugin/AkRoomVerbFXFactory.h>
 #include <AK/Plugin/AkMatrixReverbFXFactory.h>
-#include "CCPAudioStream/include/CCPAudioStreamSourceFactory.h"
-#include "CCPAudioStream/AudioEngineFX/CCPFXSrcAudioStreamSourceFactory.h"
 #include <AK/Plugin/AkMeterFXFactory.h>
 #include <AK/Plugin/AkPeakLimiterFXFactory.h>
 #include <AK/Plugin/AkFlangerFXFactory.h>
 #include <AK/Plugin/AkGuitarDistortionFXFactory.h>
 #include <AK/Plugin/AkHarmonizerFXFactory.h>
+#include <AK/Plugin/AkConvolutionReverbFXFactory.h>
 #include <AK/Plugin/AkTremoloFXFactory.h>
+#include <AK/Plugin/AkStereoDelayFXFactory.h>
+#include <AK/Plugin/AkPitchShifterFXFactory.h>
+
+// All needed for Wwise low level IO
+#include "SoundEngine/Common/AkMultipleFileLocation.cpp"
+#include "SoundEngine/Common/AkFilePackageLUT.cpp"
+#include "SoundEngine/Common/AkFilePackage.cpp"
+#include "SoundEngine/Win32/AkFileHelpers.h"
+#include "SoundEngine/Win32/AkDefaultIOHookBlocking.cpp"
 
 #include "AudManager.h"
-#include "AudSettingsRegistrar.h"
 #include "AudAlloc.h"
 #include "AudResource.h"
 #include "AudSettings.h"
-#include "AudConfig.h"
-#include "AudLowLevelIO.h"
 #include "AudEmitterMulti.h"
 #include "AudEmitter.h"
 
-static CcpLogChannel_t s_ch = CCP_LOG_DEFINE_CHANNEL( "WwiseAssert" );
+
+static CcpLogChannel_t s_ch = CCP_LOG_DEFINE_CHANNEL( "AudioManager" );
 
 static void WwiseAssertHook(const char* in_pszExpression,const char* in_pszFileName,int in_lineNumber)
 {
@@ -47,11 +56,9 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_multiEmitterMutex( "AudManager", "m_multiEmitterMutex" ),
 	m_useDoppler( false ),
 	m_debugLastPlayedEventMutex( "AudManager", "debugLastPlayedEventMutex" ),
-	m_debugLastSwitchMutex( "AudManager", "debugLastSwitchMutex" ),
-	m_applicationName( "EVE Audio" )
+	m_debugLastSwitchMutex( "AudManager", "debugLastSwitchMutex" )
 {
 	s_gameObjectsToBeDestroyed.push_back( 0 );
-	SetApplicationName( m_applicationName );
 }
 
 AudManager::~AudManager()
@@ -177,14 +184,25 @@ void AudManager::OnTick( Be::Time realTime, Be::Time simTime, void* cookie )
 
 bool AudManager::InitLowLevel()
 {
+	CCP_LOG(
+		"Audio Backend: Wwise(R) SDK Version %d.%d.%d Build %d. Copyright (c) 2006-%d Audiokinetic Inc.",
+		AK_WWISESDK_VERSION_MAJOR,
+		AK_WWISESDK_VERSION_MINOR,
+		AK_WWISESDK_VERSION_SUBMINOR,
+		AK_WWISESDK_VERSION_BUILD,
+		AK_WWISESDK_VERSION_MAJOR
+	);
 //-----------------------------------------------------------------------------
     // Create and initialize an instance of the default memory manager. Note
 	// that you can override the default memory manager with your own. Refer
 	// to the Wwise SDK documentation for more information.
 //-----------------------------------------------------------------------------
 
-	if ( AK::MemoryMgr::Init( &m_initConfig->m_memSettings ) != AK_Success )
+	AkMemSettings memSettings;
+	AK::MemoryMgr::GetDefaultSettings( memSettings );
+	if ( AK::MemoryMgr::Init( &memSettings ) != AK_Success )
     {
+		CCP_LOGERR( "Failed to start Wwise Memory Manager" );
         return false;
     }
 
@@ -194,23 +212,34 @@ bool AudManager::InitLowLevel()
 	// to the SDK documentation for more information.
 //-----------------------------------------------------------------------------
 
-    // Streaming settings
-    // Create and initialize an instance of our stream manager.
-	AK::IAkStreamMgr * pStreamMgr = AK::StreamMgr::Create( m_initConfig->m_streamMgrSettings );
-    if ( ! pStreamMgr )
+	AkStreamMgrSettings streamSettings;
+	AK::StreamMgr::GetDefaultSettings( streamSettings );
+    if ( !AK::StreamMgr::Create( streamSettings ) )
     {
+		CCP_LOGERR( "Failed to start Wwise Stream Manager" );
         return false;
     }
 
 //-----------------------------------------------------------------------------
     // Create default IO device.
 //-----------------------------------------------------------------------------
-	// Device settings
-	AudLowLevelIOPtr tmp = reinterpret_cast<AudLowLevelIO*>(m_initConfig->m_lowLevelIO.p);
-	if ( tmp->Init( m_initConfig->m_deviceSettings, m_initConfig->m_asyncFileOpen ) != AK_Success )
+	AkDeviceSettings deviceSettings;
+	AK::StreamMgr::GetDefaultDeviceSettings( deviceSettings );
+	if ( m_lowLevelIO.Init( deviceSettings ) != AK_Success )
     {
+		CCP_LOGERR( "Failed to create Wwise Low Level IO Hook" );
         return false;
     }
+	if ( m_lowLevelIO.SetBasePath( m_settings->m_baseSoundBankPath.c_str() ) != AK_Success )
+	{
+		CCP_LOGERR( "Soundbank path %S is invalid and soundbanks will not be loaded correctly.", m_settings->m_baseSoundBankPath.c_str() );
+		return false;
+	}
+	if ( AK::StreamMgr::SetCurrentLanguage( m_settings->m_soundbankLanguage.c_str() ) != AK_Success )
+	{
+		CCP_LOGERR( "Setting soundbank language to %S failed and soundbanks will not be able to be loaded.", m_settings->m_soundbankLanguage.c_str() );
+		return false;
+	}
 
 	return true;
 }
@@ -222,13 +251,13 @@ bool AudManager::InitCommunication()
 	// Wwise to allow for remote debugging.
 //-----------------------------------------------------------------------------
 	#ifndef AK_OPTIMIZED
-	AK::Comm::GetDefaultInitSettings( m_commSettings );
-	AKPLATFORM::SafeStrCpy(&m_commSettings.szAppNetworkName[0], m_applicationName.c_str(), AK_COMM_SETTINGS_MAX_STRING_SIZE);
-	if( AK::Comm::Init( m_commSettings ) != AK_Success )
-	{
-		assert( ! "Audio2: Could not init communication lib" );
-		return false;
-	}
+		AK::Comm::GetDefaultInitSettings( m_commSettings );
+		AKPLATFORM::SafeStrCpy(&m_commSettings.szAppNetworkName[0], m_settings->m_applicationName.c_str(), AK_COMM_SETTINGS_MAX_STRING_SIZE);
+		if( AK::Comm::Init( m_commSettings ) != AK_Success )
+		{
+			assert( ! "Audio2: Could not init communication lib" );
+			return false;
+		}
 	#endif
 
 	return true;
@@ -236,11 +265,14 @@ bool AudManager::InitCommunication()
 
 bool AudManager::InitSound()
 {
-	//Change the assert hook
-	m_initConfig->m_initSettings.pfnAssertHook = &WwiseAssertHook;
+	AkInitSettings initSettings;
+	AkPlatformInitSettings platformInitSettings;
+	AK::SoundEngine::GetDefaultInitSettings( initSettings );
+	AK::SoundEngine::GetDefaultPlatformInitSettings( platformInitSettings );
 
-	if ( AK::SoundEngine::Init( &m_initConfig->m_initSettings, &m_initConfig->m_platformInitSettings ) != AK_Success )
+	if ( AK::SoundEngine::Init( &initSettings, &platformInitSettings ) != AK_Success )
     {
+		CCP_LOGERR( "Failed to initialize Wwise Sound Engine" );
         return false;
     }
 
@@ -249,8 +281,11 @@ bool AudManager::InitSound()
 
 bool AudManager::InitMusic()
 {
-	if ( AK::MusicEngine::Init( &m_initConfig->m_musicSettings ) != AK_Success )
+	AkMusicSettings musicSettings;
+	AK::MusicEngine::GetDefaultInitSettings( musicSettings );
+	if ( AK::MusicEngine::Init( &musicSettings ) != AK_Success )
 	{
+		CCP_LOGERR( "Failed to initialize Wwise Music Engine" );
 		return false;
 	}
 
@@ -282,13 +317,11 @@ void AudManager::SetEnabled( bool newStatus )
 		AkBankID tmp;
 		for( BankVector::iterator it = m_loadedBanks.begin(); it != bankEnd; ++it )
 		{
-			AK::SoundEngine::LoadBank( it->c_str(), AK_DEFAULT_POOL_ID, tmp );
+			AK::SoundEngine::LoadBank( it->c_str(), tmp );
 		}
 		AudResource::RecreateResources();
 
 		BeOS->RegisterForTicks(this, (void*)"Audio::Tick");
-
-		m_initConfig->m_dirty = false;
 	}
 	else
 	{
@@ -307,6 +340,11 @@ void AudManager::SetEnabled( bool newStatus )
 	}
 }
 
+void AudManager::UpdateSettings( AudSettings* settings )
+{
+	m_settings = settings;
+}
+
 struct BankLoadUnloadStatus
 {
 	BankLoadUnloadStatus() : isDone( 0 ), result( AK_Fail ) {}
@@ -316,7 +354,7 @@ struct BankLoadUnloadStatus
 
 namespace
 {
-	void BankLoadUnloadCb( AkUInt32 in_bankID, const void* in_pInMemoryBankPtr, AKRESULT in_eLoadResult, AkMemPoolId in_memPoolId, void *in_pCookie )
+	void BankLoadUnloadCb( AkUInt32 in_bankID, const void* in_pInMemoryBankPtr, AKRESULT in_eLoadResult, void *in_pCookie )
 	{
 		BankLoadUnloadStatus* status = reinterpret_cast<BankLoadUnloadStatus*>( in_pCookie );
 		status->isDone = true;
@@ -362,7 +400,7 @@ bool AudManager::LoadBank( const std::wstring& name )
 	{
 		AkBankID tmp;
 		BankLoadUnloadStatus* status = CCP_NEW( "LoadBank/status" ) BankLoadUnloadStatus;
-		AKRESULT result = AK::SoundEngine::LoadBank( name.c_str(), BankLoadUnloadCb, status, AK_DEFAULT_POOL_ID, tmp );
+		AKRESULT result = AK::SoundEngine::LoadBank( name.c_str(), BankLoadUnloadCb, status, tmp );
 		if( result == AK_Fail )
 		{
 			CCP_LOGERR( "AK::SoundEngine::LoadBank failed scheduling for %S", name.c_str() );
@@ -410,7 +448,6 @@ void AudManager::UnloadBank( const std::wstring& name )
 	{
 		// The pInMemoryBankPtr can be NULL is NULL is passed when loading the bank.
 		const void *pInMemoryBankPtr = NULL;
-		AkMemPoolId out_pool_id = NULL;
 
 		BankLoadUnloadStatus* status = CCP_NEW( "LoadBank/status" ) BankLoadUnloadStatus;
 		AKRESULT result = AK::SoundEngine::UnloadBank( name.c_str(), pInMemoryBankPtr, BankLoadUnloadCb, status );
@@ -450,12 +487,6 @@ void AudManager::ClearBanks()
 void AudManager::AddToDestructionVector(AkGameObjectID gameObjID)
 {
 	s_gameObjectsToBeDestroyed.push_back( gameObjID );
-}
-
-AudSettings& AudManager::GetSettings()
-{
-	static CAudSettings s; // C-object & singleton, no reference counting magic!
-	return s;
 }
 
 std::vector<std::wstring> AudManager::GetLoadedSoundBanks()
@@ -621,11 +652,6 @@ void AudManager::SetDebugSwitch( const std::wstring& switchGroup, const std::wst
 
 	CcpAutoMutex mutex( m_debugLastSwitchMutex );
 	m_debugLastSwitches.push(switchGroup + L" -- " + switchName);
-}
-
-void AudManager::SetApplicationName( std::string applicationName )
-{
-	m_applicationName = applicationName;
 }
 
 void AudManager::EnableDebugDisplayAllEmitters()

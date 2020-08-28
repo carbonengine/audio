@@ -31,6 +31,7 @@
 #include "AudParameter.h"
 #include "AudPosition.h"
 #include <AK/SoundEngine/Common/AkTypes.h>
+#include <AK/SoundEngine/Common/AkQueryParameters.h>
 
 #include "CcpMath/include/CcpMath.h"
 #include "trinity/Include/ITr2DebugRenderer2.h"

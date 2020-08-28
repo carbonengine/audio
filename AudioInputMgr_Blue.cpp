@@ -1,0 +1,13 @@
+#include "StdAfx.h"
+#include "AudioInputMgr.h"
+
+BLUE_DEFINE( AudioInputMgr );
+BLUE_DEFINE_INTERFACE( IAudioInputMgr );
+
+const Be::ClassInfo* AudioInputMgr::ExposeToBlue()
+{
+	EXPOSURE_BEGIN( AudioInputMgr, "" )
+		MAP_INTERFACE( AudioInputMgr )
+		MAP_INTERFACE( IAudioInputMgr )
+	EXPOSURE_END()
+}

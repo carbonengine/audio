@@ -13,7 +13,6 @@ BLUE_DEFINE_INTERFACE( IBlueEventListener );
 
 #include "AudManager.h"
 #include "AudResource.h"
-#include "AudSettings.h"
 
 #ifndef BLUE_DLL_NAME
 #error Please add BLUE_DLL_NAME=<PythonModuleName> to compiler preprocessor definitions (/D)
@@ -26,11 +25,28 @@ const char* g_moduleName = "audio2";
 // Globals
 //-----------------------------------------------------------------------------
 HINSTANCE gInstance = NULL;
+AudManager* g_audioManager = nullptr;
 bool g_audioEnabled = false;
 bool g_audioInitialized = false;
 bool g_debugDisplayAllEmitters = false;
 
 IBlueCallbackManPtr g_mainThreadQueue;
+
+static PyObject* PyGetManager( PyObject* self, PyObject* args)
+{
+	if ( !g_audioManager )
+	{
+		g_audioManager = new OAudManager;
+		if ( !g_audioManager )
+		{
+			PyOS->PyError();
+			return 0;
+		}
+	}
+
+	return PyOS->WrapBlueObject( g_audioManager );
+}
+MAP_FUNCTION( "GetOrCreateManager", PyGetManager, "Create a global audio manager instance if needed, otherwise return the existing one." );
 
 static PyObject* PyGetRegisteredEnums( PyObject* self, PyObject* args )
 {
@@ -105,8 +121,6 @@ static void StartDLL( HINSTANCE instance )
 	PyObject* module = Py_InitModule( ( char* )BLUE_DLL_NAME_STR, NULL );
 	
 	BlueRegisterToModule( module, BlueRegistration::GetClassRegs(), BlueRegistration::GetFuncRegs() );
-
-	PyModule_AddObject( module, "settings", PyOS->WrapBlueObject(&AudManager::GetSettings()) );
 }
 
 //-----------------------------------------------------------------------------

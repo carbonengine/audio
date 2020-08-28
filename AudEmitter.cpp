@@ -5,7 +5,6 @@
 #include "Vector3.h"
 
 #include <AK/SoundEngine/Common/AkSoundEngine.h>
-#include <AK/SoundEngine/Common/AkQueryParameters.h>
 
 AudEmitter::AudEmitter( IRoot* lockobj ) :
 	AudGameObjResource( lockobj ),

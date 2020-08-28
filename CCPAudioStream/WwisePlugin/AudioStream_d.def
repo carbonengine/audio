@@ -1,7 +1,0 @@
-; AudioStream.def : Declares the module parameters for the DLL.
-
-LIBRARY      "AudioStream_d"
-
-EXPORTS
-	AkCreatePlugin
-	AkGetSoundEngineCallbacks
