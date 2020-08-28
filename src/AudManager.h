@@ -28,11 +28,13 @@
 
 #include <queue>
 #include "Audio2.h"
+#include "AudSettings.h"
 
 //-----------------------------------------------------------------------------
 // Wwise includes
 //-----------------------------------------------------------------------------
 #include <AK/SoundEngine/Common/AkTypes.h>
+#include "SoundEngine/Win32/AkFilePackageLowLevelIOBlocking.h"
 
 // Communication (AKA remote Wwise debugging)
 #ifndef AK_OPTIMIZED
@@ -45,17 +47,10 @@
 // Forward declarations
 //-----------------------------------------------------------------------------
 BLUE_DECLARE( AudResource );
-BLUE_DECLARE( AudSettings );
 BLUE_DECLARE( AudConfig );
 BLUE_DECLARE( AudLowLevelIO );
 BLUE_DECLARE( AudEmitterMulti );
 BLUE_DECLARE( AudEmitter );
-
-//Audio communication settings
-#ifndef AK_OPTIMIZED
-	#define COMM_POOL_SIZE			(256 * 1024)
-	#define COMM_POOL_BLOCK_SIZE	(48)
-#endif
 
 //-----------------------------------------------------------------------------
 // Typedefs
@@ -84,9 +79,7 @@ public:
 	//-----------------------------------------------------------------------------
 	void OnTick( Be::Time realTime, Be::Time simTime, void* cookie );
 
-	//-----------------------------------------------------------------------------
-	// Audio init/term
-	//-----------------------------------------------------------------------------
+	// Interface that handles initializing or termination of audio engine
 	void SetEnabled( bool onoff );
 
 	bool Init();
@@ -97,6 +90,8 @@ public:
 	// in audio2.cpp
 	static void RemovePythonReference();
 
+	void UpdateSettings( AudSettings* settings );
+
 	// Bank loading
 	bool LoadBank( const std::wstring& name );
 	void UnloadBank( const std::wstring& name );
@@ -104,10 +99,6 @@ public:
 
 	// Game object destruction
 	void AddToDestructionVector( AkGameObjectID gameObjID );
-
-	// Settings store - not used a.t.m. because Wwise isn't
-	// filled with runtime changeable settings as is.
-	static AudSettings& GetSettings();
 
 	// Exposing loaded sound banks to python
 	std::vector<std::wstring> GetLoadedSoundBanks();
@@ -157,9 +148,6 @@ private:
 	// Takes care of updating the location for all AudEmitterMulti on each tick.
 	void ProcessMultiEmitterList();
 
-	// Sets the Wwise application name when remote debugging.
-	void SetApplicationName(std::string applicationName);
-
 	friend class AudEmitterMulti;
 	friend class AudEmitter;
 	friend class AudEmitterDoppler;
@@ -167,8 +155,10 @@ private:
 	int m_tickInterval;
 	Be::Time m_Time;
 
-	//Exposed attributes
-	AudConfigPtr m_initConfig;
+	// Initialization settings for Wwise
+	AudSettingsPtr m_settings;
+	// low level IO hook for Wwise
+	CAkFilePackageLowLevelIOBlocking m_lowLevelIO;
 
 	#ifndef AK_OPTIMIZED
 		AkCommSettings m_commSettings;
@@ -192,8 +182,6 @@ private:
 	BlueScriptCallback m_debugSwitchCallback;
 	std::queue<std::wstring> m_debugLastSwitches;
 	CcpMutex m_debugLastSwitchMutex;
-
-	std::string m_applicationName;
 };
 
 TYPEDEF_BLUECLASS( AudManager );
