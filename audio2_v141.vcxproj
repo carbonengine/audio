@@ -248,7 +248,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PreprocessorDefinitions>AK_OPTIMIZED;BLUE_DLL_NAME=$(TargetName);BLUE_WITH_PYTHON=1;CCP_ASSERT_ENABLED=1;CCP_STACKLESS=1;NDEBUG;AKSOUNDENGINEDLL_EXPORTS;AKSOUNDENGINE_STATIC;BLUE_OVERRIDE_VECTOR_TYPES=1;WWISE_EXPORTS;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(CcpSdkPath)/wwise/2019.2.3.7304/samples;$(CcpSdkPath)\telemetry\3.0.1.1719\include;..\..\..\carbon\src\stackless\include;..\..\..\carbon\src\stackless\pc;..\..\..\carbon\src\stackless\stackless;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)/wwise/2019.2.3.7304/include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CcpSdkPath)\telemetry\3.0.1.1719\include;..\..\..\carbon\src\stackless\include;..\..\..\carbon\src\stackless\pc;..\..\..\carbon\src\stackless\stackless;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)/wwise/2019.2.3.7304/include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>True</MultiProcessorCompilation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <WholeProgramOptimization>True</WholeProgramOptimization>
@@ -281,7 +281,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PreprocessorDefinitions>AK_OPTIMIZED;BLUE_DLL_NAME=$(TargetName);BLUE_WITH_PYTHON=1;CCP_ASSERT_ENABLED=1;NDEBUG;AKSOUNDENGINEDLL_EXPORTS;AKSOUNDENGINE_STATIC;BLUE_OVERRIDE_VECTOR_TYPES=1;WWISE_EXPORTS;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(CcpSdkPath)/wwise/2019.2.3.7304/samples;$(CcpSdkPath)\Python\27_64\include;$(CcpSdkPath)\telemetry\3.0.1.1719\include;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)/wwise/2019.2.3.7304/include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CcpSdkPath)\Python\27_64\include;$(CcpSdkPath)\telemetry\3.0.1.1719\include;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)/wwise/2019.2.3.7304/include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>True</MultiProcessorCompilation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <WholeProgramOptimization>True</WholeProgramOptimization>
@@ -347,7 +347,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PreprocessorDefinitions>BLUE_DLL_NAME=$(TargetName);BLUE_WITH_PYTHON=1;CCP_ASSERT_ENABLED=1;CCP_STACKLESS=1;NDEBUG;AKSOUNDENGINEDLL_EXPORTS;AKSOUNDENGINE_STATIC;BLUE_OVERRIDE_VECTOR_TYPES=1;WWISE_EXPORTS;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(CcpSdkPath)/wwise/2019.2.3.7304/samples;$(CcpSdkPath)\telemetry\3.0.1.1719\include;..\..\..\carbon\src\stackless\include;..\..\..\carbon\src\stackless\pc;..\..\..\carbon\src\stackless\stackless;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)/wwise/2019.2.3.7304/include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CcpSdkPath)\telemetry\3.0.1.1719\include;..\..\..\carbon\src\stackless\include;..\..\..\carbon\src\stackless\pc;..\..\..\carbon\src\stackless\stackless;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)/wwise/2019.2.3.7304/include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>True</MultiProcessorCompilation>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <WholeProgramOptimization>false</WholeProgramOptimization>
@@ -417,7 +417,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PreprocessorDefinitions>AK_OPTIMIZED;BLUE_DLL_NAME=$(TargetName);BLUE_WITH_PYTHON=1;CCP_ASSERT_ENABLED=1;NDEBUG;AKSOUNDENGINEDLL_EXPORTS;AKSOUNDENGINE_STATIC;BLUE_OVERRIDE_VECTOR_TYPES=1;WWISE_EXPORTS;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(CcpSdkPath)/wwise/2019.2.3.7304/samples;$(CcpSdkPath)\Python\26_64\include;$(CcpSdkPath)\telemetry\3.0.1.1719\include;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)/wwise/2019.2.3.7304/include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(CcpSdkPath)\Python\26_64\include;$(CcpSdkPath)\telemetry\3.0.1.1719\include;$(CcpBranchPath)/carbon/src;$(CcpSdkPath)/wwise/2019.2.3.7304/include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>True</MultiProcessorCompilation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <WholeProgramOptimization>True</WholeProgramOptimization>
@@ -500,6 +500,13 @@
     <ClInclude Include="DebugUtilities.h" />
     <ClInclude Include="IAudioInputMgr.h" />
     <ClInclude Include="LogBridge.h" />
+    <ClInclude Include="LowLevelIO\AkFileLocationBase.h" />
+    <ClInclude Include="LowLevelIO\AkFilePackage.h" />
+    <ClInclude Include="LowLevelIO\AkFilePackageLowLevelIO.h" />
+    <ClInclude Include="LowLevelIO\AkFilePackageLUT.h" />
+    <ClInclude Include="LowLevelIO\Win32\AkDefaultIOHookBlocking.h" />
+    <ClInclude Include="LowLevelIO\Win32\AkFileHelpers.h" />
+    <ClInclude Include="LowLevelIO\Win32\AkFilePackageLowLevelIOBlocking.h" />
     <ClInclude Include="Mutex.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Semaphore.h" />
@@ -541,6 +548,10 @@
     <ClCompile Include="AudUIPlayer_Blue.cpp" />
     <ClCompile Include="DebugUtilities.cpp" />
     <ClCompile Include="LogBridge.cpp" />
+    <ClCompile Include="LowLevelIO\AkFileLocationBase.cpp" />
+    <ClCompile Include="LowLevelIO\AkFilePackage.cpp" />
+    <ClCompile Include="LowLevelIO\AkFilePackageLUT.cpp" />
+    <ClCompile Include="LowLevelIO\Win32\AkDefaultIOHookBlocking.cpp" />
     <ClCompile Include="Mutex.cpp" />
     <ClCompile Include="Semaphore.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -549,6 +560,9 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="audio2.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="LowLevelIO\AkFilePackageLowLevelIO.inl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

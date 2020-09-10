@@ -26,12 +26,11 @@
 #include <AK/Plugin/AkStereoDelayFXFactory.h>
 #include <AK/Plugin/AkPitchShifterFXFactory.h>
 
-// All needed for Wwise low level IO
-#include "SoundEngine/Common/AkMultipleFileLocation.cpp"
-#include "SoundEngine/Common/AkFilePackageLUT.cpp"
-#include "SoundEngine/Common/AkFilePackage.cpp"
-#include "SoundEngine/Win32/AkFileHelpers.h"
-#include "SoundEngine/Win32/AkDefaultIOHookBlocking.cpp"
+#if _WIN32
+#include "LowLevelIO/Win32/AkDefaultIOHookBlocking.h"
+#elif __APPLE__
+#include "LowLevelIO/POSIX/AkDefaultIOHookBlocking.h"
+#endif
 
 #include "AudManager.h"
 #include "AudAlloc.h"

@@ -34,11 +34,15 @@
 // Wwise includes
 //-----------------------------------------------------------------------------
 #include <AK/SoundEngine/Common/AkTypes.h>
-#include "SoundEngine/Win32/AkFilePackageLowLevelIOBlocking.h"
+#if _WIN32
+#include "LowLevelIO/Win32/AkFilePackageLowLevelIOBlocking.h"
+#elif __APPLE__
+#include "LowLevelIO/POSIX/AkFilePackageLowLevelIOBlocking.h"
+#endif
 
 // Communication (AKA remote Wwise debugging)
 #ifndef AK_OPTIMIZED
-	#include <AK/Comm/AkCommunication.h>
+#include <AK/Comm/AkCommunication.h>
 #endif
 
 #include "CcpCore/include/CcpMutex.h"
@@ -61,12 +65,14 @@ typedef std::set<AudEmitterMulti*> EmitterMultiSet;
 
 struct WaitingEvent
 {
-	AkUniqueID			eventID;
-	AkGameObjectID		gameObjectID;
-	AkUInt32			numRetries;
+	AkUniqueID eventID;
+	AkGameObjectID gameObjectID;
+	AkUInt32 numRetries;
 };
 
-BLUE_CLASS( AudManager ) : public IRoot, public IBlueEvents
+BLUE_CLASS( AudManager ) :
+	public IRoot,
+	public IBlueEvents
 {
 public:
 	AudManager( IRoot* lockobj = 0 );
@@ -90,7 +96,7 @@ public:
 	// in audio2.cpp
 	static void RemovePythonReference();
 
-	void UpdateSettings( AudSettings* settings );
+	void UpdateSettings( AudSettings * settings );
 
 	// Bank loading
 	bool LoadBank( const std::wstring& name );
@@ -107,7 +113,7 @@ public:
 	void AddWaitingEvent( AkUniqueID eventID, AkGameObjectID gameObjID );
 
 	// Run throught the list once and try to resend the events to the gameObjects.
-	void ProcessWaitingEvents( );
+	void ProcessWaitingEvents();
 
 	// Gets an AudEmitterMulti for a given event name or creates it if it does not exist.
 	Be::Result<std::string> GetEmitterForEventName( const std::wstring& eventName, AudEmitterMulti** out );
@@ -122,8 +128,8 @@ public:
 	void DisableDebugDisplayAllEmitters();
 	bool GetDebugDisplayAllEmitters();
 
-	void RegisterAudEmitter( AudEmitter* emitter );
-	void UnregisterAudEmitter( AudEmitter* emitter );
+	void RegisterAudEmitter( AudEmitter * emitter );
+	void UnregisterAudEmitter( AudEmitter * emitter );
 	void StopAll();
 
 private:
@@ -137,13 +143,13 @@ private:
 	void Process(); // Tick handler.
 
 	// Get an emitter for an event that is already playing
-	AudEmitterMulti* GetEmitterForEventID(AkUniqueID eventID);
+	AudEmitterMulti* GetEmitterForEventID( AkUniqueID eventID );
 
 	// Adds an AudEmitterMulti to the m_multiEmitters list.
-	void AddMultiEmitterToList(AudEmitterMulti* multiEmitter);
+	void AddMultiEmitterToList( AudEmitterMulti * multiEmitter );
 
 	// Removes an AudEmitterMulti from the m_multiEmitters list.
-	void RemoveMultiEmitterFromList(AudEmitterMulti* multiEmitter);
+	void RemoveMultiEmitterFromList( AudEmitterMulti * multiEmitter );
 
 	// Takes care of updating the location for all AudEmitterMulti on each tick.
 	void ProcessMultiEmitterList();
@@ -160,9 +166,9 @@ private:
 	// low level IO hook for Wwise
 	CAkFilePackageLowLevelIOBlocking m_lowLevelIO;
 
-	#ifndef AK_OPTIMIZED
-		AkCommSettings m_commSettings;
-	#endif
+#ifndef AK_OPTIMIZED
+	AkCommSettings m_commSettings;
+#endif
 
 	BankVector m_loadedBanks;
 
