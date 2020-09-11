@@ -16,7 +16,8 @@ static bool SortDistancePositions( const DistancePosition& p0, const DistancePos
 
 AudEmitterMulti::AudEmitterMulti( IRoot* lockobj ) : 
 	AudGameObjResource( lockobj ), 
-	m_currentIndex( 0 )
+	m_currentIndex( 0 ),
+	m_eventID( 0 )
 {
 	m_playOnLoad = true;
 	m_maximumLocations = 10;

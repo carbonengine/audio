@@ -181,7 +181,7 @@ void AudEventCurve::SetKeyTime( int ix, float time )
 	}
 }
 
-void AudEventCurve::SetKeyValue( int ix, std::wstring value )
+void AudEventCurve::SetKeyValue( int ix, const std::wstring value )
 {
 	if( (ix < m_keys.GetSize()) && (ix >= 0) )
 	{

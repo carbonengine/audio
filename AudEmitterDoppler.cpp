@@ -7,9 +7,11 @@
 #include <AK/SoundEngine/Common/AkSoundEngine.h>
 #include <AK/SoundEngine/Common/AkQueryParameters.h>
 
-AudEmitterDoppler::AudEmitterDoppler( IRoot* lockobj ) : AudEmitter( lockobj )
+AudEmitterDoppler::AudEmitterDoppler( IRoot* lockobj ) : AudEmitter( lockobj ),
+	m_dopplerChangeDuration( 0 ),
+	m_lastKnowDistanceSq( 0 ),
+	m_rtpcID( 0 )
 {
-	m_lastKnowDistanceSq = 0;
 }
 
 AudEmitterDoppler::~AudEmitterDoppler()

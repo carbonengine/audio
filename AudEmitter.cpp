@@ -8,7 +8,6 @@
 
 AudEmitter::AudEmitter( IRoot* lockobj ) :
 	AudGameObjResource( lockobj ),
-	PARENTLOCK( m_position ),
 	m_debugPosition(0, 0, 0),
 	m_debugColor()
 {
@@ -95,7 +94,7 @@ void AudEmitter::StopSound( AkPlayingID playingID )
 	AK::SoundEngine::StopPlayingID( playingID );
 }
 
-bool AudEmitter::StopEvent( std::wstring eventName )
+bool AudEmitter::StopEvent( const std::wstring eventName )
 {
 	std::wstring fullEventName = PrepareEvent( eventName, false );
 	if ( m_playingEvents.count(fullEventName) > 0 )

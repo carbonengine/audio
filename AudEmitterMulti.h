@@ -50,8 +50,8 @@ struct Vector3;
 struct DistancePosition {
 	AkReal32 distance;
 	AkSoundPosition wwisePos;
-	DistancePosition( AkReal32 dist, AkSoundPosition pos ) : distance( dist ), wwisePos( pos ) {}
-	DistancePosition() : distance( 0.f ) {}
+	DistancePosition( AkReal32 dist, AkSoundPosition const pos ) : distance( dist ), wwisePos( pos ) {}
+	DistancePosition() : distance( 0.f ), wwisePos( AkSoundPosition() ) {}
 };
 typedef std::vector<DistancePosition> DistancePositionVector;
 typedef std::vector<AkSoundPosition> PositionVector;
