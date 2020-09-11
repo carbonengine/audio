@@ -17,7 +17,8 @@ AudioInputMgr::AudioInputMgr() :
 	m_channels( 2 ),
 	m_bitsPerSamples( 16 ),
 	m_sampleRate( 48000 ),
-	m_playingID( 0 )
+	m_playingID( 0 ),
+	m_inputSink( nullptr )
 {
 	g_audioInputMgr = this;
 }

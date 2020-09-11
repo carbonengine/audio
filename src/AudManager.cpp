@@ -125,10 +125,12 @@ bool AudManager::Init()
 		return false;
 	}
 
+#ifndef AK_OPTIMIZED
 	if( !InitCommunication() )
 	{
 		return false;
 	}
+#endif
 
 	if( !InitSound() )
 	{

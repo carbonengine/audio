@@ -4,7 +4,8 @@
 
 #include "Vector3.h"
 
-AudPosition::AudPosition( IRoot *lockobj )
+AudPosition::AudPosition( IRoot* lockobj ) :
+	m_value( AkSoundPosition() )
 {}
 
 AudPosition::~AudPosition()
