@@ -45,7 +45,7 @@ public:
 	std::wstring GetKeyValue( int ix );
 	
 	void SetKeyTime( int ix, float time );
-	void SetKeyValue( int ix, const std::wstring value );
+	void SetKeyValue( int ix, const std::wstring& value );
 
 	int GetKeyCount();
 

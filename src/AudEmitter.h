@@ -78,7 +78,7 @@ public:
 	// AudEmitter
 	void StopAll(); // Stop all sounds on this audio emitter.
 	void StopSound( AkPlayingID playingID ); // Stop sounds by Wwise PlayID.
-	bool StopEvent( const std::wstring eventName ); // Stop all sounds associated with an event.
+	bool StopEvent( const std::wstring& eventName ); // Stop all sounds associated with an event.
 
 protected:
 	Vector3 m_debugPosition;

@@ -94,7 +94,7 @@ void AudEmitter::StopSound( AkPlayingID playingID )
 	AK::SoundEngine::StopPlayingID( playingID );
 }
 
-bool AudEmitter::StopEvent( const std::wstring eventName )
+bool AudEmitter::StopEvent( const std::wstring& eventName )
 {
 	std::wstring fullEventName = PrepareEvent( eventName, false );
 	if ( m_playingEvents.count(fullEventName) > 0 )
