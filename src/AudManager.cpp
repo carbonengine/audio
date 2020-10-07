@@ -25,6 +25,7 @@
 #include <AK/Plugin/AkTremoloFXFactory.h>
 #include <AK/Plugin/AkStereoDelayFXFactory.h>
 #include <AK/Plugin/AkPitchShifterFXFactory.h>
+#include <AK/Plugin/AkDelayFXFactory.h>
 
 #if _WIN32
 #include "LowLevelIO/Win32/AkDefaultIOHookBlocking.h"
