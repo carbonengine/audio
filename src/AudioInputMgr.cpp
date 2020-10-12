@@ -32,6 +32,10 @@ AudioInputMgr::~AudioInputMgr()
 // Start the Wwise Audio Input plugin and set callbacks Wwise will call.
 void AudioInputMgr::StartInput( uint32_t channels, uint32_t bps, uint32_t rate )
 {
+	if( !g_audioInitialized )
+	{
+		return;
+	}
 	m_channels = channels;
 	m_bitsPerSamples = bps;
 	m_sampleRate = rate;
@@ -46,6 +50,10 @@ void AudioInputMgr::StartInput( uint32_t channels, uint32_t bps, uint32_t rate )
 // Stop the audio input plugin which will stop Wwise callbacks.
 void AudioInputMgr::StopInput()
 {
+	if( !g_audioInitialized )
+	{
+		return;
+	}
 	// Stopping the event called in StartInput will kill the Audio Input plugin in Wwise.
 	AK::SoundEngine::StopPlayingID( m_playingID );
 }
@@ -85,7 +93,7 @@ void AudioInputMgr::Execute( AkPlayingID in_playingID, AkAudioBuffer* io_pBuffer
 	}
 }
 
-// The callback Wwise will call when it wants to know the format of the audio that will be 
+// The callback Wwise will call when it wants to know the format of the audio that will be
 // passed to it.
 void AudioInputMgr::GetFormatCallback( AkPlayingID in_playingID, AkAudioFormat& io_AudioFormat )
 {
@@ -93,13 +101,12 @@ void AudioInputMgr::GetFormatCallback( AkPlayingID in_playingID, AkAudioFormat& 
 	AkUInt32 bytesPerSample = ( g_audioInputMgr->m_bitsPerSamples / 8 ) * g_audioInputMgr->m_channels; // Bytes per sample * number of channels (8 bits in a byte).
 
 	io_AudioFormat.SetAll(
-		g_audioInputMgr->m_sampleRate, 
+		g_audioInputMgr->m_sampleRate,
 		AkChannelConfig( g_audioInputMgr->m_channels, channelBitmask ),
-		g_audioInputMgr->m_bitsPerSamples, 
-		bytesPerSample, 
+		g_audioInputMgr->m_bitsPerSamples,
+		bytesPerSample,
 		AK_INT, // feeding integers(signed)
-		AK_INTERLEAVED 
-	);
+		AK_INTERLEAVED );
 }
 
 void AudioInputMgr::SetSink( IAudioInputSink* inputSink )
