@@ -128,8 +128,8 @@ public:
 	void DisableDebugDisplayAllEmitters();
 	bool GetDebugDisplayAllEmitters();
 
-	void RegisterAudEmitter( AudEmitter * emitter );
-	void UnregisterAudEmitter( AudEmitter * emitter );
+	void RegisterAudEmitter( AudEmitter* emitter );
+	void UnregisterAudEmitter( AudEmitter* emitter );
 	void StopAll();
 
 private:
