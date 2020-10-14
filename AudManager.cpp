@@ -330,7 +330,7 @@ void AudManager::SetEnabled( bool newStatus )
 		m_waitingEvents.clear();
 
 		//Unload all resources
-		AK::SoundEngine::StopAll();
+		StopAll();
 		AK::SoundEngine::UnregisterAllGameObj();
 		AK::SoundEngine::ClearBanks();
 		//Tear down WWISE
@@ -609,6 +609,7 @@ void AudManager::StopAll()
 		{
 			( *it )->StopAll();
 		}
+		m_audioEmitters.clear();
 	}
 }
 
