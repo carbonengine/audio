@@ -178,6 +178,11 @@ private:
 	CcpMutex m_multiEmitterMutex;
 	bool m_useDoppler;
 
+	// Determines whether Wwise tries to asynchronously open files. If false, the client will freeze while an audio asset is 
+	// downloaded on demand. Asynchronous opening does not freeze the client when using download on demand in conjunction 
+	// with .wem files (aka streaming) but .bnk files will still freeze the client while Wwise waits to open it.
+	bool m_asyncOpen; 
+
 	std::vector<AudEmitter*> m_audioEmitters;
 
 	//Debug

@@ -56,7 +56,8 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_multiEmitterMutex( "AudManager", "m_multiEmitterMutex" ),
 	m_useDoppler( false ),
 	m_debugLastPlayedEventMutex( "AudManager", "debugLastPlayedEventMutex" ),
-	m_debugLastSwitchMutex( "AudManager", "debugLastSwitchMutex" )
+	m_debugLastSwitchMutex( "AudManager", "debugLastSwitchMutex" ),
+	m_asyncOpen( true )
 {
 	s_gameObjectsToBeDestroyed.push_back( 0 );
 }
@@ -226,7 +227,8 @@ bool AudManager::InitLowLevel()
 	//-----------------------------------------------------------------------------
 	AkDeviceSettings deviceSettings;
 	AK::StreamMgr::GetDefaultDeviceSettings( deviceSettings );
-	if( m_lowLevelIO.Init( deviceSettings ) != AK_Success )
+	
+	if( m_lowLevelIO.Init( deviceSettings, m_asyncOpen ) != AK_Success )
 	{
 		CCP_LOGERR( "Failed to create Wwise Low Level IO Hook" );
 		return false;
