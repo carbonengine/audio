@@ -77,6 +77,11 @@ unsigned int AudGameObjResource::SendEvent( const std::wstring& name, bool bypas
 	return 0;
 }
 
+void AudGameObjResource::StopSound( AkPlayingID playingID )
+{
+	AK::SoundEngine::StopPlayingID( playingID );
+}
+
 int AudGameObjResource::SetAttenuationScalingFactor( float value )
 {
 	if( g_audioInitialized )

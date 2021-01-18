@@ -9,36 +9,45 @@ const Be::ClassInfo* AudUIPlayer::ExposeToBlue()
 		MAP_INTERFACE( AudGameObjResource )
 		MAP_INTERFACE( AudUIPlayer )
 
-		MAP_METHOD_AND_WRAP( "SendEvent", SendEvent,
-							"Description:\n"
-							"\tSends an event to Wwise and associates it with this entity.\n"
-							"Signature:\n"
-							"\tSendEvent( eventname ) -> unsigned int\n"
-							"Arguments:\n"
-							"\teventname -- Name of the event to be sent. UNICODE!"
-							"Returns:\n"
-							"\tunsigned int representing the playing id of that request."
-							)
-		MAP_METHOD_AND_WRAP( "SetRTPC", 
-							 SetRTPC,
-						     "Set an RTPC value on the game object.\n"
-							 ":type rtpcName: str\n"
-							 ":param rtpcName: The name of the RTPC you wish to set on the game object.\n"
-							 ":type rtpcValue: float\n"
-							 ":param rtpcValue: The value you wish to set the RTPC to on the game object.\n"
-						   )
+		MAP_METHOD_AND_WRAP
+		( 
+			"SendEvent", 
+			SendEvent,
+			"Send an event to Wwise and associates it with this entity."
+			":param eventName: Name of the event to be sent. UNICODE!"
+			":type eventName: str"
+			":return: an int representing a playing ID of the event sent. 0 if it failed to send."
+			":rtype: int"
+		)
+		MAP_METHOD_AND_WRAP
+		( 
+			"SetRTPC", 
+			SetRTPC,
+			"Set an RTPC value on the game object."
+			":type rtpcName: str"
+			":param rtpcName: The name of the RTPC you wish to set on the game object."
+			":type rtpcValue: float"
+			":param rtpcValue: The value you wish to set the RTPC to on the game object."
+		)
+		MAP_METHOD_AND_WRAP
+		( 
+			"SendEventWithCallback", 
+			SendEventWithCallback,
+			"Send an event to Wwise and associates it with this entity. When event has finished a callback will be made to the callback function."
+			":param eventName: Name of the event to be sent. UNICODE!"
+			":type eventName: str"
+			":return: an int representing a playing ID of the event sent. 0 if it failed to send."
+			":rtype: int"
+		)
+		MAP_METHOD_AND_WRAP
+		(
+			"StopSound",
+			StopSound,
+			"Stop a playing sound by playing ID."
+			":param playingID: The playingID of the sound you want to stop. playingIDs are returned when sending events."
+			":type playingID: int"
+		)
 
-							MAP_METHOD_AND_WRAP( "SendEventWithCallback", SendEventWithCallback,
-							"Description:\n"
-							"\tSends an event to Wwise and associates it with this entity.\n"
-							"\tWhen event has finished a callback will be made to the m_callback function.\n"
-							"Signature:\n"
-							"\tSendEvent( eventname ) -> unsigned int\n"
-							"Arguments:\n"
-							"\teventname -- Name of the event to be sent. UNICODE!"
-							"Returns:\n"
-							"\tunsigned int representing the playing id of that request."
-							)
 #if BLUE_WITH_PYTHON
 							MAP_ATTRIBUTE( "eventSenderCallback", m_callback, "", Be::READWRITE )
 #endif
