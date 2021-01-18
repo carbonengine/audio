@@ -47,5 +47,13 @@ const Be::ClassInfo* AudEmitter::ExposeToBlue()
 			":return: true if the event was found and stopped, false otherwise\n"
 			":rtype: bool\n"
 		)
+		MAP_METHOD_AND_WRAP
+		(
+			"StopSound",
+			StopSound,
+			"Stop a playing sound by playing ID."
+			":param playingID: The playingID of the sound you want to stop. playingIDs are returned when sending events."
+			":type playingID: int"
+		)
 	EXPOSURE_CHAINTO( AudGameObjResource )
 }

@@ -61,6 +61,7 @@ public:
 	virtual void OnListModified( long event, ssize_t key, ssize_t key2, IRoot* value, const IList* theList ) override;
 
 	virtual unsigned int SendEvent( const std::wstring& name, bool bypassPrefix = false );
+	virtual void StopSound( AkPlayingID playingID ); 
 	virtual int SetAttenuationScalingFactor( float value );
 	virtual int SetObstructionAndOcclusion( unsigned int listenerID, float obstruction, float occlusion );
 
