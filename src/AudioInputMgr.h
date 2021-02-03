@@ -30,10 +30,13 @@ public:
 
 	// The event in Wwise that must be triggered in order to start the Audio Input Plugin.
 	const std::string INPUT_PLUGIN_EVENT = "in_game_video_stream_play";
+	// The name of the RTPC in the Wwise project that controls video volumes.
+	const std::string VOLUME_RTPC = "volume_video";
 	
 	// IAudioInputMgr //
 	void StartInput( uint32_t channels, uint32_t bps, uint32_t rate ) override;
 	void StopInput() override;
+	void SetVolume( float volume ) override;
 
 	// Wwise callbacks //
 	static void Execute( AkPlayingID in_playingID, AkAudioBuffer * io_pBufferOut );
@@ -46,7 +49,7 @@ protected:
 	uint32_t m_channels;
 	uint32_t m_bitsPerSamples;
 	uint32_t m_sampleRate;
-	int m_playingID;
+	AkPlayingID m_playingID;
 
 private:
 	IAudioInputSink* m_inputSink;
