@@ -22,6 +22,7 @@ BLUE_INTERFACE( IAudioInputMgr ) :
 
 	virtual void StartInput( uint32_t channels, uint32_t bps, uint32_t rate) = 0;
 	virtual void StopInput() = 0;
+	virtual void SetVolume( float volume ) = 0;
 };
 
 // The interface your class must inherit from to provide an audio stream to Wwise.
