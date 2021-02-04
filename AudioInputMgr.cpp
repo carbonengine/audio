@@ -67,13 +67,16 @@ void AudioInputMgr::StopInput()
 	{
 		return;
 	}
-	// Stopping the event called in StartInput will kill the Audio Input plugin in Wwise.
-	AK::SoundEngine::StopPlayingID( m_playingID );
+	if ( m_playingID > 0 )
+	{
+		// Stopping the event called in StartInput will kill the Audio Input plugin in Wwise.
+		AK::SoundEngine::StopPlayingID( m_playingID );
 
-	CcpAutoMutex lock( g_inputMgrMapMutex );
-	g_audioInputMgrMap.erase( m_playingID );
+		CcpAutoMutex lock( g_inputMgrMapMutex );
+		g_audioInputMgrMap.erase( m_playingID );
 
-	m_playingID = 0;
+		m_playingID = 0;
+	}
 }
 
 void AudioInputMgr::SetVolume( float volume )
