@@ -55,5 +55,11 @@ const Be::ClassInfo* AudEmitter::ExposeToBlue()
 			":param playingID: The playingID of the sound you want to stop. playingIDs are returned when sending events."
 			":type playingID: int"
 		)
+		MAP_METHOD_AND_WRAP
+		(
+			"StopAll",
+			StopAll,
+			"Stop all sounds playing on this emitter."
+		)
 	EXPOSURE_CHAINTO( AudGameObjResource )
 }
