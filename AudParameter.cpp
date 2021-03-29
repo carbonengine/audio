@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "AudParameter.h"
+#include "AudManager.h"
 #include <AK/SoundEngine/Common/AkSoundEngine.h>
 
 AudParameter::AudParameter( IRoot* lockobj ) :
@@ -19,6 +20,7 @@ bool AudParameter::OnModified( Be::Var* value )
 		if( g_audioInitialized && m_ID )
 		{
 			AK::SoundEngine::SetRTPCValue( m_name.c_str(), m_value, m_ID );
+			g_audioManager->LogSetRTPC( m_ID, m_name, m_value );
 		}
 	}
 	return true;

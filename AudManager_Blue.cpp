@@ -16,6 +16,7 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		MAP_INTERFACE( AudManager )
 
 		MAP_ATTRIBUTE( "useDoppler", m_useDoppler, "A flag for deciding if we use the doppler calculations.", Be::READWRITE )
+		MAP_ATTRIBUTE( "log", m_log, "A log system for logging events.", Be::READWRITE )
 		MAP_METHOD_AND_WRAP( "UpdateSettings", 
 							 UpdateSettings,
 							 "Update settings to be used when starting Wwise. Needs to be called before SetEnabled in order to apply."
@@ -60,16 +61,6 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 							 StopAll,
 							 "Stops all sounds currently playing."
 						   )
-		MAP_METHOD_AND_WRAP( "RegisterDebugEventCallback",
-							RegisterDebugEventCallback,
-							"Registers a python function be called when an audio event is sent to the sound engine\n"
-							":param callback: An instance of a python function to be executed"
-						   )
-		MAP_METHOD_AND_WRAP( "RegisterDebugSwitchCallback",
-							RegisterDebugSwitchCallback,
-							"Registers a python function be called when an audio switch is set in the sound engine\n"
-							":param callback: An instance of a python function to be executed"
-						   )
 		MAP_METHOD_AND_WRAP("EnableDebugDisplayAllEmitters",
 							EnableDebugDisplayAllEmitters,
 							"Forces all AudEmitters to render their debug info on screen."
@@ -97,6 +88,7 @@ static PyObject* PySetGlobalRTPC( PyObject* module, PyObject* args )
 		std::wstring name( buffer );
 
 		AK::SoundEngine::SetRTPCValue( name.c_str(), value );
+		g_audioManager->LogSetRTPC( 0, name, value );
 	}
 
 	//Return
@@ -115,6 +107,7 @@ static PyObject* PySetState( PyObject* module, PyObject* args )
 		std::wstring stateName( stateBuf );
 
 		AK::SoundEngine::SetState( groupName.c_str(), stateName.c_str() );
+		g_audioManager->LogSetState( groupName, stateName );
 	}
 
 	//Return

@@ -479,6 +479,7 @@
     <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AudActionLog.h" />
     <ClInclude Include="AudConstants.h" />
     <ClInclude Include="AudEmitter.h" />
     <ClInclude Include="AudEmitterDoppler.h" />
@@ -516,6 +517,8 @@
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AudActionLog.cpp" />
+    <ClCompile Include="AudActionLog_Blue.cpp" />
     <ClCompile Include="AudConstants.cpp" />
     <ClCompile Include="AudEmitter.cpp" />
     <ClCompile Include="AudEmitterDoppler.cpp" />

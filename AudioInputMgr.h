@@ -29,9 +29,9 @@ public:
 	EXPOSE_TO_BLUE();
 
 	// The event in Wwise that must be triggered in order to start the Audio Input Plugin.
-	const std::string INPUT_PLUGIN_EVENT = "in_game_video_stream_play";
+	const std::wstring INPUT_PLUGIN_EVENT = L"in_game_video_stream_play";
 	// The name of the RTPC in the Wwise project that controls video volumes.
-	const std::string VOLUME_RTPC = "volume_video";
+	const std::wstring VOLUME_RTPC = L"volume_video";
 	
 	// IAudioInputMgr //
 	void StartInput( uint32_t channels, uint32_t bps, uint32_t rate ) override;

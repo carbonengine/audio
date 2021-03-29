@@ -55,6 +55,7 @@ BLUE_DECLARE( AudConfig );
 BLUE_DECLARE( AudLowLevelIO );
 BLUE_DECLARE( AudEmitterMulti );
 BLUE_DECLARE( AudEmitter );
+BLUE_DECLARE_INTERFACE( IAudActionLog );
 
 //-----------------------------------------------------------------------------
 // Typedefs
@@ -118,11 +119,11 @@ public:
 	// Gets an AudEmitterMulti for a given event name or creates it if it does not exist.
 	Be::Result<std::string> GetEmitterForEventName( const std::wstring& eventName, AudEmitterMulti** out );
 
-	void RegisterDebugEventCallback( BlueScriptCallback callback );
-	void RegisterDebugSwitchCallback( BlueScriptCallback callback );
-
-	void SetDebugEventName( const std::wstring& eventName );
-	void SetDebugSwitch( const std::wstring& switchGroup, const std::wstring& switchName );
+	void LogPostEvent( AkGameObjectID emitterID, AkPlayingID playID, AkUniqueID eventID, const std::wstring& name );
+	void LogStopPlayingID( AkGameObjectID emitterID, AkPlayingID playID );
+	void LogSetSwitch( AkGameObjectID emitterID, const std::wstring& group, const std::wstring& state );
+	void LogSetState( const std::wstring& group, const std::wstring& state );
+	void LogSetRTPC( AkGameObjectID emitterID, const std::wstring& name, float value, AkPlayingID playID = AK_INVALID_PLAYING_ID );
 
 	void EnableDebugDisplayAllEmitters();
 	void DisableDebugDisplayAllEmitters();
@@ -186,13 +187,7 @@ private:
 	std::vector<AudEmitter*> m_audioEmitters;
 
 	//Debug
-	BlueScriptCallback m_debugEventCallback;
-	std::queue<std::wstring> m_debugLastPlayedEvents;
-	CcpMutex m_debugLastPlayedEventMutex;
-
-	BlueScriptCallback m_debugSwitchCallback;
-	std::queue<std::wstring> m_debugLastSwitches;
-	CcpMutex m_debugLastSwitchMutex;
+	IAudActionLogPtr m_log;
 };
 
 TYPEDEF_BLUECLASS( AudManager );
