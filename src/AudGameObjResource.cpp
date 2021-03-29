@@ -35,8 +35,8 @@ AudGameObjResource::~AudGameObjResource()
 	if( g_audioInitialized )
         {
 		// Silence the game object and put it on death row!
-		AK::SoundEngine::PostEvent( L"fade_out", m_ID );
-
+		AkPlayingID eventID = AK::SoundEngine::PostEvent( L"fade_out", m_ID );
+		g_audioManager->LogPostEvent( m_ID, eventID, AK_INVALID_UNIQUE_ID, L"fade_out" );
 		g_audioManager->AddToDestructionVector( m_ID );
 	}
 }
@@ -65,7 +65,7 @@ unsigned int AudGameObjResource::SendEvent( const std::wstring& name, bool bypas
 		std::wstring eventName = PrepareEvent( name, bypassPrefix );
 
 		m_playID = AK::SoundEngine::PostEvent( eventName.c_str(), m_ID );
-		g_audioManager->SetDebugEventName( eventName );
+		g_audioManager->LogPostEvent( m_ID, m_playID, AK_INVALID_UNIQUE_ID, eventName );
 
 		if (m_playID == AK_INVALID_PLAYING_ID)
 		{
@@ -80,6 +80,7 @@ unsigned int AudGameObjResource::SendEvent( const std::wstring& name, bool bypas
 void AudGameObjResource::StopSound( AkPlayingID playingID )
 {
 	AK::SoundEngine::StopPlayingID( playingID );
+	g_audioManager->LogStopPlayingID( m_ID, playingID );
 }
 
 int AudGameObjResource::SetAttenuationScalingFactor( float value )
@@ -184,7 +185,7 @@ void AudGameObjResource::SetSwitch( const std::wstring& switchGroup, const std::
 	if ( g_audioInitialized )
 	{
 		AK::SoundEngine::SetSwitch( switchGroup.c_str(), switchState.c_str(), m_ID );
-		g_audioManager->SetDebugSwitch( switchGroup, switchState );
+		g_audioManager->LogSetSwitch( m_ID, switchGroup, switchState );
 	}
 }
 
@@ -193,6 +194,7 @@ void AudGameObjResource::SetRTPC( const std::wstring& rtpcName, float rtpcValue 
 	if ( g_audioInitialized )
 	{
 		AK::SoundEngine::SetRTPCValue( rtpcName.c_str(), AkRtpcValue(rtpcValue), m_ID );
+		g_audioManager->LogSetRTPC( m_ID, rtpcName, rtpcValue );
 	}
 }
 

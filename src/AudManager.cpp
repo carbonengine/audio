@@ -39,6 +39,7 @@
 #include "AudSettings.h"
 #include "AudEmitterMulti.h"
 #include "AudEmitter.h"
+#include "AudActionLog.h"
 
 
 static CcpLogChannel_t s_ch = CCP_LOG_DEFINE_CHANNEL( "AudioManager" );
@@ -55,11 +56,12 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_waitingEventsMutex( "AudManager", "m_waitingEventsMutex" ),
 	m_multiEmitterMutex( "AudManager", "m_multiEmitterMutex" ),
 	m_useDoppler( false ),
-	m_debugLastPlayedEventMutex( "AudManager", "debugLastPlayedEventMutex" ),
-	m_debugLastSwitchMutex( "AudManager", "debugLastSwitchMutex" ),
-	m_asyncOpen( true )
+	m_asyncOpen( true ),
+	m_log()
 {
 	s_gameObjectsToBeDestroyed.push_back( 0 );
+
+
 }
 
 AudManager::~AudManager()
@@ -98,24 +100,9 @@ void AudManager::Process()
 			}
 		}
 
-		CcpAutoMutex eventMutex( m_debugLastPlayedEventMutex ); //Releases when variable is out of scope.
-		if( m_debugEventCallback && !m_debugLastPlayedEvents.empty() )
+		if( m_log )
 		{
-			while( !m_debugLastPlayedEvents.empty() )
-			{
-				m_debugEventCallback.CallVoid( m_debugLastPlayedEvents.front() );
-				m_debugLastPlayedEvents.pop();
-			}
-		}
-
-		CcpAutoMutex switchMutex( m_debugLastSwitchMutex );
-		if( m_debugSwitchCallback && !m_debugLastSwitches.empty() )
-		{
-			while( !m_debugLastSwitches.empty() )
-			{
-				m_debugSwitchCallback.CallVoid( m_debugLastSwitches.front() );
-				m_debugLastSwitches.pop();
-			}
+			m_log->Flush();
 		}
 	}
 }
@@ -525,6 +512,7 @@ void AudManager::ProcessWaitingEvents()
 	for( std::vector<WaitingEvent>::iterator it = m_waitingEvents.begin(); it != m_waitingEvents.end(); )
 	{
 		AkInt32 playback_ID = AK::SoundEngine::PostEvent( it->eventID, it->gameObjectID );
+		LogPostEvent( it->gameObjectID, playback_ID, it->eventID, L"" );
 		it->numRetries += 1;
 		if( ( playback_ID != AK_INVALID_PLAYING_ID ) || it->numRetries > 7 )
 		{
@@ -631,36 +619,44 @@ void AudManager::UnregisterAudEmitter( AudEmitter* emitter )
 	}
 }
 
-void AudManager::RegisterDebugEventCallback( BlueScriptCallback callback )
+void AudManager::LogPostEvent( AkGameObjectID emitterID, AkPlayingID playID, AkUniqueID eventID, const std::wstring& name )
 {
-	m_debugEventCallback = callback;
-}
-
-void AudManager::RegisterDebugSwitchCallback( BlueScriptCallback callback )
-{
-	m_debugSwitchCallback = callback;
-}
-
-void AudManager::SetDebugEventName( const std::wstring& eventName )
-{
-	if( !m_debugEventCallback )
+	if( m_log )
 	{
-		return;
+		m_log->LogPostEvent( emitterID, playID, eventID, name );
 	}
-
-	CcpAutoMutex mutex( m_debugLastPlayedEventMutex );
-	m_debugLastPlayedEvents.push( eventName );
 }
 
-void AudManager::SetDebugSwitch( const std::wstring& switchGroup, const std::wstring& switchName )
+void AudManager::LogStopPlayingID( AkGameObjectID emitterID, AkPlayingID playID )
 {
-	if( !m_debugSwitchCallback )
+	if( m_log )
 	{
-		return;
+		m_log->LogStopPlayingID( emitterID, playID );
 	}
+}
 
-	CcpAutoMutex mutex( m_debugLastSwitchMutex );
-	m_debugLastSwitches.push( switchGroup + L" -- " + switchName );
+void AudManager::LogSetSwitch( AkGameObjectID emitterID, const std::wstring& group, const std::wstring& state )
+{
+	if( m_log )
+	{
+		m_log->LogSetSwitch( emitterID, group, state );
+	}
+}
+
+void AudManager::LogSetState( const std::wstring& group, const std::wstring& state )
+{
+	if( m_log )
+	{
+		m_log->LogSetState( group, state );
+	}
+}
+
+void AudManager::LogSetRTPC( AkGameObjectID emitterID, const std::wstring& name, float value, AkPlayingID playID )
+{
+	if( m_log )
+	{
+		m_log->LogSetRTPC( emitterID, name, value, playID );
+	}
 }
 
 void AudManager::EnableDebugDisplayAllEmitters()
