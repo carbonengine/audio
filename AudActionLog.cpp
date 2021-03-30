@@ -1,11 +1,11 @@
 #include "stdafx.h"
 #include "AudActionLog.h"
 
-AudActionRecordPostEvent::AudActionRecordPostEvent( Be::Time time, AkGameObjectID emitterID, AkPlayingID playID, AkUniqueID m_eventID, const std::wstring& name ) :
+AudActionRecordPostEvent::AudActionRecordPostEvent( Be::Time time, AkGameObjectID emitterID, AkPlayingID playID, AkUniqueID eventID, const std::wstring& name ) :
 	m_time( time ),
 	m_emitterID( emitterID ),
 	m_playID( playID ),
-	m_eventID( m_eventID ),
+	m_eventID( eventID ),
 	m_name( name )
 {
 }
