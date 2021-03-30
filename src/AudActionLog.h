@@ -21,7 +21,7 @@ struct AudActionRecordPostEvent : public AudActionRecord
 	AkUniqueID m_eventID;
 	std::wstring m_name;
 
-	AudActionRecordPostEvent( Be::Time time = 0, AkGameObjectID emitterID = AK_INVALID_UNIQUE_ID, AkPlayingID playID = AK_INVALID_UNIQUE_ID, AkUniqueID m_eventID = AK_INVALID_UNIQUE_ID, const std::wstring& name = std::wstring() );
+	AudActionRecordPostEvent( Be::Time time = 0, AkGameObjectID emitterID = AK_INVALID_UNIQUE_ID, AkPlayingID playID = AK_INVALID_UNIQUE_ID, AkUniqueID eventID = AK_INVALID_UNIQUE_ID, const std::wstring& name = std::wstring() );
 	PyObject* ToPyObject() override;
 };
 
@@ -30,7 +30,6 @@ struct AudActionRecordStopPlayingID : public AudActionRecord
 	Be::Time m_time;
 	AkGameObjectID m_emitterID;
 	AkPlayingID m_playID;
-	AkUniqueID m_eventID;
 
 	AudActionRecordStopPlayingID( Be::Time time = 0, AkGameObjectID emitterID = AK_INVALID_UNIQUE_ID, AkPlayingID playID = AK_INVALID_UNIQUE_ID );
 	PyObject* ToPyObject() override;
