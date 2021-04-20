@@ -9,6 +9,7 @@
 AudEmitter::AudEmitter( IRoot* lockobj ) :
 	AudGameObjResource( lockobj ),
 	m_debugPosition(0, 0, 0),
+	m_debugFront(0, 0, 0),
 	m_debugColor()
 {
 	Initialize();
@@ -38,6 +39,7 @@ void AudEmitter::SetName( const std::string& name )
 int AudEmitter::SetPosition( const Vector3& front, const Vector3& top, const Vector3& pos )
 {
 	m_debugPosition = pos;
+	m_debugFront = front;
 	return SetPositionHelper( front, top, pos );
 }
 

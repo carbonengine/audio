@@ -61,5 +61,7 @@ const Be::ClassInfo* AudEmitter::ExposeToBlue()
 			StopAll,
 			"Stop all sounds playing on this emitter."
 		)
+		MAP_ATTRIBUTE( "debugPosition", m_debugPosition, "The location of the audio emitter in space.", Be::READ )
+		MAP_ATTRIBUTE( "debugFront", m_debugFront, "A vector pointing in the same direction that the audio emitter is facing. Can be (0.0, 0.0, 0.0)", Be::READ )
 	EXPOSURE_CHAINTO( AudGameObjResource )
 }

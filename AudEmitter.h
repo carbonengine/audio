@@ -81,6 +81,7 @@ public:
 
 protected:
 	Vector3 m_debugPosition;
+	Vector3 m_debugFront;
 	Color m_debugColor;
 private:
 	std::map<std::wstring, unsigned int> m_playingEvents;
