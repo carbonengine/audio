@@ -9,13 +9,16 @@ const Be::ClassInfo* AudUIPlayer::ExposeToBlue()
 		MAP_INTERFACE( AudGameObjResource )
 		MAP_INTERFACE( AudUIPlayer )
 
-		MAP_METHOD_AND_WRAP
+		MAP_METHOD_AND_WRAP_OPTIONAL_ARGS
 		( 
 			"SendEvent", 
-			SendEvent,
+			PySendEvent,
+			1,
 			"Send an event to Wwise and associates it with this entity."
-			":param eventName: Name of the event to be sent. UNICODE!"
+			":param eventName: Name of the event to be sent"
 			":type eventName: str"
+			":param bypassPrefix: An optional argument that bypasses the audio emitters defined prefix if set to True."
+			":type bypassPrefix: boolean"
 			":return: an int representing a playing ID of the event sent. 0 if it failed to send."
 			":rtype: int"
 		)

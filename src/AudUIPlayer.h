@@ -35,7 +35,6 @@ public:
 
 	EXPOSE_TO_BLUE();
 
-	virtual unsigned int SendEvent( const std::wstring& name );
 	virtual unsigned int SendEventWithCallback( const std:: wstring& name );
 	virtual void Callback( std::wstring eventName );
 

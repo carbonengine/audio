@@ -33,10 +33,9 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 AudGameObjResource::~AudGameObjResource()
 {
 	if( g_audioInitialized )
-        {
+    {
 		// Silence the game object and put it on death row!
-		AkPlayingID eventID = AK::SoundEngine::PostEvent( L"fade_out", m_ID );
-		g_audioManager->LogPostEvent( m_ID, eventID, AK_INVALID_UNIQUE_ID, L"fade_out" );
+		PostEvent( L"fade_out" );
 		g_audioManager->AddToDestructionVector( m_ID );
 	}
 }
@@ -58,23 +57,27 @@ void AudGameObjResource::LogInfo()
 	//}
 }
 
-unsigned int AudGameObjResource::SendEvent( const std::wstring& name, bool bypassPrefix )
+unsigned int AudGameObjResource::PostEvent( const std::wstring& name, bool bypassPrefix, AkUInt32 in_uFlags, AkCallbackFunc in_pfnCallback, void * in_pCookie ) 
 {
 	if( g_audioInitialized )
 	{
 		std::wstring eventName = PrepareEvent( name, bypassPrefix );
 
-		m_playID = AK::SoundEngine::PostEvent( eventName.c_str(), m_ID );
+		m_playID = AK::SoundEngine::PostEvent( eventName.c_str(), m_ID, in_uFlags, in_pfnCallback, in_pCookie);
 		g_audioManager->LogPostEvent( m_ID, m_playID, AK_INVALID_UNIQUE_ID, eventName );
 
 		if (m_playID == AK_INVALID_PLAYING_ID)
 		{
-			AkUniqueID eventID = AK::SoundEngine::GetIDFromString( eventName.c_str() );
-			g_audioManager->AddWaitingEvent( eventID, m_ID );
+			CCP_LOGERR( "Failed to send event to Wwise: %S", eventName.c_str() );
 		}
 		return m_playID;
 	}
 	return 0;
+}
+
+unsigned int AudGameObjResource::PySendEvent( const std::wstring& event, bool bypassPrefix )
+{
+	return PostEvent( event, bypassPrefix );
 }
 
 void AudGameObjResource::StopSound( AkPlayingID playingID )
@@ -126,7 +129,7 @@ int AudGameObjResource::SetPositionHelper( const Vector3& front, const Vector3& 
 //----------------------------------
 void AudGameObjResource::HandleEvent( const wchar_t* evtName )
 {
-	SendEvent( evtName );	//g_audioInitialized is checked in SendEvent
+	PostEvent( evtName );	//g_audioInitialized is checked in PostEvent
 }
 
 
@@ -146,7 +149,7 @@ bool AudGameObjResource::Initialize()
 	//Start playing on loading from a red file.
 	if( m_playOnLoad )
 	{
-		SendEvent( m_playEvent );	//SendEvent checks for g_audioEnabled
+		PostEvent( m_playEvent );	//PostEvent checks for g_audioEnabled
 	}
 
 	return true;
@@ -173,11 +176,6 @@ void AudGameObjResource::Initialize( const std::string& name, const std::wstring
 	m_eventPrefix = prefix;
 	m_position = position;
 	Initialize();
-}
-
-void AudGameObjResource::SendSoundEvent( const wchar_t* eventName )
-{
-	SendEvent( eventName );
 }
 
 void AudGameObjResource::SetSwitch( const std::wstring& switchGroup, const std::wstring& switchState )

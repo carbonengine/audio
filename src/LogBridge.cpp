@@ -1,3 +1,4 @@
+// Send Wwise errors directly to our error logging system if running the Debug or Profile versions of the Wwise SDK.
 #include "stdafx.h"
 #include "LogBridge.h"
 
@@ -20,6 +21,9 @@ void WwiseLogServerMessageHandler( ErrorCode in_eErrorCode, const wchar_t *in_ps
 
 void WwiseLogServerBridgeInit( AK::Monitor::ErrorLevel errorLevel )
 {
-	AK::Monitor::SetLocalOutput( errorLevel, &WwiseLogServerMessageHandler );
-	CCP_LOG_CH( s_ch, "Audio2 logobject up." );
+	AKRESULT result = AK::Monitor::SetLocalOutput( errorLevel, &WwiseLogServerMessageHandler );
+	if ( result != AK_NotCompatible )
+	{
+		CCP_LOG_CH( s_ch, "Wwise LogBridge initialized." );
+	}
 }
