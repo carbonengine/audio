@@ -26,7 +26,7 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 		MAP_METHOD_AND_WRAP_OPTIONAL_ARGS
 		( 
 			"SendEvent", 
-			SendEvent, 
+			PySendEvent, 
 			1,
 		    "Sends an event to the audio system and returns an ID for the playing stream.\n"
 			":param eventName: The name of the event to send to the sound engine\n"

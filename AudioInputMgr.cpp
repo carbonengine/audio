@@ -49,7 +49,7 @@ void AudioInputMgr::StartInput( uint32_t channels, uint32_t bps, uint32_t rate )
 	// An event using the source plugin Audio Input must exist in the a loaded Wwise soundbank and
 	// be triggered to start the Audio Input plugin.
 	m_playingID = AK::SoundEngine::PostEvent( INPUT_PLUGIN_EVENT.c_str(), UI_GAME_OBJ_ID );
-	if( m_playingID == 0 )
+	if( m_playingID == AK_INVALID_PLAYING_ID )
 	{
 		CCP_LOGERR( "Failed to post %S to audio emitter %d. Video playback will fail.", INPUT_PLUGIN_EVENT.c_str(), UI_GAME_OBJ_ID );
 		return;

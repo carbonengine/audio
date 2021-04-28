@@ -64,13 +64,6 @@ typedef std::vector<std::wstring> BankVector;
 typedef std::vector<AkGameObjectID> GameObjIDVector;
 typedef std::set<AudEmitterMulti*> EmitterMultiSet;
 
-struct WaitingEvent
-{
-	AkUniqueID eventID;
-	AkGameObjectID gameObjectID;
-	AkUInt32 numRetries;
-};
-
 BLUE_CLASS( AudManager ) :
 	public IRoot,
 	public IBlueEvents
@@ -109,12 +102,6 @@ public:
 
 	// Exposing loaded sound banks to python
 	std::vector<std::wstring> GetLoadedSoundBanks();
-
-	// Add a Failed event to the waiting events vector
-	void AddWaitingEvent( AkUniqueID eventID, AkGameObjectID gameObjID );
-
-	// Run throught the list once and try to resend the events to the gameObjects.
-	void ProcessWaitingEvents();
 
 	// Gets an AudEmitterMulti for a given event name or creates it if it does not exist.
 	Be::Result<std::string> GetEmitterForEventName( const std::wstring& eventName, AudEmitterMulti** out );
@@ -172,10 +159,7 @@ private:
 #endif
 
 	BankVector m_loadedBanks;
-
-	std::vector<WaitingEvent> m_waitingEvents;
 	EmitterMultiSet m_multiEmitters;
-	CcpMutex m_waitingEventsMutex;
 	CcpMutex m_multiEmitterMutex;
 	bool m_useDoppler;
 

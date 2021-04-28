@@ -53,15 +53,12 @@ static GameObjIDVector s_gameObjectsToBeDestroyed;
 
 AudManager::AudManager( IRoot* lockobj ) :
 	m_tickInterval( 10 ),
-	m_waitingEventsMutex( "AudManager", "m_waitingEventsMutex" ),
 	m_multiEmitterMutex( "AudManager", "m_multiEmitterMutex" ),
 	m_useDoppler( false ),
 	m_asyncOpen( true ),
 	m_log()
 {
 	s_gameObjectsToBeDestroyed.push_back( 0 );
-
-
 }
 
 AudManager::~AudManager()
@@ -214,7 +211,7 @@ bool AudManager::InitLowLevel()
 	//-----------------------------------------------------------------------------
 	AkDeviceSettings deviceSettings;
 	AK::StreamMgr::GetDefaultDeviceSettings( deviceSettings );
-	
+
 	if( m_lowLevelIO.Init( deviceSettings, m_asyncOpen ) != AK_Success )
 	{
 		CCP_LOGERR( "Failed to create Wwise Low Level IO Hook" );
@@ -315,9 +312,6 @@ void AudManager::SetEnabled( bool newStatus )
 	}
 	else
 	{
-		CcpAutoMutex guard( m_waitingEventsMutex );
-		m_waitingEvents.clear();
-
 		//Unload all resources
 		StopAll();
 		AK::SoundEngine::UnregisterAllGameObj();
@@ -405,8 +399,6 @@ bool AudManager::LoadBank( const std::wstring& name )
 
 		WaitForLoadUnload( status );
 
-		ProcessWaitingEvents();
-
 		if( status->result == AK_Fail )
 		{
 			return false;
@@ -487,42 +479,6 @@ void AudManager::AddToDestructionVector( AkGameObjectID gameObjID )
 std::vector<std::wstring> AudManager::GetLoadedSoundBanks()
 {
 	return m_loadedBanks;
-}
-
-void AudManager::AddWaitingEvent( AkUniqueID eventID, AkGameObjectID gameObjID )
-{
-	CcpAutoMutex guard( m_waitingEventsMutex );
-
-	WaitingEvent failedEvent = { eventID, gameObjID, 0 };
-	for( std::vector<WaitingEvent>::iterator it = m_waitingEvents.begin(); it != m_waitingEvents.end(); ++it )
-	{
-		if( ( it->eventID == failedEvent.eventID ) && ( it->gameObjectID == failedEvent.gameObjectID ) )
-		{
-			// Return early if same event-gameobjectID combo is already in the list.
-			return;
-		}
-	}
-	m_waitingEvents.push_back( failedEvent );
-}
-
-void AudManager::ProcessWaitingEvents()
-{
-	CcpAutoMutex guard( m_waitingEventsMutex );
-
-	for( std::vector<WaitingEvent>::iterator it = m_waitingEvents.begin(); it != m_waitingEvents.end(); )
-	{
-		AkInt32 playback_ID = AK::SoundEngine::PostEvent( it->eventID, it->gameObjectID );
-		LogPostEvent( it->gameObjectID, playback_ID, it->eventID, L"" );
-		it->numRetries += 1;
-		if( ( playback_ID != AK_INVALID_PLAYING_ID ) || it->numRetries > 7 )
-		{
-			it = m_waitingEvents.erase( it );
-		}
-		else
-		{
-			++it;
-		}
-	}
 }
 
 AudEmitterMulti* AudManager::GetEmitterForEventID( AkUniqueID eventID )

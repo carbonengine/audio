@@ -45,8 +45,8 @@ int AudEmitter::SetPosition( const Vector3& front, const Vector3& top, const Vec
 
 unsigned int AudEmitter::SendEvent( const std::wstring& name, bool bypassPrefix )
 {
-	unsigned int playingID = AudGameObjResource::SendEvent( name, bypassPrefix );
-	if ( playingID != 0 ) // 0 means the sending of the event failed
+	unsigned int playingID = PostEvent( name, bypassPrefix );
+	if ( playingID != AK_INVALID_PLAYING_ID ) 
 	{
 		std::wstring eventName = PrepareEvent( name, false );
 		m_playingEvents.insert({eventName, playingID});
