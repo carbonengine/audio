@@ -82,8 +82,11 @@ unsigned int AudGameObjResource::PySendEvent( const std::wstring& event, bool by
 
 void AudGameObjResource::StopSound( AkPlayingID playingID )
 {
-	AK::SoundEngine::StopPlayingID( playingID );
-	g_audioManager->LogStopPlayingID( m_ID, playingID );
+	if ( g_audioInitialized )
+	{
+		AK::SoundEngine::ExecuteActionOnPlayingID( AK::SoundEngine::AkActionOnEventType_Stop, playingID );
+		g_audioManager->LogStopPlayingID( m_ID, playingID );
+	}
 }
 
 int AudGameObjResource::SetAttenuationScalingFactor( float value )
