@@ -96,7 +96,7 @@ public:
 	void LogSetState( const std::wstring& group, const std::wstring& state ) override;
 	void LogSetRTPC( AkGameObjectID emitterID, const std::wstring& name, float value, AkPlayingID playID = AK_INVALID_PLAYING_ID ) override;
 
-	void Flush();
+	void Flush() override;
 
 	// Register callback
 	void RegisterCallback( BlueScriptCallback callback );

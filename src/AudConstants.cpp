@@ -1,29 +1,27 @@
-#include "StdAfx.h"
+#include "stdafx.h"
 
 #include "AudConstants.h"
-
-#define VAL(v) BeCast(v)
 
 const Be::VarChooser TriExtrapolation[] =
 {
 	{ 
-		"TRIEXT_NONE",     
-		VAL(TRIEXT_NONE),     
+		"TRIEXT_NONE",
+		BeCast(TRIEXT_NONE),
 		"no comment" 
 	},
 	{ 
-		"TRIEXT_CONSTANT", 
-		VAL(TRIEXT_CONSTANT), 
+		"TRIEXT_CONSTANT",
+		BeCast(TRIEXT_CONSTANT),
 		"no comment" 
 	},
 	{ 
-		"TRIEXT_GRADIENT", 
-		VAL(TRIEXT_GRADIENT), 
+		"TRIEXT_GRADIENT",
+		BeCast(TRIEXT_GRADIENT),
 		"no comment" 
 	},
 	{ 
-		"TRIEXT_CYCLE",    
-		VAL(TRIEXT_CYCLE),    
+		"TRIEXT_CYCLE",
+		BeCast(TRIEXT_CYCLE),
 		"no comment" 
 	},
 	{0}

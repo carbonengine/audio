@@ -45,7 +45,7 @@ public:
 	// Blue interfaces
 	//--------------------------
 	// INotify
-	virtual bool OnModified( Be::Var* value );
+	virtual bool OnModified( Be::Var* value ) override;
 
 private:
 	AkGameObjectID m_ID;

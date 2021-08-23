@@ -1,6 +1,5 @@
 #include <stdafx.h>
 #include "AudUIPlayer.h"
-#include "blue\Include\IBlueResMan.h"
 
 // Wwise includes
 #include <AK/SoundEngine/Common/AkTypes.h>
@@ -64,7 +63,7 @@ static void PropagateCallback( void* callbackCookie )
 	CallbackCookie* callback = reinterpret_cast<CallbackCookie*>(callbackCookie);
 	AudUIPlayer* audplayer = reinterpret_cast<AudUIPlayer*>(callback->uiPlayer);
 	audplayer->Callback( callback->eventName );
-	delete callbackCookie;
+	delete callback;
 }
 
 static void EventFinishedCallback(AkCallbackType in_eType, AkCallbackInfo* in_pCallbackInfo)

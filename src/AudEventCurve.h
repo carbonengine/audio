@@ -5,11 +5,11 @@
 
 #include "AudEventKey.h"
 #include "blue/Include/IBluePlacementObserver.h"
-#include "trinity/include/ITriFunction.h"
-#include "trinity/include/ITriCurveLength.h"
-#include "blue/include/IBlueEventListener.h"
+#include "trinity/Include/ITriFunction.h"
+#include "trinity/Include/ITriCurveLength.h"
+#include "blue/Include/IBlueEventListener.h"
 #include "CcpMath/include/Vector3.h"
-#include "trinity/include/ITriObserverLocal.h"
+#include "trinity/Include/ITriObserverLocal.h"
 
 BLUE_DECLARE( AudEventCurve );
 
@@ -24,16 +24,16 @@ public:
 
 	//////////////////////////////////////////////////////////////////////////
 	// ITriFunction
-	void UpdateValue( double time );
-	void Reset();
+	void UpdateValue( double time ) override;
+	void Reset() override;
 
 	//////////////////////////////////////////////////////////////////////////
 	// IInitialize
-	bool Initialize();
+	bool Initialize() override;
 
 	//////////////////////////////////////////////////////////////////////////
 	// ITriEventCurve
-	float Length() { return m_length; }
+	float Length() override { return m_length; }
 
 	void Sort();
 

@@ -30,7 +30,7 @@
 #include <AK/SoundEngine/Common/AkTypes.h>
 
 // Blue headers specific to this file
-#include <blue/include/IBluePlacementObserver.h>
+#include <blue/Include/IBluePlacementObserver.h>
 
 #include "AudResource.h"
 struct Vector3;
@@ -45,7 +45,7 @@ public:
 	EXPOSE_TO_BLUE();
 
 	// IBluePlacementObserver
-	virtual void UpdatePlacement( const Vector3& front, const Vector3& top, const Vector3& pos );
+	virtual void UpdatePlacement( const Vector3& front, const Vector3& top, const Vector3& pos ) override;
 	// IInitialize
 	void Initialize();
 
@@ -53,8 +53,8 @@ public:
 
 	AkUInt32 m_ID;
 protected:
-	virtual void CreateWwiseObject();
-	virtual void LogInfo();
+	virtual void CreateWwiseObject() override;
+	virtual void LogInfo() override;
 
 };
 

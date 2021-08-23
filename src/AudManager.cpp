@@ -108,23 +108,27 @@ bool AudManager::Init()
 {
 	if( !InitLowLevel() )
 	{
+		CCP_LOGERR("Failed to initialize Low Level audio");
 		return false;
 	}
 
 #ifndef AK_OPTIMIZED
 	if( !InitCommunication() )
 	{
+		CCP_LOGERR("Failed to initialize audio : Communication");
 		return false;
 	}
 #endif
 
 	if( !InitSound() )
 	{
+		CCP_LOGERR("Failed to initialize audio : Sound");
 		return false;
 	}
 
 	if( !InitMusic() )
 	{
+		CCP_LOGERR("Failed to initialize audio : Music");
 		return false;
 	}
 	return true;
@@ -401,6 +405,7 @@ bool AudManager::LoadBank( const std::wstring& name )
 
 		if( status->result == AK_Fail )
 		{
+			CCP_LOGERR("AK::SoundEngine::LoadBank failed for %S", name.c_str());
 			return false;
 		}
 

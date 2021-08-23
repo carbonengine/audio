@@ -4,7 +4,7 @@
 
 static CcpLogChannel_t s_ch = CCP_LOG_DEFINE_CHANNEL( "Wwise" );
 
-void WwiseLogServerMessageHandler( ErrorCode in_eErrorCode, const wchar_t *in_pszError, ErrorLevel in_eErrorLevel, AkPlayingID in_playingID, AkGameObjectID in_gameObjID )
+void WwiseLogServerMessageHandler( ErrorCode in_eErrorCode, const AkOSChar* in_pszError, ErrorLevel in_eErrorLevel, AkPlayingID in_playingID, AkGameObjectID in_gameObjID )
 {
 	switch( in_eErrorLevel )
 	{

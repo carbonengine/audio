@@ -10,8 +10,8 @@ const Be::ClassInfo* AudUIPlayer::ExposeToBlue()
 		MAP_INTERFACE( AudUIPlayer )
 
 		MAP_METHOD_AND_WRAP_OPTIONAL_ARGS
-		( 
-			"SendEvent", 
+        (
+			"SendEvent",
 			PySendEvent,
 			1,
 			"Send an event to Wwise and associates it with this entity."
@@ -23,8 +23,8 @@ const Be::ClassInfo* AudUIPlayer::ExposeToBlue()
 			":rtype: int"
 		)
 		MAP_METHOD_AND_WRAP
-		( 
-			"SetRTPC", 
+		(
+			"SetRTPC",
 			SetRTPC,
 			"Set an RTPC value on the game object."
 			":type rtpcName: str"
@@ -33,8 +33,8 @@ const Be::ClassInfo* AudUIPlayer::ExposeToBlue()
 			":param rtpcValue: The value you wish to set the RTPC to on the game object."
 		)
 		MAP_METHOD_AND_WRAP
-		( 
-			"SendEventWithCallback", 
+		(
+			"SendEventWithCallback",
 			SendEventWithCallback,
 			"Send an event to Wwise and associates it with this entity. When event has finished a callback will be made to the callback function."
 			":param eventName: Name of the event to be sent. UNICODE!"

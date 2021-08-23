@@ -27,8 +27,9 @@
 
 #define NOMINMAX //don't want that evil microsoft macro
 
-// Windows Header Files:
+#ifdef _WIN32
 #include <windows.h>
+#endif
 
 
 
@@ -38,5 +39,5 @@
 #include <list>
 
 #include "BlueExposure/include/BlueExposure.h"
-#include "blue/include/IBluePaths.h"
+#include "blue/Include/IBluePaths.h"
 #include "CcpMath/include/CcpMath.h"

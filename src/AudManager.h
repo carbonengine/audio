@@ -77,7 +77,7 @@ public:
 	//-----------------------------------------------------------------------------
 	// IBlueEvents
 	//-----------------------------------------------------------------------------
-	void OnTick( Be::Time realTime, Be::Time simTime, void* cookie );
+	void OnTick( Be::Time realTime, Be::Time simTime, void* cookie ) override;
 
 	// Interface that handles initializing or termination of audio engine
 	void SetEnabled( bool onoff );

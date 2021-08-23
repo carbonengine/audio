@@ -3,9 +3,6 @@
 
 #include "stdafx.h"
 
-#include <Blue/Include/Blue.cxx>
-#include <BlueExposure/include/InterfaceDefinitions.cxx>
-
 #include "LogBridge.h"
 
 BLUE_DEFINE_INTERFACE( IBluePlacementObserver );
@@ -14,18 +11,17 @@ BLUE_DEFINE_INTERFACE( IBlueEventListener );
 #include "AudManager.h"
 #include "AudResource.h"
 
-#ifndef BLUE_DLL_NAME
-#error Please add BLUE_DLL_NAME=<PythonModuleName> to compiler preprocessor definitions (/D)
-#endif
-
-const char* BLUE_DLL_NAME_STR = CCP_STRINGIZE( BLUE_DLL_NAME );
-const char* g_moduleName = "audio2";
+const char* g_moduleName = "_audio2";
 
 //-----------------------------------------------------------------------------
 // Globals
 //-----------------------------------------------------------------------------
+#ifdef _WIN32
 HINSTANCE gInstance = NULL;
+#endif // _WIN32
+
 AudManager* g_audioManager = nullptr;
+
 bool g_audioEnabled = false;
 bool g_audioInitialized = false;
 bool g_debugDisplayAllEmitters = false;
@@ -110,7 +106,7 @@ MAP_FUNCTION( "GetRegisteredEnumValues", PyGetRegisteredEnumValues, "GetRegister
 //-----------------------------------------------------------------------------
 // Global DLL init function.
 //-----------------------------------------------------------------------------
-static void StartDLL( HINSTANCE instance )
+static void StartDLL( /*HINSTANCE instance*/ )
 {	
 	WwiseLogServerBridgeInit( AK::Monitor::ErrorLevel_All );
 
@@ -118,11 +114,12 @@ static void StartDLL( HINSTANCE instance )
 
 	BeClasses->RegisterClasses( BlueRegistration::GetClassRegs() );
 	
-	PyObject* module = Py_InitModule( ( char* )BLUE_DLL_NAME_STR, NULL );
+	PyObject* module = Py_InitModule( CCP_STRINGIZE( CCP_CONCATENATE( _audio2, CCP_BUILD_FLAVOR ) ), NULL );
 	
 	BlueRegisterToModule( module, BlueRegistration::GetClassRegs(), BlueRegistration::GetFuncRegs() );
 }
 
+#ifdef _WIN32
 //-----------------------------------------------------------------------------
 // DLL entry(main) function
 //-----------------------------------------------------------------------------
@@ -139,14 +136,18 @@ BOOL APIENTRY DllMain( HINSTANCE instance, DWORD  reason, LPVOID )
 
     return TRUE;
 }
+#endif // _WIN32
 
 //-----------------------------------------------------------------------------
 // init_audio2 - python dll module entry function
 //-----------------------------------------------------------------------------
-#define CONCAT( a, b ) MY_CONCAT( a, b )
-#define MY_CONCAT( a, b ) a##b
-//---------------------------------
-extern "C" void __declspec(dllexport) CONCAT( init, BLUE_DLL_NAME )()
+extern "C" void
+#ifdef _MSC_VER
+__declspec(dllexport)
+#else
+__attribute__((visibility("default")))
+#endif
+CCP_CONCATENATE( init_audio2, CCP_BUILD_FLAVOR )()
 {
-	StartDLL( gInstance );
+    StartDLL();
 }

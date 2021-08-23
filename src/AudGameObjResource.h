@@ -34,8 +34,8 @@ BLUE_DECLARE( AudPosition );
 #include <AK/SoundEngine/Common/AkCallback.h>
 
 // Blue headers specific to this file
-#include <blue/include/IBluePlacementObserver.h>
-#include <blue/include/IBlueEventListener.h>
+#include <blue/Include/IBluePlacementObserver.h>
+#include <blue/Include/IBlueEventListener.h>
 
 
 struct Vector3;
@@ -55,11 +55,11 @@ public:
 	// Blue interfaces
 	//--------------------------
 	// IBlueEventListener
-	virtual void HandleEvent( const wchar_t* evtName ) override;
+	void HandleEvent( const wchar_t* evtName ) override;
 	// IInitialized
-	virtual bool Initialize() override;
+	bool Initialize() override;
 	// IListNotify
-	virtual void OnListModified( long event, ssize_t key, ssize_t key2, IRoot* value, const IList* theList ) override;
+	void OnListModified( long event, ssize_t key, ssize_t key2, IRoot* value, const IList* theList ) override;
 
 	virtual unsigned int PySendEvent( const std::wstring& event, bool bypassPrefix = false ); // Exposed through blue.
 	virtual void StopSound( AkPlayingID playingID );
@@ -72,8 +72,8 @@ public:
 	void SetRTPC( const std::wstring& rtpcName, float rtpcValue );
 
 protected:
-	virtual void CreateWwiseObject();
-	virtual void LogInfo();
+	void CreateWwiseObject() override;
+	void LogInfo() override;
 	virtual int SetPositionHelper( const Vector3& front, const Vector3& top, const Vector3& position );
 	std::wstring PrepareEvent( const std::wstring& event, bool bypassPrefix );
 
