@@ -16,36 +16,16 @@
 #   *************************************************************************
 
 import blue
+import sys
 
-commdev = 0
-mem = 0
-args = blue.pyos.GetArg()
-for arg in args:
-    if arg.startswith("/audiodev"):
-        commdev = 1
-        break
-    if arg == "/audiomem":
-        mem = 1
-        break
+# This is a hack to allow PyCharm to parse stub files for _audio2. The _audio2_stub stub is located
+# in packages/stubgen/stubs and will always generate an ImportError.
+try:
+    from _audio2_stub import *
+except ImportError:
+    pass
 
-if commdev == 1:
-    try:
-        from _audio2_dev import *
-        print "Audio2 imported from _audio2_dev"
-    except ImportError:
-        print "Import from _audio2_dev failed - fallback to _audio2"
-        from _audio2 import *
-elif mem:
-    try:
-        from _audio2_mem import *
-        print "Audio2 imported from _audio2_mem for memory tracking"
-    except ImportError:
-        print "Import from _audio2_mem failed - fallback to _audio2"
-        from _audio2 import *
-else:
-    from _audio2 import *
-
-
+_audio2 = blue.LoadExtension("_audio2")
 
 # We do the work in a function, to keep things out of the main module namespace
 def __RegisterEnums( namespace ):
@@ -53,38 +33,14 @@ def __RegisterEnums( namespace ):
     class enumWrapper( object ):
         pass
 
-    for enum in GetRegisteredEnums():
+    for enum in _audio2.GetRegisteredEnums():
         namespace[enum] = enumWrapper()
         namespace[enum].values = {}
-        for enumValueName, value, docString in GetRegisteredEnumValues( enum ):
+        for enumValueName, value, docString in _audio2.GetRegisteredEnumValues( enum ):
             #namespace[enumValueName] = value                                # Define helloworld.ENUM_VALUE
             setattr( namespace[enum], enumValueName, value )                # Define helloworld.ENUM.ENUM_VALUE
             namespace[enum].values[ enumValueName ] = ( value, docString )  # Define helloworld.ENUM.values[ ENUM_VALUE ]
 __RegisterEnums( globals() )
 
-def GetEnumValueName( enumName, value ):
-    if enumName in globals():
-        enum = globals()[enumName]
-        result = ""
-        for enumKeyName, (enumKeyValue, enumKeydocString) in enum.values.iteritems():
-            if enumKeyValue == value:
-                if result != "":
-                    result += " | "
-                result += enumKeyName
-        return result
 
-def GetEnumValueNameAsBitMask( enumName, value ):
-    if enumName in globals():
-        enum = globals()[enumName]
-        result = ""
-        for enumKeyName, (enumKeyValue, enumKeydocString) in enum.values.iteritems():
-            if (enumKeyValue & value) == enumKeyValue:
-                if result != "":
-                    result += " | "
-                result += enumKeyName
-        return result
-
-#Remove vars we don't need or want in Jessicas' autocomplete feature
-del commdev
-del args
-del mem
+sys.modules[__name__] = _audio2
