@@ -39,8 +39,8 @@
 #include "AudPosition.h"
 
 // Blue headers specific to this file
-#include <blue/include/IBluePlacementObserver.h>
-#include <blue/include/IBlueEventListener.h>
+#include <blue/Include/IBluePlacementObserver.h>
+#include <blue/Include/IBlueEventListener.h>
 
 #include <AK/SoundEngine/Common/AkTypes.h>
 
@@ -66,7 +66,7 @@ public:
 	EXPOSE_TO_BLUE();
 	
 	void Initialize( const std::wstring& eventName );
-	virtual void UpdatePlacement(  const Vector3& front, const Vector3& top, const Vector3& pos );
+	void UpdatePlacement(  const Vector3& front, const Vector3& top, const Vector3& pos ) override;
 	void ProcessPlacementList();
 	void SetMaximumLocations( const unsigned int numberOfLocations );
 
@@ -77,6 +77,8 @@ private:
 	CcpAtomic<uint32_t> m_currentIndex;
 	DistancePositionVector m_distancePositionVector;
 	PositionVector m_positionVector;
+	
+	using AudGameObjResource::Initialize; // Silence warning about this hidden function
 };
 
 TYPEDEF_BLUECLASS( AudEmitterMulti );

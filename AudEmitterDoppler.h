@@ -42,7 +42,7 @@ public:
 	// Blue interfaces
 	//--------------------------
 	// IBluePlacementObserver
-	virtual void UpdatePlacement( const Vector3& front, const Vector3& top, const Vector3& pos );
+	virtual void UpdatePlacement( const Vector3& front, const Vector3& top, const Vector3& pos ) override;
 
 protected:
 	void Py__init__( const std::string& name, const std::string& rtpc, const int duration);
@@ -50,7 +50,7 @@ protected:
 	AkTimeMs m_dopplerChangeDuration;
 	AkReal32 m_lastKnowDistanceSq;
 	AkUInt32 m_rtpcID;
-	boolean m_rtpcIsDirty;
+	bool m_rtpcIsDirty;
 
 };
 

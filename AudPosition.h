@@ -29,7 +29,7 @@
 #include "Audio2.h"
 
 #include <AK/SoundEngine/Common/AkTypes.h>
-#include <blue/include/IBluePlacementObserver.h>
+#include <blue/Include/IBluePlacementObserver.h>
 
 struct Vector3;
 
@@ -47,7 +47,7 @@ public:
 	// Blue interfaces
 	//--------------------------
 	// IBluePlacementObserver
-	virtual void UpdatePlacement( const Vector3& front, const Vector3& top, const Vector3& pos );
+	virtual void UpdatePlacement( const Vector3& front, const Vector3& top, const Vector3& pos ) override;
 	// INotify
 	virtual bool OnModified( Be::Var* value );
 

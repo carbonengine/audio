@@ -34,13 +34,16 @@ public:
 	~AudUIPlayer();
 
 	EXPOSE_TO_BLUE();
-
-	virtual unsigned int SendEventWithCallback( const std:: wstring& name );
-	virtual void Callback( std::wstring eventName );
+	
+	unsigned int SendEventWithCallback( const std:: wstring& name );
+	void Callback( std::wstring eventName );
 
 protected:
 	BlueScriptCallback	m_callback;
 	std::wstring		m_callbackEventName;
+
+private:
+	//using AudGameObjResource::SendEvent; // Silence warning about this hidden function
 
 };
 

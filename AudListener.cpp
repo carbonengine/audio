@@ -1,7 +1,5 @@
 #include "stdafx.h"
 
-#include <sstream>
-
 #include "AudListener.h"
 #include "Vector3.h"
 #include "Utilities.h"
@@ -56,10 +54,9 @@ void AudListener::CreateWwiseObject()
 	{
 		auto userFacingID = m_ID - START_LISTENER_GAME_OBJ_COUNT;
 
-		std::ostringstream listenerName;
-		listenerName << "Listener_" << userFacingID;
+		std::string listenerName = "Listener_" + std::to_string(userFacingID);
 
-		AK::SoundEngine::RegisterGameObj(m_ID, listenerName.str().c_str());
+		AK::SoundEngine::RegisterGameObj(m_ID, listenerName.c_str());
 		AK::SoundEngine::AddDefaultListener(m_ID);
 	}
 }

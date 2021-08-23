@@ -55,11 +55,11 @@ public:
 	// Blue interfaces
 	//--------------------------
 	// IBluePlacementObserver
-	virtual void UpdatePlacement( const Vector3& front, const Vector3& top, const Vector3& pos );
+	virtual void UpdatePlacement( const Vector3& front, const Vector3& top, const Vector3& pos ) override;
 	void Py__init__( const std::string& name );
 
 	// IInitialized
-	bool Initialize();
+	bool Initialize() override;
 
 	//ITr2AudEmitter
 	void Initialize( const std::string& name, const std::wstring& prefix, const Vector3& position ) override;
@@ -72,8 +72,8 @@ public:
 	std::string GetName() override;
 
 	// Debug
-	virtual	void GetDebugOptions( Tr2DebugRendererOptions& options );
-	virtual	void RenderDebugInfo( ITr2DebugRenderer2& renderer );
+	virtual	void GetDebugOptions( Tr2DebugRendererOptions& options ) override;
+	virtual	void RenderDebugInfo( ITr2DebugRenderer2& renderer ) override;
 
 	// AudEmitter
 	void StopAll(); // Stop all sounds on this audio emitter.

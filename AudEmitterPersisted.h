@@ -42,11 +42,11 @@ public:
 
 	EXPOSE_TO_BLUE();
 
-	// IInitialize
-	virtual bool Initialize();
+	// Initialize
+	virtual bool Initialize() override;
 
 	// INotify
-	virtual bool OnModified( Be::Var* value );
+	virtual bool OnModified( Be::Var* value ) override;
 
 	//Other
 	void Py__init__( const std::string& name, const std::wstring& playEvent, bool playOnLoad = true );

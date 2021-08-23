@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "stdafx.h"
 #include "AudEventCurve.h"
 #include "AudEmitter.h"
 #include "CcpMath/include/Vector3.h"

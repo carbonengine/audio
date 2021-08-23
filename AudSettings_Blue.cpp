@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "stdafx.h"
 #include "AudSettings.h"
 
 BLUE_DEFINE( AudSettings );

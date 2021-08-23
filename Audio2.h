@@ -4,10 +4,10 @@
 #define _AUDIO2_H_
 
 //Blue includes
-#include <Blue/Include/Blue.h>
-#include <Blue/Include/IBluePython.h>
-#include <Blue/Include/IBlueOS.h>
-#include <Blue/Include/IBlueCallbackMan.h>
+#include <blue/Include/Blue.h>
+#include <blue/Include/IBluePython.h>
+#include <blue/Include/IBlueOS.h>
+#include <blue/Include/IBlueCallbackMan.h>
 
 //Global setting constants
 const int UI_GAME_OBJ_ID = 2;
@@ -28,9 +28,5 @@ extern bool g_debugDisplayAllEmitters;
 extern IBlueCallbackManPtr g_mainThreadQueue;
 
 extern void DestroyListenerVector();
-
-//Backwards compatibility
-typedef LPCWSTR			AkLpCtstr;
-typedef LPCSTR			AkLpCstr;
 
 #endif
