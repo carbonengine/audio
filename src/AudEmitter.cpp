@@ -45,14 +45,7 @@ int AudEmitter::SetPosition( const Vector3& front, const Vector3& top, const Vec
 
 unsigned int AudEmitter::SendEvent( const std::wstring& name, bool bypassPrefix )
 {
-	unsigned int playingID = PostEvent( name, bypassPrefix );
-	if ( playingID != AK_INVALID_PLAYING_ID ) 
-	{
-		std::wstring eventName = PrepareEvent( name, false );
-		m_playingEvents.insert({eventName, playingID});
-	}
-
-	return playingID;
+	return PostEvent( name, bypassPrefix );
 }
 
 std::string AudEmitter::GetName()
@@ -85,20 +78,14 @@ void AudEmitter::UpdatePlacement(const Vector3& front, const Vector3& top, const
 	SetPosition( front, top, pos );
 }
 
-void AudEmitter::StopAll()
-{
-	m_playingEvents.clear();
-	AK::SoundEngine::StopAll( m_ID );
-}
-
 bool AudEmitter::StopEvent( const std::wstring& eventName )
 {
 	std::wstring fullEventName = PrepareEvent( eventName, false );
-	if ( m_playingEvents.count(fullEventName) > 0 )
+	if ( m_playedEvents.count(fullEventName) > 0 )
 	{
-		AkPlayingID playingID = m_playingEvents.find( fullEventName )->second;
+		AkPlayingID playingID = m_playedEvents.find( fullEventName )->second;
 		StopSound(playingID);
-		m_playingEvents.erase( fullEventName );
+		m_playedEvents.erase( fullEventName );
 		return true;
 	}
 	return false;

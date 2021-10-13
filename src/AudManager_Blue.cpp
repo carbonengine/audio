@@ -15,40 +15,43 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 	EXPOSURE_BEGIN( AudManager, "Manages startup and shutdown of Wwise, don't use unless clever!" )
 		MAP_INTERFACE( AudManager )
 
-		MAP_ATTRIBUTE( "useDoppler", m_useDoppler, "A flag for deciding if we use the doppler calculations.", Be::READWRITE )
 		MAP_ATTRIBUTE( "log", m_log, "A log system for logging events.", Be::READWRITE )
-		MAP_METHOD_AND_WRAP( "UpdateSettings", 
+		MAP_METHOD_AND_WRAP( "UpdateSettings",
 							 UpdateSettings,
 							 "Update settings to be used when starting Wwise. Needs to be called before SetEnabled in order to apply."
 							 ":settings: An AudSettings instance defining Wwise specific settings."
 							 ":type settings: AudSettings"
 						   )
-		MAP_METHOD_AND_WRAP( "SetEnabled", 
+		MAP_METHOD_AND_WRAP( "SetEnabled",
 							 SetEnabled,
 							 "Toggles Wwise on and off."
 							 ":param onoff: whether Wwise should be turned on or off."
 							 ":type onoff: bool"
 						   )
-		MAP_METHOD_AND_WRAP( "LoadBank", 
+		MAP_METHOD_AND_WRAP( "LoadBank",
 			                  LoadBank,
 							 "Loads a sound bank from disk."
 							 ":param name: Name of the soundbank to load"
 							 ":type name: unicode"
 							 ":return: True or False depending on if the call to LoadBank failed or not."
 						   )
-		MAP_METHOD_AND_WRAP( "UnloadBank", 
+		MAP_METHOD_AND_WRAP( "UnloadBank",
 			                 UnloadBank,
 							 "Unloads a sound bank."
 							 ":param name: Name of the soundbank to unload."
 							 ":type name: unicode"
 						   )
-		MAP_METHOD_AND_WRAP( "ClearBanks", 
+		MAP_METHOD_AND_WRAP( "ClearBanks",
 							 ClearBanks,
 							 "Unloads all currently loaded banks in Wwise."
 						   )
-		MAP_METHOD_AND_WRAP( "GetLoadedSoundBanks", 
+		MAP_METHOD_AND_WRAP( "GetLoadedSoundBanks",
 							 GetLoadedSoundBanks,
 							 "Return a list of loaded sound banks."
+						   )
+		MAP_METHOD_AND_WRAP( "GetWwiseVersion",
+							 GetWwiseVersion,
+							 "Return the full version of the Wwise SDK being used."
 						   )
 		MAP_METHOD_AND_WRAP( "GetEmitterForEventName",
 							 GetEmitterForEventName,

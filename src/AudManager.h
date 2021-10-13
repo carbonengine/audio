@@ -102,9 +102,9 @@ public:
 
 	// Exposing loaded sound banks to python
 	std::vector<std::wstring> GetLoadedSoundBanks();
-
 	// Gets an AudEmitterMulti for a given event name or creates it if it does not exist.
 	Be::Result<std::string> GetEmitterForEventName( const std::wstring& eventName, AudEmitterMulti** out );
+	std::wstring GetWwiseVersion();
 
 	void LogPostEvent( AkGameObjectID emitterID, AkPlayingID playID, AkUniqueID eventID, const std::wstring& name );
 	void LogStopPlayingID( AkGameObjectID emitterID, AkPlayingID playID );
@@ -144,7 +144,6 @@ private:
 
 	friend class AudEmitterMulti;
 	friend class AudEmitter;
-	friend class AudEmitterDoppler;
 
 	int m_tickInterval;
 	Be::Time m_Time;
@@ -161,12 +160,11 @@ private:
 	BankVector m_loadedBanks;
 	EmitterMultiSet m_multiEmitters;
 	CcpMutex m_multiEmitterMutex;
-	bool m_useDoppler;
 
-	// Determines whether Wwise tries to asynchronously open files. If false, the client will freeze while an audio asset is 
-	// downloaded on demand. Asynchronous opening does not freeze the client when using download on demand in conjunction 
+	// Determines whether Wwise tries to asynchronously open files. If false, the client will freeze while an audio asset is
+	// downloaded on demand. Asynchronous opening does not freeze the client when using download on demand in conjunction
 	// with .wem files (aka streaming) but .bnk files will still freeze the client while Wwise waits to open it.
-	bool m_asyncOpen; 
+	bool m_asyncOpen;
 
 	std::vector<AudEmitter*> m_audioEmitters;
 
