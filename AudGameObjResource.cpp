@@ -24,7 +24,8 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 														 m_playOnLoad( false ),
 														 m_eventPrefix(L""),
 														 m_scalingFactor( 1.0 ),
-														 m_position( 1.0e+7F, 1.0e+7F, 1.0e+7F ) // WWISE INIT POSITION
+														 m_position( 1.0e+7F, 1.0e+7F, 1.0e+7F ), // WWISE INIT POSITION
+														 m_defaultFadeDuration(1000)
 {
 	m_ID = GenerateEntityID();
 	m_parameters.SetNotify( this );
@@ -34,8 +35,7 @@ AudGameObjResource::~AudGameObjResource()
 {
 	if( g_audioInitialized )
     {
-		// Silence the game object and put it on death row!
-		PostEvent( L"fade_out" );
+		StopAll();
 		g_audioManager->AddToDestructionVector( m_ID );
 	}
 }
@@ -57,7 +57,7 @@ void AudGameObjResource::LogInfo()
 	//}
 }
 
-unsigned int AudGameObjResource::PostEvent( const std::wstring& name, bool bypassPrefix, AkUInt32 in_uFlags, AkCallbackFunc in_pfnCallback, void * in_pCookie ) 
+unsigned int AudGameObjResource::PostEvent( const std::wstring& name, bool bypassPrefix, AkUInt32 in_uFlags, AkCallbackFunc in_pfnCallback, void * in_pCookie )
 {
 	if( g_audioInitialized )
 	{
@@ -65,6 +65,11 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& name, bool bypas
 
 		m_playID = AK::SoundEngine::PostEvent( eventName.c_str(), m_ID, in_uFlags, in_pfnCallback, in_pCookie);
 		g_audioManager->LogPostEvent( m_ID, m_playID, AK_INVALID_UNIQUE_ID, eventName );
+
+		if ( m_playID != AK_INVALID_PLAYING_ID )
+		{
+			m_playedEvents.insert({eventName, m_playID});
+		}
 
 		if (m_playID == AK_INVALID_PLAYING_ID)
 		{
@@ -84,8 +89,16 @@ void AudGameObjResource::StopSound( AkPlayingID playingID )
 {
 	if ( g_audioInitialized )
 	{
-		AK::SoundEngine::ExecuteActionOnPlayingID( AK::SoundEngine::AkActionOnEventType_Stop, playingID );
+		AK::SoundEngine::ExecuteActionOnPlayingID( AK::SoundEngine::AkActionOnEventType_Stop, playingID, m_defaultFadeDuration );
 		g_audioManager->LogStopPlayingID( m_ID, playingID );
+	}
+}
+
+void AudGameObjResource::StopAll()
+{
+	if( g_audioInitialized )
+	{
+		AK::SoundEngine::StopAll(m_ID);
 	}
 }
 

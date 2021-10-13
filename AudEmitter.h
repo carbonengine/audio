@@ -76,15 +76,12 @@ public:
 	virtual	void RenderDebugInfo( ITr2DebugRenderer2& renderer ) override;
 
 	// AudEmitter
-	void StopAll(); // Stop all sounds on this audio emitter.
 	bool StopEvent( const std::wstring& eventName ); // Stop all sounds associated with an event.
 
 protected:
 	Vector3 m_debugPosition;
 	Vector3 m_debugFront;
 	Color m_debugColor;
-private:
-	std::map<std::wstring, unsigned int> m_playingEvents;
 };
 
 TYPEDEF_BLUECLASS( AudEmitter );

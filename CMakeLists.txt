@@ -9,9 +9,7 @@ add_library(audio2 SHARED
 	AudManager_Blue.cpp
 	AudEmitter.cpp
 	AudParameter.cpp
-	AudEmitterDoppler.cpp
 	AudParameter_Blue.cpp
-	AudEmitterDoppler_Blue.cpp
 	AudPosition.cpp
 	AudEmitterMulti.cpp
 	AudPosition_Blue.cpp
@@ -46,7 +44,6 @@ target_sources(audio2 PRIVATE
     AudActionLog.h
 	AudConstants.h
 	AudEmitter.h
-	AudEmitterDoppler.h
 	AudEmitterMulti.h
 	AudEmitterPersisted.h
 	AudEventCurve.h

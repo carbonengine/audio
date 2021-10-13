@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include <string>
 
 #include <AK/AkWwiseSDKVersion.h>
 #include <AK/MusicEngine/Common/AkMusicEngine.h> // Interactive music engine
@@ -54,7 +55,6 @@ static GameObjIDVector s_gameObjectsToBeDestroyed;
 AudManager::AudManager( IRoot* lockobj ) :
 	m_tickInterval( 10 ),
 	m_multiEmitterMutex( "AudManager", "m_multiEmitterMutex" ),
-	m_useDoppler( false ),
 	m_asyncOpen( true ),
 	m_log()
 {
@@ -175,13 +175,7 @@ void AudManager::OnTick( Be::Time realTime, Be::Time simTime, void* cookie )
 
 bool AudManager::InitLowLevel()
 {
-	CCP_LOG(
-		"Audio Backend: Wwise(R) SDK Version %d.%d.%d Build %d. Copyright (c) 2006-%d Audiokinetic Inc.",
-		AK_WWISESDK_VERSION_MAJOR,
-		AK_WWISESDK_VERSION_MINOR,
-		AK_WWISESDK_VERSION_SUBMINOR,
-		AK_WWISESDK_VERSION_BUILD,
-		AK_WWISESDK_VERSION_MAJOR );
+	CCP_LOG( "Audio Backend: Wwise(R) SDK Version %S. %s", GetWwiseVersion().c_str(), AK_WWISESDK_COPYRIGHT);
 	//-----------------------------------------------------------------------------
 	// Create and initialize an instance of the default memory manager. Note
 	// that you can override the default memory manager with your own. Refer
@@ -260,6 +254,7 @@ bool AudManager::InitSound()
 	AkPlatformInitSettings platformInitSettings;
 	AK::SoundEngine::GetDefaultInitSettings( initSettings );
 	AK::SoundEngine::GetDefaultPlatformInitSettings( platformInitSettings );
+	initSettings.uCommandQueueSize = 512000;
 
 	if( AK::SoundEngine::Init( &initSettings, &platformInitSettings ) != AK_Success )
 	{
@@ -499,6 +494,14 @@ AudEmitterMulti* AudManager::GetEmitterForEventID( AkUniqueID eventID )
 		}
 	}
 	return NULL;
+}
+
+std::wstring AudManager::GetWwiseVersion()
+{
+	return std::to_wstring(AK_WWISESDK_VERSION_MAJOR) + \
+		   L"." + std::to_wstring(AK_WWISESDK_VERSION_MINOR) + \
+		   L"." + std::to_wstring(AK_WWISESDK_VERSION_SUBMINOR) + \
+		   L"." + std::to_wstring(AK_WWISESDK_VERSION_BUILD);
 }
 
 void AudManager::AddMultiEmitterToList( AudEmitterMulti* emitter )
