@@ -25,7 +25,7 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 														 m_eventPrefix(L""),
 														 m_scalingFactor( 1.0 ),
 														 m_position( 1.0e+7F, 1.0e+7F, 1.0e+7F ), // WWISE INIT POSITION
-														 m_defaultFadeDuration(1000)
+														 m_defaultFadeDuration( 100 )
 {
 	m_ID = GenerateEntityID();
 	m_parameters.SetNotify( this );
