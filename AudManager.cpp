@@ -27,6 +27,7 @@
 #include <AK/Plugin/AkStereoDelayFXFactory.h>
 #include <AK/Plugin/AkPitchShifterFXFactory.h>
 #include <AK/Plugin/AkDelayFXFactory.h>
+#include <AK/Plugin/MasteringSuiteFXFactory.h>
 
 #if _WIN32
 #include "LowLevelIO/Win32/AkDefaultIOHookBlocking.h"
