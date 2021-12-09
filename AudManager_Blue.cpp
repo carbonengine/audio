@@ -15,7 +15,16 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 	EXPOSURE_BEGIN( AudManager, "Manages startup and shutdown of Wwise, don't use unless clever!" )
 		MAP_INTERFACE( AudManager )
 
-		MAP_ATTRIBUTE( "log", m_log, "A log system for logging events.", Be::READWRITE )
+		MAP_ATTRIBUTE( "log", 
+					   m_log, 
+					   "A log system for logging events.", 
+					   Be::READWRITE 
+					 )
+		MAP_ATTRIBUTE( "communicationEnabled", 
+						m_communicationEnabled, 
+						"Flag whether remote communication with Wwise is possible.", 
+						Be::READ 
+					 )
 		MAP_METHOD_AND_WRAP( "UpdateSettings",
 							 UpdateSettings,
 							 "Update settings to be used when starting Wwise. Needs to be called before SetEnabled in order to apply."
