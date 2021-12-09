@@ -57,7 +57,8 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_tickInterval( 10 ),
 	m_multiEmitterMutex( "AudManager", "m_multiEmitterMutex" ),
 	m_asyncOpen( true ),
-	m_log()
+	m_log(),
+	m_communicationEnabled( false )
 {
 	s_gameObjectsToBeDestroyed.push_back( 0 );
 }
@@ -244,6 +245,7 @@ bool AudManager::InitCommunication()
 		assert( !"Audio2: Could not init communication lib" );
 		return false;
 	}
+	m_communicationEnabled = true;
 #endif
 
 	return true;

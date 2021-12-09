@@ -120,6 +120,8 @@ public:
 	void UnregisterAudEmitter( AudEmitter* emitter );
 	void StopAll();
 
+	// Flag whether Wwise remote communication with Wwise is available so Python code can know.
+	bool m_communicationEnabled;  
 private:
 	// Please note these inits need to be done in this order!
 	bool InitLowLevel();
