@@ -44,11 +44,44 @@ const Be::ClassInfo* AudUIPlayer::ExposeToBlue()
 		)
 		MAP_METHOD_AND_WRAP
 		(
+			"PostDialogueEvent",
+			PostDialogueEvent,
+			"Post an event meant for dialogue. Allows for getting the duration of the playing event.\n"
+			":param eventName: Name of the event to be sent to the sound engine.\n"
+			":return: An int representing a playing ID of the event sent. 0 or below if it failed to send.\n"
+		)
+		MAP_METHOD_AND_WRAP
+		(
 			"StopSound",
 			StopSound,
 			"Stop a playing sound by playing ID."
 			":param playingID: The playingID of the sound you want to stop. playingIDs are returned when sending events."
 			":type playingID: int"
+		)
+		MAP_METHOD_AND_WRAP
+		( 
+			"SeekOnEventPercent",
+			SeekOnEventPercent,
+			"Seek on the given event by a percentage amount. Must be between 0 and 1.\n"
+			":param eventName: The event you want to seek on. Must have been played on this game object.\n"
+			":param percent: The desired position, in percentage, where you want playback of this event to restart.\n"
+			"				  Expressed in a percentage of the audio file's total duration between 0 and 1."
+		)
+		MAP_METHOD_AND_WRAP
+		( 
+			"SeekOnEventMs",
+			SeekOnEventMs,
+			"Seek on an event using milliseconds.\n"
+			":param playingID: The playingID of the event you want to seek on. Must have been played on this game object.\n"
+			":param msToSeek: Desired position where playback should restart, in milliseconds.\n"
+		)
+		MAP_METHOD_AND_WRAP
+		( 
+			"GetEventPlayPosition",
+			GetEventPlayPosition,
+ 			"Get the time elapsed in milliseconds for the given playingID.\n"
+			":param playingID: The playing ID of the event whose play position you want to get.\n"
+			":return: The time elapsed in milliseconds. -1 if the playingID is invalid or has finished playing.\n"
 		)
 
 #if BLUE_WITH_PYTHON

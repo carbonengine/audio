@@ -80,15 +80,22 @@ void AudEmitter::UpdatePlacement(const Vector3& front, const Vector3& top, const
 
 bool AudEmitter::StopEvent( const std::wstring& eventName )
 {
+	bool stopped = false;
 	std::wstring fullEventName = PrepareEvent( eventName, false );
-	if ( m_playedEvents.count(fullEventName) > 0 )
+
+	for ( auto it = begin( m_playingEvents ); it != end( m_playingEvents ); )
 	{
-		AkPlayingID playingID = m_playedEvents.find( fullEventName )->second;
-		StopSound(playingID);
-		m_playedEvents.erase( fullEventName );
-		return true;
+		if ( it->second == fullEventName )
+		{
+			StopSound(it->first);
+			stopped = true;
+		}
+		else
+		{
+			++it;
+		}
 	}
-	return false;
+	return stopped;
 }
 
 // Debug

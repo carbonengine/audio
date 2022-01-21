@@ -33,6 +33,9 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 
 AudGameObjResource::~AudGameObjResource()
 {
+	// Make sure end of event callbacks do not happen after this object is destroyed.
+	AK::SoundEngine::CancelEventCallbackGameObject( m_ID );
+
 	if( g_audioInitialized )
     {
 		StopAll();
@@ -57,18 +60,23 @@ void AudGameObjResource::LogInfo()
 	//}
 }
 
-unsigned int AudGameObjResource::PostEvent( const std::wstring& name, bool bypassPrefix, AkUInt32 in_uFlags, AkCallbackFunc in_pfnCallback, void * in_pCookie )
+unsigned int AudGameObjResource::PostEvent( const std::wstring& name, bool bypassPrefix, AkUInt32 additionalFlags )
 {
 	if( g_audioInitialized )
 	{
+
 		std::wstring eventName = PrepareEvent( name, bypassPrefix );
 
-		m_playID = AK::SoundEngine::PostEvent( eventName.c_str(), m_ID, in_uFlags, in_pfnCallback, in_pCookie);
+		// Set up callback info so that we get a callback when every event is finished playing.
+		AkUInt32 inFlags = AK_EndOfEvent | additionalFlags;
+		AkCallbackFunc callback = &AudGameObjResource::PropagateWwiseCallback;
+
+		m_playID = AK::SoundEngine::PostEvent( eventName.c_str(), m_ID, inFlags, callback, this );
 		g_audioManager->LogPostEvent( m_ID, m_playID, AK_INVALID_UNIQUE_ID, eventName );
 
 		if ( m_playID != AK_INVALID_PLAYING_ID )
 		{
-			m_playedEvents.insert({eventName, m_playID});
+			m_playingEvents.insert({m_playID, eventName});
 		}
 
 		if (m_playID == AK_INVALID_PLAYING_ID)
@@ -78,6 +86,39 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& name, bool bypas
 		return m_playID;
 	}
 	return 0;
+}
+
+//-----------------------------------------------------
+// Description:
+//   A callback function called by Wwise 
+// Arguments:
+//   in_eType - The type of callback that Wwise is calling this for.
+//              See https://www.audiokinetic.com/library/edge/?source=SDK&id=_ak_callback_8h_a948c083ff18dc4c8dfe1d32cb0eb6732.html
+//              for all possible callback types, keep in mind we don't ask for all of these to happen.
+//   in_pCallbackInfo - A pointer to the callback information. 
+//-----------------------------------------------------
+void AudGameObjResource::PropagateWwiseCallback( AkCallbackType in_eType, AkCallbackInfo* in_pCallbackInfo )
+{
+	if ( in_eType == AK_EndOfEvent )
+	{
+		AkEventCallbackInfo* cbInfo = reinterpret_cast<AkEventCallbackInfo*>(in_pCallbackInfo);
+		AudGameObjResource* audGameObjResourcePtr = reinterpret_cast<AudGameObjResource*>(cbInfo->pCookie);
+		audGameObjResourcePtr->EventFinishedCallback( cbInfo );
+	}
+	return;
+}
+
+
+//-----------------------------------------------------
+// Description:
+//   The callback that this class uses when an event finishes playing. Updates our
+//   internal map of which events are currently playing on this game object.
+// Arguments:
+//   cbInfo - Callback information from Wwise, see https://www.audiokinetic.com/library/edge/?source=SDK&id=struct_ak_event_callback_info.html 
+//-----------------------------------------------------
+void AudGameObjResource::EventFinishedCallback( AkEventCallbackInfo* cbInfo )
+{
+	m_playingEvents.erase(cbInfo->playingID);
 }
 
 unsigned int AudGameObjResource::PySendEvent( const std::wstring& event, bool bypassPrefix )
@@ -211,6 +252,56 @@ void AudGameObjResource::SetRTPC( const std::wstring& rtpcName, float rtpcValue 
 		g_audioManager->LogSetRTPC( m_ID, rtpcName, rtpcValue );
 	}
 }
+
+//-----------------------------------------------------
+// Description:
+//   Seek on an event by using a percentage of its duration. 
+// Arguments:
+//   playingID - The playing ID of the event to seek. Returned from PostEvent().
+//   percentToSeek - The desired position, in percentage, where you want playback of this event to restart.
+//    				 Expressed in a percentage of the audio file's total duration between 0 and 1.
+//-----------------------------------------------------
+void AudGameObjResource::SeekOnEventPercent( const unsigned int playingID, float percentToSeek )
+{
+	if ( g_audioInitialized )
+	{
+
+		auto it = m_playingEvents.find( playingID );
+		if ( it != m_playingEvents.end() )
+		{
+			AKRESULT result = AK::SoundEngine::SeekOnEvent( it->second.c_str(), m_ID, percentToSeek, false, it->first);
+			if ( result != AK_Success )
+			{
+				CCP_LOGERR( "Failed to seek on event %S", it->second.c_str() );
+			}
+		}
+	}
+}
+
+//-----------------------------------------------------
+// Description:
+//   Seek on an event using milliseconds. 
+// Arguments:
+//   playingID - The playing ID of the event to seek. Returned from PostEvent().
+//   msToSeek - Desired position where playback should restart, in milliseconds.
+//-----------------------------------------------------
+void AudGameObjResource::SeekOnEventMs( const unsigned int playingID, const unsigned int msToSeek)
+{
+	if ( g_audioInitialized )
+	{
+
+		auto it = m_playingEvents.find( playingID );
+		if ( it != m_playingEvents.end() )
+		{
+			AKRESULT result = AK::SoundEngine::SeekOnEvent( it->second.c_str(), m_ID, AkTimeMs(msToSeek), false, it->first);
+			if ( result != AK_Success )
+			{
+				CCP_LOGERR( "Failed to seek on event %S", it->second.c_str() );
+			}
+		}
+	}
+}
+
 
 // Formats events to be sent to Wwise. bypassPrefix determines whether or not to apply the prefix
 // defined on the emitter to the event.
