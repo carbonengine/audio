@@ -72,6 +72,19 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 							 ":type rtpcValue: float\n"
 							 ":param rtpcValue: The value you wish to set the RTPC to on the game object.\n"
 						   )
+		MAP_METHOD_AND_WRAP( "SeekOnEventPercent",
+							 SeekOnEventPercent,
+						     "Seek on an event by using a percentage of its duration.\n"
+							 ":param playingID: The playingID of the event you want to seek on. Must have been played on this game object.\n"
+							 ":param percent: The desired position, in percentage, where you want playback of this event to restart.\n"
+							 "				  Expressed in a percentage of the audio file's total duration between 0 and 1.\n"
+						   )
+		MAP_METHOD_AND_WRAP( "SeekOnEventMs",
+							 SeekOnEventMs,
+						     "Seek on an event using milliseconds.\n"
+							 ":param playingID: The playingID of the event you want to seek on. Must have been played on this game object.\n"
+							 ":param msToSeek: Desired position where playback should restart, in milliseconds.\n"
+						   )
 
 	EXPOSURE_END()
 }

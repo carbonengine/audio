@@ -67,16 +67,23 @@ public:
 	virtual int SetAttenuationScalingFactor( float value );
 	virtual int SetObstructionAndOcclusion( unsigned int listenerID, float obstruction, float occlusion );
 
-	unsigned int PostEvent( const std::wstring& name, bool bypassPrefix = false, AkUInt32 in_uFlags = 0, AkCallbackFunc in_pfnCallback = NULL, void* in_pCookie = NULL );
+	unsigned int PostEvent( const std::wstring& name, bool bypassPrefix = false, AkUInt32 additionalFlags = 0x0000 );
 	void Initialize( const std::string& name, const std::wstring& prefix, const Vector3& position );
 	void SetSwitch( const std::wstring& switchGroup, const std::wstring& switchState );
 	void SetRTPC( const std::wstring& rtpcName, float rtpcValue );
+	// Seek on an event by using a percentage of its duration.
+	void SeekOnEventPercent( const unsigned int playingID, const float percentToSeek );
+	//Seek on an event using milliseconds.
+	void SeekOnEventMs( const unsigned int playingID, const unsigned int msToSeek );
+
+	virtual void EventFinishedCallback( AkEventCallbackInfo* cbInfo );
 
 protected:
 	void CreateWwiseObject() override;
 	void LogInfo() override;
 	virtual int SetPositionHelper( const Vector3& front, const Vector3& top, const Vector3& position );
 	std::wstring PrepareEvent( const std::wstring& event, bool bypassPrefix );
+	static void PropagateWwiseCallback( AkCallbackType in_eType, AkCallbackInfo* in_pCallbackInfo );
 
 	AkGameObjectID m_ID;
 	std::string m_name;
@@ -89,7 +96,7 @@ protected:
 	Vector3 m_position;
 	bool bypassPrefix;
 
-	std::map<std::wstring, unsigned int> m_playedEvents;
+	std::map<unsigned int, std::wstring> m_playingEvents;
 private:
     AkTimeMs m_defaultFadeDuration;
 };

@@ -36,10 +36,16 @@ public:
 	EXPOSE_TO_BLUE();
 	
 	unsigned int SendEventWithCallback( const std:: wstring& name );
-	void Callback( std::wstring eventName );
+	// Post an event meant for dialogue. Allows for getting the duration of the playing event.
+	unsigned int PostDialogueEvent( const std:: wstring& eventName );
+	// Get elapsed time of the playing event in milliseconds for the given playingID.  
+	int32_t GetEventPlayPosition( const unsigned int playingID );
+	void EventFinishedCallback( AkEventCallbackInfo* cbInfo ) override; 
+	static void PropagatePythonCallback( void* cookie );
+
+	BlueScriptCallback	m_callback;
 
 protected:
-	BlueScriptCallback	m_callback;
 	std::wstring		m_callbackEventName;
 
 private:
