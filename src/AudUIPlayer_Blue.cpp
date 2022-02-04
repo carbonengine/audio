@@ -83,11 +83,10 @@ const Be::ClassInfo* AudUIPlayer::ExposeToBlue()
 			":param playingID: The playing ID of the event whose play position you want to get.\n"
 			":return: The time elapsed in milliseconds. -1 if the playingID is invalid or has finished playing.\n"
 		)
-
 #if BLUE_WITH_PYTHON
-							MAP_ATTRIBUTE( "eventSenderCallback", m_callback, "", Be::READWRITE )
+		MAP_ATTRIBUTE( "eventSenderCallback", m_callback, "", Be::READWRITE )
 #endif
-	EXPOSURE_END()
+	EXPOSURE_CHAINTO( AudGameObjResource )
 }
 
 static BluePythonObject* s_audUIPlayer = NULL;

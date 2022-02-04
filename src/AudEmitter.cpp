@@ -12,18 +12,10 @@ AudEmitter::AudEmitter( IRoot* lockobj ) :
 	m_debugFront(0, 0, 0),
 	m_debugColor()
 {
-	Initialize();
 }
 
 AudEmitter::~AudEmitter()
 {
-	g_audioManager->UnregisterAudEmitter( this );
-}
-
-bool AudEmitter::Initialize()
-{
-	g_audioManager->RegisterAudEmitter( this );
-	return AudGameObjResource::Initialize();
 }
 
 void AudEmitter::Initialize( const std::string& name, const std::wstring& prefix, const Vector3& position )
@@ -78,21 +70,17 @@ void AudEmitter::UpdatePlacement(const Vector3& front, const Vector3& top, const
 	SetPosition( front, top, pos );
 }
 
-bool AudEmitter::StopEvent( const std::wstring& eventName )
+bool AudEmitter::StopEvent( const std::wstring& eventName, uint32_t fadeOutDuration )
 {
 	bool stopped = false;
 	std::wstring fullEventName = PrepareEvent( eventName, false );
 
-	for ( auto it = begin( m_playingEvents ); it != end( m_playingEvents ); )
+	for ( auto it = begin( m_playingEvents ); it != end( m_playingEvents ); ++it)
 	{
 		if ( it->second == fullEventName )
 		{
-			StopSound(it->first);
+			StopSound(it->first, fadeOutDuration );
 			stopped = true;
-		}
-		else
-		{
-			++it;
 		}
 	}
 	return stopped;

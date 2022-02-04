@@ -58,9 +58,6 @@ public:
 	virtual void UpdatePlacement( const Vector3& front, const Vector3& top, const Vector3& pos ) override;
 	void Py__init__( const std::string& name );
 
-	// IInitialized
-	bool Initialize() override;
-
 	//ITr2AudEmitter
 	void Initialize( const std::string& name, const std::wstring& prefix, const Vector3& position ) override;
 	unsigned int SendEvent( const std::wstring& name, bool bypassPrefix = false ) override;
@@ -76,7 +73,7 @@ public:
 	virtual	void RenderDebugInfo( ITr2DebugRenderer2& renderer ) override;
 
 	// AudEmitter
-	bool StopEvent( const std::wstring& eventName ); // Stop all sounds associated with an event.
+	bool StopEvent( const std::wstring& eventName, uint32_t fadeOutDuration = 1000 ); // Stop all sounds associated with an event.
 
 protected:
 	Vector3 m_debugPosition;

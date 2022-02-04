@@ -54,7 +54,7 @@ BLUE_DECLARE( AudResource );
 BLUE_DECLARE( AudConfig );
 BLUE_DECLARE( AudLowLevelIO );
 BLUE_DECLARE( AudEmitterMulti );
-BLUE_DECLARE( AudEmitter );
+BLUE_DECLARE( AudGameObjResource );
 BLUE_DECLARE_INTERFACE( IAudActionLog );
 
 //-----------------------------------------------------------------------------
@@ -105,6 +105,7 @@ public:
 	// Gets an AudEmitterMulti for a given event name or creates it if it does not exist.
 	Be::Result<std::string> GetEmitterForEventName( const std::wstring& eventName, AudEmitterMulti** out );
 	std::wstring GetWwiseVersion();
+	AudGameObjResource* GetAudioEmitter( AkGameObjectID emitterID );
 
 	void LogPostEvent( AkGameObjectID emitterID, AkPlayingID playID, AkUniqueID eventID, const std::wstring& name );
 	void LogStopPlayingID( AkGameObjectID emitterID, AkPlayingID playID );
@@ -116,8 +117,8 @@ public:
 	void DisableDebugDisplayAllEmitters();
 	bool GetDebugDisplayAllEmitters();
 
-	void RegisterAudEmitter( AudEmitter* emitter );
-	void UnregisterAudEmitter( AudEmitter* emitter );
+	void RegisterAudEmitter( AkGameObjectID emitterID, AudGameObjResource* emitter );
+	void UnregisterAudEmitter( AkGameObjectID emitterID );
 	void StopAll();
 
 	// Flag whether Wwise remote communication with Wwise is available so Python code can know.
@@ -145,7 +146,7 @@ private:
 	void ProcessMultiEmitterList();
 
 	friend class AudEmitterMulti;
-	friend class AudEmitter;
+	friend class AudGameObjResource;
 
 	int m_tickInterval;
 	Be::Time m_Time;
@@ -168,7 +169,7 @@ private:
 	// with .wem files (aka streaming) but .bnk files will still freeze the client while Wwise waits to open it.
 	bool m_asyncOpen;
 
-	std::vector<AudEmitter*> m_audioEmitters;
+	std::map<AkGameObjectID, AudGameObjResource*> m_audioEmitters;
 
 	//Debug
 	IAudActionLogPtr m_log;

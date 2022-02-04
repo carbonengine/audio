@@ -2,6 +2,7 @@
 
 #include "AudManager.h"
 #include "AudEmitterMulti.h"
+#include "AudGameObjResource.h"
 
 #include <AK/SoundEngine/Common/AkSoundEngine.h>				// Sound Engine
 
@@ -62,12 +63,17 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 							 GetWwiseVersion,
 							 "Return the full version of the Wwise SDK being used."
 						   )
+		MAP_METHOD_AND_WRAP( "GetAudioEmitter",
+							 GetAudioEmitter,
+							 "Return the audio emitter object for the given emitter ID if it exists."
+							 ":param emitterID: The ID of the emitter to get."
+							 ":return: An audio emitter object if it exists, None otherwise."
+						   )
 		MAP_METHOD_AND_WRAP( "GetEmitterForEventName",
 							 GetEmitterForEventName,
 							"Gets the AudEmitterMulti for a given event name if it exists."
 							"If it does not exist it will create a new one for the given event name."
 							":param eventName: name of the event you wish to get an emitter for."
-						    ":type eventName: unicode"
 							)
 		MAP_METHOD_AND_WRAP( "StopAll",
 							 StopAll,

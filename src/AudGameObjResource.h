@@ -62,7 +62,7 @@ public:
 	void OnListModified( long event, ssize_t key, ssize_t key2, IRoot* value, const IList* theList ) override;
 
 	virtual unsigned int PySendEvent( const std::wstring& event, bool bypassPrefix = false ); // Exposed through blue.
-	virtual void StopSound( AkPlayingID playingID);
+	virtual void StopSound( AkPlayingID playingID, uint32_t fadeOutDuration = 1000 ); 
 	void StopAll(); // Stop all sounds on this audio emitter.
 	virtual int SetAttenuationScalingFactor( float value );
 	virtual int SetObstructionAndOcclusion( unsigned int listenerID, float obstruction, float occlusion );
@@ -79,6 +79,7 @@ public:
 	virtual void EventFinishedCallback( AkEventCallbackInfo* cbInfo );
 
 protected:
+	AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj = NULL );
 	void CreateWwiseObject() override;
 	void LogInfo() override;
 	virtual int SetPositionHelper( const Vector3& front, const Vector3& top, const Vector3& position );
@@ -97,8 +98,6 @@ protected:
 	bool bypassPrefix;
 
 	std::map<unsigned int, std::wstring> m_playingEvents;
-private:
-    AkTimeMs m_defaultFadeDuration;
 };
 
 TYPEDEF_BLUECLASS( AudGameObjResource );

@@ -24,20 +24,47 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 														 m_playOnLoad( false ),
 														 m_eventPrefix(L""),
 														 m_scalingFactor( 1.0 ),
-														 m_position( 1.0e+7F, 1.0e+7F, 1.0e+7F ), // WWISE INIT POSITION
-														 m_defaultFadeDuration( 100 )
+														 m_position( 1.0e+7F, 1.0e+7F, 1.0e+7F ) // WWISE INIT POSITION
 {
 	m_ID = GenerateEntityID();
+
+	if (g_audioManager != nullptr)
+	{
+		g_audioManager->RegisterAudEmitter( m_ID, this );
+	}
+
+	m_parameters.SetNotify( this );
+}
+
+AudGameObjResource::AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj ) : PARENTLOCK( m_parameters ),
+																				   m_playID( 0 ),
+																				   m_playEvent(L""),
+																				   m_playOnLoad( false ),
+																				   m_eventPrefix(L""),
+																				   m_scalingFactor( 1.0 ),
+																				   m_position( 1.0e+7F, 1.0e+7F, 1.0e+7F ) // WWISE INIT POSITION
+{
+	m_ID = gameObjID;
+
+	if (g_audioManager != nullptr)
+	{
+		g_audioManager->RegisterAudEmitter( m_ID, this );
+	}
+
 	m_parameters.SetNotify( this );
 }
 
 AudGameObjResource::~AudGameObjResource()
 {
-	// Make sure end of event callbacks do not happen after this object is destroyed.
-	AK::SoundEngine::CancelEventCallbackGameObject( m_ID );
+	if ( g_audioManager != nullptr )
+	{
+		g_audioManager->UnregisterAudEmitter( m_ID );
+	}
 
 	if( g_audioInitialized )
     {
+		// Make sure end of event callbacks do not happen after this object is destroyed.
+		AK::SoundEngine::CancelEventCallbackGameObject( m_ID );
 		StopAll();
 		g_audioManager->AddToDestructionVector( m_ID );
 	}
@@ -126,11 +153,11 @@ unsigned int AudGameObjResource::PySendEvent( const std::wstring& event, bool by
 	return PostEvent( event, bypassPrefix );
 }
 
-void AudGameObjResource::StopSound( AkPlayingID playingID )
+void AudGameObjResource::StopSound( AkPlayingID playingID, uint32_t fadeOutDuration )
 {
 	if ( g_audioInitialized )
 	{
-		AK::SoundEngine::ExecuteActionOnPlayingID( AK::SoundEngine::AkActionOnEventType_Stop, playingID, m_defaultFadeDuration );
+		AK::SoundEngine::ExecuteActionOnPlayingID( AK::SoundEngine::AkActionOnEventType_Stop, playingID, fadeOutDuration );
 		g_audioManager->LogStopPlayingID( m_ID, playingID );
 	}
 }
@@ -139,7 +166,10 @@ void AudGameObjResource::StopAll()
 {
 	if( g_audioInitialized )
 	{
-		AK::SoundEngine::StopAll(m_ID);
+		for ( auto it = begin( m_playingEvents ); it != end( m_playingEvents ); ++it)
+		{
+			StopSound( it->first );
+		}
 	}
 }
 
