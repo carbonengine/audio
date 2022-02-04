@@ -9,7 +9,7 @@ BLUE_DEFINE_INTERFACE( ITr2AudEmitter );
 void AudEmitter::Py__init__( const std::string& name )
 {
 	m_name = name;
-	Initialize();
+	AudGameObjResource::Initialize();
 }
 
 const Be::ClassInfo* AudEmitter::ExposeToBlue()
@@ -37,15 +37,15 @@ const Be::ClassInfo* AudEmitter::ExposeToBlue()
 			":param top: Vector3 representing the up vector of the object\n"
 			":param position: Vector3 representing the world position .\n"
 		)
-		MAP_METHOD_AND_WRAP
+		MAP_METHOD_AND_WRAP_OPTIONAL_ARGS
 		(
 			"StopEvent",
 			StopEvent,
+			1,
 			"Stops the sounds playing that are part of the given event.\n"
 			":param eventName: The name of the event whose sounds you want to stop\n"
-			":type eventName: str\n"
+			":param fadeOutDuration: How long you want the fade out of the sound to be in milliseconds. Defaults to 1000.\n"
 			":return: true if the event was found and stopped, false otherwise\n"
-			":rtype: bool\n"
 		)
 		MAP_METHOD_AND_WRAP
 		(

@@ -7,9 +7,8 @@
 
 #include "AudManager.h"
 
-AudUIPlayer::AudUIPlayer( IRoot* lockobj )
+AudUIPlayer::AudUIPlayer( IRoot* lockobj ) : AudGameObjResource( UI_GAME_OBJ_ID, lockobj )
 {
-	m_ID = UI_GAME_OBJ_ID;
 	m_name = "UI";
 	CreateWwiseObject();
 }

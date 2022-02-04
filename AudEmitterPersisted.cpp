@@ -14,7 +14,7 @@ AudEmitterPersisted::~AudEmitterPersisted()
 
 bool AudEmitterPersisted::Initialize()
 {
-	AudEmitter::Initialize();
+	AudGameObjResource::Initialize();
 	if( m_playOnLoad )
 	{
 		SendEvent( m_playEvent );	//SendEvent in AudEmitter checks for g_audioEnabled

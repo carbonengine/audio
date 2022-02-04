@@ -507,6 +507,22 @@ std::wstring AudManager::GetWwiseVersion()
 		   L"." + std::to_wstring(AK_WWISESDK_VERSION_BUILD);
 }
 
+//-----------------------------------------------------
+// Description:
+//   Retrieve the given emitter if it is currently alive. 
+// Arguments:
+//   emitterID - The ID of the emitter you want to retrieve. 
+//-----------------------------------------------------
+AudGameObjResource* AudManager::GetAudioEmitter( AkGameObjectID emitterID )
+{
+	auto it = m_audioEmitters.find( emitterID );
+	if ( it != m_audioEmitters.end() )
+	{
+		return it->second;
+	}
+	return nullptr;
+}
+
 void AudManager::AddMultiEmitterToList( AudEmitterMulti* emitter )
 {
 	CcpAutoMutex guard( m_multiEmitterMutex );
@@ -564,26 +580,19 @@ void AudManager::StopAll()
 	{
 		for( auto it = m_audioEmitters.begin(); it != m_audioEmitters.end(); ++it )
 		{
-			( *it )->StopAll();
+			( *it->second ).StopAll();
 		}
-		m_audioEmitters.clear();
 	}
 }
 
-void AudManager::RegisterAudEmitter( AudEmitter* emitter )
+void AudManager::RegisterAudEmitter( AkGameObjectID emitterID, AudGameObjResource* emitter )
 {
-	if( g_audioInitialized )
-	{
-		m_audioEmitters.push_back( emitter );
-	}
+	m_audioEmitters.insert( {emitterID, emitter} );
 }
 
-void AudManager::UnregisterAudEmitter( AudEmitter* emitter )
+void AudManager::UnregisterAudEmitter( AkGameObjectID emitterID )
 {
-	if( g_audioInitialized )
-	{
-		m_audioEmitters.erase( std::remove( m_audioEmitters.begin(), m_audioEmitters.end(), emitter ), m_audioEmitters.end() );
-	}
+	m_audioEmitters.erase( emitterID );
 }
 
 void AudManager::LogPostEvent( AkGameObjectID emitterID, AkPlayingID playID, AkUniqueID eventID, const std::wstring& name )
