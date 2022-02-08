@@ -63,6 +63,7 @@ public:
 	unsigned int SendEvent( const std::wstring& name, bool bypassPrefix = false ) override;
 	int SetPosition( const Vector3& front, const Vector3& top, const Vector3& pos ) override;
 	void SetName( const std::string& name ) override;
+	void SetPrefix( const std::wstring& prefix ) override;
 	void SetSwitch( const std::wstring& switchGroup, const std::wstring& switchState ) override;
 	void SetRTPC( const std::wstring& rtpcName, float rtpcValue ) override;
 	int SetAttenuationScalingFactor( const float scalingFactor ) override;
