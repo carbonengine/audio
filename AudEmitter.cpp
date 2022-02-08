@@ -28,6 +28,11 @@ void AudEmitter::SetName( const std::string& name )
 	m_name = name;
 }
 
+void AudEmitter::SetPrefix( const std::wstring& prefix )
+{
+	m_eventPrefix = prefix;
+}
+
 int AudEmitter::SetPosition( const Vector3& front, const Vector3& top, const Vector3& pos )
 {
 	m_debugPosition = pos;
