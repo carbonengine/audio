@@ -217,6 +217,7 @@ bool AudManager::InitLowLevel()
 		CCP_LOGERR( "Failed to create Wwise Low Level IO Hook" );
 		return false;
 	}
+
 	if( m_lowLevelIO.SetBasePath( m_settings->m_baseSoundBankPath.c_str() ) != AK_Success )
 	{
 		CCP_LOGERR( "Soundbank path %S is invalid and soundbanks will not be loaded correctly.", m_settings->m_baseSoundBankPath.c_str() );
@@ -390,8 +391,8 @@ bool AudManager::LoadBank( const std::wstring& name )
 	{
 		AkBankID tmp;
 		BankLoadUnloadStatus* status = CCP_NEW( "LoadBank/status" ) BankLoadUnloadStatus;
-		AKRESULT result = AK::SoundEngine::LoadBank( name.c_str(), BankLoadUnloadCb, status, tmp );
-		if( result == AK_Fail )
+		AKRESULT out_result = AK::SoundEngine::LoadBank( name.c_str(), BankLoadUnloadCb, status, tmp );
+		if( out_result == AK_Fail )
 		{
 			CCP_LOGERR( "AK::SoundEngine::LoadBank failed scheduling for %S", name.c_str() );
 			return false;
