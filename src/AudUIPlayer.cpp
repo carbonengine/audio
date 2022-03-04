@@ -111,10 +111,13 @@ void AudUIPlayer::PropagatePythonCallback( void* pAudUIPlayer )
 void AudUIPlayer::EventFinishedCallback( AkEventCallbackInfo* cbInfo )
 {
 	std::wstring eventName = L"";
-	auto found = m_playingEvents.find( cbInfo->playingID );
-	if ( found != m_playingEvents.end() )
 	{
-		eventName = found->second;
+		CcpAutoMutex mutex( m_playingEventsMutex );
+		auto found = m_playingEvents.find( cbInfo->playingID );
+		if ( found != m_playingEvents.end() )
+		{
+			eventName = found->second;
+		}
 	}
 
 	AudGameObjResource::EventFinishedCallback( cbInfo );

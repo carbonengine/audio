@@ -24,7 +24,8 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 														 m_playOnLoad( false ),
 														 m_eventPrefix(L""),
 														 m_scalingFactor( 1.0 ),
-														 m_position( 1.0e+7F, 1.0e+7F, 1.0e+7F ) // WWISE INIT POSITION
+														 m_position( 1.0e+7F, 1.0e+7F, 1.0e+7F ), // WWISE INIT POSITION
+														 m_playingEventsMutex( "AudGameObjResource", "m_playingEventsMutex" )
 {
 	m_ID = GenerateEntityID();
 
@@ -42,7 +43,8 @@ AudGameObjResource::AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj
 																				   m_playOnLoad( false ),
 																				   m_eventPrefix(L""),
 																				   m_scalingFactor( 1.0 ),
-																				   m_position( 1.0e+7F, 1.0e+7F, 1.0e+7F ) // WWISE INIT POSITION
+																				   m_position( 1.0e+7F, 1.0e+7F, 1.0e+7F ), // WWISE INIT POSITION
+														 						   m_playingEventsMutex( "AudGameObjResource", "m_playingEventsMutex" )
 {
 	m_ID = gameObjID;
 
@@ -103,6 +105,7 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& name, bool bypas
 
 		if ( m_playID != AK_INVALID_PLAYING_ID )
 		{
+			CcpAutoMutex mutex( m_playingEventsMutex );
 			m_playingEvents.insert({m_playID, eventName});
 		}
 
@@ -145,6 +148,8 @@ void AudGameObjResource::PropagateWwiseCallback( AkCallbackType in_eType, AkCall
 //-----------------------------------------------------
 void AudGameObjResource::EventFinishedCallback( AkEventCallbackInfo* cbInfo )
 {
+
+	CcpAutoMutex mutex( m_playingEventsMutex );
 	m_playingEvents.erase(cbInfo->playingID);
 }
 
@@ -166,6 +171,7 @@ void AudGameObjResource::StopAll()
 {
 	if( g_audioInitialized )
 	{
+		CcpAutoMutex mutex( m_playingEventsMutex );
 		for ( auto it = begin( m_playingEvents ); it != end( m_playingEvents ); ++it)
 		{
 			StopSound( it->first );
@@ -295,7 +301,7 @@ void AudGameObjResource::SeekOnEventPercent( const unsigned int playingID, float
 {
 	if ( g_audioInitialized )
 	{
-
+		CcpAutoMutex mutex( m_playingEventsMutex );
 		auto it = m_playingEvents.find( playingID );
 		if ( it != m_playingEvents.end() )
 		{
@@ -319,7 +325,7 @@ void AudGameObjResource::SeekOnEventMs( const unsigned int playingID, const unsi
 {
 	if ( g_audioInitialized )
 	{
-
+		CcpAutoMutex mutex( m_playingEventsMutex );
 		auto it = m_playingEvents.find( playingID );
 		if ( it != m_playingEvents.end() )
 		{
