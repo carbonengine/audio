@@ -98,6 +98,7 @@ protected:
 	bool bypassPrefix;
 
 	std::map<unsigned int, std::wstring> m_playingEvents;
+	CcpMutex m_playingEventsMutex;
 };
 
 TYPEDEF_BLUECLASS( AudGameObjResource );
