@@ -1,13 +1,23 @@
 #include "stdafx.h"
 #include "AudEmitter.h"
-#include "AudManager.h"
-#include "DebugUtilities.h"
-#include "Vector3.h"
 
 #include <AK/SoundEngine/Common/AkSoundEngine.h>
 
+#include "AudManager.h"
+#include "AudStaticDataRepository.h"
+#include "DebugUtilities.h"
+#include "Vector3.h"
+
 AudEmitter::AudEmitter( IRoot* lockobj ) :
 	AudGameObjResource( lockobj ),
+	m_debugPosition(0, 0, 0),
+	m_debugFront(0, 0, 0),
+	m_debugColor()
+{
+}
+
+AudEmitter::AudEmitter( AkGameObjectID gameObjID, IRoot* lockobj ) :
+	AudGameObjResource( gameObjID, lockobj ),
 	m_debugPosition(0, 0, 0),
 	m_debugFront(0, 0, 0),
 	m_debugColor()
@@ -50,45 +60,31 @@ std::string AudEmitter::GetName()
 	return m_name;
 }
 
-void AudEmitter::SetSwitch( const std::wstring& switchGroup, const std::wstring& switchState )
+bool AudEmitter::SetSwitch( const std::wstring& switchGroup, const std::wstring& switchState )
 {
-	AudGameObjResource::SetSwitch( switchGroup, switchState );
+	return AudGameObjResource::SetSwitch( switchGroup, switchState );
 }
 
 
-void AudEmitter::SetRTPC( const std::wstring& rtpcName, float rtpcValue )
+bool AudEmitter::SetRTPC( const std::wstring& rtpcName, float rtpcValue )
 {
-	AudGameObjResource::SetRTPC( rtpcName, rtpcValue );
+	return AudGameObjResource::SetRTPC( rtpcName, rtpcValue );
 }
 
-int AudEmitter::SetAttenuationScalingFactor( const float scalingFactor )
+bool AudEmitter::SetAttenuationScalingFactor( const float scalingFactor )
 {
 	m_debugColor = 0xaaff0000; // Emitter's whose attenuation is affected by code will always show red in debug.
 	return AudGameObjResource::SetAttenuationScalingFactor( scalingFactor );
 }
 
-//----------------------------------
-// Needed for IBluePlacementObserver interface.
-//----------------------------------
 void AudEmitter::UpdatePlacement(const Vector3& front, const Vector3& top, const Vector3& pos )
 {
 	SetPosition( front, top, pos );
 }
 
-bool AudEmitter::StopEvent( const std::wstring& eventName, uint32_t fadeOutDuration )
+void AudEmitter::SetVisibility( bool isVisible )
 {
-	bool stopped = false;
-	std::wstring fullEventName = PrepareEvent( eventName, false );
-
-	for ( auto it = begin( m_playingEvents ); it != end( m_playingEvents ); ++it)
-	{
-		if ( it->second == fullEventName )
-		{
-			StopSound(it->first, fadeOutDuration );
-			stopped = true;
-		}
-	}
-	return stopped;
+	m_isVisible = isVisible;
 }
 
 // Debug
@@ -109,18 +105,21 @@ void AudEmitter::RenderDebugInfo( ITr2DebugRenderer2& renderer )
 			}
 		}
 
-		if ( !m_debugColor )
+		if ( !m_culled )
 		{
-			float minRange = 0.4f;
-			float maxRange = 0.9f;
-			m_debugColor = DebugUtilities::GenerateDebugColor( minRange, maxRange );
+			if ( !m_debugColor )
+			{
+				float minRange = 0.4f;
+				float maxRange = 0.9f;
+				m_debugColor = DebugUtilities::GenerateDebugColor( minRange, maxRange );
+			}
+
+			const float emitterRange = AK::SoundEngine::Query::GetMaxRadius( m_ID );
+			uint32_t debugSphereSegments = static_cast<uint32_t>(8.f + emitterRange / 5000.f);
+			debugSphereSegments = (debugSphereSegments < 25) ? debugSphereSegments : 25; // limit segment growth to 25
+
+			renderer.DrawSphere( this, m_debugPosition, emitterRange, debugSphereSegments, ITr2DebugRenderer2::Wireframe, Tr2DebugColor( m_debugColor ) );
+			renderer.DrawText( TRI_DBG_FONT_SMALL, m_debugPosition, m_debugColor, m_name.c_str() );
 		}
-
-		const float emitterRange = AK::SoundEngine::Query::GetMaxRadius( m_ID );
-		uint32_t debugSphereSegments = static_cast<uint32_t>(8.f + emitterRange / 5000.f);
-		debugSphereSegments = (debugSphereSegments < 25) ? debugSphereSegments : 25; // limit segment growth to 25
-
-		renderer.DrawSphere( this, m_debugPosition, emitterRange, debugSphereSegments, ITr2DebugRenderer2::Wireframe, Tr2DebugColor( m_debugColor ) );
-		renderer.DrawText( TRI_DBG_FONT_SMALL, m_debugPosition, m_debugColor, m_name.c_str() );
 	}
 }

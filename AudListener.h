@@ -1,42 +1,29 @@
-/* 
-	*************************************************************************************
-
-	AudListener.h
-
-	Author:    Andri Mar
-	Created:   October 2008
-	OS:        Win32
-	Project:   Audio2
-
-	Description:   
-
-		TBA
-
-
-	Dependencies:
-
-		Blue
-
-	(c) CCP 2008
-
-	*************************************************************************************
-*/
+////////////////////////////////////////////////////////////
+//
+// Creator: Andri Mar
+// Contributors: Eric Nielsen
+// Creation Date: October 2008
+// Copyright (c) 2008-2022, CCP Games
+//
 
 #ifndef _AUDLISTENER_H_
 #define _AUDLISTENER_H_
 
-#include "Audio2.h"
-
 #include <AK/SoundEngine/Common/AkTypes.h>
 
-// Blue headers specific to this file
-#include <blue/Include/IBluePlacementObserver.h>
+#include "blue/Include/IBluePlacementObserver.h"
 
-#include "AudResource.h"
+#include "Audio2.h"
+#include "AudGameObjResource.h"
+
 struct Vector3;
 
-BLUE_CLASS( AudListener ) : public IBluePlacementObserver,
-							public AudResource
+// ------------------------------------------------------------------------
+// Description:
+//   The game object that represents the listener for audio in game. All calculations
+//   about what the player can hear are relative to this game object's position.
+// ------------------------------------------------------------------------
+BLUE_CLASS( AudListener ) : public AudGameObjResource 
 {
 public:
 	AudListener( IRoot* lockobj = NULL );
@@ -44,18 +31,7 @@ public:
 	
 	EXPOSE_TO_BLUE();
 
-	// IBluePlacementObserver
-	virtual void UpdatePlacement( const Vector3& front, const Vector3& top, const Vector3& pos ) override;
-	// IInitialize
-	void Initialize();
-
-	virtual int SetPosition( const Vector3& front, const Vector3& top, const Vector3& pos );
-
-	AkUInt32 m_ID;
-protected:
-	virtual void CreateWwiseObject() override;
-	virtual void LogInfo() override;
-
+	void RegisterWwiseObject() override;
 };
 
 TYPEDEF_BLUECLASS( AudListener );

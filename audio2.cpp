@@ -2,16 +2,19 @@
 //
 
 #include "stdafx.h"
+#include "AudManager.h"
+#include "AudStaticDataRepository.h"
 
-#include "LogBridge.h"
+#include <AK/AkWwiseSDKVersion.h>
 
 BLUE_DEFINE_INTERFACE( IBluePlacementObserver );
 BLUE_DEFINE_INTERFACE( IBlueEventListener );
 
-#include "AudManager.h"
-#include "AudResource.h"
-
-const char* g_moduleName = "_audio2";
+const char* g_moduleName = "audio2";
+const std::string g_wwiseVersion = std::to_string(AK_WWISESDK_VERSION_MAJOR) + "." + \
+                                   std::to_string(AK_WWISESDK_VERSION_MINOR) + "." + \
+								   std::to_string( AK_WWISESDK_VERSION_SUBMINOR ) + "." +  \
+								   std::to_string( AK_WWISESDK_VERSION_BUILD );
 
 //-----------------------------------------------------------------------------
 // Globals
@@ -21,12 +24,30 @@ HINSTANCE gInstance = NULL;
 #endif // _WIN32
 
 AudManager* g_audioManager = nullptr;
+AudStaticDataRepository* g_staticDataRepository = nullptr;
 
 bool g_audioEnabled = false;
 bool g_audioInitialized = false;
 bool g_debugDisplayAllEmitters = false;
+bool g_wwiseCommunicationEnabled = false;
 
 IBlueCallbackManPtr g_mainThreadQueue;
+
+static PyObject* PyGetWwiseCommuncationEnabled( PyObject* self, PyObject* args )
+{
+	if ( g_wwiseCommunicationEnabled )
+	{
+		return Py_True;	
+	}
+	return Py_False;
+}
+MAP_FUNCTION( "GetWwiseCommunicationEnabled", PyGetWwiseCommuncationEnabled, "Whether audio2 is able to communicate with the Wwise profiler or not." );
+
+static PyObject* PyGetWwiseVersion( PyObject* self, PyObject* args )
+{
+	return PyString_FromString( g_wwiseVersion.c_str() );
+}
+MAP_FUNCTION( "GetWwiseVersion", PyGetWwiseVersion, "The version of Wwise being used by audio2." );
 
 static PyObject* PyGetManager( PyObject* self, PyObject* args)
 {
@@ -43,6 +64,22 @@ static PyObject* PyGetManager( PyObject* self, PyObject* args)
 	return PyOS->WrapBlueObject( g_audioManager );
 }
 MAP_FUNCTION( "GetOrCreateManager", PyGetManager, "Create a global audio manager instance if needed, otherwise return the existing one." );
+
+static PyObject* PyGetStaticDataRepository( PyObject* self, PyObject* args)
+{
+	if ( !g_staticDataRepository )
+	{
+		g_staticDataRepository = new OAudStaticDataRepository;
+		if ( !g_staticDataRepository)
+		{
+			PyOS->PyError();
+			return 0;
+		}
+	}
+
+	return PyOS->WrapBlueObject( g_staticDataRepository );
+}
+MAP_FUNCTION( "GetStaticDataRepository", PyGetStaticDataRepository, "Create a global static data repository." );
 
 static PyObject* PyGetRegisteredEnums( PyObject* self, PyObject* args )
 {
@@ -108,8 +145,6 @@ MAP_FUNCTION( "GetRegisteredEnumValues", PyGetRegisteredEnumValues, "GetRegister
 //-----------------------------------------------------------------------------
 static void StartDLL( /*HINSTANCE instance*/ )
 {	
-	WwiseLogServerBridgeInit( AK::Monitor::ErrorLevel_All );
-
 	BeClasses->CreateInstanceFromName( "BlueCallbackMan", BlueInterfaceIID<IBlueCallbackMan>(), (void**)&g_mainThreadQueue );
 
 	BeClasses->RegisterClasses( BlueRegistration::GetClassRegs() );
@@ -134,7 +169,7 @@ BOOL APIENTRY DllMain( HINSTANCE instance, DWORD  reason, LPVOID )
 	{
 	}
 
-    return TRUE;
+	return TRUE;
 }
 #endif // _WIN32
 

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-<assemblyIdentity
-    version="9.9.9.9"
-    processorArchitecture="*"
-    name="CCP.EVE._audio2"
-    type="win32"
-/>
-</assembly>

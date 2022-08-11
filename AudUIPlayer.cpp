@@ -1,16 +1,14 @@
 #include <stdafx.h>
 #include "AudUIPlayer.h"
 
-// Wwise includes
 #include <AK/SoundEngine/Common/AkTypes.h>
 #include <AK/SoundEngine/Common/AkSoundEngine.h>
 
-#include "AudManager.h"
-
-AudUIPlayer::AudUIPlayer( IRoot* lockobj ) : AudGameObjResource( UI_GAME_OBJ_ID, lockobj )
+AudUIPlayer::AudUIPlayer( IRoot* lockobj ) : AudEmitter( UI_GAME_OBJ_ID, lockobj )
 {
 	m_name = "UI";
-	CreateWwiseObject();
+	m_additionalCullingWeight = std::numeric_limits<float>::max();
+	RegisterWwiseObject();
 }
 
 AudUIPlayer::~AudUIPlayer()
@@ -32,15 +30,12 @@ unsigned int AudUIPlayer::SendEventWithCallback( const std::wstring& name )
 		m_callbackEventName = PrepareEvent(name, false);
 		if(m_callback)
 		{
-			m_playID = PostEvent( name.c_str(), false, AK_EnableGetSourcePlayPosition );
-			g_audioManager->LogPostEvent( m_ID, m_playID, AK_INVALID_UNIQUE_ID, name );
+			return PostEvent( name.c_str(), false, AK_EnableGetSourcePlayPosition );
 		}
 		else 
 		{
-			CCP_LOGWARN("SendEventWithCallback called without any callback function set");
-			return 0;
+			CCP_LOGERR("SendEventWithCallback called without any callback function set");
 		}
-		return m_playID;
 	}
 	return 0;
 }

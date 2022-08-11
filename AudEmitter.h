@@ -1,44 +1,33 @@
-/*
-	*************************************************************************************
-
-	AudEmitter.h
-
-	Author:    Andri Mar
-	Created:   November 2008
-	OS:        Win32
-	Project:   Audio2
-
-	Description:
-
-		An audio entity ingame. Wrapper for the GameObject concept in Wwise.
-
-
-	Dependencies:
-
-		Blue
-
-	(c) CCP 2008
-
-	*************************************************************************************
-*/
+////////////////////////////////////////////////////////////
+//
+// Creator: Andri Mar
+// Contributors: Eric Nielsen
+// Creation Date: June 2010
+// Copyright (c) 2010-2022, CCP Games
+//
 
 #pragma once
 #ifndef _AUDEMITTER_H_
 #define _AUDEMITTER_H_
 
-#include "Audio2.h"
-#include "AudGameObjResource.h"
-#include "AudParameter.h"
-#include "AudPosition.h"
 #include <AK/SoundEngine/Common/AkTypes.h>
 #include <AK/SoundEngine/Common/AkQueryParameters.h>
 
-#include "CcpMath/include/CcpMath.h"
 #include "trinity/Include/ITr2DebugRenderer2.h"
 #include "trinity/Audio/ITr2AudEmitter.h"
 
+#include "AudGameObjResource.h"
+#include "AudPosition.h"
+
 struct Vector3;
 
+// ------------------------------------------------------------------------
+// Description:
+//   This class encapsulates an audio emitter in EVE and is exposed both
+//   through Blue and to Trinity through ITr2AudEmitter.
+// SeeAlso:
+//   ITr2AudEmitter, AudGameObjResource
+// ------------------------------------------------------------------------
 BLUE_CLASS( AudEmitter ) :
 	public IBluePlacementObserver,
 	public AudGameObjResource,
@@ -51,9 +40,6 @@ public:
 
 	EXPOSE_TO_BLUE();
 
-	//--------------------------
-	// Blue interfaces
-	//--------------------------
 	// IBluePlacementObserver
 	virtual void UpdatePlacement( const Vector3& front, const Vector3& top, const Vector3& pos ) override;
 	void Py__init__( const std::string& name );
@@ -64,19 +50,17 @@ public:
 	int SetPosition( const Vector3& front, const Vector3& top, const Vector3& pos ) override;
 	void SetName( const std::string& name ) override;
 	void SetPrefix( const std::wstring& prefix ) override;
-	void SetSwitch( const std::wstring& switchGroup, const std::wstring& switchState ) override;
-	void SetRTPC( const std::wstring& rtpcName, float rtpcValue ) override;
-	int SetAttenuationScalingFactor( const float scalingFactor ) override;
+	bool SetSwitch( const std::wstring& switchGroup, const std::wstring& switchState ) override;
+	bool SetRTPC( const std::wstring& rtpcName, float rtpcValue ) override;
+	bool SetAttenuationScalingFactor( const float scalingFactor ) override;
+	void SetVisibility( bool isVisible ) override;
 	std::string GetName() override;
 
 	// Debug
 	virtual	void GetDebugOptions( Tr2DebugRendererOptions& options ) override;
 	virtual	void RenderDebugInfo( ITr2DebugRenderer2& renderer ) override;
-
-	// AudEmitter
-	bool StopEvent( const std::wstring& eventName, uint32_t fadeOutDuration = 1000 ); // Stop all sounds associated with an event.
-
 protected:
+	AudEmitter( AkGameObjectID gameObjID, IRoot* lockobj = NULL );
 	Vector3 m_debugPosition;
 	Vector3 m_debugFront;
 	Color m_debugColor;

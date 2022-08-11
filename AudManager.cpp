@@ -1,4 +1,6 @@
 #include "stdafx.h"
+#include "AudManager.h"
+
 #include <string>
 
 #include <AK/AkWwiseSDKVersion.h>
@@ -28,6 +30,9 @@
 #include <AK/Plugin/AkPitchShifterFXFactory.h>
 #include <AK/Plugin/AkDelayFXFactory.h>
 #include <AK/Plugin/MasteringSuiteFXFactory.h>
+#include <AK/Plugin/AkRecorderFXFactory.h>
+
+#include "tbb/parallel_for.h"
 
 #if _WIN32
 #include "LowLevelIO/Win32/AkDefaultIOHookBlocking.h"
@@ -35,14 +40,11 @@
 #include "LowLevelIO/POSIX/AkDefaultIOHookBlocking.h"
 #endif
 
-#include "AudManager.h"
-#include "AudAlloc.h"
-#include "AudResource.h"
-#include "AudSettings.h"
-#include "AudEmitterMulti.h"
-#include "AudEmitter.h"
 #include "AudActionLog.h"
-
+#include "AudEmitter.h"
+#include "AudSettings.h"
+#include "AudStaticDataRepository.h"
+#include "LogBridge.h"
 
 static CcpLogChannel_t s_ch = CCP_LOG_DEFINE_CHANNEL( "AudioManager" );
 
@@ -51,17 +53,21 @@ static void WwiseAssertHook( const char* in_pszExpression, const char* in_pszFil
 	CCP_LOGWARN_CH( s_ch, "Assert expression failed: %s in file %s at line %d", in_pszExpression, in_pszFileName, in_lineNumber );
 }
 
-static GameObjIDVector s_gameObjectsToBeDestroyed;
-
 AudManager::AudManager( IRoot* lockobj ) :
 	m_tickInterval( 10 ),
-	m_multiEmitterMutex( "AudManager", "m_multiEmitterMutex" ),
 	m_asyncOpen( true ),
 	m_log(),
-	m_communicationEnabled( false )
-{
-	s_gameObjectsToBeDestroyed.push_back( 0 );
-}
+	m_audioCullingEnabled( true ),
+	m_maxAwakeGameObjects( m_cullingInitSettings.maxAwakeGameObjects ),
+	m_waitingOneShotWeight( m_cullingInitSettings.waitingOneShotWeight),
+	m_usedEmitterWeight( m_cullingInitSettings.usedEmitterWeight ),
+	m_rangeWeight( m_cullingInitSettings.rangeWeight ),
+	m_playingEventsWeight( m_cullingInitSettings.activeSoundsWeight),
+	m_visibleWeight( m_cullingInitSettings.visibleWeight ),
+	m_playing2DWeight( m_cullingInitSettings.playing2DWeight ),
+	m_playingVitalSoundWeight( m_cullingInitSettings.playingVitalSoundWeight ),
+	m_weightMultiplier( m_cullingInitSettings.weightMultiplier )
+{}
 
 AudManager::~AudManager()
 {
@@ -75,29 +81,16 @@ void AudManager::Process()
 {
 	if( g_audioInitialized )
 	{
-		ProcessMultiEmitterList();
+		if ( m_audioCullingEnabled && g_audioEnabled )
+		{
+			CullAudio();
+		}
 
 		// Process bank requests, events, positions, RTPC, etc.
 		AK::SoundEngine::RenderAudio();
 
 		//Update main thread queue
 		g_mainThreadQueue->Update();
-
-		// Executing gameobjects on death row....culling it you might say!
-		// Resist the urge to cache the end pointer here - since we are erasing from the list, end can change and must
-		// therefore be queried on every iteration of the loop! <halldor>
-		for( GameObjIDVector::iterator it = s_gameObjectsToBeDestroyed.begin(); it != s_gameObjectsToBeDestroyed.end(); )
-		{
-			AKRESULT result = AK::SoundEngine::UnregisterGameObj( *it );
-			if( result == AK_Success )
-			{
-				it = s_gameObjectsToBeDestroyed.erase( it );
-			}
-			else
-			{
-				++it;
-			}
-		}
 
 		if( m_log )
 		{
@@ -106,8 +99,76 @@ void AudManager::Process()
 	}
 }
 
+void AudManager::CullAudio()
+{
+	CCP_STATS_ZONE( __FUNCTION__ );
+	AudListenerPtr listener = GetListener();
+	if ( listener != nullptr )
+	{
+		{
+			// Calculate distance from the listener for all game objects and update their cumulative culling weight.
+			CCP_STATS_ZONE("CullAudio_CalculateCullingWeight"); 
+			std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+			AkGameObjectID listenerID = listener->GetID();
+			Vector3 listenerPosition = listener->GetPosition();
+			tbb::parallel_for(
+				tbb::blocked_range<size_t>( 0, m_gameObjects.size() ),
+				[&]( const tbb::blocked_range<size_t>& range ) -> void {
+					for( size_t index = range.begin(); index != range.end(); ++index )
+					{
+						AudGameObjResource* gameObject = m_gameObjects[index].second;
+						if( gameObject->GetID() != listenerID )
+						{
+							float distanceSq = LengthSq( gameObject->GetPosition() - listenerPosition );
+							gameObject->SetDistanceSqFromListener( distanceSq );
+						}
+						gameObject->CalculateCullingWeight( now );
+					}
+				} 
+			);
+		}
+		{
+			CCP_STATS_ZONE("CullAudio_SortGameObjects"); 
+			// Sort all game objects by their cumulative culling weight. The larger the number the more likely to be culled.
+			sort( m_gameObjects.begin(), m_gameObjects.end(),
+				[]( const std::pair<AkGameObjectID, AudGameObjResource*>& a, const std::pair<AkGameObjectID, AudGameObjResource*>& b ) -> bool
+					{
+						return a.second->GetCullingWeight() < b.second->GetCullingWeight();
+					});
+		}
+		{
+			CCP_STATS_ZONE("CullAudio_WakeAndCullGameObjects"); 
+			// Keep the first m_maxAwakeGameObjects game objects awake.
+			int numAwake = 0;
+			for (auto it = m_gameObjects.begin(); it != m_gameObjects.end(); ++it)
+			if ( numAwake > m_maxAwakeGameObjects )
+			{
+				if ( !it->second->IsCulled() )
+				{
+					it->second->Cull();
+				}
+			}
+			else
+			{
+				if ( it->second->IsCulled() )
+				{
+					it->second->Wake();
+				}
+				++numAwake;
+			}
+		}
+	}
+}
+
 bool AudManager::Init()
 {
+	if ( g_staticDataRepository == nullptr || !g_staticDataRepository->IsInitialized() )
+	{
+		CCP_LOGERR( "The static data repository in audio2 has not been generated and needs to exist for audio2 "
+				    "to be able to run. See AudStaticDataRepository for more info on how to do this.");
+		return false;
+	}
+
 	if( !InitLowLevel() )
 	{
 		CCP_LOGERR("Failed to initialize Low Level audio");
@@ -120,6 +181,7 @@ bool AudManager::Init()
 		CCP_LOGERR("Failed to initialize audio : Communication");
 		return false;
 	}
+	WwiseLogServerBridgeInit( AK::Monitor::ErrorLevel_All );
 #endif
 
 	if( !InitSound() )
@@ -177,7 +239,7 @@ void AudManager::OnTick( Be::Time realTime, Be::Time simTime, void* cookie )
 
 bool AudManager::InitLowLevel()
 {
-	CCP_LOG( "Audio Backend: Wwise(R) SDK Version %S. %s", GetWwiseVersion().c_str(), AK_WWISESDK_COPYRIGHT);
+	CCP_LOG( "Audio Backend: Wwise(R) SDK Version %S. %s", g_wwiseVersion.c_str(), AK_WWISESDK_COPYRIGHT );
 	//-----------------------------------------------------------------------------
 	// Create and initialize an instance of the default memory manager. Note
 	// that you can override the default memory manager with your own. Refer
@@ -246,7 +308,7 @@ bool AudManager::InitCommunication()
 		assert( !"Audio2: Could not init communication lib" );
 		return false;
 	}
-	m_communicationEnabled = true;
+	g_wwiseCommunicationEnabled = true;
 #endif
 
 	return true;
@@ -309,7 +371,11 @@ void AudManager::SetEnabled( bool newStatus )
 		{
 			AK::SoundEngine::LoadBank( it->c_str(), tmp );
 		}
-		AudResource::RecreateResources();
+
+		for( auto it = m_gameObjects.begin(); it != m_gameObjects.end(); ++it )
+		{
+			( *it->second ).Wake();
+		}
 
 		BeOS->RegisterForTicks( this, (void*)"Audio::Tick" );
 	}
@@ -317,14 +383,43 @@ void AudManager::SetEnabled( bool newStatus )
 	{
 		//Unload all resources
 		StopAll();
-		AK::SoundEngine::UnregisterAllGameObj();
+		for( auto it = m_gameObjects.begin(); it != m_gameObjects.end(); ++it )
+		{
+			( *it->second ).Cull();
+		}
 		AK::SoundEngine::ClearBanks();
-		//Tear down WWISE
-		//Make this more flexible
 		Terminate();
 		g_audioInitialized = false;
 		BeOS->UnregisterForTicks( this, (void*)"Audio::Tick" );
 	}
+}
+
+bool AudManager::SetGlobalRTPC( const std::wstring& rtpcName, float value )
+{
+	if( g_audioInitialized )
+	{
+		AKRESULT result = AK::SoundEngine::SetRTPCValue( rtpcName.c_str(), value );
+		if ( result != AK_Success )
+		{
+			CCP_LOGERR( "Failed to set global RTPC %S to %f. Receive Wwise result code %d", rtpcName.c_str(), value, result );
+			return false;
+		}
+		g_audioManager->LogSetRTPC( 0, rtpcName, value );
+		return true;
+	}
+	return false;
+}
+
+
+bool AudManager::SetState( const std::wstring& stateGroup, const std::wstring& stateName )
+{
+	if( g_audioInitialized )
+	{
+		// SetState always returns True so no need to check the result.
+		AK::SoundEngine::SetState( stateGroup.c_str(), stateName.c_str() );
+		return true;
+	}
+	return false;
 }
 
 void AudManager::UpdateSettings( AudSettings* settings )
@@ -374,19 +469,6 @@ void WaitForLoadUnload( BankLoadUnloadStatus* status )
 
 bool AudManager::LoadBank( const std::wstring& name )
 {
-	{
-		// Ensure iterators go out of scope before we call WaitForLoadUnload below
-		// as it may yield and that can cause issues with iterator validation in
-		// debug builds.
-		BankVector::iterator end = m_loadedBanks.end();
-		BankVector::iterator result = std::find( m_loadedBanks.begin(), end, name );
-		if( result != end )
-		{
-			return false;
-		}
-		m_loadedBanks.push_back( name );
-	}
-
 	if( g_audioEnabled )
 	{
 		AkBankID tmp;
@@ -394,22 +476,28 @@ bool AudManager::LoadBank( const std::wstring& name )
 		AKRESULT out_result = AK::SoundEngine::LoadBank( name.c_str(), BankLoadUnloadCb, status, tmp );
 		if( out_result == AK_Fail )
 		{
-			CCP_LOGERR( "AK::SoundEngine::LoadBank failed scheduling for %S", name.c_str() );
+			CCP_LOGERR( "Soundbank %S failed to be scheduled to load", name.c_str() );
 			return false;
 		}
-
-		CCP_LOG( "AK::SoundEngine::LoadBank scheduled for %S", name.c_str() );
 
 		WaitForLoadUnload( status );
 
-		if( status->result == AK_Fail )
+		if( status->result == AK_Success )
 		{
-			CCP_LOGERR("AK::SoundEngine::LoadBank failed for %S", name.c_str());
+			m_loadedBanks.push_back( name );
+			CCP_LOG( "Soundbank %S was successfully loaded", name.c_str() );
+		}
+		else if( status->result == AK_BankAlreadyLoaded )
+		{
+			CCP_LOG( "Soundbank %S was requested to be loaded when it already is.", name.c_str() );
+		}
+		else 
+		{
+			CCP_LOGERR("Soundbank %S failed to be loaded with Wwise error %d", name.c_str(), status->result );
 			return false;
 		}
-
+		
 		CCP_DELETE status;
-		CCP_LOG( "AK::SoundEngine::LoadBank done for %S", name.c_str() );
 		return true;
 	}
 	else
@@ -475,37 +563,9 @@ void AudManager::ClearBanks()
 	}
 }
 
-void AudManager::AddToDestructionVector( AkGameObjectID gameObjID )
-{
-	s_gameObjectsToBeDestroyed.push_back( gameObjID );
-}
-
 std::vector<std::wstring> AudManager::GetLoadedSoundBanks()
 {
 	return m_loadedBanks;
-}
-
-AudEmitterMulti* AudManager::GetEmitterForEventID( AkUniqueID eventID )
-{
-	CcpAutoMutex guard( m_multiEmitterMutex );
-
-	for( EmitterMultiSet::iterator it = m_multiEmitters.begin(); it != m_multiEmitters.end(); ++it )
-	{
-		AudEmitterMulti* aem = *it;
-		if( aem->m_eventID == eventID )
-		{
-			return aem;
-		}
-	}
-	return NULL;
-}
-
-std::wstring AudManager::GetWwiseVersion()
-{
-	return std::to_wstring(AK_WWISESDK_VERSION_MAJOR) + \
-		   L"." + std::to_wstring(AK_WWISESDK_VERSION_MINOR) + \
-		   L"." + std::to_wstring(AK_WWISESDK_VERSION_SUBMINOR) + \
-		   L"." + std::to_wstring(AK_WWISESDK_VERSION_BUILD);
 }
 
 //-----------------------------------------------------
@@ -516,84 +576,77 @@ std::wstring AudManager::GetWwiseVersion()
 //-----------------------------------------------------
 AudGameObjResource* AudManager::GetAudioEmitter( AkGameObjectID emitterID )
 {
-	auto it = m_audioEmitters.find( emitterID );
-	if ( it != m_audioEmitters.end() )
+	auto it = m_gameObjects.begin();
+	while( it != m_gameObjects.end() )
 	{
-		return it->second;
-	}
-	return nullptr;
-}
-
-void AudManager::AddMultiEmitterToList( AudEmitterMulti* emitter )
-{
-	CcpAutoMutex guard( m_multiEmitterMutex );
-	m_multiEmitters.insert( emitter );
-}
-
-void AudManager::RemoveMultiEmitterFromList( AudEmitterMulti* emitter )
-{
-	CcpAutoMutex guard( m_multiEmitterMutex );
-	m_multiEmitters.erase( emitter );
-}
-
-void AudManager::ProcessMultiEmitterList()
-{
-	CcpAutoMutex guard( m_multiEmitterMutex );
-
-	for( EmitterMultiSet::iterator it = m_multiEmitters.begin(); it != m_multiEmitters.end(); ++it )
-	{
-		AudEmitterMulti* aem = *it;
-		aem->ProcessPlacementList();
-	}
-}
-
-Be::Result<std::string> AudManager::GetEmitterForEventName( const std::wstring& eventName, AudEmitterMulti** out )
-{
-	AkUniqueID eventID = AK::SoundEngine::GetIDFromString( eventName.c_str() );
-
-	AudEmitterMulti* multi = g_audioManager->GetEmitterForEventID( eventID );
-	if( multi )
-	{
-		reinterpret_cast<IRoot*>( multi )->Lock();
-		*out = multi;
-		return Be::Result<std::string>();
-	}
-	else
-	{
-		AudEmitterMulti* p = new OAudEmitterMulti();
-		if( !p )
+		if ( it->first == emitterID )
 		{
-			*out = nullptr;
-			return Be::Result<std::string>( "Could not create an instance of AudEmitterMulti" );
+			return it->second;
 		}
 		else
 		{
-			p->Initialize( eventName );
-			*out = p;
-			return Be::Result<std::string>();
+			++it;
 		}
 	}
+	return nullptr;
 }
 
 void AudManager::StopAll()
 {
 	if( g_audioInitialized )
 	{
-		for( auto it = m_audioEmitters.begin(); it != m_audioEmitters.end(); ++it )
+		for( auto it = m_gameObjects.begin(); it != m_gameObjects.end(); ++it )
 		{
 			( *it->second ).StopAll();
 		}
 	}
 }
 
-void AudManager::RegisterAudEmitter( AkGameObjectID emitterID, AudGameObjResource* emitter )
+void AudManager::RegisterGameObject( AkGameObjectID emitterID, AudGameObjResource* emitter )
 {
-	m_audioEmitters.insert( {emitterID, emitter} );
+	m_gameObjects.push_back( std::make_pair( emitterID, emitter ) );
 }
 
-void AudManager::UnregisterAudEmitter( AkGameObjectID emitterID )
+void AudManager::UnregisterGameObject( AkGameObjectID emitterID )
 {
-	m_audioEmitters.erase( emitterID );
+	m_gameObjects.erase(
+		std::remove_if( 
+			begin( m_gameObjects ), end( m_gameObjects ), [emitterID]( const std::pair<AkGameObjectID, AudGameObjResource*>& p ) 
+			{
+				return p.first == emitterID;
+			} 
+		), end( m_gameObjects ) 
+	);
+}
+
+void AudManager::DisableAudioCulling()
+{
+	for ( auto it = m_gameObjects.begin(); it != m_gameObjects.end(); ++it )
+	{
+		if ( it->second->IsCulled() )
+		{
+			( *it->second ).Wake();
+		}
+	}
+	m_audioCullingEnabled = false;
+}
+
+void AudManager::EnableAudioCulling()
+{
+	m_audioCullingEnabled = true;
+}
+
+void AudManager::ResetCullingSettings()
+{
+	m_maxAwakeGameObjects = m_cullingInitSettings.maxAwakeGameObjects;
+	m_waitingOneShotWeight = m_cullingInitSettings.waitingOneShotWeight;
+	m_usedEmitterWeight = m_cullingInitSettings.usedEmitterWeight;
+	m_rangeWeight = m_cullingInitSettings.rangeWeight;
+	m_playingEventsWeight = m_cullingInitSettings.activeSoundsWeight;
+	m_visibleWeight = m_cullingInitSettings.visibleWeight;
+	m_playing2DWeight = m_cullingInitSettings.playing2DWeight;
+	m_playingVitalSoundWeight = m_cullingInitSettings.playingVitalSoundWeight;
+	m_weightMultiplier = m_cullingInitSettings.weightMultiplier;
 }
 
 void AudManager::LogPostEvent( AkGameObjectID emitterID, AkPlayingID playID, AkUniqueID eventID, const std::wstring& name )
@@ -604,11 +657,11 @@ void AudManager::LogPostEvent( AkGameObjectID emitterID, AkPlayingID playID, AkU
 	}
 }
 
-void AudManager::LogStopPlayingID( AkGameObjectID emitterID, AkPlayingID playID )
+void AudManager::LogExecuteActionOnPlayingID( AkGameObjectID emitterID, AkPlayingID playID, const std::wstring& action )
 {
 	if( m_log )
 	{
-		m_log->LogStopPlayingID( emitterID, playID );
+		m_log->LogExecuteActionOnPlayingID( emitterID, playID, action );
 	}
 }
 
@@ -649,4 +702,86 @@ void AudManager::DisableDebugDisplayAllEmitters()
 bool AudManager::GetDebugDisplayAllEmitters()
 {
 	return g_debugDisplayAllEmitters;
+}
+
+float AudManager::GetPlaying2DWeight() const
+{
+	return m_weightMultiplier * m_playing2DWeight;
+}
+
+float AudManager::GetPlayingEventsWeight() const
+{
+	return m_weightMultiplier * m_playingEventsWeight;
+}
+
+float AudManager::GetPlayingVitalSoundWeight() const
+{
+	return m_weightMultiplier * m_playingVitalSoundWeight;
+}
+
+float AudManager::GetRangeWeight() const
+{
+	return m_weightMultiplier * m_rangeWeight;
+}
+
+float AudManager::GetUsedEmitterWeight() const 
+{
+	return m_weightMultiplier * m_usedEmitterWeight;
+}
+
+float AudManager::GetVisibleWeight() const
+{
+	return m_weightMultiplier * m_visibleWeight;
+}
+
+float AudManager::GetWaitingOneShotWeight() const 
+{
+	return m_weightMultiplier * m_waitingOneShotWeight;
+}
+
+void AudManager::SetPlaying2DWeight( float weight )
+{
+	m_playing2DWeight = weight;
+}
+
+void AudManager::SetPlayingEventsWeight( float weight )
+{
+	m_playingEventsWeight = weight;
+}
+
+void AudManager::SetPlayingVitalSoundWeight( float weight )
+{
+	m_playingVitalSoundWeight = weight;
+}
+
+void AudManager::SetRangeWeight( float weight )
+{
+	m_rangeWeight = weight;
+}
+
+void AudManager::SetUsedEmitterWeight( float weight )
+{
+	m_usedEmitterWeight = weight;
+}
+
+void AudManager::SetVisibleWeight( float weight )
+{
+	m_visibleWeight = weight;
+}
+
+void AudManager::SetWaitingOneShotWeight( float weight )
+{
+	m_waitingOneShotWeight = weight;
+}
+
+AudListenerPtr AudManager::GetListener()
+{
+	AudGameObjResourcePtr listenerGameObj = GetAudioEmitter( LISTENER_GAME_OBJ_ID );
+	AudListenerPtr listener = dynamic_cast<AudListener*>( listenerGameObj.p );
+	return listener;
+}
+
+std::vector<std::pair<AkGameObjectID, AudGameObjResource*>> AudManager::GetPrioritizedAudioEmitters()
+{
+	return m_gameObjects;
 }

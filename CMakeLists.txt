@@ -1,5 +1,7 @@
 project(audio2 VERSION 1.0.0)
 
+find_package(IntelTBB REQUIRED)
+
 add_library(audio2 SHARED
 	AudListener_Blue.cpp
     AudActionLog.cpp
@@ -11,16 +13,13 @@ add_library(audio2 SHARED
 	AudParameter.cpp
 	AudParameter_Blue.cpp
 	AudPosition.cpp
-	AudEmitterMulti.cpp
 	AudPosition_Blue.cpp
-	AudEmitterMulti_Blue.cpp
-	AudResource.cpp
-	AudEmitterPersisted.cpp
 	AudSettings_Blue.cpp
-	AudEmitterPersisted_Blue.cpp
 	AudUIPlayer.cpp
 	AudEmitter_Blue.cpp
 	AudUIPlayer_Blue.cpp
+	AudMusicPlayer.cpp
+	AudMusicPlayer_Blue.cpp
 	AudEventCurve.cpp
 	AudEventCurve_Blue.cpp
 	LogBridge.cpp
@@ -33,6 +32,8 @@ add_library(audio2 SHARED
 	AudListener.cpp
 	AudioInputMgr.cpp
 	AudioInputMgr_Blue.cpp
+	AudStaticDataRepository.cpp
+	AudStaticDataRepository_Blue.cpp
 	DebugUtilities.cpp
 	LowLevelIO/AkFileLocationBase.cpp
 	LowLevelIO/AkFilePackage.cpp
@@ -44,8 +45,6 @@ target_sources(audio2 PRIVATE
     AudActionLog.h
 	AudConstants.h
 	AudEmitter.h
-	AudEmitterMulti.h
-	AudEmitterPersisted.h
 	AudEventCurve.h
 	AudEventKey.h
 	AudGameObjResource.h
@@ -55,9 +54,10 @@ target_sources(audio2 PRIVATE
 	AudManager.h
 	AudParameter.h
 	AudPosition.h
-	AudResource.h
 	AudSettings.h
+	AudStaticDataRepository.h
 	AudUIPlayer.h
+	AudMusicPlayer.h
 	autoversion.h
 	DebugUtilities.h
 	LogBridge.h
@@ -100,6 +100,7 @@ target_link_libraries(audio2
 			BlueExposure
 			CcpMath
 			Wwise::Wwise
+            Intel::TBB
 		)
 if(APPLE)
 	target_link_libraries(audio2 PRIVATE "-framework AudioToolbox -framework CoreAudio -framework CoreFoundation")
@@ -133,7 +134,11 @@ endif()
 
 set_target_properties(audio2 PROPERTIES OUTPUT_NAME "_audio2")
 
-target_compile_definitions(audio2 PRIVATE BLUE_OVERRIDE_VECTOR_TYPES=1)
+target_compile_definitions(audio2 
+	PRIVATE 
+		BLUE_OVERRIDE_VECTOR_TYPES=1
+		TBB_ENABLED=1
+)
 target_compile_definitions(audio2 PUBLIC AUDIO2BUILD)
 
 set_target_properties(audio2 PROPERTIES POSITION_INDEPENDENT_CODE ON EXPORT_NAME _audio2)
