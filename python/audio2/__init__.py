@@ -25,22 +25,8 @@ try:
 except ImportError:
     pass
 
-_audio2 = blue.LoadExtension("_audio2")
+audio2 = blue.LoadExtension("_audio2")
 
-# We do the work in a function, to keep things out of the main module namespace
-def __RegisterEnums( namespace ):
-    # You can't add attributes to a pure 'object'
-    class enumWrapper( object ):
-        pass
-
-    for enum in _audio2.GetRegisteredEnums():
-        namespace[enum] = enumWrapper()
-        namespace[enum].values = {}
-        for enumValueName, value, docString in _audio2.GetRegisteredEnumValues( enum ):
-            #namespace[enumValueName] = value                                # Define helloworld.ENUM_VALUE
-            setattr( namespace[enum], enumValueName, value )                # Define helloworld.ENUM.ENUM_VALUE
-            namespace[enum].values[ enumValueName ] = ( value, docString )  # Define helloworld.ENUM.values[ ENUM_VALUE ]
-__RegisterEnums( globals() )
-
-
-sys.modules[__name__] = _audio2
+for memberName in dir(audio2):
+    globals()[memberName] = getattr(audio2, memberName)
+del audio2
