@@ -1,15 +1,16 @@
 #include "stdafx.h"
-
 #include "AudListener.h"
-#include "Vector3.h"
-#include "Utilities.h"
 
 #include <AK/SoundEngine/Common/AkSoundEngine.h>
 
+#include "Vector3.h"
+#include "Utilities.h"
 
-AudListener::AudListener( IRoot* lockobj ) :
-	m_ID(0)
+
+AudListener::AudListener( IRoot* lockobj ) : AudGameObjResource( LISTENER_GAME_OBJ_ID, lockobj )
 {
+	m_name = "Listener";
+	m_additionalCullingWeight = std::numeric_limits<float>::max();
 }
 
 AudListener::~AudListener()
@@ -18,54 +19,12 @@ AudListener::~AudListener()
 	AK::SoundEngine::UnregisterGameObj(m_ID);
 }
 
-void AudListener::Initialize()
+void AudListener::RegisterWwiseObject()
 {
-	CreateWwiseObject();
-}
-
-//-----------------------------------------------------------------------------
-// IBluePlacementObserver
-//-----------------------------------------------------------------------------
-void AudListener::UpdatePlacement( const Vector3& front, const Vector3& top, const Vector3& pos )
-{
-	SetPosition( front, top, pos );
-}
-
-int AudListener::SetPosition( const Vector3& front, const Vector3& top, const Vector3& pos )
-{
-	if( g_audioInitialized )
+	if( g_audioInitialized && m_gameObjRegistered == false )
 	{
-		AkListenerPosition listenerRH, listenerLH;
-		Vector3 correctFront = Normalize( front );
-		Vector3 correctUp = Normalize( top );
-		correctUp = Normalize( Cross( Cross( correctFront, correctUp ), correctFront ) );
-		listenerRH.Set( MakeAkVector(pos), MakeAkVector(correctFront), MakeAkVector(correctUp) );
-		// all vectors come in RH, but WWISE is LH, so convert
-		RH2LH::convertListener( &listenerLH, &listenerRH );
-
-		AK::SoundEngine::SetPosition(m_ID, listenerLH);
-	}
-	return AK_Success;
-}
-
-void AudListener::CreateWwiseObject()
-{
-	if( g_audioInitialized )
-	{
-		auto userFacingID = m_ID - START_LISTENER_GAME_OBJ_COUNT;
-
-		std::string listenerName = "Listener_" + std::to_string(userFacingID);
-
-		AK::SoundEngine::RegisterGameObj(m_ID, listenerName.c_str());
+		AK::SoundEngine::RegisterGameObj(m_ID, m_name.c_str());
 		AK::SoundEngine::AddDefaultListener(m_ID);
+		m_gameObjRegistered = true;
 	}
-}
-
-void AudListener::LogInfo()
-{
-	//if( g_audioInitialized )
-	//{
-	//Currently does nothing
-	//AK::SoundEngine::Query::GetListenerPosition( m_ID, tmpListenerPosition );
-	//}
 }

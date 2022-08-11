@@ -3,9 +3,11 @@
 #define _AUDACTIONLOG_H_
 
 #include "Audio2.h"
-#include <AK/SoundEngine/Common/AkTypes.h>
+
 #include <string>
 #include <queue>
+
+#include <AK/SoundEngine/Common/AkTypes.h>
 
 struct AudActionRecord
 {
@@ -25,13 +27,14 @@ struct AudActionRecordPostEvent : public AudActionRecord
 	PyObject* ToPyObject() override;
 };
 
-struct AudActionRecordStopPlayingID : public AudActionRecord
+struct AudActionRecordExecuteActionOnPlayingID: public AudActionRecord
 {
 	Be::Time m_time;
 	AkGameObjectID m_emitterID;
 	AkPlayingID m_playID;
+	std::wstring m_action;
 
-	AudActionRecordStopPlayingID( Be::Time time = 0, AkGameObjectID emitterID = AK_INVALID_UNIQUE_ID, AkPlayingID playID = AK_INVALID_UNIQUE_ID );
+	AudActionRecordExecuteActionOnPlayingID( Be::Time time = 0, AkGameObjectID emitterID = AK_INVALID_UNIQUE_ID, AkPlayingID playID = AK_INVALID_UNIQUE_ID, const std::wstring& action = std::wstring() );
 	PyObject* ToPyObject() override;
 };
 
@@ -72,7 +75,7 @@ BLUE_INTERFACE( IAudActionLog ) :
 	public IRoot
 {
 	virtual void LogPostEvent( AkGameObjectID emitterID, AkPlayingID playID, AkUniqueID eventID, const std::wstring& name ) = 0;
-	virtual void LogStopPlayingID( AkGameObjectID emitterID, AkPlayingID playID ) = 0;
+	virtual void LogExecuteActionOnPlayingID( AkGameObjectID emitterID, AkPlayingID playID, const std::wstring& action ) = 0;
 	virtual void LogSetSwitch( AkGameObjectID emitterID, const std::wstring& group, const std::wstring& state ) = 0;
 	virtual void LogSetState( const std::wstring& group, const std::wstring& state ) = 0;
 	virtual void LogSetRTPC( AkGameObjectID emitterID, const std::wstring& name, float value, AkPlayingID playID = AK_INVALID_PLAYING_ID ) = 0;
@@ -91,7 +94,7 @@ public:
 
 	// Add a new record.
 	void LogPostEvent( AkGameObjectID emitterID, AkPlayingID playID, AkUniqueID eventID, const std::wstring& name ) override;
-	void LogStopPlayingID( AkGameObjectID emitterID, AkPlayingID playID ) override;
+	void LogExecuteActionOnPlayingID( AkGameObjectID emitterID, AkPlayingID playID, const std::wstring& action ) override;
 	void LogSetSwitch( AkGameObjectID emitterID, const std::wstring& group, const std::wstring& state ) override;
 	void LogSetState( const std::wstring& group, const std::wstring& state ) override;
 	void LogSetRTPC( AkGameObjectID emitterID, const std::wstring& name, float value, AkPlayingID playID = AK_INVALID_PLAYING_ID ) override;

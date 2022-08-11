@@ -1,36 +1,22 @@
-/* 
-	*************************************************************************************
+////////////////////////////////////////////////////////////
+//
+// Creator: Andri Mar
+// Contributors: Eric Nielsen
+// Creation Date: February 2009
+// Copyright (c) 2009-2022, CCP Games
+//
+// Send Wwise errors directly to our error logging system if running the Debug or Profile versions of the Wwise SDK.
+// 
 
-	LogBridge.h
-
-	Author:    Andri Mar
-	Created:   February 2009
-	OS:        Win32
-	Project:   Audio2
-
-	Description:   
-
-		Connects Wwise to LogServer
-
-
-	Dependencies:
-
-		Blue
-
-	(c) CCP 2009
-
-	*************************************************************************************
-*/
 #pragma once
 #ifndef _LOGBRIDGE_H_
 #define _LOGBRIDGE_H_
 
-#include "Audio2.h"
 #include <AK/Tools/Common/AkMonitorError.h>
 
 using namespace AK::Monitor;
 
 void WwiseLogServerMessageHandler( ErrorCode in_eErrorCode, const AkOSChar* in_pszError, ErrorLevel in_eErrorLevel, AkPlayingID in_playingID, AkGameObjectID in_gameObjID );
-void WwiseLogServerBridgeInit( AK::Monitor::ErrorLevel errorLevel );
+void WwiseLogServerBridgeInit( ErrorLevel errorLevel );
 
 #endif

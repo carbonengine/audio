@@ -1,5 +1,4 @@
-// Send Wwise errors directly to our error logging system if running the Debug or Profile versions of the Wwise SDK.
-#include "stdafx.h"
+#include "StdAfx.h"
 #include "LogBridge.h"
 
 static CcpLogChannel_t s_ch = CCP_LOG_DEFINE_CHANNEL( "Wwise" );
@@ -8,10 +7,18 @@ void WwiseLogServerMessageHandler( ErrorCode in_eErrorCode, const AkOSChar* in_p
 {
 	switch( in_eErrorLevel )
 	{
-		case AK::Monitor::ErrorLevel_Error :
-			CCP_LOGERR_CH( s_ch, "%S", in_pszError );
+		case ErrorLevel_Error :
+			if ( in_eErrorCode == ErrorCode_UnknownGameObject )
+			{
+				CCP_LOGERR_CH( s_ch, "A Wwise API call was made on game object %d which does not exist in Wwise. "
+				"Make sure game objects are registered before calling Wwise methods on them.", in_gameObjID );
+			} 
+			else
+			{
+				CCP_LOGERR_CH( s_ch, "Wwise error code %d was sent with the following message: %S", in_eErrorCode, in_pszError );
+			}
 			break;
-		case AK::Monitor::ErrorLevel_Message :
+		case ErrorLevel_Message :
 			CCP_LOGWARN_CH( s_ch, "%S", in_pszError );
 			break;
 		default:
@@ -19,9 +26,9 @@ void WwiseLogServerMessageHandler( ErrorCode in_eErrorCode, const AkOSChar* in_p
 	}
 }
 
-void WwiseLogServerBridgeInit( AK::Monitor::ErrorLevel errorLevel )
+void WwiseLogServerBridgeInit( ErrorLevel errorLevel )
 {
-	AKRESULT result = AK::Monitor::SetLocalOutput( errorLevel, &WwiseLogServerMessageHandler );
+	AKRESULT result = SetLocalOutput( errorLevel, &WwiseLogServerMessageHandler);
 	if ( result != AK_NotCompatible )
 	{
 		CCP_LOG_CH( s_ch, "Wwise LogBridge initialized." );

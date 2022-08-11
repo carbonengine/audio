@@ -10,6 +10,6 @@
 #define EVEVERSIONSTRING "9.9.9.9\0"
 #define EVEBUILDDATE "Sometime, someday, somewhere\0"
 #define EVECOMPANY "CCP hf.\0"
-#define EVECOPYRIGHT "© 2009 CCP hf. All rights reserved.\0"
+#define EVECOPYRIGHT "ï¿½ 2009 CCP hf. All rights reserved.\0"
 #define EVEPRODUCTVER "9.9\0"
 /* end */

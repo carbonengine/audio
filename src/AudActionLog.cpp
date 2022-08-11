@@ -15,16 +15,17 @@ PyObject* AudActionRecordPostEvent::ToPyObject()
 	return Py_BuildValue( "sKKKKu", "AudActionRecordPostEvent", m_time, m_emitterID, m_playID, m_eventID, m_name.c_str() );
 }
 
-AudActionRecordStopPlayingID::AudActionRecordStopPlayingID( Be::Time time, AkGameObjectID emitterID, AkPlayingID playID ) :
+AudActionRecordExecuteActionOnPlayingID::AudActionRecordExecuteActionOnPlayingID( Be::Time time, AkGameObjectID emitterID, AkPlayingID playID, const std::wstring& action ) :
 	m_time( time ),
 	m_emitterID( emitterID ),
-	m_playID( playID )
+	m_playID( playID ),
+	m_action( action )
 {
 }
 
-PyObject* AudActionRecordStopPlayingID::ToPyObject()
+PyObject* AudActionRecordExecuteActionOnPlayingID::ToPyObject()
 {
-	return Py_BuildValue( "sKKK", "AudActionRecordStopPlayingID", m_time, m_emitterID, m_playID );
+	return Py_BuildValue( "sKKKu", "AudActionRecordExecuteActionOnPlayingID", m_time, m_emitterID, m_playID, m_action.c_str() );
 }
 
 AudActionRecordSetSwitch::AudActionRecordSetSwitch( Be::Time time, AkGameObjectID emitterID, const std::wstring& group, const std::wstring& state ) :
@@ -88,10 +89,10 @@ void AudActionLogCB::LogPostEvent( AkGameObjectID emitterID, AkPlayingID playID,
 	m_queue.push( new AudActionRecordPostEvent( BeOS->GetActualTime(), emitterID, playID, eventID, name ) );
 }
 
-void AudActionLogCB::LogStopPlayingID( AkGameObjectID emitterID, AkPlayingID playID )
+void AudActionLogCB::LogExecuteActionOnPlayingID( AkGameObjectID emitterID, AkPlayingID playID, const std::wstring& action )
 {
 	CcpAutoMutex mutex( m_mutex );
-	m_queue.push( new AudActionRecordStopPlayingID( BeOS->GetActualTime(), emitterID, playID ) );
+	m_queue.push( new AudActionRecordExecuteActionOnPlayingID( BeOS->GetActualTime(), emitterID, playID, action ) );
 }
 
 void AudActionLogCB::LogSetSwitch( AkGameObjectID emitterID, const std::wstring& group, const std::wstring& state )
