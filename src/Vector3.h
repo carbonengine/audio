@@ -1,18 +1,12 @@
-/* 
-	*************************************************************************************
-
-	Vector3.h
-
-	Creator:	Andri Mar
-	Created:	November 2008
-	Project:	Destiny
-
-	Bare bones Vector3 support for .
-
-	(c) CCP 2008
-
-	*************************************************************************************
-*/
+////////////////////////////////////////////////////////////
+//
+// Creator: Andri Mar
+// Contributors: Eric Nielsen
+// Creation Date: November 2008
+// Copyright (c) 2008-2022, CCP Games
+//
+// Bare bones Vector3 support for audio2
+//
 
 #pragma once
 #ifndef VECTOR3_H

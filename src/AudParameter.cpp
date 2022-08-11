@@ -1,8 +1,9 @@
 #include "stdafx.h"
-
 #include "AudParameter.h"
-#include "AudManager.h"
+
 #include <AK/SoundEngine/Common/AkSoundEngine.h>
+
+#include "AudManager.h"
 
 AudParameter::AudParameter( IRoot* lockobj ) :
 	m_ID( 0 ),

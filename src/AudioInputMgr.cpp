@@ -1,15 +1,10 @@
-////////////////////////////////////////////////////////////////////////////////
-//
-// Creator:		Eric Nielsen
-// Created:		August 2020
-// Copyright:	CCP 2020
-
 #include "stdafx.h"
 #include "AudioInputMgr.h"
-#include "Audio2.h"
 
 #include <AK/Plugin/AkAudioInputPlugin.h>
 #include <AK/SoundEngine/Common/AkSoundEngine.h>
+
+#include "Audio2.h"
 
 std::map<int, AudioInputMgr*> g_audioInputMgrMap;
 CcpMutex g_inputMgrMapMutex( "AudioInputMgr", "g_inputMgrMapMutex" );

@@ -3,12 +3,6 @@
 // Creator:		Eric Nielsen
 // Created:		August 2020
 // Copyright:	CCP 2020
-// Description: A class to interface with Wwises Audio Input plugin: https://www.audiokinetic.com/library/edge/?source=SDK&id=referencematerial_audioinput.html.
-//				This class takes care of registering, catching and forwarding callbacks from Wwise for the purpose of playing external 
-//				audio streams inside the game. A class that wants to use this must inherit from IAudioInputSink. Only 16 bit interleaved
-//				buffers are supported.
-//
-//			    In particular this is used for our in game video player to stream audio directly from in game cinematics.
 
 #pragma once
 #ifndef AudioInputMgr_h_
@@ -19,6 +13,16 @@
 #include <AK/SoundEngine/Common/AkTypes.h>
 #include <AK/SoundEngine/Common/IAkPlugin.h>
 
+// ------------------------------------------------------------------------
+// Description:
+//   A class to interface with Wwises Audio Input plugin.
+//   This class takes care of registering, catching and forwarding callbacks from Wwise for the purpose of playing external 
+//   audio streams inside the game. A class that wants to use this must inherit from IAudioInputSink. Only 16 bit interleaved
+//   buffers are supported. In particular this is used for our in game video player to stream audio directly from in game cinematics.
+//   <extlink https://www.audiokinetic.com/library/edge/?source=SDK&id=referencematerial_audioinput.html</extlink>
+// SeeAlso:
+//   VideoPlayer/WwiseAudioSink
+// ------------------------------------------------------------------------
 BLUE_CLASS( AudioInputMgr ) :
 	public IAudioInputMgr
 {

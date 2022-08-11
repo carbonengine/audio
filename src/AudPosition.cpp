@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "AudPosition.h"
-#include "AudEmitterMulti.h"
 
 #include "Vector3.h"
 

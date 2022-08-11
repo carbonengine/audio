@@ -1,7 +1,9 @@
 #include "stdafx.h"
 #include "AudEventCurve.h"
-#include "AudEmitter.h"
+
 #include "CcpMath/include/Vector3.h"
+
+#include "AudEmitter.h"
 
 BLUE_DEFINE_INTERFACE( ITriObserverLocal );
 

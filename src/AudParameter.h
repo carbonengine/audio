@@ -1,32 +1,14 @@
-/* 
-	*************************************************************************************
-
-	AudParameter.h
-
-	Author:    Andri Mar
-	Created:   April 2009
-	OS:        Win32
-	Project:   Audio2
-
-	Description:   
-
-		TBA
-
-
-	Dependencies:
-
-		Blue
-
-	(c) CCP 2009
-
-	*************************************************************************************
-*/
+////////////////////////////////////////////////////////////
+//
+// Creator: Andri Mar
+// Creation Date: April 2009
+// Copyright (c) 2009-2022, CCP Games
+//
 
 #pragma once
 #ifndef _AUDPARAMETER_H_
 #define _AUDPARAMETER_H_
 
-#include "Audio2.h"
 #include <AK/SoundEngine/Common/AkTypes.h>
 
 BLUE_DECLARE( AudGameObjResource );
@@ -41,9 +23,6 @@ public:
 
 	EXPOSE_TO_BLUE();
 
-	//--------------------------
-	// Blue interfaces
-	//--------------------------
 	// INotify
 	virtual bool OnModified( Be::Var* value ) override;
 

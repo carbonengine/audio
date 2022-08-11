@@ -2,7 +2,7 @@
 //
 // Creator: Eric Nielsen
 // Created: July 2020
-// Copyright: CCP 2020
+// Copyright (c) 2020, CCP Games
 //
 
 #pragma once

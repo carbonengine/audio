@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "AudEventCurve.h"
+
 #include "trinity/TriConstants.h"
 #include "trinity/Include/ITriConstants.h"
 
@@ -25,64 +26,13 @@ const Be::ClassInfo* AudEventCurve::ExposeToBlue()
 		MAP_INTERFACE( IInitialize )
 		MAP_INTERFACE( ITriCurveLength )
 
-		MAP_ATTRIBUTE
-		(
-			"name",
-			m_name,
-			"The name of the curve",
-			Be::READWRITE | Be::PERSIST
-		)
-		MAP_ATTRIBUTE
-		(
-			"time",
-			m_time,
-			"Current time of the curve",
-			Be::READ
-		)
-		MAP_ATTRIBUTE
-		(
-			"length",
-			m_length,
-			"Length of the curve",
-			Be::READ
-		)
-		MAP_ATTRIBUTE
-		(
-			"localTime",
-			m_localTime,
-			"Local time - reset to 0 when curve cycles.",
-			Be::READ
-		)
-		MAP_ATTRIBUTE
-		(
-			"value",
-			m_value,
-			"The string value of the last key triggered.",
-			Be::READWRITE | Be::PERSIST
-		)
-		MAP_ATTRIBUTE
-		(  
-			"keys",          
-			m_keys,          
-			"These are the keys of the curve", 
-			Be::PERSISTONLY
-		)
-		MAP_ATTRIBUTE_WITH_CHOOSER
-		(   
-			"extrapolation", 
-			m_extrapolation, 
-			"This controls how time values outside the range of the curve are handled", 
-			Be::READWRITE | Be::PERSIST | Be::ENUM,
-			TriExtrapolation
-		)
-		MAP_ATTRIBUTE
-		(
-			"audioEmitter",
-			m_audioEmitter,
-			"This is the AudEmitter that is created when the curve is loaded\n"
-			"up and connected to the sourceTriObserver.",
-			Be::READ
-		)
+		MAP_ATTRIBUTE( "name", m_name, "The name of the curve", Be::READWRITE | Be::PERSIST )
+		MAP_ATTRIBUTE( "time", m_time, "Current time of the curve", Be::READ )
+		MAP_ATTRIBUTE( "length", m_length, "Length of the curve", Be::READ )
+		MAP_ATTRIBUTE( "localTime", m_localTime, "Local time - reset to 0 when curve cycles.", Be::READ )
+		MAP_ATTRIBUTE( "value", m_value, "The string value of the last key triggered.", Be::READWRITE | Be::PERSIST )
+		MAP_ATTRIBUTE( "keys", m_keys, "These are the keys of the curve", Be::PERSISTONLY )
+		MAP_ATTRIBUTE( "audioEmitter", m_audioEmitter, "This is the AudEmitter that is created when the curve is loaded.", Be::READ )
 		MAP_ATTRIBUTE
 		(
 			"sourceTriObserver",
@@ -96,6 +46,13 @@ const Be::ClassInfo* AudEventCurve::ExposeToBlue()
 			"If this is done directly without SetSourceTriObserver the emitter will\n"
 			"not be created.",
 			Be::READWRITE | Be::PERSIST
+		)
+		MAP_ATTRIBUTE_WITH_CHOOSER(   
+			"extrapolation", 
+			m_extrapolation, 
+			"This controls how time values outside the range of the curve are handled", 
+			Be::READWRITE | Be::PERSIST | Be::ENUM,
+			TriExtrapolation
 		)
 		MAP_METHOD_AND_WRAP
 		( 
@@ -120,24 +77,42 @@ const Be::ClassInfo* AudEventCurve::ExposeToBlue()
 			GetSourceTriObserver,
 			"Gets and returns the TriObserverLocal if it exists"
 		)
-		MAP_METHOD_AND_WRAP( 
+		MAP_METHOD_AND_WRAP
+		( 
 			"RemoveKey",
 			RemoveKey,
 			"Remove a key from the curve, takes in the index number of the key to be removed."
-		);
-		MAP_METHOD_AND_WRAP( "GetKeyCount", GetKeyCount, "Get number of keys in the curve" );
-		MAP_METHOD_AND_WRAP( "GetKeyTime", GetKeyTime, "Get the time of a specific key" );
-		MAP_METHOD_AND_WRAP( "GetKeyValue", GetKeyValue, "Get the value of a specific key" );
-
-		MAP_METHOD_AND_WRAP( 
+		)
+		MAP_METHOD_AND_WRAP
+		( 
+			"GetKeyCount", 
+			GetKeyCount, 
+			"Get number of keys in the curve" 
+		)
+		MAP_METHOD_AND_WRAP
+		( 
+			"GetKeyTime", 
+			GetKeyTime, 
+			"Get the time of a specific key" 
+		)
+		MAP_METHOD_AND_WRAP
+		( 
+			"GetKeyValue", 
+			GetKeyValue, 
+			"Get the value of a specific key" 
+		)
+		MAP_METHOD_AND_WRAP
+		( 
 			"SetKeyTime", 
 			SetKeyTime, 
 			"Set the time of a specific key. Takes in an index of key and a float value for time." 
-			);
-		MAP_METHOD_AND_WRAP( 
+		)
+		MAP_METHOD_AND_WRAP
+		( 
 			"SetKeyValue", 
 			SetKeyValue, 
-			"Set the value of a specific key. Takes in an index of key and a std::wstring for value." );
+			"Set the value of a specific key. Takes in an index of key and a std::wstring for value." 
+		)
 
     EXPOSURE_END()
 }
