@@ -1,0 +1,6 @@
+ownermails:
+  - eric@ccpgames.com
+version: '0.1'
+testing:
+   nodename: 'AutomatedTests'
+   without_testharness: True
