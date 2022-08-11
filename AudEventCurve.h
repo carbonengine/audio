@@ -2,14 +2,16 @@
 #ifndef AudEventCurve_h
 #define AudEventCurve_h
 
-
-#include "AudEventKey.h"
 #include "blue/Include/IBluePlacementObserver.h"
+#include "blue/Include/IBlueEventListener.h"
+
+#include "CcpMath/include/Vector3.h"
+
 #include "trinity/Include/ITriFunction.h"
 #include "trinity/Include/ITriCurveLength.h"
-#include "blue/Include/IBlueEventListener.h"
-#include "CcpMath/include/Vector3.h"
 #include "trinity/Include/ITriObserverLocal.h"
+
+#include "AudEventKey.h"
 
 BLUE_DECLARE( AudEventCurve );
 

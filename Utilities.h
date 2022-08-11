@@ -1,26 +1,10 @@
-/* 
-	*************************************************************************************
-
-	AudManager.h
-
-	Author:    Andri Mar
-	Created:   October 2008
-	OS:        Win32
-	Project:   Audio2
-
-	Description:   
-
-		TBA
-
-
-	Dependencies:
-
-		Blue
-
-	(c) CCP 2008
-
-	*************************************************************************************
-*/
+////////////////////////////////////////////////////////////
+//
+// Creator: Andri Mar
+// Contributors: Eric Nielsen
+// Creation Date: October 2008
+// Copyright (c) 2008-2022, CCP Games
+//
 
 #pragma once
 #ifndef _AUD_UTILITIES_H_
@@ -37,11 +21,9 @@ private:
 	NoCopy& operator=(const NoCopy&);
 };
 
-// bunch of funtions to help with converting LH data into RH
 class RH2LH
 {
 public:
-	// convert listener
 	static void convertListener( AkListenerPosition* listenerLH, const AkListenerPosition* listenerRH )
 	{
 		memcpy( listenerLH, listenerRH, sizeof( AkListenerPosition ) );
@@ -56,13 +38,12 @@ public:
 
 		listenerLH->Set(pos, front, top);
 	}
-	// convert emitter
 	static void convertEmitter( AkSoundPosition* emitterLH, const AkSoundPosition* emitterRH )
 	{
 		memcpy( emitterLH, emitterRH, sizeof( AkSoundPosition ) );
-		AkVector pos = emitterLH->Position();
 		AkVector front = emitterLH->OrientationFront();
 		AkVector top = emitterLH->OrientationTop();
+		AkVector pos = emitterLH->Position();
 		
 		pos.Z *= -1.f;
 		front.Z *= -1.f;

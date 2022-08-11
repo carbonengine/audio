@@ -1,26 +1,9 @@
-/* 
-	*************************************************************************************
-
-	AudPositon.h
-
-	Author:    Andri Mar
-	Created:   June 2010
-	OS:        Win32
-	Project:   Audio2
-
-	Description:   
-
-		Represents a position in game for audio objects.
-
-
-	Dependencies:
-
-		Blue
-
-	(c) CCP 2008
-
-	*************************************************************************************
-*/
+////////////////////////////////////////////////////////////
+//
+// Creator: Andri Mar
+// Creation Date: June 2010
+// Copyright (c) 2010-2022, CCP Games
+//
 
 #pragma once
 #ifndef _AUDPOSITION_H_
@@ -32,8 +15,6 @@
 #include <blue/Include/IBluePlacementObserver.h>
 
 struct Vector3;
-
-BLUE_DECLARE( AudEmitterMulti );
 
 BLUE_CLASS( AudPosition ) : public IBluePlacementObserver
 {

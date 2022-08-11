@@ -1,5 +1,4 @@
 #include "stdafx.h"
-
 #include "AudConstants.h"
 
 const Be::VarChooser TriExtrapolation[] =

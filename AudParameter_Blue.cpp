@@ -1,5 +1,4 @@
 #include "stdafx.h"
-
 #include "AudParameter.h"
 
 BLUE_DEFINE( AudParameter );
