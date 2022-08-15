@@ -108,6 +108,12 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 			Wake,
 			"Debug entry point to allow python to wake a game object from being culled. Never use this for anything other than debugging!"
 		)
+		MAP_METHOD_AND_WRAP
+		( 
+			"IsCulled",
+			IsCulled,
+			"Whether or not this game object is currently culled."
+		)
 			
 	EXPOSURE_END()
 }
