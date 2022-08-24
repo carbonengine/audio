@@ -121,7 +121,7 @@ protected:
 	// Signals whether the listener is in range of sounds playing on this game object.
 	bool m_listenerInRange;
 	// Signals whether this game object is active (a.k.a. has had any events be sent to it).
-	bool m_isActive;
+	bool m_isUsed;
 	// Signals whether a 2d sound is being played on this game object.
 	bool m_playing2DSound;
 	// Signals that this game object is playing a sound considered vital 
