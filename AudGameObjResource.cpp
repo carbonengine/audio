@@ -26,7 +26,7 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 														 m_culled(false),
 														 m_isVisible(false),
 														 m_listenerInRange( false ),
-														 m_isActive( false ),
+														 m_isUsed( false ),
 														 m_playing2DSound( false ),
 														 m_playingVitalSound( false ),
 														 m_distanceSqFromListener( 0.0f ),
@@ -54,7 +54,7 @@ AudGameObjResource::AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj
 														 						   m_culled(false),
 														 						   m_isVisible(false),
 																				   m_listenerInRange( false ),
-																				   m_isActive( false ),
+																				   m_isUsed( false ),
 																				   m_playing2DSound( false ),
 																				   m_distanceSqFromListener( 0.0f ),
 														 						   m_additionalCullingWeight( 0.0f ),
@@ -139,7 +139,7 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 
 	if ( g_audioInitialized )
 	{
-		m_isActive = true;
+		m_isUsed = true;
 
 		bool eventUsed = false;
 		std::wstring fullEventName = PrepareEvent( eventName, bypassPrefix );
@@ -608,7 +608,7 @@ void AudGameObjResource::CalculateCullingWeight( std::chrono::steady_clock::time
 
 	m_listenerInRange = m_distanceSqFromListener < m_maxAttenuationRadiusSq;
 
-	float usedEmitterWeight = m_isActive ? g_audioManager->GetUsedEmitterWeight() : 0.0f;
+	float usedEmitterWeight = m_isUsed ? g_audioManager->GetUsedEmitterWeight() : 0.0f;
 	float rangeWeight = m_listenerInRange ? g_audioManager->GetRangeWeight() : 0.0f;
 	float activeSoundsWeight = ( m_eventsOnWake.size() > 0 || m_playingEvents.size() > 0 || m_waitingOneShotInRange.second != L"" ) ? g_audioManager->GetPlayingEventsWeight() : 0.0f;
 	float visibleWeight = m_isVisible ? g_audioManager->GetVisibleWeight() : 0.0f;

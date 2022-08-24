@@ -19,6 +19,16 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 		MAP_ATTRIBUTE( "parameters", m_parameters, "List of RTPC parameters associated with this emitter.", Be::READ | Be::PERSIST )
 		MAP_ATTRIBUTE( "eventPrefix", m_eventPrefix, "A string that will be prefixed to all events using this emitter", Be::READWRITE | Be::PERSIST )
 		MAP_ATTRIBUTE( "scalingFactor", m_scalingFactor, "The scaling factor of the attenuation used for the sounds played using this emitter", Be::READ )
+		MAP_ATTRIBUTE( "cumulativeWeight", m_cumulativeWeight, "The cumulative weight of this audio emitter as determined by the sound prioritization system.", Be::READ )
+		MAP_ATTRIBUTE( "isUsed", m_isUsed, "Signals whether this game object has been used (a.k.a. has had any events ever be sent to it).", Be::READ )
+		MAP_ATTRIBUTE( "isVisible", m_isVisible, "Whether this game object is visible to the camera.", Be::READ )
+		MAP_ATTRIBUTE( "listenerInRange", m_listenerInRange, "Signals whether the listener is in range of sounds playing on this game object.", Be::READ )
+		MAP_ATTRIBUTE( "playing2DSound", m_playing2DSound, "Signals whether a 2d sound is being played on this game object.", Be::READ )
+		MAP_ATTRIBUTE( "playingVitalSound", m_playingVitalSound, "Signals that this game object is playing a sound considered vital. ", Be::READ )
+		MAP_ATTRIBUTE( "additionalCullingWeight", m_additionalCullingWeight, "Any additional weight you want this game object to have in the culling system.", Be::READ )
+		MAP_ATTRIBUTE( "distanceFromListener", m_distanceSqFromListener, "The distance of this game object from the listener.", Be::READ )
+		MAP_ATTRIBUTE( "maxAttenuationRadius", m_maxAttenuationRadiusSq, "The max attenuation radius this game object has based off of Wwise metadata.", Be::READ )
+
 
 		MAP_METHOD_AND_WRAP
 		( 
