@@ -91,6 +91,11 @@ public:
 
 	// Functions to use for testing/debugging
 	std::map<unsigned int, std::wstring> GetPlayingEvents();
+	// Force this game object to change it's culling state from awake to culled or vice versa.  You must call ReleaseForcedCullingState to get it to return to normal.
+	void ForceCullingStateChange();
+	// Return this game object to be controlled by the sound prioritization system. 
+	void ReleaseForcedCullingState();
+
 protected:
 	enum ActionTypes
 	{
@@ -126,6 +131,8 @@ protected:
 	bool m_playing2DSound;
 	// Signals that this game object is playing a sound considered vital 
 	bool m_playingVitalSound;
+	// Signals whether the current culling state of this game object (e.g. culled or awake) should be forced to stay this way. Used for debug purposes.
+	bool m_forceCullingState;
 	// The distance of this game object from the listener.
 	float m_distanceSqFromListener;
 	// Any additional weight you want this game object to have in the culling system. Can be from 0.0 to infinity. The higher the value the less likely it is to be culled.
@@ -140,6 +147,8 @@ protected:
 	std::set<std::wstring> m_eventsOnWake;
 	// Currently playing events on this game object.
 	std::map<unsigned int, std::wstring> m_playingEvents;
+	// Keeps track of RTPCs sent to this game object.
+	std::map<std::wstring, float> m_rtpcValues;
 	// A one shot event sent to this game object while it was culled. 
 	std::pair<std::chrono::steady_clock::time_point, std::wstring> m_waitingOneShotInRange;
 
