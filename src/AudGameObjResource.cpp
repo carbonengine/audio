@@ -29,6 +29,7 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 														 m_isUsed( false ),
 														 m_playing2DSound( false ),
 														 m_playingVitalSound( false ),
+														 m_forceCullingState( false ),
 														 m_distanceSqFromListener( 0.0f ),
 														 m_additionalCullingWeight( 0.0f ),
 														 m_cumulativeWeight( 0.0f ),
@@ -56,6 +57,7 @@ AudGameObjResource::AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj
 																				   m_listenerInRange( false ),
 																				   m_isUsed( false ),
 																				   m_playing2DSound( false ),
+																				   m_forceCullingState( false ),
 																				   m_distanceSqFromListener( 0.0f ),
 														 						   m_additionalCullingWeight( 0.0f ),
 																				   m_cumulativeWeight( 0.0f ),
@@ -411,6 +413,9 @@ bool AudGameObjResource::SetRTPC( const std::wstring& rtpcName, float rtpcValue 
 {
 	if ( g_audioInitialized )
 	{
+		// Store RTPCs that have been sent so it can be used when waking up a game object.
+		m_rtpcValues[rtpcName] = rtpcValue;
+
 		if( m_gameObjRegistered )
 		{
 			AKRESULT result = AK::SoundEngine::SetRTPCValue( rtpcName.c_str(), AkRtpcValue(rtpcValue), m_ID );
@@ -515,6 +520,11 @@ void AudGameObjResource::Wake()
 {
 	if( g_audioEnabled )
 	{
+		if ( m_forceCullingState )
+		{
+			return;	
+		}
+
 		RegisterWwiseObject();	
 		m_culled = false;
 		if ( m_waitingOneShotInRange.second != L"" )
@@ -523,11 +533,17 @@ void AudGameObjResource::Wake()
 			m_waitingOneShotInRange = std::pair( std::chrono::steady_clock::now(), L"" );
 		}
 
+		for( auto it = m_rtpcValues.begin(); it != m_rtpcValues.end(); ++it )
+		{
+			SetRTPC( it->first, it->second );
+		}
+
 		for ( auto it = m_eventsOnWake.begin(); it != m_eventsOnWake.end(); ++it )
 		{
 			PostEvent( *it, true );
 		}
 		m_eventsOnWake.clear();
+
 		CCP_LOG("Woke up game object %d", m_ID);
 	}
 }
@@ -544,6 +560,11 @@ void AudGameObjResource::Cull()
 {
 	if ( g_audioInitialized )
 	{
+		if ( m_forceCullingState )
+		{
+			return;	
+		}
+
 		CcpAutoMutex mutex( m_playingEventsMutex );
 		for ( auto it = m_playingEvents.begin(); it != m_playingEvents.end(); ++it )
 		{
@@ -677,4 +698,32 @@ std::map<unsigned int, std::wstring> AudGameObjResource::GetPlayingEvents()
 {
 	CcpAutoMutex mutex( m_playingEventsMutex );
 	return m_playingEvents;
+}
+
+//-----------------------------------------------------
+// Description:
+//   Force this game object to change its culling state and stay that way until ReleaseForcedCullingState is called.
+//   This is meant for debug uses only so that the behavior of culling or waking up an object can be observed.
+//-----------------------------------------------------
+void AudGameObjResource::ForceCullingStateChange()
+{
+	m_forceCullingState = false;
+	if ( m_culled )
+	{
+		Wake();
+	}
+	else
+	{
+		Cull();
+	}
+	m_forceCullingState = true;
+}
+
+//-----------------------------------------------------
+// Description:
+//   Release this game object from its forced culling state and give it back to the sound prioritzation system to decide.
+//-----------------------------------------------------
+void AudGameObjResource::ReleaseForcedCullingState()
+{
+	m_forceCullingState = false;
 }

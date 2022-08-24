@@ -28,6 +28,7 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 		MAP_ATTRIBUTE( "additionalCullingWeight", m_additionalCullingWeight, "Any additional weight you want this game object to have in the culling system.", Be::READ )
 		MAP_ATTRIBUTE( "distanceFromListener", m_distanceSqFromListener, "The distance of this game object from the listener.", Be::READ )
 		MAP_ATTRIBUTE( "maxAttenuationRadius", m_maxAttenuationRadiusSq, "The max attenuation radius this game object has based off of Wwise metadata.", Be::READ )
+		MAP_ATTRIBUTE( "forceCullingState", m_forceCullingState, "Whether this game object's culling state is currently forced and not automatically ", Be::READ )
 
 
 		MAP_METHOD_AND_WRAP
@@ -123,6 +124,19 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 			"IsCulled",
 			IsCulled,
 			"Whether or not this game object is currently culled."
+		)
+		MAP_METHOD_AND_WRAP
+		( 
+			"ForceCullingStateChange",
+			ForceCullingStateChange,
+			"Force this game object to change its culling state from awake to culled or vice versa.\n"
+			"You must call ReleaseForcedCullingState to get it to return to normal."
+		)
+		MAP_METHOD_AND_WRAP
+		( 
+			"ReleaseForcedCullingState",
+			ReleaseForcedCullingState, 
+			"Allows this game object to go back to being woken up and culled by the sound prioritization system as it normally would."
 		)
 			
 	EXPOSURE_END()
