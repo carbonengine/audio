@@ -149,6 +149,8 @@ protected:
 	std::map<unsigned int, std::wstring> m_playingEvents;
 	// Keeps track of RTPCs sent to this game object.
 	std::map<std::wstring, float> m_rtpcValues;
+	// Keeps track of switches sent to this game object.
+	std::map<std::wstring, std::wstring> m_switchValues;
 	// A one shot event sent to this game object while it was culled. 
 	std::pair<std::chrono::steady_clock::time_point, std::wstring> m_waitingOneShotInRange;
 

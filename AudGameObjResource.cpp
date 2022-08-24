@@ -305,6 +305,8 @@ bool AudGameObjResource::SetAttenuationScalingFactor( float value )
 {
 	if( g_audioInitialized )
 	{
+		m_scalingFactor = value;
+
 		if( m_gameObjRegistered )
 		{
 			AKRESULT result = AK::SoundEngine::SetScalingFactor( m_ID, value );
@@ -314,7 +316,6 @@ bool AudGameObjResource::SetAttenuationScalingFactor( float value )
 							"Received akresult %d", m_ID, result );
 				return false;
 			}
-			m_scalingFactor = value;
 			return true;
 		}
 	}
@@ -384,6 +385,9 @@ bool AudGameObjResource::SetSwitch( const std::wstring& switchGroup, const std::
 {
 	if ( g_audioInitialized )
 	{
+		// Store switches sent to it can be used when waking up this game object.
+		m_switchValues[switchGroup] = switchState;
+
 		if( m_gameObjRegistered )
 		{
 			AKRESULT result = AK::SoundEngine::SetSwitch( switchGroup.c_str(), switchState.c_str(), m_ID );
@@ -413,7 +417,7 @@ bool AudGameObjResource::SetRTPC( const std::wstring& rtpcName, float rtpcValue 
 {
 	if ( g_audioInitialized )
 	{
-		// Store RTPCs that have been sent so it can be used when waking up a game object.
+		// Store RTPCs that have been sent so it can be used when waking up this game object.
 		m_rtpcValues[rtpcName] = rtpcValue;
 
 		if( m_gameObjRegistered )
@@ -537,6 +541,13 @@ void AudGameObjResource::Wake()
 		{
 			SetRTPC( it->first, it->second );
 		}
+
+		for( auto it = m_switchValues.begin(); it != m_switchValues.end(); ++it )
+		{
+			SetSwitch( it->first, it->second );
+		}
+
+		SetAttenuationScalingFactor( m_scalingFactor );
 
 		for ( auto it = m_eventsOnWake.begin(); it != m_eventsOnWake.end(); ++it )
 		{
