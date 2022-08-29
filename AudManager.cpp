@@ -57,7 +57,7 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_tickInterval( 10 ),
 	m_asyncOpen( true ),
 	m_log(),
-	m_audioCullingEnabled( true ),
+	m_audioCullingEnabled( false ),
 	m_maxAwakeGameObjects( m_cullingInitSettings.maxAwakeGameObjects ),
 	m_waitingOneShotWeight( m_cullingInitSettings.waitingOneShotWeight),
 	m_usedEmitterWeight( m_cullingInitSettings.usedEmitterWeight ),
