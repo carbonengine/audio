@@ -150,6 +150,18 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 
 		if ( m_culled || !g_audioEnabled )
 		{
+			for ( auto it = m_eventsOnWake.cbegin(); it != m_eventsOnWake.cend();)
+			{
+				if( g_staticDataRepository->EventIsStopped( *it, fullEventName ) )
+				{
+					it = m_eventsOnWake.erase( it );
+				}
+				else
+				{
+					++it;	
+				}
+			}
+
 			if ( g_staticDataRepository->EventIsLoop( fullEventName ) || eventIsVital )
 			{
 				m_eventsOnWake.insert( fullEventName );

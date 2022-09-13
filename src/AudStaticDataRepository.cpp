@@ -62,6 +62,30 @@ bool AudStaticDataRepository::EventIsVital( const std::wstring& eventName ) cons
     return false;
 }
 
+//-----------------------------------------------------
+// Description:
+//   Determine if a given event is stopped by another event. The data used to determine this is found by looking at the 
+//   Wwise project during soundbank generation.
+// Arguments:
+//   eventPotentiallyStopped - The event you want to know is stopped or not by another event. 
+//   eventPotentiallyStopping - The event that you want to know if it stops the first event given as the first argument.
+// Return:
+//   True if the given eventPotentiallyStopped is actually stopped by eventPotentiallyStopping. False otherwise.
+//-----------------------------------------------------
+bool AudStaticDataRepository::EventIsStopped( const std::wstring& eventPotentiallyStopped, const std::wstring& eventPotentiallyStopping ) const
+{
+    const EventData* eventData = GetEventData( eventPotentiallyStopped );
+    if ( eventData != nullptr )
+    {
+        auto result = std::find(eventData->eventsStoppedBy.begin(), eventData->eventsStoppedBy.end(), eventPotentiallyStopping );
+		if ( result != eventData->eventsStoppedBy.end() )
+		{
+			return true;	
+        }
+    }
+    return false;
+}
+
 //-----------------------------------------------------------------------------
 // Description:
 //   Generate a look up table based off sound ID static data provided by python. Sets the m_initialized flag to true if successful.
@@ -133,6 +157,22 @@ void AudStaticDataRepository::Initialize( PyObject* wwiseEvents )
             }
         }
 
+        std::vector<std::wstring> eventsStoppedBy = std::vector<std::wstring>();
+        PyObject* eventsStoppedByObj = GetPyObjectFromDictionary( value, "eventsStoppedBy", &eventName );
+        if ( eventsStoppedByObj != nullptr )
+        {
+            if ( PyList_CheckExact( eventsStoppedByObj ) )
+            {
+				const unsigned int listLength = (unsigned int)PyList_GET_SIZE( eventsStoppedByObj );
+		        for( unsigned int i=0; i<listLength; i++ )
+				{
+					std::string eventNameC = PyString_AsString( PyList_GetItem( eventsStoppedByObj, i ) );
+					std::wstring eventName = static_cast<const wchar_t*>( CA2W( eventNameC.c_str() ) );
+					eventsStoppedBy.push_back( eventName );
+                }
+            }
+        }
+
         EventData eventData = {
             eventName,
             eventID,
@@ -140,6 +180,7 @@ void AudStaticDataRepository::Initialize( PyObject* wwiseEvents )
             isLoop,
             is2D,
             isVital,
+            eventsStoppedBy,
         };
         m_events[eventName] = eventData;
     }
