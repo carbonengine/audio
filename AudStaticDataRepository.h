@@ -37,6 +37,8 @@ public:
     bool EventIs2D( const std::wstring& eventName ) const;
     // Whether the given event is a 2D sound or not.
     bool EventIsVital( const std::wstring& eventName ) const;
+    // Whether an event stops another event.
+    bool EventIsStopped( const std::wstring& eventPotentiallyStopped, const std::wstring& eventPotentiallyStopping) const;
 protected:
     struct EventData
     {
@@ -46,6 +48,7 @@ protected:
         bool isLoop;
         bool is2D;
 		bool isVital;
+		std::vector<std::wstring> eventsStoppedBy; 
     };
     bool m_initialized;
     // Helper function to get sound data for a given event name.
