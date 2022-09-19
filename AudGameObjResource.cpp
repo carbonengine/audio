@@ -20,7 +20,7 @@ static AkGameObjectID GenerateEntityID()
 AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_parameters ),
 														 m_eventPrefix(L""),
 														 m_scalingFactor( 1.0 ),
-														 m_position( WWISE_INIT_POSITION, WWISE_INIT_POSITION, WWISE_INIT_POSITION ), 
+														 m_position( WWISE_INIT_POSITION ), 
 														 m_playingEventsMutex( "AudGameObjResource", "m_playingEventsMutex" ),
 														 m_gameObjRegistered( false ),
 														 m_culled(false),
@@ -49,7 +49,7 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 AudGameObjResource::AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj ) : PARENTLOCK( m_parameters ),
 																				   m_eventPrefix(L""),
 																				   m_scalingFactor( 1.0 ),
-																				   m_position( WWISE_INIT_POSITION, WWISE_INIT_POSITION, WWISE_INIT_POSITION ), // WWISE INIT POSITION
+																				   m_position( WWISE_INIT_POSITION ), 
 														 						   m_playingEventsMutex( "AudGameObjResource", "m_playingEventsMutex" ),
 																				   m_gameObjRegistered( false ),
 														 						   m_culled(false),
@@ -169,11 +169,8 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 			}
 			else
 			{
-				if ( m_distanceSqFromListener < eventMaxAttenuationRadius)
-				{
-					m_waitingOneShotInRange = std::pair( std::chrono::steady_clock::now(), fullEventName );
-					eventUsed = true;
-				}
+				m_waitingOneShotInRange = std::pair( std::chrono::steady_clock::now(), fullEventName );
+				eventUsed = true;
 			}
 		}
 		else if ( m_gameObjRegistered )
@@ -357,12 +354,6 @@ int AudGameObjResource::SetPositionHelper( const Vector3& front, const Vector3& 
 	return AK_Success;
 }
 
-void AudGameObjResource::HandleEvent( const wchar_t* evtName )
-{
-	PostEvent( evtName );	
-}
-
-
 bool AudGameObjResource::Initialize()
 {
 	RegisterWwiseObject();
@@ -543,7 +534,7 @@ void AudGameObjResource::Wake()
 
 		RegisterWwiseObject();	
 		m_culled = false;
-		if ( m_waitingOneShotInRange.second != L"" )
+		if ( m_waitingOneShotInRange.second != L"" && m_listenerInRange )
 		{
 			PostEvent( m_waitingOneShotInRange.second );
 			m_waitingOneShotInRange = std::pair( std::chrono::steady_clock::now(), L"" );

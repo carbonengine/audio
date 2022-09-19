@@ -3,8 +3,6 @@
 
 #include "CcpMath/include/Vector3.h"
 
-#include "AudEmitter.h"
-
 BLUE_DEFINE_INTERFACE( ITriObserverLocal );
 
 AudEventCurve::AudEventCurve( IRoot* lockobj ) :
@@ -54,13 +52,29 @@ void AudEventCurve::UpdateValue( double time )
 			break;
 	}
 
-	while( (m_currentKeyIt != m_keys.end()) && (m_localTime >= (*m_currentKeyIt)->m_time) )
+	if( !m_queuedEvent.empty() )
+	{
+		if ( m_audioEmitter->GetPosition() != WWISE_INIT_POSITION )
+		{
+			m_audioEmitter->SendEvent( m_queuedEvent.c_str() );
+			m_queuedEvent.clear();
+		}
+	}
+
+	while( ( m_currentKeyIt != m_keys.end() ) && ( m_localTime >= ( *m_currentKeyIt )->m_time ) )
 	{
 		AudEventKey* currentKey = *m_currentKeyIt;
 
 		if ( !currentKey->m_value.empty() )
 		{
-			m_audioEmitter->HandleEvent( currentKey->m_value.c_str() );
+			if( m_audioEmitter->GetPosition() == WWISE_INIT_POSITION )
+			{
+				m_queuedEvent = currentKey->m_value;
+			}
+			else
+			{
+				m_audioEmitter->SendEvent( currentKey->m_value.c_str() );
+			}
 		}
 
 		++m_currentKeyIt;
@@ -134,22 +148,21 @@ void AudEventCurve::CreateAudioEmitter()
 	{
 		return;
 	}
-	IBluePlacementObserverPtr existingEmitter = m_sourceTriObserver->GetObserver();
-	if (existingEmitter == NULL)
+	IBluePlacementObserver* obs = m_sourceTriObserver->GetObserver();
+	if ( auto existingEmitter = dynamic_cast<AudEmitter*>( obs ) )
+	{
+		//If there is already an existing audio emitter we use that.
+		m_audioEmitter = existingEmitter;
+	}
+	else
 	{
 		//Here no audioEmitter exists on the TriObserver so we need to create one.
 		AudEmitterPtr audioEmitter;
 		audioEmitter.CreateInstance( );
 		audioEmitter->Py__init__( m_name );
 
-		m_sourceTriObserver->SetObserver(audioEmitter);
+		m_sourceTriObserver->SetObserver( audioEmitter );
 		m_audioEmitter = audioEmitter;
-	}
-	else
-	{
-		//If there is already an existing audio emitter we use that.
-		IBlueEventListenerPtr emitterPointer(BlueCastPtr( existingEmitter ) );
-		m_audioEmitter = emitterPointer;
 	}
 	return;
 	

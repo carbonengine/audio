@@ -13,6 +13,7 @@
 #include <AK/SoundEngine/Common/AkTypes.h>
 #include <AK/SoundEngine/Common/AkQueryParameters.h>
 
+#include "blue/Include/IBlueEventListener.h"
 #include "trinity/Include/ITr2DebugRenderer2.h"
 #include "trinity/Audio/ITr2AudEmitter.h"
 
@@ -29,6 +30,7 @@ struct Vector3;
 //   ITr2AudEmitter, AudGameObjResource
 // ------------------------------------------------------------------------
 BLUE_CLASS( AudEmitter ) :
+	public IBlueEventListener,
 	public IBluePlacementObserver,
 	public AudGameObjResource,
 	public ITr2DebugRenderable,
@@ -39,6 +41,9 @@ public:
 	virtual ~AudEmitter();
 
 	EXPOSE_TO_BLUE();
+
+	// IBlueEventListener
+	void HandleEvent( const wchar_t* evtName ) override;
 
 	// IBluePlacementObserver
 	virtual void UpdatePlacement( const Vector3& front, const Vector3& top, const Vector3& pos ) override;

@@ -7,8 +7,6 @@
 //
 #pragma once
 
-#include <blue/Include/IBlueEventListener.h>
-
 #include <AK/SoundEngine/Common/AkCallback.h>
 #include <AK/SoundEngine/Common/AkSoundEngine.h>
 
@@ -26,8 +24,7 @@ struct Vector3;
 // SeeAlso:
 //   AudEmitter, AudUIPlayer, AudListener 
 // ------------------------------------------------------------------------
-BLUE_CLASS( AudGameObjResource ) : public IBlueEventListener
-								 , public IInitialize
+BLUE_CLASS( AudGameObjResource ) : public IInitialize
 	                             , public IListNotify 
 {
 public:
@@ -36,8 +33,6 @@ public:
 
 	EXPOSE_TO_BLUE();
 
-	// IBlueEventListener
-	void HandleEvent( const wchar_t* evtName ) override;
 	// IInitialized
 	bool Initialize() override;
 	// IListNotify

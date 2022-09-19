@@ -15,6 +15,7 @@ void AudEmitter::Py__init__( const std::string& name )
 const Be::ClassInfo* AudEmitter::ExposeToBlue()
 {
 	EXPOSURE_BEGIN( AudEmitter, "RAII wrapper for Wwise gameobjects. Python constructor takes in a name of the object as a string" )
+		MAP_INTERFACE( IBlueEventListener )
 		MAP_INTERFACE( IBluePlacementObserver )
 		MAP_INTERFACE( ITr2AudEmitter )
 
