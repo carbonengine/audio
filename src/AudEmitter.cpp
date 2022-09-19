@@ -33,6 +33,11 @@ void AudEmitter::Initialize( const std::string& name, const std::wstring& prefix
 	AudGameObjResource::Initialize( name, prefix, position );
 }
 
+void AudEmitter::HandleEvent( const wchar_t* evtName )
+{
+	PostEvent( evtName );
+}
+
 void AudEmitter::SetName( const std::string& name )
 {
 	m_name = name;

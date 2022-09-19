@@ -9,7 +9,6 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 {
 	EXPOSURE_BEGIN( AudGameObjResource, "" )
 
-		MAP_INTERFACE( IBlueEventListener )
 		MAP_INTERFACE( IInitialize )
 		MAP_INTERFACE( IListNotify )
 		MAP_INTERFACE( AudGameObjResource )

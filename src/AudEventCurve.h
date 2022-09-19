@@ -3,14 +3,15 @@
 #define AudEventCurve_h
 
 #include "blue/Include/IBluePlacementObserver.h"
-#include "blue/Include/IBlueEventListener.h"
 
 #include "CcpMath/include/Vector3.h"
 
+#include "trinity/Audio/ITr2AudEmitter.h"
 #include "trinity/Include/ITriFunction.h"
 #include "trinity/Include/ITriCurveLength.h"
 #include "trinity/Include/ITriObserverLocal.h"
 
+#include "AudEmitter.h"
 #include "AudEventKey.h"
 
 BLUE_DECLARE( AudEventCurve );
@@ -56,6 +57,7 @@ public:
 
 private:
 	std::string m_name;
+	std::wstring m_queuedEvent;
 	double m_time;
 	float m_localTime;
 	std::wstring m_value;
@@ -67,7 +69,7 @@ private:
 	PAudEventKeyVector m_keys;
 	AudEventKeyVector::const_iterator m_currentKeyIt;
 
-	IBlueEventListenerPtr m_audioEmitter;
+	AudEmitterPtr m_audioEmitter;
 	ITriObserverLocalPtr m_sourceTriObserver;
 
 	void CreateAudioEmitter();
