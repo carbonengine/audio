@@ -146,7 +146,6 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 		bool eventUsed = false;
 		std::wstring fullEventName = PrepareEvent( eventName, bypassPrefix );
 		bool eventIsVital = g_staticDataRepository->EventIsVital( fullEventName );
-		float eventMaxAttenuationRadius = g_staticDataRepository->GetEventRadiusSq( fullEventName );
 
 		if ( m_culled || !g_audioEnabled )
 		{
@@ -155,6 +154,7 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 				if( g_staticDataRepository->EventIsStopped( *it, fullEventName ) )
 				{
 					it = m_eventsOnWake.erase( it );
+					UpdateEventSoundPrioritizationAttributes();
 				}
 				else
 				{
@@ -197,7 +197,7 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 
 		if( eventUsed )
 		{
-			m_maxAttenuationRadiusSq = std::max( m_maxAttenuationRadiusSq, eventMaxAttenuationRadius );
+			UpdateMaxAttenuationRadiusForEvent( fullEventName );
 			if( g_staticDataRepository->EventIs2D( fullEventName ) )
 			{
 				m_playing2DSound = true;
@@ -244,26 +244,7 @@ void AudGameObjResource::EventFinishedCallback( AkEventCallbackInfo* cbInfo )
 {
 	CcpAutoMutex mutex( m_playingEventsMutex );
 	m_playingEvents.erase( cbInfo->playingID );
-
-	bool playing2DSound = false;
-	bool playingVitalSound = false;
-	float maxAttenuationRadiusSq = 0.0f;
-	for ( auto it = m_playingEvents.begin(); it != m_playingEvents.end(); ++it )
-	{
-		maxAttenuationRadiusSq = std::max( maxAttenuationRadiusSq, g_staticDataRepository->GetEventRadiusSq( it->second ) );
-		if( g_staticDataRepository->EventIs2D( it->second ) )
-		{
-			playing2DSound = true;
-		}
-		if( g_staticDataRepository->EventIsVital( it->second ) )
-		{
-			playingVitalSound = true;
-		}
-	}
-
-	m_maxAttenuationRadiusSq = maxAttenuationRadiusSq;
-	m_playing2DSound = playing2DSound;
-	m_playingVitalSound = playingVitalSound;
+	UpdateEventSoundPrioritizationAttributes();
 }
 
 bool AudGameObjResource::StopEvent( const std::wstring& eventName, uint32_t fadeOutDuration )
@@ -310,12 +291,15 @@ void AudGameObjResource::StopAll()
 	}
 }
 
+//-----------------------------------------------------
+// Description:
+//   Update the degree to which the attenuation of sounds playing on this game object are scaled by. 
+//   This will also update the scaling of this game objects max attenuation radius.
+//-----------------------------------------------------
 bool AudGameObjResource::SetAttenuationScalingFactor( float value )
 {
 	if( g_audioInitialized )
 	{
-		m_scalingFactor = value;
-
 		if( m_gameObjRegistered )
 		{
 			AKRESULT result = AK::SoundEngine::SetScalingFactor( m_ID, value );
@@ -325,6 +309,9 @@ bool AudGameObjResource::SetAttenuationScalingFactor( float value )
 							"Received akresult %d", m_ID, result );
 				return false;
 			}
+			m_maxAttenuationRadiusSq = ( ( m_maxAttenuationRadiusSq / m_scalingFactor ) * value );
+			m_scalingFactor = value;
+
 			return true;
 		}
 	}
@@ -706,6 +693,68 @@ void AudGameObjResource::ExecuteActionOnPlayingID( const AkPlayingID playingID, 
 			}
 		}
 	}
+}
+//-----------------------------------------------------
+// Description:
+//	Calculates and updates sound prioritization attributes that are determined by currently playing events or events that will play on wake.
+//  This should be called only after the state of what is currently playing or what is meant to be playing is changed. 
+//-----------------------------------------------------
+void AudGameObjResource::UpdateEventSoundPrioritizationAttributes()
+{
+	CcpAutoMutex mutex( m_playingEventsMutex );
+
+	if( m_playingEvents.empty() && m_eventsOnWake.empty() )
+	{
+		m_maxAttenuationRadiusSq = 0.0f;	
+		m_playing2DSound = false;
+		m_playingVitalSound = false;
+	}
+	else
+	{
+		bool playing2DSound = false;
+		bool playingVitalSound = false;
+		for ( auto it = m_playingEvents.begin(); it != m_playingEvents.end(); ++it )
+		{
+			UpdateMaxAttenuationRadiusForEvent( it->second );
+			if( g_staticDataRepository->EventIs2D( it->second ) )
+			{
+				playing2DSound = true;
+			}
+			if( g_staticDataRepository->EventIsVital( it->second ) )
+			{
+				playingVitalSound = true;
+			}
+		}
+
+		for ( auto it = m_eventsOnWake.begin(); it != m_eventsOnWake.end(); ++it )
+		{
+			UpdateMaxAttenuationRadiusForEvent( *it );
+			if( g_staticDataRepository->EventIs2D( *it ) )
+			{
+				playing2DSound = true;
+			}
+			if( g_staticDataRepository->EventIsVital( *it ) )
+			{
+				playingVitalSound = true;
+			}
+		}
+
+		m_playing2DSound = playing2DSound;
+		m_playingVitalSound = playingVitalSound;
+	}
+}
+
+//-----------------------------------------------------
+// Description:
+//	 Update the max attenuation radius of this game object if the given event's radius is larger than the current value. 
+//   This game object's scaling factor will also be taken into account.
+// Arguments:
+//   eventName - The Wwise event to whose radius you want to update to if it's larger than the current value.
+//-----------------------------------------------------
+void AudGameObjResource::UpdateMaxAttenuationRadiusForEvent( const std::wstring& eventName )
+{
+	float eventMaxAttenuationRadius = g_staticDataRepository->GetEventRadiusSq( eventName );
+	m_maxAttenuationRadiusSq = ( std::max( ( m_maxAttenuationRadiusSq / m_scalingFactor ) , eventMaxAttenuationRadius ) * m_scalingFactor );
 }
 
 std::map<unsigned int, std::wstring> AudGameObjResource::GetPlayingEvents()

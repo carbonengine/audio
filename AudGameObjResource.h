@@ -106,6 +106,10 @@ protected:
 	static void PropagateWwiseCallback( AkCallbackType in_eType, AkCallbackInfo* in_pCallbackInfo );
 	// Execute the given action on a playing ID if it is playing on this game object.
 	void ExecuteActionOnPlayingID( const AkPlayingID playingID, const ActionTypes action, uint32_t fadeOutDuration = 1000 );
+	// Calculates and updates sound prioritization attributes that are determined by currently playing events or events that will play on wake.
+	void UpdateEventSoundPrioritizationAttributes();
+	// Update the max attenuation radius of this game object if the given event's radius is larger than the current value.
+	void UpdateMaxAttenuationRadiusForEvent( const std::wstring& eventName );
 
 	AkGameObjectID m_ID;
 	std::string m_name;
