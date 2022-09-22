@@ -571,7 +571,7 @@ void AudGameObjResource::Cull()
 		{
 			if ( g_staticDataRepository->EventIsLoop( it->second ) )
 			{
-				StopSound( it->first );
+				StopSound( it->first, 3000 );
 				m_eventsOnWake.insert( it->second );
 			} 
 			else
@@ -632,7 +632,7 @@ void AudGameObjResource::CalculateCullingWeight( std::chrono::steady_clock::time
 
 	float usedEmitterWeight = m_isUsed ? g_audioManager->GetUsedEmitterWeight() : 0.0f;
 	float rangeWeight = m_listenerInRange ? g_audioManager->GetRangeWeight() : 0.0f;
-	float activeSoundsWeight = ( m_eventsOnWake.size() > 0 || m_playingEvents.size() > 0 || m_waitingOneShotInRange.second != L"" ) ? g_audioManager->GetPlayingEventsWeight() : 0.0f;
+	float activeSoundsWeight = m_playingEvents.size() > 0 ? g_audioManager->GetPlayingEventsWeight() : 0.0f;
 	float visibleWeight = m_isVisible ? g_audioManager->GetVisibleWeight() : 0.0f;
 	float playing2DWeight = m_playing2DSound ? g_audioManager->GetPlaying2DWeight() : 0.0f;
 	float playingVitalSoundWeight = m_playingVitalSound ? g_audioManager->GetPlayingVitalSoundWeight() : 0.0f;
