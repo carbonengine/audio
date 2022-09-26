@@ -26,10 +26,14 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 		MAP_ATTRIBUTE( "playingVitalSound", m_playingVitalSound, "Signals that this game object is playing a sound considered vital. ", Be::READ )
 		MAP_ATTRIBUTE( "additionalCullingWeight", m_additionalCullingWeight, "Any additional weight you want this game object to have in the culling system.", Be::READ )
 		MAP_ATTRIBUTE( "distanceFromListener", m_distanceSqFromListener, "The distance of this game object from the listener.", Be::READ )
-		MAP_ATTRIBUTE( "maxAttenuationRadius", m_maxAttenuationRadiusSq, "The max attenuation radius this game object has based off of Wwise metadata.", Be::READ )
 		MAP_ATTRIBUTE( "forceCullingState", m_forceCullingState, "Whether this game object's culling state is currently forced and not automatically ", Be::READ )
 
-
+		MAP_PROPERTY_READONLY
+		( 
+			"maxAttenuationRadius", 
+			GetMaxAttenuationRadius, 
+			"The max attenuation radius this game object has based off of Wwise metadata. The scaling factor of this game object is also taken into account."
+		)
 		MAP_METHOD_AND_WRAP
 		( 
 			"SetAttenuationScalingFactor", 

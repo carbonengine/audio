@@ -110,6 +110,8 @@ protected:
 	void UpdateEventSoundPrioritizationAttributes();
 	// Update the max attenuation radius of this game object if the given event's radius is larger than the current value.
 	void UpdateMaxAttenuationRadiusForEvent( const std::wstring& eventName );
+	// Get the max attenuation radius. The scaling factor of this game object will also be taken into account.
+	float GetMaxAttenuationRadius() const;
 
 	AkGameObjectID m_ID;
 	std::string m_name;
@@ -153,8 +155,8 @@ protected:
 	// A one shot event sent to this game object while it was culled. 
 	std::pair<std::chrono::steady_clock::time_point, std::wstring> m_waitingOneShotInRange;
 
-	CcpMutex m_playingEventsMutex;
-	CcpMutex m_eventsOnWakeMutex;
+	// A mutex to be used when working with m_playingEvents and m_eventsOnWake as they are accessed in different threads.
+	CcpMutex m_mutex;
 };
 
 TYPEDEF_BLUECLASS( AudGameObjResource );
