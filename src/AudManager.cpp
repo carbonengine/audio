@@ -59,6 +59,7 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_log(),
 	m_audioCullingEnabled( true ),
 	m_maxAwakeGameObjects( m_cullingInitSettings.maxAwakeGameObjects ),
+	m_oneShotWindow( m_cullingInitSettings.oneShotWindow ),
 	m_waitingOneShotWeight( m_cullingInitSettings.waitingOneShotWeight),
 	m_usedEmitterWeight( m_cullingInitSettings.usedEmitterWeight ),
 	m_rangeWeight( m_cullingInitSettings.rangeWeight ),
@@ -704,6 +705,11 @@ bool AudManager::GetDebugDisplayAllEmitters()
 	return g_debugDisplayAllEmitters;
 }
 
+long long AudManager::GetOneShotWindow() const
+{
+	return m_oneShotWindow;
+}
+
 float AudManager::GetPlaying2DWeight() const
 {
 	return m_weightMultiplier * m_playing2DWeight;
@@ -737,6 +743,11 @@ float AudManager::GetVisibleWeight() const
 float AudManager::GetWaitingOneShotWeight() const 
 {
 	return m_weightMultiplier * m_waitingOneShotWeight;
+}
+
+void AudManager::SetOneShotWindow( long long numMilliseconds )
+{
+	m_oneShotWindow = numMilliseconds;
 }
 
 void AudManager::SetPlaying2DWeight( float weight )

@@ -51,6 +51,7 @@ public:
 	const struct CullingInitSettings 
 	{
 		int maxAwakeGameObjects = 75; // Number of audio emitters that can be awake at the same time.
+		long long oneShotWindow = 50; // The window, in milliseconds, a one shot has to potentially be played.
 		float weightMultiplier = 10000000.0f; // A multiplier applied to each individual weight.
 		float playingVitalSoundWeight = std::numeric_limits<float>::max(); // The weight applied to a game object if it is playing a vital sound.
 		float playing2DWeight = 999.0f; // The weight applied to a game object if it is playing or slated to play any 2D sounds.
@@ -108,6 +109,7 @@ public:
 	void LogSetRTPC( AkGameObjectID emitterID, const std::wstring& name, float value, AkPlayingID playID = AK_INVALID_PLAYING_ID );
 
 	// Audio culling getters/setters
+	long long GetOneShotWindow() const;
 	float GetPlaying2DWeight() const;
 	float GetPlayingEventsWeight() const;
 	float GetPlayingVitalSoundWeight() const;
@@ -115,6 +117,7 @@ public:
 	float GetUsedEmitterWeight() const;
 	float GetVisibleWeight() const;
 	float GetWaitingOneShotWeight() const;
+	void SetOneShotWindow( long long numMilliseconds );
 	void SetPlaying2DWeight( float weight );
 	void SetPlayingEventsWeight( float weight );
 	void SetPlayingVitalSoundWeight( float weight );
@@ -168,6 +171,7 @@ private:
 	// Audio culling settings
 	bool m_audioCullingEnabled;
 	int m_maxAwakeGameObjects;
+	long long m_oneShotWindow;
 	float m_waitingOneShotWeight;
 	float m_usedEmitterWeight; 
 	float m_rangeWeight;
