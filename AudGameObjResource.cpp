@@ -57,6 +57,7 @@ AudGameObjResource::AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj
 																				   m_listenerInRange( false ),
 																				   m_isUsed( false ),
 																				   m_playing2DSound( false ),
+																				   m_playingVitalSound( false ),
 																				   m_forceCullingState( false ),
 																				   m_distanceSqFromListener( 0.0f ),
 														 						   m_additionalCullingWeight( 0.0f ),
@@ -123,8 +124,8 @@ void AudGameObjResource::UnregisterWwiseObject()
 //   If this game object is not culled then an event will be sent to Wwise and registered in m_playingEvents. 
 //   If the game object is culled then one of two things happen: 
 //    * If the event is a loop it will be added to a set of events waiting to be played when this game object wakes up. 
-//    * If the event is a one shot and in range of the listener then it will be registered along with a timestamp and that 
-//      event will be played if this game object wakes up within 10 milliseconds.
+//    * If the event is a one shot then it will be registered along with a timestamp and that event will be played if 
+//      this game object wakes up within a configurable number of milliseconds.
 // Arguments:
 //   eventName - The name of the event to send to the audio engine. 
 //   bypassPrefix - If false then the event name will be prefixed with an event prefix if it is set on this game object.
@@ -615,7 +616,7 @@ void AudGameObjResource::CalculateCullingWeight( std::chrono::steady_clock::time
 	{
 		if ( m_waitingOneShotInRange.second != L"" )
 		{
-			if ( std::chrono::duration_cast<std::chrono::milliseconds>( now - m_waitingOneShotInRange.first ) > std::chrono::milliseconds( 10 ) ) 
+			if ( std::chrono::duration_cast<std::chrono::milliseconds>( now - m_waitingOneShotInRange.first ) > std::chrono::milliseconds( g_audioManager->GetOneShotWindow() ) ) 
 			{
 				m_waitingOneShotInRange = std::pair( now, L"" );
 			}
