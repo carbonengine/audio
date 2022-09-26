@@ -22,6 +22,7 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 														 m_scalingFactor( 1.0 ),
 														 m_position( WWISE_INIT_POSITION ), 
 														 m_playingEventsMutex( "AudGameObjResource", "m_playingEventsMutex" ),
+														 m_eventsOnWakeMutex( "AudGameObjResource", "m_eventsOnWakeMutex" ),
 														 m_gameObjRegistered( false ),
 														 m_culled( true ),
 														 m_isVisible(false),
@@ -51,6 +52,7 @@ AudGameObjResource::AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj
 																				   m_scalingFactor( 1.0 ),
 																				   m_position( WWISE_INIT_POSITION ), 
 														 						   m_playingEventsMutex( "AudGameObjResource", "m_playingEventsMutex" ),
+																				   m_eventsOnWakeMutex( "AudGameObjResource", "m_eventsOnWakeMutex" ),
 																				   m_gameObjRegistered( false ),
 														 						   m_culled( true ),
 														 						   m_isVisible(false),
@@ -149,6 +151,7 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 
 		if ( m_culled || !g_audioEnabled )
 		{
+			CcpAutoMutex mutex( m_eventsOnWakeMutex );
 			for ( auto it = m_eventsOnWake.cbegin(); it != m_eventsOnWake.cend();)
 			{
 				if( g_staticDataRepository->EventIsStopped( *it, fullEventName ) )
@@ -539,6 +542,8 @@ void AudGameObjResource::Wake()
 
 		SetAttenuationScalingFactor( m_scalingFactor );
 
+		
+		CcpAutoMutex mutex( m_eventsOnWakeMutex );
 		for ( auto it = m_eventsOnWake.begin(); it != m_eventsOnWake.end(); ++it )
 		{
 			PostEvent( *it, true );
@@ -566,7 +571,8 @@ void AudGameObjResource::Cull()
 			return;	
 		}
 
-		CcpAutoMutex mutex( m_playingEventsMutex );
+		CcpAutoMutex playingEventsMutex( m_playingEventsMutex );
+		CcpAutoMutex eventsOnWakeMutex( m_eventsOnWakeMutex );
 		for ( auto it = m_playingEvents.begin(); it != m_playingEvents.end(); ++it )
 		{
 			if ( g_staticDataRepository->EventIsLoop( it->second ) )
@@ -701,7 +707,8 @@ void AudGameObjResource::ExecuteActionOnPlayingID( const AkPlayingID playingID, 
 //-----------------------------------------------------
 void AudGameObjResource::UpdateEventSoundPrioritizationAttributes()
 {
-	CcpAutoMutex mutex( m_playingEventsMutex );
+	CcpAutoMutex playingEventsMutex( m_playingEventsMutex );
+	CcpAutoMutex eventsOnWakeMutex( m_eventsOnWakeMutex );
 
 	if( m_playingEvents.empty() && m_eventsOnWake.empty() )
 	{

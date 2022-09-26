@@ -154,6 +154,7 @@ protected:
 	std::pair<std::chrono::steady_clock::time_point, std::wstring> m_waitingOneShotInRange;
 
 	CcpMutex m_playingEventsMutex;
+	CcpMutex m_eventsOnWakeMutex;
 };
 
 TYPEDEF_BLUECLASS( AudGameObjResource );
