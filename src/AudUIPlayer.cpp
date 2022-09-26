@@ -108,7 +108,7 @@ void AudUIPlayer::EventFinishedCallback( AkEventCallbackInfo* cbInfo )
 {
 	std::wstring eventName = L"";
 	{
-		CcpAutoMutex mutex( m_playingEventsMutex );
+		CcpAutoMutex mutex( m_mutex );
 		auto found = m_playingEvents.find( cbInfo->playingID );
 		if ( found != m_playingEvents.end() )
 		{

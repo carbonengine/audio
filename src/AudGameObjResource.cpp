@@ -21,8 +21,7 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 														 m_eventPrefix(L""),
 														 m_scalingFactor( 1.0 ),
 														 m_position( WWISE_INIT_POSITION ), 
-														 m_playingEventsMutex( "AudGameObjResource", "m_playingEventsMutex" ),
-														 m_eventsOnWakeMutex( "AudGameObjResource", "m_eventsOnWakeMutex" ),
+														 m_mutex( "AudGameObjResource", "m_mutex" ),
 														 m_gameObjRegistered( false ),
 														 m_culled( true ),
 														 m_isVisible(false),
@@ -51,8 +50,7 @@ AudGameObjResource::AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj
 																				   m_eventPrefix(L""),
 																				   m_scalingFactor( 1.0 ),
 																				   m_position( WWISE_INIT_POSITION ), 
-														 						   m_playingEventsMutex( "AudGameObjResource", "m_playingEventsMutex" ),
-																				   m_eventsOnWakeMutex( "AudGameObjResource", "m_eventsOnWakeMutex" ),
+														 						   m_mutex( "AudGameObjResource", "m_mutex" ),
 																				   m_gameObjRegistered( false ),
 														 						   m_culled( true ),
 														 						   m_isVisible(false),
@@ -143,6 +141,7 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 
 	if ( g_audioInitialized )
 	{
+		CcpAutoMutex mutex( m_mutex );
 		m_isUsed = true;
 
 		bool eventUsed = false;
@@ -151,7 +150,6 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 
 		if ( m_culled || !g_audioEnabled )
 		{
-			CcpAutoMutex mutex( m_eventsOnWakeMutex );
 			for ( auto it = m_eventsOnWake.cbegin(); it != m_eventsOnWake.cend();)
 			{
 				if( g_staticDataRepository->EventIsStopped( *it, fullEventName ) )
@@ -188,7 +186,6 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 
 			if ( playingID != AK_INVALID_PLAYING_ID )
 			{
-				CcpAutoMutex mutex( m_playingEventsMutex );
 				m_playingEvents.insert({playingID, fullEventName});
 				eventUsed = true;
 			}
@@ -245,7 +242,7 @@ void AudGameObjResource::PropagateWwiseCallback( AkCallbackType in_eType, AkCall
 //-----------------------------------------------------
 void AudGameObjResource::EventFinishedCallback( AkEventCallbackInfo* cbInfo )
 {
-	CcpAutoMutex mutex( m_playingEventsMutex );
+	CcpAutoMutex mutex( m_mutex );
 	m_playingEvents.erase( cbInfo->playingID );
 	UpdateEventSoundPrioritizationAttributes();
 }
@@ -286,7 +283,7 @@ void AudGameObjResource::StopAll()
 {
 	if( g_audioInitialized )
 	{
-		CcpAutoMutex mutex( m_playingEventsMutex );
+		CcpAutoMutex mutex( m_mutex );
 		for ( auto it = begin( m_playingEvents ); it != end( m_playingEvents ); ++it)
 		{
 			StopSound( it->first );
@@ -312,7 +309,6 @@ bool AudGameObjResource::SetAttenuationScalingFactor( float value )
 							"Received akresult %d", m_ID, result );
 				return false;
 			}
-			m_maxAttenuationRadiusSq = ( ( m_maxAttenuationRadiusSq / m_scalingFactor ) * value );
 			m_scalingFactor = value;
 
 			return true;
@@ -441,7 +437,7 @@ bool AudGameObjResource::SeekOnEventPercent( const unsigned int playingID, float
 {
 	if ( g_audioInitialized )
 	{
-		CcpAutoMutex mutex( m_playingEventsMutex );
+		CcpAutoMutex mutex( m_mutex );
 		auto it = m_playingEvents.find( playingID );
 		if ( it != m_playingEvents.end() )
 		{
@@ -468,7 +464,7 @@ bool AudGameObjResource::SeekOnEventMs( const unsigned int playingID, const unsi
 {
 	if ( g_audioInitialized )
 	{
-		CcpAutoMutex mutex( m_playingEventsMutex );
+		CcpAutoMutex mutex( m_mutex );
 		auto it = m_playingEvents.find( playingID );
 		if ( it != m_playingEvents.end() )
 		{
@@ -543,7 +539,7 @@ void AudGameObjResource::Wake()
 		SetAttenuationScalingFactor( m_scalingFactor );
 
 		
-		CcpAutoMutex mutex( m_eventsOnWakeMutex );
+		CcpAutoMutex mutex( m_mutex );
 		for ( auto it = m_eventsOnWake.begin(); it != m_eventsOnWake.end(); ++it )
 		{
 			PostEvent( *it, true );
@@ -571,8 +567,7 @@ void AudGameObjResource::Cull()
 			return;	
 		}
 
-		CcpAutoMutex playingEventsMutex( m_playingEventsMutex );
-		CcpAutoMutex eventsOnWakeMutex( m_eventsOnWakeMutex );
+		CcpAutoMutex mutex( m_mutex );
 		for ( auto it = m_playingEvents.begin(); it != m_playingEvents.end(); ++it )
 		{
 			if ( g_staticDataRepository->EventIsLoop( it->second ) )
@@ -634,7 +629,7 @@ void AudGameObjResource::CalculateCullingWeight( std::chrono::steady_clock::time
 		}
 	}
 
-	m_listenerInRange = m_distanceSqFromListener < m_maxAttenuationRadiusSq;
+	m_listenerInRange = m_distanceSqFromListener < GetMaxAttenuationRadius();
 
 	float usedEmitterWeight = m_isUsed ? g_audioManager->GetUsedEmitterWeight() : 0.0f;
 	float rangeWeight = m_listenerInRange ? g_audioManager->GetRangeWeight() : 0.0f;
@@ -683,7 +678,7 @@ void AudGameObjResource::ExecuteActionOnPlayingID( const AkPlayingID playingID, 
 {
 	if ( g_audioInitialized )
 	{
-		CcpAutoMutex mutex( m_playingEventsMutex );
+		CcpAutoMutex mutex( m_mutex );
 		if ( m_playingEvents.find( playingID ) != m_playingEvents.end() )
 		{
 			switch ( action )
@@ -707,8 +702,7 @@ void AudGameObjResource::ExecuteActionOnPlayingID( const AkPlayingID playingID, 
 //-----------------------------------------------------
 void AudGameObjResource::UpdateEventSoundPrioritizationAttributes()
 {
-	CcpAutoMutex playingEventsMutex( m_playingEventsMutex );
-	CcpAutoMutex eventsOnWakeMutex( m_eventsOnWakeMutex );
+	CcpAutoMutex mutex( m_mutex );
 
 	if( m_playingEvents.empty() && m_eventsOnWake.empty() )
 	{
@@ -754,19 +748,27 @@ void AudGameObjResource::UpdateEventSoundPrioritizationAttributes()
 //-----------------------------------------------------
 // Description:
 //	 Update the max attenuation radius of this game object if the given event's radius is larger than the current value. 
-//   This game object's scaling factor will also be taken into account.
 // Arguments:
 //   eventName - The Wwise event to whose radius you want to update to if it's larger than the current value.
 //-----------------------------------------------------
 void AudGameObjResource::UpdateMaxAttenuationRadiusForEvent( const std::wstring& eventName )
 {
-	float eventMaxAttenuationRadius = g_staticDataRepository->GetEventRadiusSq( eventName );
-	m_maxAttenuationRadiusSq = ( std::max( ( m_maxAttenuationRadiusSq / m_scalingFactor ) , eventMaxAttenuationRadius ) * m_scalingFactor );
+	float eventMaxAttenuationRadiusSq = g_staticDataRepository->GetEventRadiusSq( eventName );
+	m_maxAttenuationRadiusSq = std::max( m_maxAttenuationRadiusSq, eventMaxAttenuationRadiusSq );
+}
+
+//-----------------------------------------------------
+// Description:
+//	 Get the max attenuation radius. The scaling factor of this game object will also be taken into account.
+//-----------------------------------------------------
+float AudGameObjResource::GetMaxAttenuationRadius() const
+{
+	return m_maxAttenuationRadiusSq * m_scalingFactor;
 }
 
 std::map<unsigned int, std::wstring> AudGameObjResource::GetPlayingEvents()
 {
-	CcpAutoMutex mutex( m_playingEventsMutex );
+	CcpAutoMutex mutex( m_mutex );
 	return m_playingEvents;
 }
 
