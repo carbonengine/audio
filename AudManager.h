@@ -56,8 +56,8 @@ public:
 		float playingVitalSoundWeight = std::numeric_limits<float>::max(); // The weight applied to a game object if it is playing a vital sound.
 		float playing2DWeight = 999.0f; // The weight applied to a game object if it is playing or slated to play any 2D sounds.
 		float rangeWeight = 400.0f; // The weight applied to a game object if it is within range of the listener.
-		float waitingOneShotWeight = 300.0f; // The weight applied to a game object if there is a one shot sound waiting to play.
 		float activeSoundsWeight = 200.0f; // The weight applied to a game object if it has sounds currently playing.
+		float waitingOneShotWeight = 100.0f; // The weight applied to a game object if there is a one shot sound waiting to play.
 		float visibleWeight = 100.0f; // the weight applied to a game object if it is visible to the listener.
 		float usedEmitterWeight = 50.0f; // The weight applied to a game object if it has been used in any way.
 	};
