@@ -524,7 +524,7 @@ void AudGameObjResource::Wake()
 		m_culled = false;
 		if ( m_waitingOneShotInRange.second != L"" && m_listenerInRange )
 		{
-			PostEvent( m_waitingOneShotInRange.second );
+			PostEvent( m_waitingOneShotInRange.second, true );
 			m_waitingOneShotInRange = std::pair( std::chrono::steady_clock::now(), L"" );
 		}
 
