@@ -21,10 +21,18 @@ AudListener::~AudListener()
 
 void AudListener::RegisterWwiseObject()
 {
-	if( g_audioInitialized && m_gameObjRegistered == false )
+	if( g_audioInitialized )
 	{
-		AK::SoundEngine::RegisterGameObj(m_ID, m_name.c_str());
-		AK::SoundEngine::AddDefaultListener(m_ID);
-		m_gameObjRegistered = true;
+		if( m_gameObjRegistered == false )
+		{
+			AK::SoundEngine::RegisterGameObj(m_ID, m_name.c_str());
+			AK::SoundEngine::AddDefaultListener(m_ID);
+			m_gameObjRegistered = true;
+		}
+	}
+	else
+	{
+		CCP_LOGERR( "Audio listener was requested to be created before audio was initialized! Audio will be silent because of this. "
+					"Try to change where audio is initialized or create the listener again." );
 	}
 }

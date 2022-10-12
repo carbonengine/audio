@@ -31,6 +31,10 @@ static PyObject* PyGetAudListener( PyObject* self, PyObject* args )
 		s_listener = new OAudListener;
 		s_listener->Initialize();
 	}
+	else
+	{
+		s_listener->RegisterWwiseObject();
+	}
 	return PyOS->WrapBlueObject( s_listener->GetRawRoot() );
 }
 MAP_FUNCTION( "GetListener", PyGetAudListener, "Return a specific Wwise listener." );
