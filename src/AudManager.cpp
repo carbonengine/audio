@@ -630,11 +630,13 @@ void AudManager::DisableAudioCulling()
 		}
 	}
 	m_audioCullingEnabled = false;
+	CCP_LOG_CH( s_ch, "The sound prioritization system has been disabled." );
 }
 
 void AudManager::EnableAudioCulling()
 {
 	m_audioCullingEnabled = true;
+	CCP_LOG_CH( s_ch, "The sound prioritization system has been enabled." );
 }
 
 void AudManager::ResetCullingSettings()
@@ -703,6 +705,11 @@ void AudManager::DisableDebugDisplayAllEmitters()
 bool AudManager::GetDebugDisplayAllEmitters()
 {
 	return g_debugDisplayAllEmitters;
+}
+
+bool AudManager::GetAudioCullingEnabled() const
+{
+	return m_audioCullingEnabled;
 }
 
 long long AudManager::GetOneShotWindow() const

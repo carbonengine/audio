@@ -40,6 +40,10 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 
 	if (g_audioManager != nullptr)
 	{
+		if( !g_audioManager->GetAudioCullingEnabled() )
+		{
+			m_culled = false;	
+		}
 		g_audioManager->RegisterGameObject( m_ID, this );
 	}
 
@@ -69,6 +73,10 @@ AudGameObjResource::AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj
 
 	if (g_audioManager != nullptr)
 	{
+		if( !g_audioManager->GetAudioCullingEnabled() )
+		{
+			m_culled = false;	
+		}
 		g_audioManager->RegisterGameObject( m_ID, this );
 	}
 

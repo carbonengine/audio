@@ -109,6 +109,7 @@ public:
 	void LogSetRTPC( AkGameObjectID emitterID, const std::wstring& name, float value, AkPlayingID playID = AK_INVALID_PLAYING_ID );
 
 	// Audio culling getters/setters
+	bool GetAudioCullingEnabled() const;
 	long long GetOneShotWindow() const;
 	float GetPlaying2DWeight() const;
 	float GetPlayingEventsWeight() const;
