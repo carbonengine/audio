@@ -150,6 +150,12 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 
 	if ( g_audioInitialized )
 	{
+		if( eventName.empty() )
+		{
+			CCP_LOG( "An empty event string was requested to be sent to Wwise. This request has been ignored." );
+			return playingID;
+		}
+
 		CcpAutoMutex mutex( m_mutex );
 		m_isUsed = true;
 
