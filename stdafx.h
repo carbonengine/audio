@@ -22,4 +22,4 @@
 
 #include "BlueExposure/include/BlueExposure.h"
 #include "blue/Include/IBluePaths.h"
-#include "CcpMath/include/CcpMath.h"
+#include <CcpMath.h>

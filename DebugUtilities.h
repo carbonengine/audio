@@ -7,7 +7,7 @@
 //    A namespace for utilities used only for debugging.
 
 #pragma once
-#include "CcpMath/include/CcpMath.h"
+#include <CcpMath.h>
 
 namespace DebugUtilities
 {
