@@ -4,7 +4,7 @@
 
 #include "blue/Include/IBluePlacementObserver.h"
 
-#include "CcpMath/include/Vector3.h"
+#include <Vector3.h>
 
 #include "trinity/Audio/ITr2AudEmitter.h"
 #include "trinity/Include/ITriFunction.h"
