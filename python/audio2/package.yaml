@@ -1,0 +1,6 @@
+ownermails:
+  - eric@ccpgames.com
+version: '0.1'
+testing:
+  skipci: True
+  skipreason: Need to make a test .wwu unit to work with so teamcity doesn't need soundbanks for tests.
