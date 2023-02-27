@@ -1,8 +1,6 @@
 #include "stdafx.h"
+#include "AudConstants.h"
 #include "AudEventCurve.h"
-
-#include "trinity/TriConstants.h"
-#include "trinity/Include/ITriConstants.h"
 
 BLUE_DEFINE( AudEventCurve );
 BLUE_DEFINE_INTERFACE( ITriFunction );

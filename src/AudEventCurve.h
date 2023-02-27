@@ -2,17 +2,16 @@
 #ifndef AudEventCurve_h
 #define AudEventCurve_h
 
-#include "blue/Include/IBluePlacementObserver.h"
-
+#include <IBluePlacementObserver.h>
+#include <ITriConstants.h>
+#include <ITriCurveLength.h>
+#include <ITriFunction.h>
+#include <ITriObserverLocal.h>
 #include <Vector3.h>
-
-#include "trinity/Audio/ITr2AudEmitter.h"
-#include "trinity/Include/ITriFunction.h"
-#include "trinity/Include/ITriCurveLength.h"
-#include "trinity/Include/ITriObserverLocal.h"
 
 #include "AudEmitter.h"
 #include "AudEventKey.h"
+#include "ITr2AudEmitter.h"
 
 BLUE_DECLARE( AudEventCurve );
 
