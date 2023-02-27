@@ -21,5 +21,6 @@
 #include <list>
 
 #include <BlueExposure.h>
-#include "blue/Include/IBluePaths.h"
+#include <BlueStatistics.h>
+#include <IBluePaths.h>
 #include <CcpMath.h>

@@ -11,7 +11,7 @@
 
 #include <AK/SoundEngine/Common/AkTypes.h>
 
-#include "blue/Include/IBluePlacementObserver.h"
+#include <IBluePlacementObserver.h>
 
 #include "Audio2.h"
 #include "AudGameObjResource.h"

@@ -4,10 +4,10 @@
 #define _AUDIO2_H_
 
 //Blue includes
-#include "blue/Include/Blue.h"
-#include "blue/Include/IBluePython.h"
-#include "blue/Include/IBlueOS.h"
-#include "blue/Include/IBlueCallbackMan.h"
+#include <Blue.h>
+#include <IBluePython.h>
+#include <IBlueOS.h>
+#include <IBlueCallbackMan.h>
 
 #include "Vector3.h"
 

@@ -13,9 +13,9 @@
 #include <AK/SoundEngine/Common/AkTypes.h>
 #include <AK/SoundEngine/Common/AkQueryParameters.h>
 
-#include "blue/Include/IBlueEventListener.h"
-#include "trinity/Include/ITr2DebugRenderer2.h"
-#include "trinity/Audio/ITr2AudEmitter.h"
+#include <IBlueEventListener.h>
+#include <ITr2DebugRenderer2.h>
+#include "ITr2AudEmitter.h"
 
 #include "AudGameObjResource.h"
 #include "AudPosition.h"
