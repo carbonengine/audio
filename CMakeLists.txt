@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(audio2 VERSION 1.0.0)
+project(CarbonAudio VERSION 1.0.0)
 
 if(NOT DEFINED ENV{CCP_EVE_PERFORCE_BRANCH_PATH})
     message(FATAL_ERROR "Missing required environment variable CCP_EVE_PERFORCE_BRANCH_PATH")
@@ -28,7 +28,7 @@ set(PUBLIC_HEADER_FILES_INCLUDE
 	include/IAudioInputMgr.h
 )
 
-ccp_add_library(audio2 SHARED
+ccp_add_library(CarbonAudio SHARED
 	src/AudListener_Blue.cpp
     src/AudActionLog.cpp
 	src/AudActionLog_Blue.cpp
@@ -67,7 +67,7 @@ ccp_add_library(audio2 SHARED
 	src/LowLevelIO/AkFilePackageLUT.cpp
 )
 
-target_sources(audio2 PRIVATE
+target_sources(CarbonAudio PRIVATE
     src/AudActionLog.h
 	src/AudConstants.h
 	src/AudEmitter.h
@@ -101,26 +101,26 @@ target_sources(audio2 PRIVATE
 
 # Add Platform specific code
 if(WIN32)
-	target_sources(audio2 PRIVATE
+	target_sources(CarbonAudio PRIVATE
 		src/LowLevelIO/Win32/AkDefaultIOHookBlocking.cpp
 		src/LowLevelIO/Win32/AkDefaultIOHookBlocking.h
 		src/LowLevelIO/Win32/AkFileHelpers.h
 		src/LowLevelIO/Win32/AkFilePackageLowLevelIOBlocking.h
 	)
 elseif(APPLE)
-	target_sources(audio2 PRIVATE
+	target_sources(CarbonAudio PRIVATE
 		src/LowLevelIO/POSIX/AkDefaultIOHookBlocking.cpp
 		src/LowLevelIO/POSIX/AkDefaultIOHookBlocking.h
 		src/LowLevelIO/POSIX/AkFileHelpers.h
 		src/LowLevelIO/POSIX/AkFilePackageLowLevelIOBlocking.h
 	)
 else()
-	message(FATAL_ERROR "Audio2 does not support platform specified.")
+	message(FATAL_ERROR "CarbonAudio does not support platform specified.")
 endif()
 
 
 
-target_link_libraries(audio2
+target_link_libraries(CarbonAudio
 		PUBLIC
 			Blue
 		PRIVATE
@@ -130,11 +130,11 @@ target_link_libraries(audio2
             Intel::TBB
 		)
 if(APPLE)
-	target_link_libraries(audio2 PRIVATE "-framework AudioToolbox -framework CoreAudio -framework CoreFoundation")
+	target_link_libraries(CarbonAudio PRIVATE "-framework AudioToolbox -framework CoreAudio -framework CoreFoundation")
 endif()
 
-target_precompile_headers(audio2 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/stdafx.h)
-target_include_directories(audio2
+target_precompile_headers(CarbonAudio PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/stdafx.h)
+target_include_directories(CarbonAudio
 		PUBLIC
 			${CMAKE_CURRENT_SOURCE_DIR}/include
 		PRIVATE
@@ -143,7 +143,7 @@ target_include_directories(audio2
 
 if(APPLE)
 	set_target_properties(
-			audio2
+			CarbonAudio
 			PROPERTIES
 			PREFIX ""
 			SUFFIX ".so"
@@ -158,23 +158,23 @@ else()
     set(WWISE_PLATFORM Linux64)
 endif()
 
-set_target_properties(audio2 PROPERTIES OUTPUT_NAME "_audio2")
+set_target_properties(CarbonAudio PROPERTIES OUTPUT_NAME "_audio2")
 
-target_compile_definitions(audio2 
+target_compile_definitions(CarbonAudio 
 	PRIVATE 
 		BLUE_OVERRIDE_VECTOR_TYPES=1
 		TBB_ENABLED=1
 )
-target_compile_definitions(audio2 PUBLIC AUDIO2BUILD)
+target_compile_definitions(CarbonAudio PUBLIC CARBONAUDIOBUILD)
 
-set_target_properties(audio2 PROPERTIES POSITION_INDEPENDENT_CODE ON EXPORT_NAME _audio2)
+set_target_properties(CarbonAudio PROPERTIES POSITION_INDEPENDENT_CODE ON EXPORT_NAME _audio2)
 
 # Provide an install target iff this is the top level project only
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     # Install rule to ensure that our runtime and linker files are in the expected, platform-specific folders
     install(
-        TARGETS audio2
-        EXPORT audio2Targets 
+        TARGETS CarbonAudio
+        EXPORT carbonAudioTargets 
         CONFIGURATIONS ${CMAKE_CONFIGURATION_TYPES}
         ARCHIVE DESTINATION lib/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/
         LIBRARY DESTINATION lib/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/
@@ -183,14 +183,14 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     # Install rule for available public headers
     install(FILES ${PUBLIC_HEADER_FILES_INCLUDE} DESTINATION include)
 
-    # Install a custom audio2Config.cmake file, since as a dependency we are
+    # Install a custom CarbonAudioConfig.cmake file, since as a dependency we are
     # basically a header-only library, not something that gets linked against.
     configure_ccp_vendor_config_file(
-        TARGET audio2 
-        DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/audio2Config.cmake"
+        TARGET CarbonAudio 
+        DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/CarbonAudioConfig.cmake"
         DEPENDENCIES ""
     )
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/audio2Config.cmake DESTINATION .)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/CarbonAudioConfig.cmake DESTINATION .)
 
     # Install python package
     install(DIRECTORY python/ DESTINATION python
