@@ -1,0 +1,82 @@
+{
+ "SoundBanksInfo": {
+  "Platform": "Windows",
+  "BasePlatform": "Windows",
+  "SchemaVersion": "12",
+  "SoundbankVersion": "140",
+  "RootPaths": {
+   "ProjectRoot": "C:\\Users\\eric\\code\\carbon-audio\\Wwise\\CarbonAudioTest\\",
+   "SourceFilesRoot": "C:\\Users\\eric\\code\\carbon-audio\\Wwise\\CarbonAudioTest\\.cache\\Windows\\",
+   "SoundBanksRoot": "C:\\Users\\eric\\code\\carbon-audio\\python\\audio2\\test\\soundbanks\\",
+   "ExternalSourcesInputFile": "",
+   "ExternalSourcesOutputRoot": "C:\\Users\\eric\\code\\carbon-audio\\Wwise\\CarbonAudioTest\\GeneratedSoundBanks\\Windows"
+  },
+  "DialogueEvents": [],
+  "StreamedFiles": [],
+  "MediaFilesNotInAnyBank": [],
+  "SoundBanks": [
+   {
+    "Id": "592435907",
+    "Language": "SFX",
+    "Hash": "2909888888",
+    "ObjectPath": "\\SoundBanks\\Default Work Unit\\TestOneShot",
+    "ShortName": "TestOneShot",
+    "Path": "TestOneShot.bnk",
+    "IncludedMemoryFiles": [
+     {
+      "Id": "870446094",
+      "Language": "SFX",
+      "ShortName": "commerce_bleeps_02.wav",
+      "Path": "SFX\\commerce_bleeps_02_10C4C929.wem"
+     }
+    ]
+   },
+   {
+    "Id": "1355168291",
+    "Language": "SFX",
+    "Hash": "3690994985",
+    "ObjectPath": "Init",
+    "ShortName": "Init",
+    "Path": "Init.bnk"
+   },
+   {
+    "Id": "2395677314",
+    "Language": "SFX",
+    "Hash": "774431777",
+    "ObjectPath": "\\SoundBanks\\Default Work Unit\\Common",
+    "ShortName": "Common",
+    "Path": "Common.bnk",
+    "IncludedEvents": [
+     {
+      "Id": "1483003980",
+      "Name": "Play_TestLoop",
+      "ObjectPath": "\\Events\\Default Work Unit\\Play_TestLoop",
+      "MaxAttenuation": "100."
+     },
+     {
+      "Id": "1669951674",
+      "Name": "Play_TestOneShot",
+      "ObjectPath": "\\Events\\Default Work Unit\\Play_TestOneShot",
+      "MaxAttenuation": "100."
+     }
+    ]
+   },
+   {
+    "Id": "3918824947",
+    "Language": "SFX",
+    "Hash": "766794574",
+    "ObjectPath": "\\SoundBanks\\Default Work Unit\\TestLoop",
+    "ShortName": "TestLoop",
+    "Path": "TestLoop.bnk",
+    "IncludedMemoryFiles": [
+     {
+      "Id": "839160035",
+      "Language": "SFX",
+      "ShortName": "children_of_light_loop.wav",
+      "Path": "SFX\\children_of_light_loop_D79FB2B7.wem"
+     }
+    ]
+   }
+  ]
+ }
+}

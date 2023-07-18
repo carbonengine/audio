@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WwiseDocument Type="WorkUnit" ID="{4B764402-C2B1-488E-A768-588CB657A0CD}" SchemaVersion="103">
+	<SoundBanks>
+		<WorkUnit Name="Default Work Unit" ID="{4B764402-C2B1-488E-A768-588CB657A0CD}" PersistMode="Standalone">
+			<ChildrenList>
+				<SoundBank Name="TestOneShot" ID="{7D747524-6171-41C5-9D5E-4F0465DD6D98}">
+					<ObjectInclusionList>
+						<ObjectRef Name="TestOneShot" ID="{197F89F7-D4C8-4107-AD0C-A270ADA999BD}" WorkUnitID="{C3703968-666D-47C8-9715-ABD3DA334A25}" Origin="Manual" Filter="6"/>
+					</ObjectInclusionList>
+					<ObjectExclusionList/>
+					<GameSyncExclusionList/>
+				</SoundBank>
+				<SoundBank Name="TestLoop" ID="{5B6959F0-EE85-40E6-822B-90DC0157584F}">
+					<ObjectInclusionList>
+						<ObjectRef Name="TestLoop" ID="{1F3A1B8E-BC64-4900-8A0A-1949E174AD76}" WorkUnitID="{C3703968-666D-47C8-9715-ABD3DA334A25}" Origin="Manual" Filter="6"/>
+					</ObjectInclusionList>
+					<ObjectExclusionList/>
+					<GameSyncExclusionList/>
+				</SoundBank>
+				<SoundBank Name="Common" ID="{78C5B374-6E68-4C0A-BF96-90DB7624E4B2}">
+					<ObjectInclusionList>
+						<ObjectRef Name="Events" ID="{A69BF0FC-D84A-487C-ABDD-56F71CB2A126}" WorkUnitID="{A69BF0FC-D84A-487C-ABDD-56F71CB2A126}" Origin="Manual" Filter="1"/>
+					</ObjectInclusionList>
+					<ObjectExclusionList/>
+					<GameSyncExclusionList/>
+				</SoundBank>
+			</ChildrenList>
+		</WorkUnit>
+	</SoundBanks>
+</WwiseDocument>

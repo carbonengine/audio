@@ -1,0 +1,17 @@
+{
+ "PluginInfo": {
+  "Project": "CarbonAudioTest",
+  "Platform": "Windows",
+  "BasePlatform": "Windows",
+  "Plugins": [
+   {
+    "Name": "System",
+    "ID": "11403271"
+   },
+   {
+    "Name": "No Output",
+    "ID": "11862023"
+   }
+  ]
+ }
+}

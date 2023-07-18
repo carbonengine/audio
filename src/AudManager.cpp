@@ -196,6 +196,8 @@ bool AudManager::Init()
 		CCP_LOGERR("Failed to initialize audio : Music");
 		return false;
 	}
+
+	g_audioInitialized = true;
 	return true;
 }
 
@@ -343,56 +345,6 @@ bool AudManager::InitMusic()
 	}
 
 	return true;
-}
-
-void AudManager::SetEnabled( bool newStatus )
-{
-	if( newStatus == g_audioEnabled )
-	{
-		return;
-	}
-
-	g_audioEnabled = newStatus;
-
-	if( g_audioEnabled )
-	{
-		// Initialize WWISE
-		if( !Init() )
-		{
-			CCP_LOGERR( "Failed to initialize audio" );
-			g_audioEnabled = false;
-			return;
-		}
-
-		g_audioInitialized = true;
-		//Reload resources
-		BankVector::iterator bankEnd = m_loadedBanks.end();
-		AkBankID tmp;
-		for( BankVector::iterator it = m_loadedBanks.begin(); it != bankEnd; ++it )
-		{
-			AK::SoundEngine::LoadBank( it->c_str(), tmp );
-		}
-
-		for( auto it = m_gameObjects.begin(); it != m_gameObjects.end(); ++it )
-		{
-			( *it->second ).Wake();
-		}
-
-		BeOS->RegisterForTicks( this, (void*)"Audio::Tick" );
-	}
-	else
-	{
-		//Unload all resources
-		StopAll();
-		for( auto it = m_gameObjects.begin(); it != m_gameObjects.end(); ++it )
-		{
-			( *it->second ).Cull();
-		}
-		AK::SoundEngine::ClearBanks();
-		Terminate();
-		g_audioInitialized = false;
-		BeOS->UnregisterForTicks( this, (void*)"Audio::Tick" );
-	}
 }
 
 bool AudManager::SetGlobalRTPC( const std::wstring& rtpcName, float value )
@@ -549,7 +501,7 @@ void AudManager::UnloadBank( const std::wstring& name )
 void AudManager::ClearBanks()
 {
 	// Unloads all banks currently loaded in Wwise.
-	if( g_audioEnabled )
+	if( g_audioInitialized )
 	{
 		AKRESULT result = AK::SoundEngine::ClearBanks();
 		if( result == AK_Fail )
@@ -562,6 +514,72 @@ void AudManager::ClearBanks()
 
 		CCP_LOG( "All banks unloaded in Wwise" );
 	}
+}
+
+//-----------------------------------------------------
+// Description:
+//   Disable CarbonAudio which culls all game objects, unloads all SoundBanks, terminates
+//   the sound engine and stops the audio thread.
+//-----------------------------------------------------
+void AudManager::Disable() 
+{
+	if ( g_audioEnabled == false )
+	{
+		return;
+	}
+
+	StopAll();
+	for( auto it = m_gameObjects.begin(); it != m_gameObjects.end(); ++it )
+	{
+		( *it->second ).Cull();
+	}
+	ClearBanks();
+	Terminate();
+	g_audioEnabled = false;
+	BeOS->UnregisterForTicks( this, (void*)"Audio::Tick" );
+}
+
+//-----------------------------------------------------
+// Description:
+//   Enable CarbonAudio which will initialize the sound engine, load the given SoundBanks,
+//   Wake up all audio emitters (if sound prioritization is enabled) and registers the audio thread.
+// Arguments:
+//   soundBanks - The name of all soundbanks you want to load when enabling the sound engine 
+//				  by name (relative to the base SoundBank path). Note: The Init SoundBank is implicitly
+//				  loaded and does not need to be passed in here.
+//-----------------------------------------------------
+void AudManager::Enable(BankVector soundBanksToLoad) 
+{
+	if ( g_audioEnabled )
+	{
+		return;
+	}
+	if( !Init() )
+	{
+		CCP_LOGERR( "Failed to initialize audio" );
+		return;
+	}
+
+	g_audioEnabled = true;
+	if (!LoadBank(L"Init.bnk"))
+	{
+		CCP_LOGERR("Failed to load Init.bnk! Check that you configured the base SoundBank path correctly.");
+		return;
+	}
+
+	BankVector::iterator bankEnd = soundBanksToLoad.end();
+	for( BankVector::iterator it = soundBanksToLoad.begin(); it != bankEnd; ++it )
+	{
+		LoadBank( *it );
+	}
+
+	for( auto it = m_gameObjects.begin(); it != m_gameObjects.end(); ++it )
+	{
+		( *it->second ).Wake();
+	}
+
+	BeOS->RegisterForTicks( this, (void*)"Audio::Tick" );
+	return;
 }
 
 std::vector<std::wstring> AudManager::GetLoadedSoundBanks()

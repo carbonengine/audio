@@ -1,22 +1,17 @@
-import unittest
-import uthread2
-
 import audio2
+
 from base_test_class import BaseAudio2TestClass
+from utils import run_in_tasklet
 
 
 class TestAudEmitterExposure(BaseAudio2TestClass):
-    def tearDown(self):
-        self.audioManager.StopAll()
-
     def setUp(self):
         self.emitter = audio2.AudEmitter("emitter1")
-        self.audioManager.SetEnabled(True)
+        self.Initialize()
+        self.audioManager.Enable()
 
-    def test_audemitter_set_position(self):
-        """Test that AudEmitter::SetPosition works."""
-        self.emitter.SetPosition((1,0,0), (0,1,0), (0,0,0))
 
+    @run_in_tasklet        
     def test_audioemitter_debug(self):
         """Test that all methods having to do with debugging in AudEmitter work."""
         self.emitter.SetPosition((1,0,0), (0,1,0), (0,50,0))

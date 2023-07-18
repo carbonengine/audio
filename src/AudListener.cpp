@@ -36,3 +36,26 @@ void AudListener::RegisterWwiseObject()
 					"Try to change where audio is initialized or create the listener again." );
 	}
 }
+
+int AudListener::SetPositionHelper( const Vector3& front, const Vector3& top, const Vector3& position )
+{
+	if( g_audioInitialized )
+	{
+		m_position = position;
+		if( m_gameObjRegistered )
+		{
+			AkSoundPosition tmp;
+			Vector3 correctFront = Normalize( front );
+			Vector3 correctUp = Normalize( top );
+			correctUp = Normalize( Cross( Cross( correctFront, correctUp ), correctFront ) );
+			tmp.Set( MakeAkVector(position), MakeAkVector(correctFront), MakeAkVector(correctUp) );
+
+			// all vectors come in RH, but WWISE is LH, so convert
+			AkSoundPosition soundPosLH;
+			RH2LH::convertListener( &soundPosLH, &tmp);
+
+			AKRESULT result = AK::SoundEngine::SetPosition( m_ID, soundPosLH );
+		}
+	}
+	return AK_Success;
+}

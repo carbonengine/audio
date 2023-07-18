@@ -32,6 +32,7 @@ public:
 	EXPOSE_TO_BLUE();
 
 	void RegisterWwiseObject() override;
+	int SetPositionHelper( const Vector3& front, const Vector3& top, const Vector3& position ) override;
 };
 
 TYPEDEF_BLUECLASS( AudListener );

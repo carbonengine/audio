@@ -1,0 +1,8 @@
+Event	ID	Name			Wwise Object Path	Notes
+	1483003980	Play_TestLoop			\Default Work Unit\Play_TestLoop	
+	1669951674	Play_TestOneShot			\Default Work Unit\Play_TestOneShot	
+
+In Memory Audio	ID	Name	Audio source file		Wwise Object Path	Notes	Data Size
+	839160035	TestLoop	C:\Users\eric\code\carbon-audio\Wwise\CarbonAudioTest\.cache\Windows\SFX\children_of_light_loop_D79FB2B7.wem		\Actor-Mixer Hierarchy\Default Work Unit\CarbonAudioTest\TestLoop		20724708
+	870446094	TestOneShot	C:\Users\eric\code\carbon-audio\Wwise\CarbonAudioTest\.cache\Windows\SFX\commerce_bleeps_02_10C4C929.wem		\Actor-Mixer Hierarchy\Default Work Unit\CarbonAudioTest\TestOneShot		1428660
+

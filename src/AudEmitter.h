@@ -66,6 +66,13 @@ public:
 	virtual	void RenderDebugInfo( ITr2DebugRenderer2& renderer ) override;
 protected:
 	AudEmitter( AkGameObjectID gameObjID, IRoot* lockobj = NULL );
+	// Properties used for normalizing attenuation scaling for this audio emitter.
+	bool m_normalizeAttenuationScaling;
+	float m_minNormalizedValue;
+	float m_maxNormalizedValue;
+	float m_minNormalizedScalingFactor;
+	float m_maxNormalizedScalingFactor;
+	// Debug properties.
 	Vector3 m_debugPosition;
 	Vector3 m_debugFront;
 	Color m_debugColor;

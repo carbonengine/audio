@@ -105,6 +105,12 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 		)
 		MAP_METHOD_AND_WRAP
 		( 
+			"GetSwitches",
+			GetSwitches,
+			"Get switches currently set on this game object.\n"
+		)
+		MAP_METHOD_AND_WRAP
+		( 
 			"GetPlayingEvents",
 			GetPlayingEvents,
 			"Get the currently playing events on this audio emitter.\n"

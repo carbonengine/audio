@@ -148,66 +148,64 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 {
 	AkPlayingID playingID = AK_INVALID_PLAYING_ID;
 
-	if ( g_audioInitialized )
+	if( eventName.empty() )
 	{
-		if( eventName.empty() )
+		CCP_LOG( "An empty event string was requested to be sent to Wwise. This request has been ignored." );
+		return playingID;
+	}
+
+	CcpAutoMutex mutex( m_mutex );
+	m_isUsed = true;
+
+	bool eventUsed = false;
+	std::wstring fullEventName = PrepareEvent( eventName, bypassPrefix );
+	bool eventIsVital = g_staticDataRepository->EventIsVital( fullEventName );
+
+	if ( m_culled || !g_audioEnabled )
+	{
+		for ( auto it = m_eventsOnWake.cbegin(); it != m_eventsOnWake.cend();)
 		{
-			CCP_LOG( "An empty event string was requested to be sent to Wwise. This request has been ignored." );
-			return playingID;
-		}
-
-		CcpAutoMutex mutex( m_mutex );
-		m_isUsed = true;
-
-		bool eventUsed = false;
-		std::wstring fullEventName = PrepareEvent( eventName, bypassPrefix );
-		bool eventIsVital = g_staticDataRepository->EventIsVital( fullEventName );
-
-		if ( m_culled || !g_audioEnabled )
-		{
-			for ( auto it = m_eventsOnWake.cbegin(); it != m_eventsOnWake.cend();)
+			if( g_staticDataRepository->EventIsStopped( *it, fullEventName ) )
 			{
-				if( g_staticDataRepository->EventIsStopped( *it, fullEventName ) )
-				{
-					it = m_eventsOnWake.erase( it );
-					UpdateEventSoundPrioritizationAttributes();
-				}
-				else
-				{
-					++it;	
-				}
-			}
-
-			if ( g_staticDataRepository->EventIsLoop( fullEventName ) || eventIsVital )
-			{
-				m_eventsOnWake.insert( fullEventName );
-				eventUsed = true;
+				it = m_eventsOnWake.erase( it );
+				UpdateEventSoundPrioritizationAttributes();
 			}
 			else
 			{
-				m_waitingOneShotInRange = std::pair( std::chrono::steady_clock::now(), fullEventName );
-				eventUsed = true;
+				++it;	
 			}
 		}
-		else if ( m_gameObjRegistered )
+
+		if ( g_staticDataRepository->EventIsLoop( fullEventName ) || eventIsVital )
 		{
-			// Set up callback info so that we get a callback when every event is finished playing.
-			AkUInt32 inFlags = AK_EndOfEvent | additionalFlags;
-			AkCallbackFunc callback = &AudGameObjResource::PropagateWwiseCallback;
+			m_eventsOnWake.insert( fullEventName );
+			eventUsed = true;
+		}
+		else
+		{
+			m_waitingOneShotInRange = std::pair( std::chrono::steady_clock::now(), fullEventName );
+			eventUsed = true;
+		}
+	}
+	else if ( m_gameObjRegistered )
+	{
+		// Set up callback info so that we get a callback when every event is finished playing.
+		AkUInt32 inFlags = AK_EndOfEvent | additionalFlags;
+		AkCallbackFunc callback = &AudGameObjResource::PropagateWwiseCallback;
 
-			unsigned int eventID = g_staticDataRepository->GetEventID( fullEventName );
-			playingID = AK::SoundEngine::PostEvent( eventID, m_ID, inFlags, callback, this );
-			g_audioManager->LogPostEvent( m_ID, playingID, eventID, fullEventName );
+		unsigned int eventID = g_staticDataRepository->GetEventID( fullEventName );
+		playingID = AK::SoundEngine::PostEvent( eventID, m_ID, inFlags, callback, this );
+		g_audioManager->LogPostEvent( m_ID, playingID, eventID, fullEventName );
 
-			if ( playingID != AK_INVALID_PLAYING_ID )
-			{
-				m_playingEvents.insert({playingID, fullEventName});
-				eventUsed = true;
-			}
-			else
-			{
-				CCP_LOGERR( "Failed to send event to Wwise: %S", fullEventName.c_str() );
-			}
+		if ( playingID != AK_INVALID_PLAYING_ID )
+		{
+			m_playingEvents.insert({playingID, fullEventName});
+			eventUsed = true;
+		}
+		else
+		{
+			CCP_LOGERR( "Failed to send event to Wwise: %S", fullEventName.c_str() );
+		}
 		}
 
 		if( eventUsed )
@@ -223,7 +221,6 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 				m_playingVitalSound = true;
 			}
 		}
-	}
 	return playingID;
 }
 
@@ -404,7 +401,7 @@ bool AudGameObjResource::SetSwitch( const std::wstring& switchGroup, const std::
 			g_audioManager->LogSetSwitch( m_ID, switchGroup, switchState );
 			return true;
 		}
-		else
+		else if( !m_culled )
 		{
 			CCP_LOGERR( "SetSwitch was requested on game object %d which was never registered with Wwise.", m_ID );
 		}
@@ -780,6 +777,11 @@ void AudGameObjResource::UpdateMaxAttenuationRadiusForEvent( const std::wstring&
 float AudGameObjResource::GetMaxAttenuationRadius() const
 {
 	return m_maxAttenuationRadiusSq * m_scalingFactor;
+}
+
+const std::map<std::wstring, std::wstring>& AudGameObjResource::GetSwitches() const
+{
+	return m_switchValues;
 }
 
 std::map<unsigned int, std::wstring> AudGameObjResource::GetPlayingEvents()

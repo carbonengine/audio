@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WwiseDocument Type="WorkUnit" ID="{A32F963C-3D0E-4C57-A24B-D9C0DABC7E98}" SchemaVersion="103">
+	<Events>
+		<WorkUnit Name="Default Work Unit" ID="{A32F963C-3D0E-4C57-A24B-D9C0DABC7E98}" PersistMode="Standalone">
+			<ChildrenList>
+				<Event Name="Play_TestLoop" ID="{7FE9B34E-E023-4F28-8541-1FEC4AEEFB68}">
+					<ChildrenList>
+						<Action Name="" ID="{55134ADD-1F95-4667-A82D-E4594E3C650E}" ShortID="681391013">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="TestLoop" ID="{1F3A1B8E-BC64-4900-8A0A-1949E174AD76}" WorkUnitID="{C3703968-666D-47C8-9715-ABD3DA334A25}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="Play_TestOneShot" ID="{A6FA0F98-6EAB-49CA-9417-79A6B8C2AAF3}">
+					<ChildrenList>
+						<Action Name="" ID="{B3414C6F-7897-44AB-A7EB-A76B114A8F7F}" ShortID="606722827">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="TestOneShot" ID="{197F89F7-D4C8-4107-AD0C-A270ADA999BD}" WorkUnitID="{C3703968-666D-47C8-9715-ABD3DA334A25}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+			</ChildrenList>
+		</WorkUnit>
+	</Events>
+</WwiseDocument>

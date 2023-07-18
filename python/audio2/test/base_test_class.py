@@ -1,8 +1,30 @@
+import json
+import os
 import unittest
 
-import audio2
-from eveaudio import ALL_SOUNDBANKS
-from fsdBuiltData.common.wwiseEvents import WwiseEvents 
+import blue
+from audio2.audiomanager import AudioManager
+
+AUDIO_METADATA_FILEPATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "soundbanks", "AudioMetadata.json"))
+SOUNDBANK_FILEPATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "soundbanks"))
+ONE_SHOT_BNK = "TestOneShot.bnk"
+ONE_SHOT_EVENT = "Play_TestOneShot"
+COMMON_BNK = "Common.bnk"
+LOOP_BNK = "TestLoop.bnk"
+LOOP_EVENT = "Play_TestLoop"
+
+
+def GetEventMetadataFromFile():
+    """Get event metadata from file and returns it as a dict. Also converts eventIDs to long in the process."""
+    with open(AUDIO_METADATA_FILEPATH, "r") as f:
+        audioMetadata = json.loads(f.read())
+
+    # eventID's have to be long or else CarbonAudio doesn't correctly grab it.
+    for eventName, eventInfo in audioMetadata.iteritems():
+        eventInfo["eventID"] = long(eventInfo["eventID"])
+
+    return audioMetadata
+
 
 class BaseAudio2TestClass(unittest.TestCase):
     """Initializes Wwise for other test classes."""
@@ -10,18 +32,12 @@ class BaseAudio2TestClass(unittest.TestCase):
     def setUpClass(cls):
         super(BaseAudio2TestClass, cls).setUpClass()
 
-        settings = audio2.AudSettings()
-        settings.applicationName = "Audio2 Testing"
-        settings.baseSoundbankPath = "res:/Audio/"
-        settings.soundbankLanguage = "English(US)"
-        cls.staticDataRepository = audio2.GetStaticDataRepository()
-        cls.staticDataRepository.Initialize(WwiseEvents().wwiseEventsByEventName)
-        cls.audioManager = audio2.GetOrCreateManager()
-        cls.audioManager.UpdateSettings(settings)
-        cls.audioManager.SetEnabled(True)
-        for bank in ALL_SOUNDBANKS:
-            cls.audioManager.LoadBank(bank)
+        blue.paths.SetSearchPath("soundbanks", SOUNDBANK_FILEPATH)
+        applicationName = "Audio2 Testing"
+        baseSoundbankPath = "soundbanks:/"
+        languageDirectory = "English(US)"
+        cls.audioManager = AudioManager(baseSoundbankPath, languageDirectory, applicationName)
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.audioManager.ClearBanks()
+    def Initialize(self, defaultSoundBanks=[]):
+        audioMetadata = GetEventMetadataFromFile()
+        self.audioManager.Initialize(audioMetadata, defaultSoundBanks=defaultSoundBanks)

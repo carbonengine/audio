@@ -1,0 +1,3 @@
+In Memory Audio	ID	Name	Audio source file		Wwise Object Path	Notes	Data Size
+	839160035	TestLoop	C:\Users\eric\code\carbon-audio\Wwise\CarbonAudioTest\.cache\Windows\SFX\children_of_light_loop_D79FB2B7.wem		\Actor-Mixer Hierarchy\Default Work Unit\CarbonAudioTest\TestLoop		20724708
+

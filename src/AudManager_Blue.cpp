@@ -31,10 +31,18 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		)
 		MAP_METHOD_AND_WRAP
 		( 
-			"SetEnabled",
-			SetEnabled,
-			"Toggle the audio engine on or off.\n"
-			":param onoff: whether the audio engine should initialized or terminated."
+			"Disable",
+			Disable,
+			"Disable CarbonAudio which unloads all SoundBanks and terminates the sound engine."
+		)
+		MAP_METHOD_AND_WRAP
+		( 
+			"Enable",
+			Enable,
+			"Enable CarbonAudio and load the given soundbanks.\n"
+			":param soundBanksToLoad: A list of SoundBanks to load when enabling CarbonAudio. Note: the Init SoundBank\n"
+			"                         is implicitly loaded and does not need to be passed in.\n"
+			":type soundBanksToLoad: list"
 		)
 		MAP_METHOD_AND_WRAP
 		( 

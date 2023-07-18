@@ -86,6 +86,8 @@ public:
 
 	// Functions to use for testing/debugging
 	std::map<unsigned int, std::wstring> GetPlayingEvents();
+	// Get the switches currently set on this game object.
+	const std::map<std::wstring, std::wstring>& GetSwitches() const;
 	// Force this game object to change it's culling state from awake to culled or vice versa.  You must call ReleaseForcedCullingState to get it to return to normal.
 	void ForceCullingStateChange();
 	// Return this game object to be controlled by the sound prioritization system. 

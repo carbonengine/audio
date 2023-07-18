@@ -10,6 +10,11 @@
 
 AudEmitter::AudEmitter( IRoot* lockobj ) :
 	AudGameObjResource( lockobj ),
+	m_normalizeAttenuationScaling( false ),
+	m_minNormalizedValue( 30.f ), // This default comes from the perspective that normalizing is most commonly used for bounding sphere radii of ships 
+	m_maxNormalizedValue( 9000.f), // ^
+	m_minNormalizedScalingFactor( 0.4f ),
+	m_maxNormalizedScalingFactor( 3.5f ),
 	m_debugPosition(0, 0, 0),
 	m_debugFront(0, 0, 0),
 	m_debugColor()
@@ -18,6 +23,11 @@ AudEmitter::AudEmitter( IRoot* lockobj ) :
 
 AudEmitter::AudEmitter( AkGameObjectID gameObjID, IRoot* lockobj ) :
 	AudGameObjResource( gameObjID, lockobj ),
+	m_normalizeAttenuationScaling( false ),
+	m_minNormalizedValue( 30.f ), // This default comes from the perspective that normalizing is most commonly used for bounding sphere radii of ships 
+	m_maxNormalizedValue( 9000.f), // ^
+	m_minNormalizedScalingFactor( 0.4f ),
+	m_maxNormalizedScalingFactor( 3.5f ),
 	m_debugPosition(0, 0, 0),
 	m_debugFront(0, 0, 0),
 	m_debugColor()
@@ -78,8 +88,14 @@ bool AudEmitter::SetRTPC( const std::wstring& rtpcName, float rtpcValue )
 
 bool AudEmitter::SetAttenuationScalingFactor( const float scalingFactor )
 {
+	float finalScalingFactor = scalingFactor;
+	if ( m_normalizeAttenuationScaling )
+	{
+		// Linearly normalize the scaling factor 
+		finalScalingFactor = ( scalingFactor - m_minNormalizedValue ) * ( m_maxNormalizedScalingFactor - m_minNormalizedScalingFactor ) / ( m_maxNormalizedValue - m_minNormalizedValue ) + m_minNormalizedScalingFactor;
+	}
 	m_debugColor = 0xaaff0000; // Emitter's whose attenuation is affected by code will always show red in debug.
-	return AudGameObjResource::SetAttenuationScalingFactor( scalingFactor );
+	return AudGameObjResource::SetAttenuationScalingFactor( finalScalingFactor );
 }
 
 void AudEmitter::UpdatePlacement(const Vector3& front, const Vector3& top, const Vector3& pos )

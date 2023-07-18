@@ -69,6 +69,10 @@ public:
 
 	// Unloads all soundbanks currently loaded.
 	void ClearBanks();
+	// Disable CarbonAudio and terminate all relevant subprocesses. 
+	void Disable();
+	// Enable CarbonAudio and load the given soundbanks.
+	void Enable(BankVector soundBanksToLoad);
 	// Get any game object if it currently exists.
 	AudGameObjResource* GetAudioEmitter( AkGameObjectID emitterID );
 	// Retreive a vector of all currently loaded soundbanks.
@@ -77,8 +81,6 @@ public:
 	bool LoadBank( const std::wstring& name );
 	// Register a game object for the audio manager to keep track of.
 	void RegisterGameObject( AkGameObjectID emitterID, AudGameObjResource* emitter );
-	// Handle both initialization and termination of the audio engine.
-	void SetEnabled( bool onoff );
 	// Set an RTPC not associated with a specific game object.
 	bool SetGlobalRTPC( const std::wstring& rtpcName, float value );
 	// Set a global state in Wwise.

@@ -8,16 +8,16 @@ void WwiseLogServerMessageHandler( ErrorCode in_eErrorCode, const AkOSChar* in_p
 	switch( in_eErrorLevel )
 	{
 		case ErrorLevel_Error :
-			if ( in_eErrorCode == ErrorCode_UnknownGameObject )
+			switch (in_eErrorCode)
 			{
-				CCP_LOGERR_CH( s_ch, "A Wwise API call was made on game object %d which does not exist in Wwise. "
-				"Make sure game objects are registered before calling Wwise methods on them.", in_gameObjID );
-			} 
-			else
-			{
-				CCP_LOGERR_CH( s_ch, "Wwise error code %d was sent with the following message: %S", in_eErrorCode, in_pszError );
+			case ErrorCode_UnknownGameObject:
+				CCP_LOGERR_CH(s_ch, "A Wwise API call was made on game object %d which does not exist in Wwise. Make sure game objects are registered before calling Wwise "
+					"methods on them.", in_gameObjID);
+				break;
+			default:
+				CCP_LOGERR_CH(s_ch, "%S", in_pszError);
+				break;
 			}
-			break;
 		case ErrorLevel_Message :
 			CCP_LOGWARN_CH( s_ch, "%S", in_pszError );
 			break;

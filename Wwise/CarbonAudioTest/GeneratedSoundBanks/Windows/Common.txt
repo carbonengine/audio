@@ -1,0 +1,4 @@
+Event	ID	Name			Wwise Object Path	Notes
+	1483003980	Play_TestLoop			\Default Work Unit\Play_TestLoop	
+	1669951674	Play_TestOneShot			\Default Work Unit\Play_TestOneShot	
+
