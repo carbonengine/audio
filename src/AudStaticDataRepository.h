@@ -9,8 +9,6 @@
 
 #include "Audio2.h"
 
-#include <AK/SoundEngine/Common/AkTypes.h> 
-
 // ------------------------------------------------------------------------
 // Description:
 //   A repository of audio related static data that contains necessary metadata from the Wwise project

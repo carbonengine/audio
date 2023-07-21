@@ -29,7 +29,7 @@ public:
 		memcpy( listenerLH, listenerRH, sizeof( AkListenerPosition ) );
 		AkVector front = listenerLH->OrientationFront();
 		AkVector top = listenerLH->OrientationTop();
-		AkVector pos = listenerLH->Position();
+		AkVector64 pos = listenerLH->Position();
 
 		front.X *= -1.f;
 		front.Y *= -1.f;
@@ -43,7 +43,7 @@ public:
 		memcpy( emitterLH, emitterRH, sizeof( AkSoundPosition ) );
 		AkVector front = emitterLH->OrientationFront();
 		AkVector top = emitterLH->OrientationTop();
-		AkVector pos = emitterLH->Position();
+		AkVector64 pos = emitterLH->Position();
 		
 		pos.Z *= -1.f;
 		front.Z *= -1.f;

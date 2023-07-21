@@ -10,9 +10,6 @@
 #ifndef _AUDEMITTER_H_
 #define _AUDEMITTER_H_
 
-#include <AK/SoundEngine/Common/AkTypes.h>
-#include <AK/SoundEngine/Common/AkQueryParameters.h>
-
 #include <IBlueEventListener.h>
 #include <ITr2DebugRenderer2.h>
 #include "ITr2AudEmitter.h"

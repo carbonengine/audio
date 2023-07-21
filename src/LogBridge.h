@@ -12,8 +12,6 @@
 #ifndef _LOGBRIDGE_H_
 #define _LOGBRIDGE_H_
 
-#include <AK/Tools/Common/AkMonitorError.h>
-
 using namespace AK::Monitor;
 
 void WwiseLogServerMessageHandler( ErrorCode in_eErrorCode, const AkOSChar* in_pszError, ErrorLevel in_eErrorLevel, AkPlayingID in_playingID, AkGameObjectID in_gameObjID );

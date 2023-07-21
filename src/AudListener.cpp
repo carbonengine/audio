@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "AudListener.h"
 
-#include <AK/SoundEngine/Common/AkSoundEngine.h>
-
 #include "Vector3.h"
 #include "Utilities.h"
 

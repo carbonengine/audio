@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "AudGameObjResource.h"
 
-#include <AK/SoundEngine/Common/AkQueryParameters.h>
-
 #include "AudManager.h"
 #include "AudStaticDataRepository.h"
 #include "Vector3.h"

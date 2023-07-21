@@ -10,12 +10,6 @@
 #ifndef _AUDMANAGER_H_
 #define _AUDMANAGER_H_
 
-#include <AK/SoundEngine/Common/AkTypes.h>
-
-#ifndef AK_OPTIMIZED
-#include <AK/Comm/AkCommunication.h>
-#endif
-
 #include "Audio2.h"
 #include "AudSettings.h"
 #include "AudListener.h"

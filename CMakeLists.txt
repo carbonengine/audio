@@ -18,6 +18,8 @@ list(INSERT CMAKE_MODULE_PATH 0 ${BRANCH_ROOT_DIR}/cmake)
 include(CcpGlobalSettings)
 include(CcpPackageConfigHelpers)
 
+set(Wwise_ROOT "${BRANCH_ROOT_DIR}/vendor/wwise/2022.1.4.8202")
+
 find_package(Blue CONFIG REQUIRED)
 find_package(CcpMath CONFIG REQUIRED)
 find_package(IntelTBB REQUIRED)
@@ -239,7 +241,7 @@ if(WIN32)
     # Discover and run Python tests as a single CTest test.
     set(EXEFILE_CONSOLE_EXECUTABLE "$<TARGET_FILE_DIR:CarbonAudio>/ExefileConsole.exe")
     add_test(NAME PythonTests
-            COMMAND ${EXEFILE_CONSOLE_EXECUTABLE} /buildflavor=$<LOWER_CASE:$<CONFIG>> /lib=${BRANCH_ROOT_DIR}/carbon/common/stdlib\\\;${CMAKE_CURRENT_SOURCE_DIR}/python /bin=$<TARGET_FILE_DIR:CarbonAudio> /py -m unittest discover -v .
+            COMMAND ${EXEFILE_CONSOLE_EXECUTABLE} /buildflavor=$<LOWER_CASE:$<CONFIG>> /lib=${BRANCH_ROOT_DIR}/carbon/common/stdlib\\\;${CMAKE_CURRENT_SOURCE_DIR}/python\\\;${BRANCH_ROOT_DIR}/packages /bin=$<TARGET_FILE_DIR:CarbonAudio> /py run_tests.py
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python/audio2/test
             COMMAND_EXPAND_LISTS
             )

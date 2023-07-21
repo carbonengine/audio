@@ -10,8 +10,6 @@
 #ifndef _AUDUIPLAYER_H_
 #define _AUDUIPLAYER_H_
 
-#include <AK/SoundEngine/Common/AkCallback.h>
-
 #include "AudEmitter.h"
 
 BLUE_CLASS( AudUIPlayer ) : public AudEmitter 

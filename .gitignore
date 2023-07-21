@@ -13,3 +13,5 @@ AkWwiseProjectData.asset
 IncrementalSoundBankData.xml
 PluginInfo.xml
 SoundbanksInfo.xml
+# Python
+*.pyc

@@ -11,7 +11,6 @@
 
 #include "Audio2.h"
 
-#include <AK/SoundEngine/Common/AkTypes.h>
 #include <IBluePlacementObserver.h>
 
 struct Vector3;

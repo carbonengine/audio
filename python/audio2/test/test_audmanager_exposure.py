@@ -7,7 +7,6 @@ import blue
 from audio2.audiomanager import INIT_BANK
 from base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK
 from base_test_class import GetEventMetadataFromFile
-from utils import run_in_tasklet
 
 class TestAudManagerExposure(unittest.TestCase):
     @classmethod
@@ -31,7 +30,6 @@ class TestAudManagerExposure(unittest.TestCase):
     def tearDown(self):
         self.audioManager.Disable()
 
-    @run_in_tasklet        
     def test_audmanager_load_and_unload_bank(self):
         """Test all methods relating to loading and unloading soundbanks in AudManager."""
         # Test while audmanager is enabled
@@ -69,7 +67,6 @@ class TestAudManagerExposure(unittest.TestCase):
         legitimateBank = self.audioManager.LoadBank(INIT_BANK)
         self.assertFalse(legitimateBank)
 
-    @run_in_tasklet        
     def test_audmanager_audio_emitters(self):
         """Test that the AudManager keeps track of all audio emitters."""
         emitter1 = audio2.AudEmitter("emitter1")
@@ -79,7 +76,6 @@ class TestAudManagerExposure(unittest.TestCase):
         self.assertEquals(emitter1, retrievedEmitter1)
         self.assertEquals(emitter2, retrievedEmitter2)
 
-    @run_in_tasklet        
     def test_audmanager_stopall(self):
         """Test that AudManager::StopAll works as expected."""
         self.audioManager.LoadBank(INIT_BANK)
@@ -102,18 +98,15 @@ class TestAudManagerExposure(unittest.TestCase):
         self.audioManager.Disable()
         self.audioManager.StopAll()
 
-    @run_in_tasklet        
     def test_audmanager_setglobalrtpc(self):
         """Test that AudManager::SetGlobalRTPC works as expected."""
         self.assertTrue(self.audioManager.SetGlobalRTPC("test_rtpc", 1.0))
         self.assertFalse(self.audioManager.SetGlobalRTPC("test_rtpc", float("inf")))
 
-    @run_in_tasklet        
     def test_audmanager_setstate(self):
         """Test that AudManager::SetState works as expected."""
         self.assertTrue(self.audioManager.SetState("test_state_group", "test_state"))
 
-    @run_in_tasklet        
     def test_audmanager_debug_apis(self):
         """Test all debugging APIs exposed by AudManager."""
         self.assertFalse(self.audioManager.GetDebugDisplayAllEmitters())
@@ -130,7 +123,6 @@ class TestAudManagerExposure(unittest.TestCase):
         self.audioManager.EnableDebugDisplayAllEmitters()
         self.assertTrue(self.audioManager.GetDebugDisplayAllEmitters())
 
-    @run_in_tasklet        
     def test_audmanager_disabling_clears_banks(self):
         """Test that disabling AudManager clears all soundbanks."""
         self.audioManager.LoadBank(INIT_BANK)

@@ -1,8 +1,6 @@
 #include <stdafx.h>
 #include "AudUIPlayer.h"
 
-#include <AK/SoundEngine/Common/AkTypes.h>
-#include <AK/SoundEngine/Common/AkSoundEngine.h>
 
 AudUIPlayer::AudUIPlayer( IRoot* lockobj ) : AudEmitter( UI_GAME_OBJ_ID, lockobj )
 {

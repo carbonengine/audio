@@ -15,9 +15,11 @@ public:
 	EXPOSE_TO_BLUE();
 
 #if _WIN32
+	std::wstring m_audioSrcPath = L"Media";
 	std::wstring m_baseSoundBankPath = L"res:/Audio";
 	std::wstring m_soundbankLanguage = L"en";
 #elif __APPLE__
+	std::string m_audioSrcPath = "Media";
 	std::string m_baseSoundBankPath = "res:/Audio";
 	std::string m_soundbankLanguage = "en";
 #endif

@@ -1,9 +1,8 @@
 #include "stdafx.h"
-#include "AudioInputMgr.h"
 
 #include <AK/Plugin/AkAudioInputPlugin.h>
-#include <AK/SoundEngine/Common/AkSoundEngine.h>
 
+#include "AudioInputMgr.h"
 #include "Audio2.h"
 
 std::map<int, AudioInputMgr*> g_audioInputMgrMap;

@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "AudParameter.h"
 
-#include <AK/SoundEngine/Common/AkSoundEngine.h>
-
 #include "AudManager.h"
 
 AudParameter::AudParameter( IRoot* lockobj ) :

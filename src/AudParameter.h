@@ -9,8 +9,6 @@
 #ifndef _AUDPARAMETER_H_
 #define _AUDPARAMETER_H_
 
-#include <AK/SoundEngine/Common/AkTypes.h>
-
 BLUE_DECLARE( AudGameObjResource );
 
 BLUE_CLASS( AudParameter ) : public INotify

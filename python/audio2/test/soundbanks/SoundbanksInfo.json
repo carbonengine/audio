@@ -2,81 +2,104 @@
  "SoundBanksInfo": {
   "Platform": "Windows",
   "BasePlatform": "Windows",
-  "SchemaVersion": "12",
-  "SoundbankVersion": "140",
+  "SchemaVersion": "16",
+  "SoundBankVersion": "145",
   "RootPaths": {
-   "ProjectRoot": "C:\\Users\\eric\\code\\carbon-audio\\Wwise\\CarbonAudioTest\\",
-   "SourceFilesRoot": "C:\\Users\\eric\\code\\carbon-audio\\Wwise\\CarbonAudioTest\\.cache\\Windows\\",
-   "SoundBanksRoot": "C:\\Users\\eric\\code\\carbon-audio\\python\\audio2\\test\\soundbanks\\",
+   "ProjectRoot": "../../../../Wwise/CarbonAudioTest",
+   "SourceFilesRoot": "../../../../Wwise/CarbonAudioTest/.cache/Windows",
+   "SoundBanksRoot": ".",
    "ExternalSourcesInputFile": "",
-   "ExternalSourcesOutputRoot": "C:\\Users\\eric\\code\\carbon-audio\\Wwise\\CarbonAudioTest\\GeneratedSoundBanks\\Windows"
+   "ExternalSourcesOutputRoot": "../../../../Wwise/CarbonAudioTest/GeneratedSoundBanks/Windows"
   },
   "DialogueEvents": [],
-  "StreamedFiles": [],
-  "MediaFilesNotInAnyBank": [],
   "SoundBanks": [
    {
     "Id": "592435907",
+    "Type": "User",
     "Language": "SFX",
-    "Hash": "2909888888",
-    "ObjectPath": "\\SoundBanks\\Default Work Unit\\TestOneShot",
+    "Hash": "{48463B26-BBF0-BE7D-082E-9DC232596850}",
     "ShortName": "TestOneShot",
     "Path": "TestOneShot.bnk",
-    "IncludedMemoryFiles": [
+    "Media": [
      {
       "Id": "870446094",
       "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
       "ShortName": "commerce_bleeps_02.wav",
-      "Path": "SFX\\commerce_bleeps_02_10C4C929.wem"
+      "CachePath": "SFX/commerce_bleeps_02_10C4C929.wem"
      }
     ]
    },
    {
     "Id": "1355168291",
+    "Type": "User",
     "Language": "SFX",
-    "Hash": "3690994985",
-    "ObjectPath": "Init",
+    "Hash": "{986487A9-2683-E47A-8688-3D0FE6FDB954}",
     "ShortName": "Init",
-    "Path": "Init.bnk"
+    "Path": "Init.bnk",
+    "Plugins": {
+     "AudioDevices": [
+      {
+       "Id": "2317455096",
+       "Name": "No_Output",
+       "LibName": "No Output",
+       "LibId": "11862023"
+      },
+      {
+       "Id": "3859886410",
+       "Name": "System",
+       "LibName": "System",
+       "LibId": "11403271"
+      }
+     ]
+    },
+    "Busses": [
+     {
+      "Id": "3803692087",
+      "Name": "Master Audio Bus"
+     }
+    ]
    },
    {
     "Id": "2395677314",
+    "Type": "User",
     "Language": "SFX",
-    "Hash": "774431777",
-    "ObjectPath": "\\SoundBanks\\Default Work Unit\\Common",
+    "Hash": "{64303E67-50F6-0ECB-218B-FE1061232D95}",
     "ShortName": "Common",
     "Path": "Common.bnk",
-    "IncludedEvents": [
+    "Events": [
      {
       "Id": "1483003980",
       "Name": "Play_TestLoop",
-      "ObjectPath": "\\Events\\Default Work Unit\\Play_TestLoop",
-      "MaxAttenuation": "100."
+      "MaxAttenuation": "100"
      },
      {
       "Id": "1669951674",
       "Name": "Play_TestOneShot",
-      "ObjectPath": "\\Events\\Default Work Unit\\Play_TestOneShot",
-      "MaxAttenuation": "100."
+      "MaxAttenuation": "100"
      }
     ]
    },
    {
     "Id": "3918824947",
+    "Type": "User",
     "Language": "SFX",
-    "Hash": "766794574",
-    "ObjectPath": "\\SoundBanks\\Default Work Unit\\TestLoop",
+    "Hash": "{A6607AA7-D272-6E58-212C-E952A543AA22}",
     "ShortName": "TestLoop",
     "Path": "TestLoop.bnk",
-    "IncludedMemoryFiles": [
+    "Media": [
      {
       "Id": "839160035",
       "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
       "ShortName": "children_of_light_loop.wav",
-      "Path": "SFX\\children_of_light_loop_D79FB2B7.wem"
+      "CachePath": "SFX/children_of_light_loop_D79FB2B7.wem"
      }
     ]
    }
-  ]
+  ],
+  "FileHash": "{2ADA3E4F-DFE9-5946-6832-32E14A7BBCC6}"
  }
 }

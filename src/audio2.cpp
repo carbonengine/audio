@@ -5,8 +5,6 @@
 #include "AudManager.h"
 #include "AudStaticDataRepository.h"
 
-#include <AK/AkWwiseSDKVersion.h>
-
 BLUE_DEFINE_INTERFACE( IBluePlacementObserver );
 BLUE_DEFINE_INTERFACE( IBlueEventListener );
 

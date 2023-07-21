@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "AudEmitter.h"
 
-#include <AK/SoundEngine/Common/AkSoundEngine.h>
-
 #include "AudManager.h"
 #include "AudStaticDataRepository.h"
 #include "DebugUtilities.h"

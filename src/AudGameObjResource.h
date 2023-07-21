@@ -7,9 +7,6 @@
 //
 #pragma once
 
-#include <AK/SoundEngine/Common/AkCallback.h>
-#include <AK/SoundEngine/Common/AkSoundEngine.h>
-
 #include "Audio2.h"
 #include "AudParameter.h"
 

@@ -1,17 +1,19 @@
 {
  "PluginInfo": {
-  "Project": "CarbonAudioTest",
   "Platform": "Windows",
   "BasePlatform": "Windows",
-  "Plugins": [
+  "PluginLibs": [
    {
-    "Name": "System",
-    "ID": "11403271"
+    "LibName": "System",
+    "LibId": "11403271",
+    "Type": "AudioDevice"
    },
    {
-    "Name": "No Output",
-    "ID": "11862023"
+    "LibName": "No Output",
+    "LibId": "11862023",
+    "Type": "AudioDevice"
    }
-  ]
+  ],
+  "FileHash": "{71F42CD2-2880-BF0B-D154-F41540A353AF}"
  }
 }

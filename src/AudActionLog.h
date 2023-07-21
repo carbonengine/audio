@@ -7,8 +7,6 @@
 #include <string>
 #include <queue>
 
-#include <AK/SoundEngine/Common/AkTypes.h>
-
 struct AudActionRecord
 {
 	virtual ~AudActionRecord(){};

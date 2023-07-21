@@ -3,34 +3,24 @@
 
 #include <string>
 
-#include <AK/AkWwiseSDKVersion.h>
-#include <AK/MusicEngine/Common/AkMusicEngine.h> // Interactive music engine
-#include <AK/SoundEngine/Common/AkSoundEngine.h> // Sound Engine
-#include <AK/SoundEngine/Common/AkMemoryMgr.h> // Memory Manager
-#include <AK/SoundEngine/Common/AkStreamMgrModule.h> // AkDeviceSettings, AkStreamMgrSettings
-#include <AK/SoundEngine/Common/IAkStreamMgr.h> // Streaming Manager
-#include <AK/SoundEngine/Common/AkModule.h> // Default memory and stream managers
-#include <AK/SoundEngine/Common/AkQueryParameters.h>
-#include <AK/Tools/Common/AkPlatformFuncs.h>
-
-#include <AK/Plugin/AkVorbisDecoderFactory.h>
 #include <AK/Plugin/AkCompressorFXFactory.h>
-#include <AK/Plugin/AkSilenceSourceFactory.h>
-#include <AK/Plugin/AkParametricEQFXFactory.h>
-#include <AK/Plugin/AkRoomVerbFXFactory.h>
-#include <AK/Plugin/AkMatrixReverbFXFactory.h>
-#include <AK/Plugin/AkMeterFXFactory.h>
-#include <AK/Plugin/AkPeakLimiterFXFactory.h>
+#include <AK/Plugin/AkConvolutionReverbFXFactory.h>
+#include <AK/Plugin/AkDelayFXFactory.h>
 #include <AK/Plugin/AkFlangerFXFactory.h>
 #include <AK/Plugin/AkGuitarDistortionFXFactory.h>
 #include <AK/Plugin/AkHarmonizerFXFactory.h>
-#include <AK/Plugin/AkConvolutionReverbFXFactory.h>
-#include <AK/Plugin/AkTremoloFXFactory.h>
-#include <AK/Plugin/AkStereoDelayFXFactory.h>
+#include <AK/Plugin/AkMatrixReverbFXFactory.h>
+#include <AK/Plugin/AkMeterFXFactory.h>
+#include <AK/Plugin/AkParametricEQFXFactory.h>
+#include <AK/Plugin/AkPeakLimiterFXFactory.h>
 #include <AK/Plugin/AkPitchShifterFXFactory.h>
-#include <AK/Plugin/AkDelayFXFactory.h>
-#include <AK/Plugin/MasteringSuiteFXFactory.h>
 #include <AK/Plugin/AkRecorderFXFactory.h>
+#include <AK/Plugin/AkRoomVerbFXFactory.h>
+#include <AK/Plugin/AkSilenceSourceFactory.h>
+#include <AK/Plugin/AkStereoDelayFXFactory.h>
+#include <AK/Plugin/AkTremoloFXFactory.h>
+#include <AK/Plugin/AkVorbisDecoderFactory.h>
+#include <AK/Plugin/MasteringSuiteFXFactory.h>
 
 #include "tbb/parallel_for.h"
 
@@ -242,7 +232,7 @@ void AudManager::OnTick( Be::Time realTime, Be::Time simTime, void* cookie )
 
 bool AudManager::InitLowLevel()
 {
-	CCP_LOG( "Audio Backend: Wwise(R) SDK Version %S. %s", g_wwiseVersion.c_str(), AK_WWISESDK_COPYRIGHT );
+	CCP_LOG_CH(s_ch, "Audio Backend: Wwise(R) SDK Version %s. %s", g_wwiseVersion.c_str(), AK_WWISESDK_COPYRIGHT );
 	//-----------------------------------------------------------------------------
 	// Create and initialize an instance of the default memory manager. Note
 	// that you can override the default memory manager with your own. Refer
@@ -286,6 +276,11 @@ bool AudManager::InitLowLevel()
 	if( m_lowLevelIO.SetBasePath( m_settings->m_baseSoundBankPath.c_str() ) != AK_Success )
 	{
 		CCP_LOGERR( "Soundbank path %S is invalid and soundbanks will not be loaded correctly.", m_settings->m_baseSoundBankPath.c_str() );
+		return false;
+	}
+	if ( m_lowLevelIO.SetAudioSrcPath(m_settings->m_audioSrcPath.c_str() ) != AK_Success )
+	{
+		CCP_LOGERR( "Audio source path %s is invalid and .wem files will not be loaded correctly.", m_settings->m_audioSrcPath.c_str() );
 		return false;
 	}
 	if( AK::StreamMgr::SetCurrentLanguage( m_settings->m_soundbankLanguage.c_str() ) != AK_Success )
@@ -528,7 +523,6 @@ void AudManager::Disable()
 		return;
 	}
 
-	StopAll();
 	for( auto it = m_gameObjects.begin(); it != m_gameObjects.end(); ++it )
 	{
 		( *it->second ).Cull();

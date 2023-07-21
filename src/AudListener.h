@@ -9,8 +9,6 @@
 #ifndef _AUDLISTENER_H_
 #define _AUDLISTENER_H_
 
-#include <AK/SoundEngine/Common/AkTypes.h>
-
 #include <IBluePlacementObserver.h>
 
 #include "Audio2.h"

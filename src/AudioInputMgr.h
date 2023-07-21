@@ -10,9 +10,6 @@
 
 #include "IAudioInputMgr.h"
 
-#include <AK/SoundEngine/Common/AkTypes.h>
-#include <AK/SoundEngine/Common/IAkPlugin.h>
-
 // ------------------------------------------------------------------------
 // Description:
 //   A class to interface with Wwises Audio Input plugin.

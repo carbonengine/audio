@@ -12,8 +12,6 @@
 #ifndef VECTOR3_H
 #define VECTOR3_H
 
-#include <AK/SoundEngine/Common/AkTypes.h>
-
 inline AkVector MakeAkVector( const Vector3& v )
 {
 	AkVector r;
