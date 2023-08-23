@@ -58,6 +58,8 @@ ccp_add_library(CarbonAudio SHARED
 	src/AudGameObjResource_Blue.cpp
 	src/stdafx.cpp
 	src/AudListener.cpp
+	src/AudioCurveSetDriver.cpp
+	src/AudioCurveSetDriver_Blue.cpp
 	src/AudioInputMgr.cpp
 	src/AudioInputMgr_Blue.cpp
 	src/AudStaticDataRepository.cpp
@@ -77,6 +79,7 @@ target_sources(CarbonAudio PRIVATE
 	src/AudEventKey.h
 	src/AudGameObjResource.h
 	src/Audio2.h
+	src/AudioCurveSetDriver.h
 	src/AudioInputMgr.h
 	src/AudListener.h
 	src/AudManager.h
