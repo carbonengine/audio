@@ -2,7 +2,7 @@
 
 #include "Audio2.h"
 #include "AudioCurveSetDriver.h"
-
+#include "AudManager.h"
 
 
 AudioCurveSetDriver::AudioCurveSetDriver( IRoot* lockobj ) :
@@ -16,52 +16,52 @@ AudioCurveSetDriver::AudioCurveSetDriver( IRoot* lockobj ) :
 
 AudioCurveSetDriver::~AudioCurveSetDriver()
 {
+	g_audioManager->UnregisterParameter(m_audioParameterName);
 }
 
-
-bool AudioCurveSetDriver::OnModified( Be::Var* val )
+bool AudioCurveSetDriver::Initialize()
 {
-	GetAudioParameterValue( m_audioParameterName );
+	if( m_audioParameterName != L"" )
+	{
+		g_audioManager->RegisterParameter( m_audioParameterName );
+	}
+	
 	return true;
 }
 
 double AudioCurveSetDriver::GetCurveSetTime( double time )
 {
-	if( IsValid() )
+	CCP_STATS_ZONE( __FUNCTION__ );
+	const MonitoredParameterInfo* parameterInfo = g_audioManager->GetParameterInfo( m_audioParameterName );
+	if( parameterInfo != nullptr )
 	{
-		return GetAudioParameterValue( m_audioParameterName );
+		m_audioParameterValue = parameterInfo->parameterValue;
+		m_audioParameterExists = parameterInfo->parameterExists;
 	}
-	else
+
+	if( !IsValid() )
 	{
 		if( m_fallbackCurve != nullptr )
 		{
 			return m_fallbackCurve->GetValueAt( time );
 		}
 	}
-	return 0.0;
-}
-
-float AudioCurveSetDriver::GetAudioParameterValue( const std::wstring audioParameterName ) 
-{
-	if (g_audioEnabled)
-	{
-		AK::SoundEngine::Query::RTPCValue_type rtpcValueType = AK::SoundEngine::Query::RTPCValue_type::RTPCValue_Global;
-		AKRESULT result = AK::SoundEngine::Query::GetRTPCValue(audioParameterName.c_str(), AK_INVALID_GAME_OBJECT, AK_INVALID_PLAYING_ID, m_audioParameterValue, rtpcValueType);
-		if (result == AK_IDNotFound)
-		{
-			m_audioParameterExists = false;
-			return 0.0f;
-		}
-		else
-		{
-			m_audioParameterExists = true;
-		}
-	}
-
 	return m_audioParameterValue;
 }
 
 bool AudioCurveSetDriver::IsValid() const
 {
-	return g_audioEnabled && m_audioParameterExists;
+	return g_audioEnabled && m_audioParameterName != L"" && m_audioParameterExists;
+}
+
+const std::wstring& AudioCurveSetDriver::GetAudioParameterName()
+{
+	return m_audioParameterName;
+}
+
+void AudioCurveSetDriver::SetAudioParameterName( const std::wstring& audioParameterName )
+{
+	g_audioManager->UnregisterParameter( m_audioParameterName );
+	g_audioManager->RegisterParameter( audioParameterName );
+	m_audioParameterName = audioParameterName;
 }

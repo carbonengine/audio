@@ -43,6 +43,8 @@ static void WwiseAssertHook( const char* in_pszExpression, const char* in_pszFil
 	CCP_LOGWARN_CH( s_ch, "Assert expression failed: %s in file %s at line %d", in_pszExpression, in_pszFileName, in_lineNumber );
 }
 
+
+
 AudManager::AudManager( IRoot* lockobj ) :
 	m_tickInterval( 10 ),
 	m_asyncOpen( true ),
@@ -57,7 +59,8 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_visibleWeight( m_cullingInitSettings.visibleWeight ),
 	m_playing2DWeight( m_cullingInitSettings.playing2DWeight ),
 	m_playingVitalSoundWeight( m_cullingInitSettings.playingVitalSoundWeight ),
-	m_weightMultiplier( m_cullingInitSettings.weightMultiplier )
+	m_weightMultiplier( m_cullingInitSettings.weightMultiplier ),
+	m_moniteredParametersMapMutex( "AudManager", "m_monitoredParametersMapMutex" )
 {}
 
 AudManager::~AudManager()
@@ -319,11 +322,24 @@ bool AudManager::InitSound()
 	AK::SoundEngine::GetDefaultInitSettings( initSettings );
 	AK::SoundEngine::GetDefaultPlatformInitSettings( platformInitSettings );
 	initSettings.uCommandQueueSize = 512000;
+#ifndef AK_OPTIMIZED
+	initSettings.fnProfilerPopTimer = AkPlatformProfilerPopTimer;
+	initSettings.fnProfilerPushTimer = AkPlatformProfilerPushTimer;
+	initSettings.fnProfilerPostMarker = AkPlatformProfilerPostmarker;
+#endif
 
-	if( AK::SoundEngine::Init( &initSettings, &platformInitSettings ) != AK_Success )
+	if (!AK::SoundEngine::IsInitialized())
 	{
-		CCP_LOGERR( "Failed to initialize Wwise Sound Engine" );
-		return false;
+		if (AK::SoundEngine::Init(&initSettings, &platformInitSettings) != AK_Success)
+		{
+			CCP_LOGERR("Failed to initialize Wwise Sound Engine");
+			return false;
+		}
+
+		if (AK::SoundEngine::RegisterGlobalCallback(GlobalCallbackEndRender, AkGlobalCallbackLocation_EndRender, this) != AK_Success)
+		{
+			CCP_LOGERR("Registering for Wwise's end render callback failed! Audio will continue to function correctly except audio driven visuals will not work!");
+		}
 	}
 
 	return true;
@@ -581,6 +597,17 @@ std::vector<std::wstring> AudManager::GetLoadedSoundBanks()
 	return m_loadedBanks;
 }
 
+const MonitoredParameterInfo* AudManager::GetParameterInfo(const std::wstring& audioParameterName)
+{
+	CcpAutoMutex lock( m_moniteredParametersMapMutex );
+	auto it = m_monitoredParametersMap.find( audioParameterName );
+	if ( it != m_monitoredParametersMap.end() )
+	{
+		return &it->second;
+	}
+	return nullptr;
+}
+
 //-----------------------------------------------------
 // Description:
 //   Retrieve the given emitter if it is currently alive. 
@@ -615,6 +642,26 @@ void AudManager::StopAll()
 	}
 }
 
+void AudManager::RegisterParameter(const std::wstring& audioParameterName)
+{
+	CcpAutoMutex lock( m_moniteredParametersMapMutex );
+	m_monitoredParametersMap[audioParameterName].watchers++;
+}
+
+void AudManager::UnregisterParameter(const std::wstring& audioParameterName)
+{
+	CcpAutoMutex lock( m_moniteredParametersMapMutex );
+	auto it = m_monitoredParametersMap.find( audioParameterName );
+	if (it != m_monitoredParametersMap.end())
+	{
+		it->second.watchers -= 1;
+		if (it->second.watchers == 0)
+		{
+			m_monitoredParametersMap.erase(it);
+		}
+	}
+}
+
 void AudManager::RegisterGameObject( AkGameObjectID emitterID, AudGameObjResource* emitter )
 {
 	m_gameObjects.push_back( std::make_pair( emitterID, emitter ) );
@@ -630,6 +677,22 @@ void AudManager::UnregisterGameObject( AkGameObjectID emitterID )
 			} 
 		), end( m_gameObjects ) 
 	);
+}
+
+void AudManager::UpdateMonitoredParameters()
+{
+	CCP_STATS_ZONE( __FUNCTION__ );
+	CcpAutoMutex lock(m_moniteredParametersMapMutex);
+	for (auto it = m_monitoredParametersMap.begin(); it != m_monitoredParametersMap.end(); ++it)
+	{
+		AK::SoundEngine::Query::RTPCValue_type rtpcValueType = AK::SoundEngine::Query::RTPCValue_type::RTPCValue_Global;
+		float audioParameterValue = 0.0f;
+		AKRESULT result = AK::SoundEngine::Query::GetRTPCValue( it->first.c_str(), AK_INVALID_GAME_OBJECT, AK_INVALID_PLAYING_ID, audioParameterValue, rtpcValueType);
+		bool audioParameterExists = ( result == AK_Success ) ? true : false;
+
+		it->second.parameterValue = audioParameterValue;
+		it->second.parameterExists = audioParameterExists;
+	}
 }
 
 void AudManager::DisableAudioCulling()
@@ -814,4 +877,41 @@ AudListenerPtr AudManager::GetListener()
 std::vector<std::pair<AkGameObjectID, AudGameObjResource*>> AudManager::GetPrioritizedAudioEmitters()
 {
 	return m_gameObjects;
+}
+
+// Callback from Wwise to use for tracking performance of the sound engine. This is called when a timer stops. Only applicable in Profile or Debug Wwise flavors.
+void AudManager::AkPlatformProfilerPopTimer()
+{
+	tmTaskletLeave(TMCM_CPP);
+}
+
+// Callback from Wwise to use for tracking performance of the sound engine. This is called when special Wwise events happen like voice starvation. 
+void AudManager::AkPlatformProfilerPostmarker(AkPluginID in_uPluginID, const char* in_pszMarkerName)
+{
+	if (in_uPluginID != AKMAKECLASSID(AkPluginTypeNone, AKCOMPANYID_AUDIOKINETIC, AK::ProfilingID::AudioFrameBoundary))
+	{
+		tmTaskletEnter(TMCM_CPP, in_pszMarkerName);
+		tmTaskletLeave(TMCM_CPP);
+	}
+}
+
+// Callback from Wwise to use for tracking performance of the sound engine. This is called when a timer starts. Only applicable in Profile or Debug Wwise flavors.
+void AudManager::AkPlatformProfilerPushTimer(AkPluginID in_uPluginID, const char* in_pszZoneName)
+{
+	tmTaskletEnter(TMCM_CPP, in_pszZoneName);
+}
+
+//-----------------------------------------------------
+// Description:
+//	 A callback that is registered during initialization to be called every Wwise tick after it is done rendering
+//   audio. This particular function takes care of updating monitored audio parameters because any AK::SoundEngine::Query 
+//   functions from the Wwise SDK should only be called after rendering is done to minmize CPU spikes. This info 
+//   is taken from https://www.audiokinetic.com/en/library/edge/?source=SDK&id=goingfurther_eventmgrthread.html.
+// Arguments
+//   in_pCookie - A pointer to this AudManager instance.
+//-----------------------------------------------------
+void AudManager::GlobalCallbackEndRender(AK::IAkGlobalPluginContext* in_pContext, AkGlobalCallbackLocation in_eLocation, void* in_pCookie)
+{
+	AudManager* audManager = static_cast<AudManager*>(in_pCookie);
+	audManager->UpdateMonitoredParameters();
 }

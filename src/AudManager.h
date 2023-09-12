@@ -28,6 +28,13 @@ BLUE_DECLARE_INTERFACE( IAudActionLog );
 typedef std::vector<std::wstring> BankVector;
 typedef std::vector<AkGameObjectID> GameObjIDVector;
 
+struct MonitoredParameterInfo
+{
+	float parameterValue = 0.0f;
+	bool parameterExists = false;
+	int watchers = 0;
+};
+
 // ------------------------------------------------------------------------
 // Description:
 //   Handles initialization/termination of the audio engine as well as any
@@ -56,6 +63,7 @@ public:
 		float usedEmitterWeight = 50.0f; // The weight applied to a game object if it has been used in any way.
 	};
 
+
 	EXPOSE_TO_BLUE();
 
 	// IBlueEvents
@@ -71,8 +79,12 @@ public:
 	AudGameObjResource* GetAudioEmitter( AkGameObjectID emitterID );
 	// Retreive a vector of all currently loaded soundbanks.
 	std::vector<std::wstring> GetLoadedSoundBanks();
+	// Get info about a monitored audio parameter
+	const MonitoredParameterInfo* GetParameterInfo( const std::wstring& audioParameterName );
 	// Load the given soundbank into memory if it can be found on disk. 
 	bool LoadBank( const std::wstring& name );
+	// Register an audio parameter to be monitored. 
+	void RegisterParameter( const std::wstring& audioParameterName );
 	// Register a game object for the audio manager to keep track of.
 	void RegisterGameObject( AkGameObjectID emitterID, AudGameObjResource* emitter );
 	// Set an RTPC not associated with a specific game object.
@@ -85,6 +97,8 @@ public:
 	void UpdateSettings( AudSettings * settings );
 	// Unload the given soundbank from memory if it is currently loaded.
 	void UnloadBank( const std::wstring& name );
+	// Unregister an audio parameter from being monitored. 
+	void UnregisterParameter( const std::wstring& audioParameterName );
 	// Unregister a game object from the audio manager.
 	void UnregisterGameObject( AkGameObjectID emitterID );
 	// Disable audio culling and wake up all game objects so they can be managed only by Wwise.
@@ -123,6 +137,13 @@ public:
 	void SetVisibleWeight( float weight );
 	void SetWaitingOneShotWeight( float weight );
 
+	// Wwise Callbacks
+	static void AkPlatformProfilerPopTimer();
+	static void AkPlatformProfilerPostmarker( AkPluginID in_uPluginID, const char* in_pszMarkerName );
+	static void AkPlatformProfilerPushTimer( AkPluginID in_uPluginID, const char* in_pszZoneName );
+	// Callback that is called right after audio is rendered every Wwise tick.
+	static void GlobalCallbackEndRender( AK::IAkGlobalPluginContext* in_pContext, AkGlobalCallbackLocation in_eLocation, void* in_pCookie );
+
 	// Debug
 	std::vector<std::pair<AkGameObjectID, AudGameObjResource*>> GetPrioritizedAudioEmitters();
 	
@@ -147,6 +168,8 @@ private:
 	AudListenerPtr GetListener();
 	// Run the culling algorithm on all game objects.
 	void CullAudio();
+	// Update all watched audio parameters with their current values in Wwise (if they exist).
+	void UpdateMonitoredParameters();
 
 	friend class AudGameObjResource;
 
@@ -164,6 +187,10 @@ private:
 	AudSettingsPtr m_settings;
 	const CullingInitSettings m_cullingInitSettings;
 	int m_tickInterval;
+
+	// A map of all currently monitored audio parameters in Wwise (e.g. RTPCs)
+	std::map<std::wstring, MonitoredParameterInfo> m_monitoredParametersMap;
+	CcpMutex m_moniteredParametersMapMutex;
 
 	// Audio culling settings
 	bool m_audioCullingEnabled;

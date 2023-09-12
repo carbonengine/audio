@@ -9,7 +9,7 @@ const Be::ClassInfo* AudioCurveSetDriver::ExposeToBlue()
 {
 	EXPOSURE_BEGIN( AudioCurveSetDriver, "" )
 		MAP_INTERFACE( ICurveSetDriver )
-		MAP_INTERFACE( INotify )
+		MAP_INTERFACE( IInitialize )
 
 		MAP_ATTRIBUTE
 		(
@@ -18,12 +18,18 @@ const Be::ClassInfo* AudioCurveSetDriver::ExposeToBlue()
 			"Name of this curve set driver.",
 			Be::READWRITE | Be::PERSIST 
 		)
-		MAP_ATTRIBUTE
-		(
+		MAP_ATTRIBUTE(
 			"audioParameterName",
 			m_audioParameterName,
-			"The audio parameter whose value you want to drive the curve set. NOTE: Only works with global audio parameters!",
-			Be::READWRITE | Be::PERSIST | Be::NOTIFY 
+			"This exists only to make sure m_audioParameterName can be persisted in a .red file, the MAP_PROPERTY on the same property takes care of getting/setting this.",
+			Be::PERSISTONLY
+		)
+		MAP_PROPERTY
+		(
+			"audioParameterName",
+			GetAudioParameterName,
+			SetAudioParameterName,
+			"The audio parameter whose value you want to drive the curve set. NOTE: Only works with global audio parameters!"
 		)
 		MAP_ATTRIBUTE
 		(
