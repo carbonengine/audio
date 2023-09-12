@@ -43,18 +43,22 @@ double AudioCurveSetDriver::GetCurveSetTime( double time )
 
 float AudioCurveSetDriver::GetAudioParameterValue( const std::wstring audioParameterName ) 
 {
-	AK::SoundEngine::Query::RTPCValue_type rtpcValueType = AK::SoundEngine::Query::RTPCValue_type::RTPCValue_Global;
-	AKRESULT result = AK::SoundEngine::Query::GetRTPCValue( audioParameterName.c_str(), AK_INVALID_GAME_OBJECT, AK_INVALID_PLAYING_ID, m_audioParameterValue, rtpcValueType );
-	if( result == AK_IDNotFound )
+	if (g_audioEnabled)
 	{
-		m_audioParameterExists = false;
-		return 0.0f;
+		AK::SoundEngine::Query::RTPCValue_type rtpcValueType = AK::SoundEngine::Query::RTPCValue_type::RTPCValue_Global;
+		AKRESULT result = AK::SoundEngine::Query::GetRTPCValue(audioParameterName.c_str(), AK_INVALID_GAME_OBJECT, AK_INVALID_PLAYING_ID, m_audioParameterValue, rtpcValueType);
+		if (result == AK_IDNotFound)
+		{
+			m_audioParameterExists = false;
+			return 0.0f;
+		}
+		else
+		{
+			m_audioParameterExists = true;
+		}
 	}
-	else
-	{
-		m_audioParameterExists = true;
-		return m_audioParameterValue;
-	}
+
+	return m_audioParameterValue;
 }
 
 bool AudioCurveSetDriver::IsValid() const
