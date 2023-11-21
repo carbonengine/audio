@@ -211,6 +211,10 @@ object PublishToPerforce : BuildType({
     templates(AbsoluteId("Carbon_PublishToPerforceTemplate"))
     name = "Publish to Perforce"
 
+    enablePersonalBuilds = false
+    type = BuildTypeSettings.Type.DEPLOYMENT
+    maxRunningBuilds = 1
+
     params {
         param("perforce_path_to_publish_into", "vendor/github.com/ccpgames/carbon-audio")
         param("project", "eve-frontier")
