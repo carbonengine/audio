@@ -227,12 +227,12 @@ if(WIN32)
 
     add_custom_command(TARGET CarbonAudio POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${BRANCH_ROOT_DIR}/vendor/CCP/Exefile/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/Exefile.exe"
+            "${Exefile_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/Exefile.exe"
             $<TARGET_FILE_DIR:CarbonAudio>
             )
     add_custom_command(TARGET CarbonAudio POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${BRANCH_ROOT_DIR}/vendor/CCP/ExefileConsole/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/ExefileConsole.exe"
+            "${ExefileConsole_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/ExefileConsole.exe"
             $<TARGET_FILE_DIR:CarbonAudio>
             )
 
