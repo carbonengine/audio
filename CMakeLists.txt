@@ -202,45 +202,25 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     )
 endif()
 
-if(WIN32)
-    include(CTest)
-	message(STATUS ${IntelTBB_ROOT})
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+	option(BUILD_TESTING "Build tests. Enabled by default." ON)
+	include(CTest)
 
-    # Copy required binaries for CarbonAudio tests into CarbonAudioTest folder 
-    add_custom_command(TARGET CarbonAudio POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${Python_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/python27.dll"
-            $<TARGET_FILE_DIR:CarbonAudio>
-            )
+	if(WIN32)
+		set(INTERPRETER_EXTENSION "bat")
+	elseif(APPLE)
+		set(INTERPRETER_EXTENSION "sh")
+	else()
+		message(FATAL_ERROR "CarbonAudio does not support platform specified.")
+	endif()
 
-    add_custom_command(TARGET CarbonAudio POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-			"${Blue_DIR}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/$<IF:$<CONFIG:Release>,blue.dll,blue_$<LOWER_CASE:$<CONFIG>>.dll>"
-            $<TARGET_FILE_DIR:CarbonAudio>
-            )
-
-    add_custom_command(TARGET CarbonAudio POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-			"${IntelTBB_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/tbb12.dll"
-            $<TARGET_FILE_DIR:CarbonAudio>
-            )
-
-    add_custom_command(TARGET CarbonAudio POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${BRANCH_ROOT_DIR}/vendor/CCP/Exefile/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/Exefile.exe"
-            $<TARGET_FILE_DIR:CarbonAudio>
-            )
-    add_custom_command(TARGET CarbonAudio POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${BRANCH_ROOT_DIR}/vendor/CCP/ExefileConsole/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/ExefileConsole.exe"
-            $<TARGET_FILE_DIR:CarbonAudio>
-            )
-
-    # Discover and run Python tests as a single CTest test.
-    set(EXEFILE_CONSOLE_EXECUTABLE "$<TARGET_FILE_DIR:CarbonAudio>/ExefileConsole.exe")
-    add_test(NAME PythonTests
-            COMMAND ${EXEFILE_CONSOLE_EXECUTABLE} /buildflavor=$<LOWER_CASE:$<CONFIG>> /lib=${BRANCH_ROOT_DIR}/carbon/common/stdlib\\\;${CMAKE_CURRENT_SOURCE_DIR}/python /bin=$<TARGET_FILE_DIR:CarbonAudio> /py -m unittest discover -v .
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python/audio2/test
-            COMMAND_EXPAND_LISTS
-            )
+	# Discover and run Python tests as a single CTest test.
+	set(PYTHON_INTERPRETER_PATH "${BRANCH_ROOT_DIR}/eve/client/pythonInterpreter.${INTERPRETER_EXTENSION}")
+	set(PYTHON_TEST PythonTests)
+	add_test(NAME ${PYTHON_TEST}
+			COMMAND ${PYTHON_INTERPRETER_PATH} run_tests.py
+			WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python/audio2/test
+			COMMAND_EXPAND_LISTS
+	)
+	set_tests_properties(${PYTHON_TEST} PROPERTIES ENVIRONMENT "PYTHONPATH=$<TARGET_FILE_DIR:CarbonAudio>;BUILDFLAVOR=$<LOWER_CASE:$<CONFIG>>")
 endif()
