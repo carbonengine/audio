@@ -102,8 +102,8 @@ object DebugMacOS : BuildType({
     params {
         param("env.SENTRY_CLI_DEBUG_SYMBOL_TYPE", "dsym")
         param("env.CMAKE_CONFIG_TYPE", "Debug")
-        param("eve_branch_path", "//eve-frontier/branches/%eve_branch_type%/%eve_branch_shortname%/")
-        param("eve_branch_shortname", "FRONTIER-CARBON-TO-GITHUB")
+        param("eve_branch_path", "//eve/branches/%eve_branch_type%/%eve_branch_shortname%/")
+        param("eve_branch_shortname", "CARBON-TO-GITHUB")
     }
 
     vcs {
@@ -130,8 +130,8 @@ object DebugWindows : BuildType({
     params {
         param("env.SENTRY_CLI_DEBUG_SYMBOL_TYPE", "pdb")
         param("env.CMAKE_CONFIG_TYPE", "Debug")
-        param("eve_branch_path", "//eve-frontier/branches/%eve_branch_type%/%eve_branch_shortname%/")
-        param("eve_branch_shortname", "FRONTIER-CARBON-TO-GITHUB")
+        param("eve_branch_path", "//eve/branches/%eve_branch_type%/%eve_branch_shortname%/")
+        param("eve_branch_shortname", "CARBON-TO-GITHUB")
     }
 
     vcs {
@@ -158,8 +158,8 @@ object InternalMacOS : BuildType({
     params {
         param("env.SENTRY_CLI_DEBUG_SYMBOL_TYPE", "dsym")
         param("env.CMAKE_CONFIG_TYPE", "Internal")
-        param("eve_branch_path", "//eve-frontier/branches/%eve_branch_type%/%eve_branch_shortname%/")
-        param("eve_branch_shortname", "FRONTIER-CARBON-TO-GITHUB")
+        param("eve_branch_path", "//eve/branches/%eve_branch_type%/%eve_branch_shortname%/")
+        param("eve_branch_shortname", "CARBON-TO-GITHUB")
     }
 
     vcs {
@@ -186,8 +186,8 @@ object InternalWindows : BuildType({
     params {
         param("env.SENTRY_CLI_DEBUG_SYMBOL_TYPE", "pdb")
         param("env.CMAKE_CONFIG_TYPE", "Internal")
-        param("eve_branch_path", "//eve-frontier/branches/%eve_branch_type%/%eve_branch_shortname%/")
-        param("eve_branch_shortname", "FRONTIER-CARBON-TO-GITHUB")
+        param("eve_branch_path", "//eve/branches/%eve_branch_type%/%eve_branch_shortname%/")
+        param("eve_branch_shortname", "CARBON-TO-GITHUB")
     }
 
     vcs {
@@ -217,8 +217,8 @@ object PublishToPerforce : BuildType({
 
     params {
         param("perforce_path_to_publish_into", "vendor/github.com/ccpgames/carbon-audio")
-        param("project", "eve-frontier")
-        param("eve_branch_shortname", "FRONTIER-CARBON-TO-GITHUB")
+        param("project", "eve")
+        param("eve_branch_shortname", "CARBON-TO-GITHUB")
     }
 
     dependencies {
@@ -314,8 +314,8 @@ object ReleaseMacOS : BuildType({
     params {
         param("env.SENTRY_CLI_DEBUG_SYMBOL_TYPE", "dsym")
         param("env.CMAKE_CONFIG_TYPE", "Release")
-        param("eve_branch_path", "//eve-frontier/branches/%eve_branch_type%/%eve_branch_shortname%/")
-        param("eve_branch_shortname", "FRONTIER-CARBON-TO-GITHUB")
+        param("eve_branch_path", "//eve/branches/%eve_branch_type%/%eve_branch_shortname%/")
+        param("eve_branch_shortname", "CARBON-TO-GITHUB")
     }
 
     vcs {
@@ -342,8 +342,8 @@ object ReleaseWindows : BuildType({
     params {
         param("env.SENTRY_CLI_DEBUG_SYMBOL_TYPE", "pdb")
         param("env.CMAKE_CONFIG_TYPE", "Release")
-        param("eve_branch_path", "//eve-frontier/branches/%eve_branch_type%/%eve_branch_shortname%/")
-        param("eve_branch_shortname", "FRONTIER-CARBON-TO-GITHUB")
+        param("eve_branch_path", "//eve/branches/%eve_branch_type%/%eve_branch_shortname%/")
+        param("eve_branch_shortname", "CARBON-TO-GITHUB")
     }
 
     vcs {
@@ -370,8 +370,8 @@ object TrinityDevMacOS : BuildType({
     params {
         param("env.SENTRY_CLI_DEBUG_SYMBOL_TYPE", "dsym")
         param("env.CMAKE_CONFIG_TYPE", "TrinityDev")
-        param("eve_branch_path", "//eve-frontier/branches/%eve_branch_type%/%eve_branch_shortname%/")
-        param("eve_branch_shortname", "FRONTIER-CARBON-TO-GITHUB")
+        param("eve_branch_path", "//eve/branches/%eve_branch_type%/%eve_branch_shortname%/")
+        param("eve_branch_shortname", "CARBON-TO-GITHUB")
     }
 
     vcs {
@@ -398,8 +398,8 @@ object TrinityDevWindows : BuildType({
     params {
         param("env.SENTRY_CLI_DEBUG_SYMBOL_TYPE", "pdb")
         param("env.CMAKE_CONFIG_TYPE", "TrinityDev")
-        param("eve_branch_path", "//eve-frontier/branches/%eve_branch_type%/%eve_branch_shortname%/")
-        param("eve_branch_shortname", "FRONTIER-CARBON-TO-GITHUB")
+        param("eve_branch_path", "//eve/branches/%eve_branch_type%/%eve_branch_shortname%/")
+        param("eve_branch_shortname", "CARBON-TO-GITHUB")
     }
 
     vcs {
