@@ -160,8 +160,8 @@ endif()
 
 set_target_properties(CarbonAudio PROPERTIES OUTPUT_NAME "_audio2")
 
-target_compile_definitions(CarbonAudio 
-	PRIVATE 
+target_compile_definitions(CarbonAudio
+	PRIVATE
 		BLUE_OVERRIDE_VECTOR_TYPES=1
 		TBB_ENABLED=1
 )
@@ -174,7 +174,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     # Install rule to ensure that our runtime and linker files are in the expected, platform-specific folders
     install(
         TARGETS CarbonAudio
-        EXPORT carbonAudioTargets 
+        EXPORT carbonAudioTargets
         CONFIGURATIONS ${CMAKE_CONFIGURATION_TYPES}
         ARCHIVE DESTINATION lib/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/
         LIBRARY DESTINATION lib/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/
@@ -186,7 +186,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     # Install a custom CarbonAudioConfig.cmake file, since as a dependency we are
     # basically a header-only library, not something that gets linked against.
     configure_ccp_vendor_config_file(
-        TARGET CarbonAudio 
+        TARGET CarbonAudio
         DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/CarbonAudioConfig.cmake"
         DEPENDENCIES ""
     )
@@ -202,25 +202,45 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     )
 endif()
 
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-	option(BUILD_TESTING "Build tests. Enabled by default." ON)
-	include(CTest)
+if (WIN32)
+    include(CTest)
+    message(STATUS ${IntelTBB_ROOT})
 
-	if(WIN32)
-		set(INTERPRETER_EXTENSION "bat")
-	elseif(APPLE)
-		set(INTERPRETER_EXTENSION "sh")
-	else()
-		message(FATAL_ERROR "CarbonAudio does not support platform specified.")
-	endif()
+    # Copy required binaries for CarbonAudio tests into CarbonAudioTest folder
+    add_custom_command(TARGET CarbonAudio POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${Python_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/python27.dll"
+            $<TARGET_FILE_DIR:CarbonAudio>
+    )
 
-	# Discover and run Python tests as a single CTest test.
-	set(PYTHON_INTERPRETER_PATH "${BRANCH_ROOT_DIR}/eve/client/pythonInterpreter.${INTERPRETER_EXTENSION}")
-	set(PYTHON_TEST PythonTests)
-	add_test(NAME ${PYTHON_TEST}
-			COMMAND ${PYTHON_INTERPRETER_PATH} run_tests.py
-			WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python/audio2/test
-			COMMAND_EXPAND_LISTS
-	)
-	set_tests_properties(${PYTHON_TEST} PROPERTIES ENVIRONMENT "PYTHONPATH=$<TARGET_FILE_DIR:CarbonAudio>;BUILDFLAVOR=$<LOWER_CASE:$<CONFIG>>")
+    add_custom_command(TARGET CarbonAudio POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${Blue_DIR}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/$<IF:$<CONFIG:Release>,blue.dll,blue_$<LOWER_CASE:$<CONFIG>>.dll>"
+            $<TARGET_FILE_DIR:CarbonAudio>
+    )
+
+    add_custom_command(TARGET CarbonAudio POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${IntelTBB_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/tbb12.dll"
+            $<TARGET_FILE_DIR:CarbonAudio>
+    )
+
+    add_custom_command(TARGET CarbonAudio POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${Exefile_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/Exefile.exe"
+            $<TARGET_FILE_DIR:CarbonAudio>
+    )
+    add_custom_command(TARGET CarbonAudio POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${ExefileConsole_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/ExefileConsole.exe"
+            $<TARGET_FILE_DIR:CarbonAudio>
+    )
+
+    # Discover and run Python tests as a single CTest test.
+    set(EXEFILE_CONSOLE_EXECUTABLE "$<TARGET_FILE_DIR:CarbonAudio>/ExefileConsole.exe")
+    add_test(NAME PythonTests
+            COMMAND ${EXEFILE_CONSOLE_EXECUTABLE} /buildflavor=$<LOWER_CASE:$<CONFIG>> /lib=${BRANCH_ROOT_DIR}/carbon/common/stdlib\\\;${CMAKE_CURRENT_SOURCE_DIR}/python /bin=$<TARGET_FILE_DIR:CarbonAudio> /py -m unittest discover -v .
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python/audio2/test
+            COMMAND_EXPAND_LISTS
+    )
 endif()

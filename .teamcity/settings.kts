@@ -31,7 +31,6 @@ project {
     description = "Carbon's audio engine"
 
     vcsRoot(AudioScripts)
-    vcsRoot(CarbonAudioGithub)
 
     buildType(AudioScriptsPyPi)
     buildType(DebugWindows)
@@ -108,13 +107,13 @@ object DebugMacOS : BuildType({
     }
 
     vcs {
-        root(CarbonAudioGithub)
+        root(DslContext.settingsRoot)
     }
 
     triggers {
         vcs {
             id = "TRIGGER_193"
-            triggerRules = "+:root=${CarbonAudioGithub.id}:."
+            triggerRules = "+:root=${DslContext.settingsRoot.id}:."
 
         }
     }
@@ -136,13 +135,13 @@ object DebugWindows : BuildType({
     }
 
     vcs {
-        root(CarbonAudioGithub)
+        root(DslContext.settingsRoot)
     }
 
     triggers {
         vcs {
             id = "TRIGGER_193"
-            triggerRules = "+:root=${CarbonAudioGithub.id}:."
+            triggerRules = "+:root=${DslContext.settingsRoot.id}:."
 
         }
     }
@@ -164,13 +163,13 @@ object InternalMacOS : BuildType({
     }
 
     vcs {
-        root(CarbonAudioGithub)
+        root(DslContext.settingsRoot)
     }
 
     triggers {
         vcs {
             id = "TRIGGER_193"
-            triggerRules = "+:root=${CarbonAudioGithub.id}:."
+            triggerRules = "+:root=${DslContext.settingsRoot.id}:."
 
         }
     }
@@ -192,13 +191,13 @@ object InternalWindows : BuildType({
     }
 
     vcs {
-        root(CarbonAudioGithub)
+        root(DslContext.settingsRoot)
     }
 
     triggers {
         vcs {
             id = "TRIGGER_193"
-            triggerRules = "+:root=${CarbonAudioGithub.id}:."
+            triggerRules = "+:root=${DslContext.settingsRoot.id}:."
 
         }
     }
@@ -304,7 +303,7 @@ object PublishToPerforce : BuildType({
             }
         }
     }
-    
+
     disableSettings("RUNNER_851")
 })
 
@@ -320,13 +319,13 @@ object ReleaseMacOS : BuildType({
     }
 
     vcs {
-        root(CarbonAudioGithub)
+        root(DslContext.settingsRoot)
     }
 
     triggers {
         vcs {
             id = "TRIGGER_193"
-            triggerRules = "+:root=${CarbonAudioGithub.id}:."
+            triggerRules = "+:root=${DslContext.settingsRoot.id}:."
 
         }
     }
@@ -348,13 +347,13 @@ object ReleaseWindows : BuildType({
     }
 
     vcs {
-        root(CarbonAudioGithub)
+        root(DslContext.settingsRoot)
     }
 
     triggers {
         vcs {
             id = "TRIGGER_193"
-            triggerRules = "+:root=${CarbonAudioGithub.id}:."
+            triggerRules = "+:root=${DslContext.settingsRoot.id}:."
 
         }
     }
@@ -376,13 +375,13 @@ object TrinityDevMacOS : BuildType({
     }
 
     vcs {
-        root(CarbonAudioGithub)
+        root(DslContext.settingsRoot)
     }
 
     triggers {
         vcs {
             id = "TRIGGER_193"
-            triggerRules = "+:root=${CarbonAudioGithub.id}:."
+            triggerRules = "+:root=${DslContext.settingsRoot.id}:."
 
         }
     }
@@ -404,13 +403,13 @@ object TrinityDevWindows : BuildType({
     }
 
     vcs {
-        root(CarbonAudioGithub)
+        root(DslContext.settingsRoot)
     }
 
     triggers {
         vcs {
             id = "TRIGGER_193"
-            triggerRules = "+:root=${CarbonAudioGithub.id}:."
+            triggerRules = "+:root=${DslContext.settingsRoot.id}:."
 
         }
     }
@@ -430,19 +429,4 @@ object AudioScripts : GitVcsRoot({
     }
     param("oauthProviderId", "PROJECT_EXT_71")
     param("tokenType", "undefined")
-})
-
-object CarbonAudioGithub : GitVcsRoot({
-    name = "carbon-audio Github"
-    url = "git@github.com:ccpgames/carbon-audio"
-    branch = "refs/heads/main"
-    branchSpec = """
-        +:refs/tags/*
-        +:refs/heads/*
-    """.trimIndent()
-    useTagsAsBranches = true
-    checkoutPolicy = GitVcsRoot.AgentCheckoutPolicy.NO_MIRRORS
-    authMethod = uploadedKey {
-        uploadedKey = "ccpgames-evetech GitHub"
-    }
 })
