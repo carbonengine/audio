@@ -158,6 +158,7 @@ object InternalMacOS : BuildType({
     name = "Internal macOS"
 
     params {
+        param("eve_branch_type", "snapshot")
         param("env.SENTRY_CLI_DEBUG_SYMBOL_TYPE", "dsym")
         param("env.CMAKE_CONFIG_TYPE", "Internal")
         param("eve_branch_path", "//eve-frontier/branches/%eve_branch_type%/%eve_branch_shortname%/")
