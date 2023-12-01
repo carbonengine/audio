@@ -100,6 +100,7 @@ object DebugMacOS : BuildType({
     name = "Debug macOS"
 
     params {
+        param("eve_branch_type", "snapshot")
         param("env.SENTRY_CLI_DEBUG_SYMBOL_TYPE", "dsym")
         param("env.CMAKE_CONFIG_TYPE", "Debug")
         param("eve_branch_path", "//eve/branches/%eve_branch_type%/%eve_branch_shortname%/")
