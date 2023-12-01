@@ -104,7 +104,7 @@ object DebugMacOS : BuildType({
         param("env.SENTRY_CLI_DEBUG_SYMBOL_TYPE", "dsym")
         param("env.CMAKE_CONFIG_TYPE", "Debug")
         param("eve_branch_path", "//eve/branches/%eve_branch_type%/%eve_branch_shortname%/")
-        param("eve_branch_shortname", "CARBON-TO-GITHUB")
+        param("eve_branch_shortname", "VS")
     }
 
     vcs {
