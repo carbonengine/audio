@@ -154,13 +154,18 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 		return playingID;
 	}
 
+	// This function relies heavily on static data and cannot function without it
+	if (g_staticDataRepository == nullptr)
+	{
+		return playingID;
+	}
+
 	CcpAutoMutex mutex( m_mutex );
 	m_isUsed = true;
-
 	bool eventUsed = false;
 	std::wstring fullEventName = PrepareEvent( eventName, bypassPrefix );
-	bool eventIsVital = g_staticDataRepository->EventIsVital( fullEventName );
 
+	bool eventIsVital = g_staticDataRepository->EventIsVital( fullEventName );
 	if ( m_culled || !g_audioEnabled )
 	{
 		for ( auto it = m_eventsOnWake.cbegin(); it != m_eventsOnWake.cend();)
