@@ -11,6 +11,12 @@
    {
     "Name": "No Output",
     "ID": "11862023"
+   },
+   {
+    "Name": "Wwise Audio Input",
+    "ID": "13107202",
+    "DLL": "AkAudioInput",
+    "StaticLib": "AkAudioInputSource"
    }
   ]
  }

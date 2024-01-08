@@ -1,29 +1,11 @@
-import json
 import os
 import unittest
 
 import blue
 from audio2.audiomanager import AudioManager
 
-AUDIO_METADATA_FILEPATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "soundbanks", "AudioMetadata.json"))
-SOUNDBANK_FILEPATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "soundbanks"))
-ONE_SHOT_BNK = "TestOneShot.bnk"
-ONE_SHOT_EVENT = "Play_TestOneShot"
-COMMON_BNK = "Common.bnk"
-LOOP_BNK = "TestLoop.bnk"
-LOOP_EVENT = "Play_TestLoop"
-
-
-def GetEventMetadataFromFile():
-    """Get event metadata from file and returns it as a dict. Also converts eventIDs to long in the process."""
-    with open(AUDIO_METADATA_FILEPATH, "r") as f:
-        audioMetadata = json.loads(f.read())
-
-    # eventID's have to be long or else CarbonAudio doesn't correctly grab it.
-    for eventName, eventInfo in audioMetadata.iteritems():
-        eventInfo["eventID"] = long(eventInfo["eventID"])
-
-    return audioMetadata
+from const import SOUNDBANK_FILEPATH
+from utils import GetEventMetadataFromFile
 
 
 class BaseAudio2TestClass(unittest.TestCase):

@@ -18,7 +18,7 @@
    {
     "Id": "592435907",
     "Language": "SFX",
-    "Hash": "2909888888",
+    "Hash": "1012764700",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\TestOneShot",
     "ShortName": "TestOneShot",
     "Path": "TestOneShot.bnk",
@@ -34,7 +34,7 @@
    {
     "Id": "1355168291",
     "Language": "SFX",
-    "Hash": "3690994985",
+    "Hash": "92870250",
     "ObjectPath": "Init",
     "ShortName": "Init",
     "Path": "Init.bnk"
@@ -42,11 +42,16 @@
    {
     "Id": "2395677314",
     "Language": "SFX",
-    "Hash": "774431777",
+    "Hash": "560003489",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\Common",
     "ShortName": "Common",
     "Path": "Common.bnk",
     "IncludedEvents": [
+     {
+      "Id": "2637304785",
+      "Name": "in_game_video_stream_play",
+      "ObjectPath": "\\Events\\Default Work Unit\\in_game_video_stream_play"
+     },
      {
       "Id": "1483003980",
       "Name": "Play_TestLoop",
@@ -62,9 +67,24 @@
     ]
    },
    {
+    "Id": "2536242713",
+    "Language": "SFX",
+    "Hash": "2708987935",
+    "ObjectPath": "\\SoundBanks\\Default Work Unit\\Videoplayer",
+    "ShortName": "Videoplayer",
+    "Path": "Videoplayer.bnk",
+    "GameParameters": [
+     {
+      "Id": "2564084323",
+      "Name": "volume_video",
+      "ObjectPath": "\\Game Parameters\\Default Work Unit\\volume_video"
+     }
+    ]
+   },
+   {
     "Id": "3918824947",
     "Language": "SFX",
-    "Hash": "766794574",
+    "Hash": "148151616",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\TestLoop",
     "ShortName": "TestLoop",
     "Path": "TestLoop.bnk",

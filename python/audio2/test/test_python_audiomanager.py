@@ -3,8 +3,8 @@ import shutil
 import unittest
 
 from audio2.audiomanager import INIT_BANK
-from base_test_class import COMMON_BNK, LOOP_BNK, ONE_SHOT_BNK, SOUNDBANK_FILEPATH
 from base_test_class import BaseAudio2TestClass
+from const import COMMON_BNK, LOOP_BNK, ONE_SHOT_BNK, SOUNDBANK_FILEPATH
 from utils import run_in_tasklet
 
 class TestPythonAudioManager(BaseAudio2TestClass):

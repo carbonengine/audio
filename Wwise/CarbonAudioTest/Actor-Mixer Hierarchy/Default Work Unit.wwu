@@ -160,6 +160,74 @@
 								<ActiveSource Name="commerce_bleeps_02" ID="{8007F860-A6F0-419A-B174-6B62281068EA}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
+						<Sound Name="video input" ID="{62D81D13-01C1-4E7E-935E-CBD777300DDD}" ShortID="383460095">
+							<Comment>This exists purely to test the videoplayer functionality from carbon-videoplayer. This is needed for IAudioInputMgr to be able to stream audio from videos.</Comment>
+							<PropertyList>
+								<Property Name="IgnoreParentMaxSoundInstance" Type="bool" Value="True"/>
+								<Property Name="MaxSoundPerInstance" Type="int16">
+									<ValueList>
+										<Value>1</Value>
+									</ValueList>
+								</Property>
+								<Property Name="OverridePositioning" Type="bool" Value="True"/>
+								<Property Name="UseMaxSoundPerInstance" Type="bool">
+									<ValueList>
+										<Value>True</Value>
+									</ValueList>
+								</Property>
+								<Property Name="Volume" Type="Real64">
+									<ValueList>
+										<Value>-3.2</Value>
+									</ValueList>
+									<RTPCList>
+										<RTPC Name="" ID="{07C52AE3-222E-4F8E-9BDB-81472D4DEEA2}" ShortID="95705521">
+											<ReferenceList>
+												<Reference Name="ControlInput">
+													<ObjectRef Name="volume_video" ID="{4E4CD371-990E-4B84-8520-2C2078CC707A}" WorkUnitID="{6536BB86-3205-49BF-A301-8AF136E6E7C1}"/>
+												</Reference>
+											</ReferenceList>
+											<Curve Name="" ID="{8437CD4E-CCE3-4553-A35B-673BE3BAF724}">
+												<PropertyList>
+													<Property Name="Flags" Type="int32" Value="3"/>
+												</PropertyList>
+												<PointList>
+													<Point>
+														<XPos>0</XPos>
+														<YPos>-200</YPos>
+														<Flags>5</Flags>
+													</Point>
+													<Point>
+														<XPos>1</XPos>
+														<YPos>12.11097</YPos>
+														<Flags>37</Flags>
+													</Point>
+												</PointList>
+											</Curve>
+										</RTPC>
+									</RTPCList>
+								</Property>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{9C20F434-C2E0-4332-91CA-4EA3F4523348}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{6BF5E114-60A4-4E30-8AD9-FD2431628A04}"/>
+								</Reference>
+							</ReferenceList>
+							<ChildrenList>
+								<SourcePlugin Name="Wwise Audio Input" ID="{ABD531EF-98BC-45F3-8A7D-46126712B87C}" ShortID="457485585" PluginName="Wwise Audio Input" CompanyID="0" PluginID="200">
+									<PropertyList>
+										<Property Name="AudioInputGain" Type="Real32" Value="0"/>
+									</PropertyList>
+									<Language>SFX</Language>
+								</SourcePlugin>
+							</ChildrenList>
+							<ObjectLists/>
+							<ActiveSourceList>
+								<ActiveSource Name="Wwise Audio Input" ID="{ABD531EF-98BC-45F3-8A7D-46126712B87C}" Platform="Linked"/>
+							</ActiveSourceList>
+						</Sound>
 					</ChildrenList>
 					<ObjectLists/>
 				</ActorMixer>

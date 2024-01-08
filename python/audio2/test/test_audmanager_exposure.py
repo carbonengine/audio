@@ -5,8 +5,8 @@ import audio2
 import blue
 
 from audio2.audiomanager import INIT_BANK
-from base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK
 from base_test_class import GetEventMetadataFromFile
+from const import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK
 from utils import run_in_tasklet
 
 class TestAudManagerExposure(unittest.TestCase):

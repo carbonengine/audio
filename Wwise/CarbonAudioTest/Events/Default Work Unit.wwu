@@ -25,6 +25,17 @@
 						</Action>
 					</ChildrenList>
 				</Event>
+				<Event Name="in_game_video_stream_play" ID="{05C77151-1E43-4988-B427-F742D715C785}">
+					<ChildrenList>
+						<Action Name="" ID="{B27DE534-98F7-41BF-B69A-7A8F4D6FD481}" ShortID="869361120">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="video input" ID="{62D81D13-01C1-4E7E-935E-CBD777300DDD}" WorkUnitID="{C3703968-666D-47C8-9715-ABD3DA334A25}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
 			</ChildrenList>
 		</WorkUnit>
 	</Events>

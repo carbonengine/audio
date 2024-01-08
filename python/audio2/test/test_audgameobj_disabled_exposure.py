@@ -1,6 +1,6 @@
 import audio2
-from base_test_class import LOOP_BNK, LOOP_EVENT
 from base_test_class import BaseAudio2TestClass
+from const import LOOP_BNK, LOOP_EVENT
 from utils import run_in_tasklet
 
 
