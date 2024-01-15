@@ -228,6 +228,29 @@
 								<ActiveSource Name="Wwise Audio Input" ID="{ABD531EF-98BC-45F3-8A7D-46126712B87C}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
+						<Sound Name="TestLoadBank" ID="{2D6F4FAA-C9AB-4E9B-A6C5-FFF4624928C7}" ShortID="287522386">
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{9C20F434-C2E0-4332-91CA-4EA3F4523348}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{6BF5E114-60A4-4E30-8AD9-FD2431628A04}"/>
+								</Reference>
+							</ReferenceList>
+							<ChildrenList>
+								<AudioFileSource Name="static1" ID="{783CC915-785A-4BA9-9658-6F0D48B2C702}">
+									<Language>SFX</Language>
+									<AudioFile>static1.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="375618080"/>
+									</MediaIDList>
+								</AudioFileSource>
+							</ChildrenList>
+							<ObjectLists/>
+							<ActiveSourceList>
+								<ActiveSource Name="static1" ID="{783CC915-785A-4BA9-9658-6F0D48B2C702}" Platform="Linked"/>
+							</ActiveSourceList>
+						</Sound>
 					</ChildrenList>
 					<ObjectLists/>
 				</ActorMixer>

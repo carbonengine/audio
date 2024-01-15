@@ -3,7 +3,7 @@ import blue
 
 from base_test_class import BaseAudio2TestClass
 from const import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK, ONE_SHOT_EVENT
-from utils import run_in_tasklet
+from utils import PumpOSWithTimeout
 
 
 class TestAudUIPlayerExposure(BaseAudio2TestClass):
@@ -14,11 +14,11 @@ class TestAudUIPlayerExposure(BaseAudio2TestClass):
 
     def setUp(self):
         self.audioManager.Enable()
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
 
     def tearDown(self):
         self.audioManager.Disable()
 
-    @run_in_tasklet
     def test_auduiplayer_creation(self):
         """Test that only one instance of AudUIPlayer can be created and it has an ID of 2."""
         uiPlayer = audio2.GetUIPlayer()
@@ -26,14 +26,12 @@ class TestAudUIPlayerExposure(BaseAudio2TestClass):
         self.assertEquals(uiPlayer, audio2.GetUIPlayer())
         self.assertEquals(uiPlayer.ID, 2)
 
-    @run_in_tasklet
     def test_auduiplayer_sendevent(self):
         """Test that SendEvent is properly exposed through AudUIPlayer."""
         uiPlayer = audio2.GetUIPlayer()
         playingID = uiPlayer.SendEvent(LOOP_EVENT)
         self.assertTrue(playingID > 0)
 
-    @run_in_tasklet
     def test_auduiplayer_sendeventwithcallback(self):
         """Test that AudUIPlayer::SendEventWithCallback works as expected."""
         def callback(event):
@@ -43,13 +41,12 @@ class TestAudUIPlayerExposure(BaseAudio2TestClass):
         uiPlayer.eventSenderCallback = callback
         uiPlayer.SendEventWithCallback(LOOP_EVENT)
 
-    @run_in_tasklet
     def test_auduiplayer_postdialogueevent(self):
         """Test that AudUIPlayer::PostDialogueEvent allows you to get the current playing position of an event."""
         uiPlayer = audio2.GetUIPlayer()
         playingID = uiPlayer.PostDialogueEvent(ONE_SHOT_EVENT)
         self.assertTrue(playingID > 0)
-        blue.pyos.synchro.SleepWallclock(0.5)
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
         playPosition = uiPlayer.GetEventPlayPosition(playingID)
         self.assertTrue(playPosition > 0)
 

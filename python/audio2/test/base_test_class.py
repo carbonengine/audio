@@ -23,3 +23,7 @@ class BaseAudio2TestClass(unittest.TestCase):
     def Initialize(self, defaultSoundBanks=[]):
         audioMetadata = GetEventMetadataFromFile()
         self.audioManager.Initialize(audioMetadata, defaultSoundBanks=defaultSoundBanks)
+
+    def alwaysTrueBoolean(self):
+        '''This can be used with the PumpOsWithTimeout function to simply have it pump a few times.'''
+        return True

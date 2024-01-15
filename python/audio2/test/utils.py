@@ -1,15 +1,14 @@
 import json
+
+import blue
 from const import AUDIO_METADATA_FILEPATH
 
-def run_in_tasklet(func):
-    def wrapped(*args, **kwargs):
-        import stackless
-        stackless.tasklet(func)(*args, **kwargs)
-        assert(stackless.runcount == 2)
-        stackless.run()
-        if (stackless.runcount != 1):
-            raise RuntimeError("Leaking tasklets")
-    return wrapped
+def PumpOSWithTimeout(booleanFunc, maxTries=10):
+    numTries = 0
+    while( numTries < maxTries and booleanFunc() ):
+        blue.pyos.synchro.SleepWallclock(100)
+        blue.os.Pump()
+        numTries += 1
 
 
 def GetEventMetadataFromFile():

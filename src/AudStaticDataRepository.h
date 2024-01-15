@@ -38,7 +38,9 @@ public:
     // Whether the given event is a 2D sound or not.
     bool EventIsVital( const std::wstring& eventName ) const;
     // Whether an event stops another event.
-    bool EventIsStopped( const std::wstring& eventPotentiallyStopped, const std::wstring& eventPotentiallyStopping) const;
+	bool EventIsStopped( const std::wstring& eventPotentiallyStopped, const std::wstring& eventPotentiallyStopping ) const;
+    // Return a list of the SoundBanks the given event needs to be able to be played
+    std::vector<std::wstring> SoundBanksRequiredForEvent( const std::wstring& eventName ) const;
 protected:
     struct EventData
     {
@@ -49,15 +51,21 @@ protected:
         bool is2D;
 		bool isVital;
 		std::vector<std::wstring> eventsStoppedBy; 
+        std::vector<std::wstring> soundbanks;
     };
     bool m_initialized;
     // Helper function to get sound data for a given event name.
     const EventData* GetEventData( const std::wstring& eventName ) const;
     // Helper function to get a key from a python dictionary. Logs and error if the key lookup fails.
     PyObject* GetPyObjectFromDictionary( PyObject* dict, const char* key, const std::wstring* eventName ) const;
+    // Helper function to generate a vector of wstrings from a Python list
+    std::vector<std::wstring> GenerateVectorFromPythonList( PyObject* pyList );
 
     // Generated map from wwiseEvents static data given to AudStaticDataRepository when it is initalized.
     std::unordered_map<std::wstring, EventData> m_events;
+
+    // A mutex to be used for manipulating the m_events attribute
+	CcpMutex mutable m_eventsMutex;
 };
 
 TYPEDEF_BLUECLASS( AudStaticDataRepository );

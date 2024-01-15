@@ -5,11 +5,11 @@
   "SchemaVersion": "12",
   "SoundbankVersion": "140",
   "RootPaths": {
-   "ProjectRoot": "C:\\Users\\eric\\code\\carbon-audio\\Wwise\\CarbonAudioTest\\",
-   "SourceFilesRoot": "C:\\Users\\eric\\code\\carbon-audio\\Wwise\\CarbonAudioTest\\.cache\\Windows\\",
-   "SoundBanksRoot": "C:\\Users\\eric\\code\\carbon-audio\\python\\audio2\\test\\soundbanks\\",
+   "ProjectRoot": "C:\\Users\\eric\\code\\carbon-audio-2\\Wwise\\CarbonAudioTest\\",
+   "SourceFilesRoot": "C:\\Users\\eric\\code\\carbon-audio-2\\Wwise\\CarbonAudioTest\\.cache\\Windows\\",
+   "SoundBanksRoot": "C:\\Users\\eric\\code\\carbon-audio-2\\python\\audio2\\test\\soundbanks\\",
    "ExternalSourcesInputFile": "",
-   "ExternalSourcesOutputRoot": "C:\\Users\\eric\\code\\carbon-audio\\Wwise\\CarbonAudioTest\\GeneratedSoundBanks\\Windows"
+   "ExternalSourcesOutputRoot": "C:\\Users\\eric\\code\\carbon-audio-2\\Wwise\\CarbonAudioTest\\GeneratedSoundBanks\\Windows"
   },
   "DialogueEvents": [],
   "StreamedFiles": [],
@@ -18,7 +18,7 @@
    {
     "Id": "592435907",
     "Language": "SFX",
-    "Hash": "1012764700",
+    "Hash": "535791031",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\TestOneShot",
     "ShortName": "TestOneShot",
     "Path": "TestOneShot.bnk",
@@ -28,6 +28,30 @@
       "Language": "SFX",
       "ShortName": "commerce_bleeps_02.wav",
       "Path": "SFX\\commerce_bleeps_02_10C4C929.wem"
+     }
+    ]
+   },
+   {
+    "Id": "831522427",
+    "Language": "SFX",
+    "Hash": "2267446647",
+    "ObjectPath": "\\SoundBanks\\Default Work Unit\\TestLoadBank",
+    "ShortName": "TestLoadBank",
+    "Path": "TestLoadBank.bnk",
+    "IncludedEvents": [
+     {
+      "Id": "1805356984",
+      "Name": "Play_TestLoadBank",
+      "ObjectPath": "\\Events\\Default Work Unit\\Play_TestLoadBank",
+      "MaxAttenuation": "100."
+     }
+    ],
+    "IncludedMemoryFiles": [
+     {
+      "Id": "375618080",
+      "Language": "SFX",
+      "ShortName": "static1.wav",
+      "Path": "SFX\\static1_10C4C929.wem"
      }
     ]
    },
@@ -42,7 +66,7 @@
    {
     "Id": "2395677314",
     "Language": "SFX",
-    "Hash": "560003489",
+    "Hash": "1903289877",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\Common",
     "ShortName": "Common",
     "Path": "Common.bnk",
@@ -51,6 +75,12 @@
       "Id": "2637304785",
       "Name": "in_game_video_stream_play",
       "ObjectPath": "\\Events\\Default Work Unit\\in_game_video_stream_play"
+     },
+     {
+      "Id": "1805356984",
+      "Name": "Play_TestLoadBank",
+      "ObjectPath": "\\Events\\Default Work Unit\\Play_TestLoadBank",
+      "MaxAttenuation": "100."
      },
      {
       "Id": "1483003980",
@@ -84,7 +114,7 @@
    {
     "Id": "3918824947",
     "Language": "SFX",
-    "Hash": "148151616",
+    "Hash": "3796051580",
     "ObjectPath": "\\SoundBanks\\Default Work Unit\\TestLoop",
     "ShortName": "TestLoop",
     "Path": "TestLoop.bnk",

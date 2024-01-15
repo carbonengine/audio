@@ -36,6 +36,17 @@
 						</Action>
 					</ChildrenList>
 				</Event>
+				<Event Name="Play_TestLoadBank" ID="{6500D57B-AC06-46A2-B04C-9044C022A763}">
+					<ChildrenList>
+						<Action Name="" ID="{CC4AB6A6-CEDF-48B1-9970-74F6BE1E0B61}" ShortID="557102701">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="TestLoadBank" ID="{2D6F4FAA-C9AB-4E9B-A6C5-FFF4624928C7}" WorkUnitID="{C3703968-666D-47C8-9715-ABD3DA334A25}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
 			</ChildrenList>
 		</WorkUnit>
 	</Events>

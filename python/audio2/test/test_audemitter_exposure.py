@@ -1,7 +1,6 @@
 import audio2
 
 from base_test_class import BaseAudio2TestClass
-from utils import run_in_tasklet
 
 
 class TestAudEmitterExposure(BaseAudio2TestClass):
@@ -11,7 +10,6 @@ class TestAudEmitterExposure(BaseAudio2TestClass):
         self.audioManager.Enable()
 
 
-    @run_in_tasklet        
     def test_audioemitter_debug(self):
         """Test that all methods having to do with debugging in AudEmitter work."""
         self.emitter.SetPosition((1,0,0), (0,1,0), (0,50,0))
