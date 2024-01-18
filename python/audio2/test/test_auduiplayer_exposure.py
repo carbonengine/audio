@@ -3,6 +3,7 @@ import blue
 
 from base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK, ONE_SHOT_EVENT
 from base_test_class import BaseAudio2TestClass
+from utils import PumpOSWithTimeout
 
 
 class TestAudUIPlayerExposure(BaseAudio2TestClass):
@@ -13,6 +14,7 @@ class TestAudUIPlayerExposure(BaseAudio2TestClass):
 
     def setUp(self):
         self.audioManager.Enable()
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
 
     def tearDown(self):
         self.audioManager.Disable()
@@ -44,7 +46,7 @@ class TestAudUIPlayerExposure(BaseAudio2TestClass):
         uiPlayer = audio2.GetUIPlayer()
         playingID = uiPlayer.PostDialogueEvent(ONE_SHOT_EVENT)
         self.assertTrue(playingID > 0)
-        blue.pyos.synchro.SleepWallclock(1000)
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
         playPosition = uiPlayer.GetEventPlayPosition(playingID)
         self.assertTrue(playPosition > 0)
 

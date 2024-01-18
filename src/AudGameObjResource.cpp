@@ -187,38 +187,61 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 	}
 	else if ( m_gameObjRegistered )
 	{
-		// Set up callback info so that we get a callback when every event is finished playing.
-		AkUInt32 inFlags = AK_EndOfEvent | additionalFlags;
-		AkCallbackFunc callback = &AudGameObjResource::PropagateWwiseCallback;
+		bool soundbanksLoaded = true;
 
-		unsigned int eventID = g_staticDataRepository->GetEventID( fullEventName );
-		playingID = AK::SoundEngine::PostEvent( eventID, m_ID, inFlags, callback, this );
-		g_audioManager->LogPostEvent( m_ID, playingID, eventID, fullEventName );
-
-		if ( playingID != AK_INVALID_PLAYING_ID )
-		{
-			m_playingEvents.insert({playingID, fullEventName});
-			eventUsed = true;
-		}
-		else
-		{
-			CCP_LOGERR( "Failed to send event to Wwise: %S", fullEventName.c_str() );
-		}
-		}
-
-		if( eventUsed )
-		{
-			UpdateMaxAttenuationRadiusForEvent( fullEventName );
-			if( g_staticDataRepository->EventIs2D( fullEventName ) )
+		std::vector<std::wstring> eventSoundBanks = g_staticDataRepository->SoundBanksRequiredForEvent( fullEventName );
+		for( auto it = eventSoundBanks.begin(); it != eventSoundBanks.end(); ++it )
+		{	
+			SoundBankStatus soundBankStatus = g_audioManager->GetSoundBankStatus( *it );
+			if( soundBankStatus != SoundBankStatus::LOADED )
 			{
-				m_playing2DSound = true;
-			}
-
-			if( eventIsVital )
-			{
-				m_playingVitalSound = true;
+				soundbanksLoaded = false;
+				if( soundBankStatus == SoundBankStatus::LOADING )
+				{
+					g_audioManager->RegisterEventAfterSoundBankLoad( *it, fullEventName, this );
+				}
+				else
+				{
+					CCP_LOGERR( "Wwise event %S will not be sent to Wwise because SoundBank %S is currently not loaded.", fullEventName.c_str(), it->c_str() );
+				}
+				break;
 			}
 		}
+
+		if( soundbanksLoaded )
+		{
+			// Set up callback info so that we get a callback when every event is finished playing.
+			AkUInt32 inFlags = AK_EndOfEvent | additionalFlags;
+			AkCallbackFunc callback = &AudGameObjResource::PropagateWwiseCallback;
+			unsigned int eventID = g_staticDataRepository->GetEventID( fullEventName );
+			playingID = AK::SoundEngine::PostEvent( eventID, m_ID, inFlags, callback, this );
+			g_audioManager->LogPostEvent( m_ID, playingID, eventID, fullEventName );
+
+			if ( playingID != AK_INVALID_PLAYING_ID )
+			{
+				m_playingEvents.insert({playingID, fullEventName});
+				eventUsed = true;
+			}
+			else
+			{
+				CCP_LOGERR( "Wwise event %S failed to play even though its SoundBanks are loaded.", fullEventName.c_str() );
+			}
+		}
+	}
+
+	if( eventUsed )
+	{
+		UpdateMaxAttenuationRadiusForEvent( fullEventName );
+		if( g_staticDataRepository->EventIs2D( fullEventName ) )
+		{
+			m_playing2DSound = true;
+		}
+
+		if( eventIsVital )
+		{
+			m_playingVitalSound = true;
+		}
+	}
 	return playingID;
 }
 

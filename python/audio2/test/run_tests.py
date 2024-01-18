@@ -30,4 +30,3 @@ if __name__ == "__main__":
 
     if not test_result.wasSuccessful():
         sys.exit(1)
-

@@ -87,8 +87,6 @@ class AudioManager(object):
         banksBeforeReload = self.manager.GetLoadedSoundBanks()
         self.Disable()
         self.Enable(soundBanksToLoad=banksBeforeReload)
-        banksAfterReload = self.manager.GetLoadedSoundBanks()
-        return list(set(banksBeforeReload).difference(set(banksAfterReload)))
 
     def RemoveAndUnloadDefaultSoundBank(self, soundBankName):
         """Remove a SoundBank as a default SoundBank and unload it."""
@@ -133,8 +131,8 @@ class AudioManager(object):
         excludedBanks = set(self.defaultSoundBanks).union(set(banksToLoad))
         banksToUnload = loadedBanks.difference(excludedBanks) 
         banksToLoad = set(banksToLoad).difference(loadedBanks) 
+        self.LoadSoundBanks(banksToLoad)
         self.UnloadSoundBanks(banksToUnload)
-        return self.LoadSoundBanks(banksToLoad)
 
     def UnloadSoundBanks(self, soundBanksToUnload):
         """Unload all SoundBanks except for the init SoundBank and default SoundBanks."""

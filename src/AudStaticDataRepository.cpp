@@ -3,7 +3,8 @@
 
 AudStaticDataRepository::AudStaticDataRepository( IRoot* lockobj ) : 
     m_events( {} ),
-    m_initialized( false )
+    m_initialized( false ),
+    m_eventsMutex( "AudStaticDataRepository", "m_eventsMutex" )
 {}
 
 bool AudStaticDataRepository::IsInitialized() const
@@ -13,6 +14,7 @@ bool AudStaticDataRepository::IsInitialized() const
 
 unsigned int AudStaticDataRepository::GetEventID( const std::wstring& eventName ) const
 {
+    CcpAutoMutex mutex( m_eventsMutex );
     const EventData* eventData = GetEventData( eventName );
     if ( eventData != nullptr )
     {
@@ -23,6 +25,7 @@ unsigned int AudStaticDataRepository::GetEventID( const std::wstring& eventName 
 
 bool AudStaticDataRepository::EventIsLoop( const std::wstring& eventName ) const
 {
+    CcpAutoMutex mutex( m_eventsMutex );
     const EventData* eventData = GetEventData( eventName );
     if ( eventData != nullptr )
     {
@@ -33,6 +36,7 @@ bool AudStaticDataRepository::EventIsLoop( const std::wstring& eventName ) const
 
 float AudStaticDataRepository::GetEventRadiusSq( const std::wstring& eventName ) const
 {
+    CcpAutoMutex mutex( m_eventsMutex );
     const EventData* eventData = GetEventData( eventName );
     if ( eventData != nullptr )
     {
@@ -44,6 +48,7 @@ float AudStaticDataRepository::GetEventRadiusSq( const std::wstring& eventName )
 
 bool AudStaticDataRepository::EventIs2D( const std::wstring& eventName ) const
 {
+    CcpAutoMutex mutex( m_eventsMutex );
     const EventData* eventData = GetEventData( eventName );
     if ( eventData != nullptr )
     {
@@ -54,6 +59,7 @@ bool AudStaticDataRepository::EventIs2D( const std::wstring& eventName ) const
 
 bool AudStaticDataRepository::EventIsVital( const std::wstring& eventName ) const
 {
+    CcpAutoMutex mutex( m_eventsMutex );
     const EventData* eventData = GetEventData( eventName );
     if ( eventData != nullptr )
     {
@@ -74,6 +80,7 @@ bool AudStaticDataRepository::EventIsVital( const std::wstring& eventName ) cons
 //-----------------------------------------------------
 bool AudStaticDataRepository::EventIsStopped( const std::wstring& eventPotentiallyStopped, const std::wstring& eventPotentiallyStopping ) const
 {
+    CcpAutoMutex mutex( m_eventsMutex );
     const EventData* eventData = GetEventData( eventPotentiallyStopped );
     if ( eventData != nullptr )
     {
@@ -84,6 +91,17 @@ bool AudStaticDataRepository::EventIsStopped( const std::wstring& eventPotential
         }
     }
     return false;
+}
+
+std::vector<std::wstring> AudStaticDataRepository::SoundBanksRequiredForEvent( const std::wstring& eventName ) const
+{
+    CcpAutoMutex mutex( m_eventsMutex );
+    const EventData* eventData = GetEventData( eventName );
+    if ( eventData != nullptr )
+    {
+		return eventData->soundbanks;	
+    }
+    return std::vector<std::wstring>();
 }
 
 //-----------------------------------------------------------------------------
@@ -102,6 +120,7 @@ void AudStaticDataRepository::Initialize( PyObject* wwiseEvents )
     PyObject *key, *value = NULL;
     Py_ssize_t pos = 0;
 
+    CcpAutoMutex mutex( m_eventsMutex );
     while ( PyDict_Next( wwiseEvents, &pos, &key, &value ) )
     {
         std::string eventNameC = PyString_AsString( key );
@@ -157,21 +176,11 @@ void AudStaticDataRepository::Initialize( PyObject* wwiseEvents )
             }
         }
 
-        std::vector<std::wstring> eventsStoppedBy = std::vector<std::wstring>();
         PyObject* eventsStoppedByObj = GetPyObjectFromDictionary( value, "eventsStoppedBy", &eventName );
-        if ( eventsStoppedByObj != nullptr )
-        {
-            if ( PyList_CheckExact( eventsStoppedByObj ) )
-            {
-				const unsigned int listLength = (unsigned int)PyList_GET_SIZE( eventsStoppedByObj );
-		        for( unsigned int i=0; i<listLength; i++ )
-				{
-					std::string eventNameC = PyString_AsString( PyList_GetItem( eventsStoppedByObj, i ) );
-					std::wstring eventName = static_cast<const wchar_t*>( CA2W( eventNameC.c_str() ) );
-					eventsStoppedBy.push_back( eventName );
-                }
-            }
-        }
+        std::vector<std::wstring> eventsStoppedBy = GenerateVectorFromPythonList( eventsStoppedByObj );
+
+        PyObject* soundbanksObj = GetPyObjectFromDictionary( value, "soundbanks", &eventName );
+        std::vector<std::wstring> soundbanks = GenerateVectorFromPythonList( soundbanksObj );
 
         EventData eventData = {
             eventName,
@@ -181,6 +190,7 @@ void AudStaticDataRepository::Initialize( PyObject* wwiseEvents )
             is2D,
             isVital,
             eventsStoppedBy,
+            soundbanks
         };
         m_events[eventName] = eventData;
     }
@@ -204,10 +214,31 @@ PyObject* AudStaticDataRepository::GetPyObjectFromDictionary( PyObject* dict, co
 
 const AudStaticDataRepository::EventData* AudStaticDataRepository::GetEventData( const std::wstring& eventName ) const
 {
+    CcpAutoMutex mutex( m_eventsMutex );
     auto it = m_events.find( eventName );
     if ( it != m_events.end() )
     {
-        return &it->second;
+        return &((*it).second);
     }
     return nullptr;
+}
+
+std::vector<std::wstring> AudStaticDataRepository::GenerateVectorFromPythonList(PyObject* pyList)
+{
+    std::vector<std::wstring> newVector = std::vector<std::wstring>();
+	if ( pyList != nullptr )
+	{
+		if ( PyList_CheckExact( pyList ) )
+		{
+			const unsigned int listLength = (unsigned int)PyList_GET_SIZE( pyList );
+			for( unsigned int i=0; i<listLength; i++ )
+			{
+				std::string valueC = PyString_AsString( PyList_GetItem( pyList, i ) );
+				std::wstring value = static_cast<const wchar_t*>( CA2W( valueC.c_str() ) );
+				newVector.push_back( value );
+			}
+		}
+	}
+
+    return newVector;
 }

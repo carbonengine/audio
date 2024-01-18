@@ -7,6 +7,7 @@ import blue
 from audio2.audiomanager import INIT_BANK
 from base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK
 from base_test_class import GetEventMetadataFromFile
+from utils import PumpOSWithTimeout
 
 class TestAudManagerExposure(unittest.TestCase):
     @classmethod
@@ -24,8 +25,16 @@ class TestAudManagerExposure(unittest.TestCase):
         cls.staticDataRepository.Initialize(GetEventMetadataFromFile())
         cls.audioManager.DisableAudioCulling()
 
+    def loadedSoundBanksAreEmpty(self):
+        return self.audioManager.GetLoadedSoundBanks() == []
+
+    def alwaysTrueBoolean(self):
+        '''This can be used with the PumpOsWithTimeout function to simply have it pump a few times.'''
+        return True
+
     def setUp(self):
         self.audioManager.Enable([])
+        PumpOSWithTimeout(self.loadedSoundBanksAreEmpty) 
 
     def tearDown(self):
         self.audioManager.Disable()
@@ -35,37 +44,41 @@ class TestAudManagerExposure(unittest.TestCase):
         # Test while audmanager is enabled
 
         # Test loading legit soundbank
-        legitimateBank = self.audioManager.LoadBank(INIT_BANK)
-        self.assertTrue(legitimateBank)
+        self.audioManager.LoadBank(ONE_SHOT_BNK)
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
+        self.assertEquals(set(self.audioManager.GetLoadedSoundBanks()), set([INIT_BANK, ONE_SHOT_BNK])) # Init.bnk always gets loaded when you Enable Carbon Audio
 
-        # Test loading an already loaded soundbank should return True
-        self.assertTrue(self.audioManager.LoadBank(INIT_BANK))
-        self.assertEquals(len(self.audioManager.GetLoadedSoundBanks()), 1)
+        # Test loading an already loaded soundbank does nothing 
+        self.audioManager.LoadBank(ONE_SHOT_BNK)
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
+        self.assertEquals(set(self.audioManager.GetLoadedSoundBanks()), set([INIT_BANK, ONE_SHOT_BNK]))
 
         # Test unloading legit soundbank
-        self.audioManager.UnloadBank(INIT_BANK)
-        loadedBanks = self.audioManager.GetLoadedSoundBanks()
-        self.assertEquals(loadedBanks, [])
+        self.audioManager.UnloadBank(ONE_SHOT_BNK)
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
+        self.assertEquals(self.audioManager.GetLoadedSoundBanks(), [INIT_BANK])
 
         # Test clearing soundbanks
-        self.audioManager.LoadBank(INIT_BANK)
         self.audioManager.LoadBank(ONE_SHOT_BNK)
         self.audioManager.LoadBank(LOOP_BNK)
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
         banksBeforeClear = self.audioManager.GetLoadedSoundBanks() 
         self.assertEquals(len(banksBeforeClear), 3)
         self.audioManager.ClearBanks()
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
         banksAfterClear = self.audioManager.GetLoadedSoundBanks() 
         self.assertEquals(banksAfterClear, [])
 
         # Test trying to load a soundbank that doesn't exist
-        illegitimateBank = self.audioManager.LoadBank("FAKE.bnk")
-        self.assertFalse(illegitimateBank)
+        self.audioManager.LoadBank("FAKE.bnk")
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
+        self.assertEquals(self.audioManager.GetLoadedSoundBanks(), [])
 
         # Test with audio disabled
         self.audioManager.Disable()
 
-        legitimateBank = self.audioManager.LoadBank(INIT_BANK)
-        self.assertFalse(legitimateBank)
+        self.audioManager.LoadBank(ONE_SHOT_BNK)
+        self.assertEquals(self.audioManager.GetLoadedSoundBanks(), [])
 
     def test_audmanager_audio_emitters(self):
         """Test that the AudManager keeps track of all audio emitters."""
@@ -78,9 +91,9 @@ class TestAudManagerExposure(unittest.TestCase):
 
     def test_audmanager_stopall(self):
         """Test that AudManager::StopAll works as expected."""
-        self.audioManager.LoadBank(INIT_BANK)
         self.audioManager.LoadBank(COMMON_BNK)
         self.audioManager.LoadBank(LOOP_BNK)
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
         emitter1 = audio2.AudEmitter("emitter1")
         emitter2 = audio2.AudEmitter("emitter2")
 

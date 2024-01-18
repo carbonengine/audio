@@ -24,6 +24,20 @@
 					<ObjectExclusionList/>
 					<GameSyncExclusionList/>
 				</SoundBank>
+				<SoundBank Name="Videoplayer" ID="{AC2BCA79-DFC5-4A36-9ED1-AAA62469B978}">
+					<ObjectInclusionList>
+						<ObjectRef Name="video input" ID="{62D81D13-01C1-4E7E-935E-CBD777300DDD}" WorkUnitID="{C3703968-666D-47C8-9715-ABD3DA334A25}" Origin="Manual" Filter="6"/>
+					</ObjectInclusionList>
+					<ObjectExclusionList/>
+					<GameSyncExclusionList/>
+				</SoundBank>
+				<SoundBank Name="TestLoadBank" ID="{A3202F9A-5FDC-4BCE-8141-6EA716570011}">
+					<ObjectInclusionList>
+						<ObjectRef Name="TestLoadBank" ID="{2D6F4FAA-C9AB-4E9B-A6C5-FFF4624928C7}" WorkUnitID="{C3703968-666D-47C8-9715-ABD3DA334A25}" Origin="Manual" Filter="7"/>
+					</ObjectInclusionList>
+					<ObjectExclusionList/>
+					<GameSyncExclusionList/>
+				</SoundBank>
 			</ChildrenList>
 		</WorkUnit>
 	</SoundBanks>

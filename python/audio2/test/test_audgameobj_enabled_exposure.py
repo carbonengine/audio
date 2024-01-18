@@ -4,6 +4,7 @@ import uthread2
 
 from base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK, ONE_SHOT_EVENT
 from base_test_class import BaseAudio2TestClass
+from utils import PumpOSWithTimeout
 
 
 
@@ -20,6 +21,7 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
         self.emitter = audio2.AudEmitter("emitter1")
         self.emitter.SetPosition((0,0,0), (0,0,0), (0,0,0))
         self.audioManager.Enable()
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
 
     def tearDown(self):
         self.emitter.eventPrefix = ""
@@ -110,6 +112,7 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
 
         # Seek on existing playing ID
         playingID = self.emitter.SendEvent(LOOP_EVENT)
+        blue.pyos.synchro.SleepWallclock(500)
         self.assertTrue(self.emitter.SeekOnEventMs(playingID, 10))
 
     def test_enabled_audgameobjresource_seekoneventpercent(self):
@@ -119,6 +122,7 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
 
         # Seek on existing playing ID
         playingID = self.emitter.SendEvent(LOOP_EVENT)
+        blue.pyos.synchro.SleepWallclock(10)
         self.assertTrue(self.emitter.SeekOnEventPercent(playingID, 0.5))
         self.assertTrue(self.emitter.SeekOnEventPercent(playingID, 5000))
 
@@ -127,6 +131,7 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
         self.emitter.ForceCullingStateChange() # This has to be used instead of Cull() or else this will wake up automatically on the next tick.
         self.emitter.SendEvent(LOOP_EVENT)
         self.emitter.ForceCullingStateChange()
+        blue.pyos.synchro.SleepWallclock(15)
         self.assertTrue(len(self.emitter.GetPlayingEvents()) == 1)
         self.assertTrue(self.emitter.GetPlayingEvents().values()[0] == LOOP_EVENT)
 
@@ -145,7 +150,8 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
         oneShotWindow = float(audio2.GetOrCreateManager().oneShotWindow) # This is in milliseconds
         self.emitter.ForceCullingStateChange() # This has to be used instead of Cull() or else this will wake up automatically on the next tick.
         self.emitter.SendEvent(ONE_SHOT_EVENT)
-        blue.pyos.synchro.SleepWallclock(oneShotWindow + 200.0) # 20.0 has to be used because there is about a 10 ms drift when doing this.
+        blue.pyos.synchro.SleepWallclock(oneShotWindow + 200.0) # 200.0 has to be used because there is about a 10 ms drift when doing this.
         self.emitter.ForceCullingStateChange()
+        blue.pyos.synchro.SleepWallclock(oneShotWindow + 200.0) # 200.0 has to be used because there is about a 10 ms drift when doing this.
         self.assertTrue(len(self.emitter.GetPlayingEvents()) == 0)
-        
+

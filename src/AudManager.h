@@ -28,6 +28,22 @@ BLUE_DECLARE_INTERFACE( IAudActionLog );
 typedef std::vector<std::wstring> BankVector;
 typedef std::vector<AkGameObjectID> GameObjIDVector;
 
+enum class SoundBankStatus
+{
+	LOADING,
+	LOADED,
+	UNLOADING,
+	NOT_LOADED
+};
+
+struct SoundBankInfo 
+{
+	SoundBankStatus soundBankStatus;
+	AkBankID soundBankID;
+	std::wstring soundBankName;
+	std::vector<std::pair<AudGameObjResourcePtr, std::wstring>> waitingEventsAfterLoad;
+};
+
 struct MonitoredParameterInfo
 {
 	float parameterValue = 0.0f;
@@ -78,15 +94,23 @@ public:
 	// Get any game object if it currently exists.
 	AudGameObjResource* GetAudioEmitter( AkGameObjectID emitterID );
 	// Retreive a vector of all currently loaded soundbanks.
-	std::vector<std::wstring> GetLoadedSoundBanks();
+	const std::vector<std::wstring> GetLoadedSoundBanks();
+	// Get the name of a SoundBank given its bank ID 
+	std::wstring GetSoundBankName( const AkBankID bankID );
+	// Get info about currently loaded, loading or unloading SoundBanks.
+	SoundBankStatus GetSoundBankStatus( const AkBankID bankID );
+	// Get info about currently loaded, loading or unloading SoundBanks. Note: lookup by SoundBank name is slower than lookup by bank ID.
+	SoundBankStatus GetSoundBankStatus( const std::wstring& soundBankName );
+	// Asynchronosly request to load the given soundbank into memory if it can be found on disk. 
+	void LoadBank( const std::wstring& name );
 	// Get info about a monitored audio parameter
 	const MonitoredParameterInfo* GetParameterInfo( const std::wstring& audioParameterName );
-	// Load the given soundbank into memory if it can be found on disk. 
-	bool LoadBank( const std::wstring& name );
 	// Register an audio parameter to be monitored. 
 	void RegisterParameter( const std::wstring& audioParameterName );
 	// Register a game object for the audio manager to keep track of.
 	void RegisterGameObject( AkGameObjectID emitterID, AudGameObjResource* emitter );
+	// Register an event to be sent to Wwise after it is done loading. Only works with soundbanks in the SoundBankStatus::Loading state.
+	void RegisterEventAfterSoundBankLoad( std::wstring& soundBankName, std::wstring& eventName, AudGameObjResource* emitter );
 	// Set an RTPC not associated with a specific game object.
 	bool SetGlobalRTPC( const std::wstring& rtpcName, float value );
 	// Set a global state in Wwise.
@@ -95,8 +119,12 @@ public:
 	void StopAll();
 	// Update audio engine settings, must be called before the audio engine is initialized in SetEnabled.
 	void UpdateSettings( AudSettings * settings );
-	// Unload the given soundbank from memory if it is currently loaded.
+	// Asynchronously request to unload the given SoundBank from memory if it is currently loaded.
 	void UnloadBank( const std::wstring& name );
+	// Update the status of a particular SoundBank. If the status is SoundBankStatus::Loading then all events waiting for that SoundBank will be posted.
+	void UpdateSoundBankStatus( const AkBankID bankID, const SoundBankStatus soundBankStatus );
+	// Remove a particular SoundBank from the map that keeps track of its status.
+	void StopTrackingSoundBank( const AkBankID bankID );
 	// Unregister an audio parameter from being monitored. 
 	void UnregisterParameter( const std::wstring& audioParameterName );
 	// Unregister a game object from the audio manager.
@@ -146,8 +174,16 @@ public:
 
 	// Debug
 	std::vector<std::pair<AkGameObjectID, AudGameObjResource*>> GetPrioritizedAudioEmitters();
+#ifndef AK_OPTIMIZED
+	// Get the event name for the given playingID and emitter. 
+	const std::wstring GetEventName( AkGameObjectID emitterID, AkPlayingID playingID );
+#endif
 	
 private:
+	// Compute a Wwise hash given a soundbank name. 
+	AkBankID ComputeWwiseHashForSoundBank( const std::wstring& soundBankName );
+	// Run the culling algorithm on all game objects.
+	void CullAudio();
 	// Initializes all parts of Wwise in the correct order.
 	bool Init();
 	// Initializes communcation with Wwise. This is only done if using the Profile flavor of the Wwise SDK.
@@ -158,16 +194,18 @@ private:
 	bool InitMusic();
 	// Initializes Wwise's sound engine.
 	bool InitSound();
+	// The callback called by Wwise once a SoundBank has been attempted to load.
+	static void LoadBankCallback( AkUInt32 in_bankID, const void* in_pInMemoryBankPtr, AKRESULT in_eLoadResult, void* in_pCookie );
 	// Tick handler
 	void Process(); 
 	// Registers audio2 for the tick handler.
 	void RegisterForTicks();
 	// Terminates all Wwise modules.
 	void Terminate();
+	// The callback used by Wwise once it is done trying to unload a SoundBank 
+	static void UnloadBankCallback( AkUInt32 in_bankID, const void* in_pInMemoryBankPtr, AKRESULT in_eLoadResult, void* in_pCookie );
 	// Get the listener game object if it exists.
 	AudListenerPtr GetListener();
-	// Run the culling algorithm on all game objects.
-	void CullAudio();
 	// Update all watched audio parameters with their current values in Wwise (if they exist).
 	void UpdateMonitoredParameters();
 
@@ -179,8 +217,8 @@ private:
 	bool m_asyncOpen;
 	// A map of all existing game objects.
 	std::vector< std::pair<AkGameObjectID, AudGameObjResource*> > m_gameObjects;
-	// All currently loaded soundbanks.
-	BankVector m_loadedBanks;
+	std::map<AkBankID, SoundBankInfo> m_soundBankInfoMap;
+	CcpMutex m_soundBankMutex;
 	// low level IO hook for Wwise
 	CAkFilePackageLowLevelIOBlocking m_lowLevelIO;
 	// Initialization settings for Wwise

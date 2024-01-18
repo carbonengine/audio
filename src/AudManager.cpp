@@ -60,14 +60,15 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_playing2DWeight( m_cullingInitSettings.playing2DWeight ),
 	m_playingVitalSoundWeight( m_cullingInitSettings.playingVitalSoundWeight ),
 	m_weightMultiplier( m_cullingInitSettings.weightMultiplier ),
-	m_moniteredParametersMapMutex( "AudManager", "m_monitoredParametersMapMutex" )
+	m_moniteredParametersMapMutex( "AudManager", "m_monitoredParametersMapMutex" ),
+	m_soundBankMutex( "AudManager", "m_soundBankMutex" )
 {}
 
 AudManager::~AudManager()
 {
 	if( g_audioInitialized )
 	{
-		Terminate();
+		Disable();
 	}
 }
 
@@ -91,6 +92,19 @@ void AudManager::Process()
 			m_log->Flush();
 		}
 	}
+}
+
+//-----------------------------------------------------
+// Description:
+//   Compute a Wwise hash given a soundbank name. Wwise uses an internal hashing system for events, soundbanks and other 
+//   Wwise objects. This will give you the ID they use for the given SoundBank name.
+// Arguments:
+//   soundBankName: The soundbank name you want hashed. This method works with a string that both ends with .bnk or not.
+//-----------------------------------------------------
+AkBankID AudManager::ComputeWwiseHashForSoundBank( const std::wstring& soundBankName )
+{
+	std::wstring filteredBankName = soundBankName.substr( 0, soundBankName.find( L".", 0 ) ); // Remove .bnk from the SoundBank name because Wwise does this when hashing.
+	return AK::SoundEngine::GetIDFromString( filteredBankName.c_str() );
 }
 
 void AudManager::CullAudio()
@@ -391,121 +405,190 @@ void AudManager::UpdateSettings( AudSettings* settings )
 	m_settings = settings;
 }
 
-struct BankLoadUnloadStatus
-{
-	BankLoadUnloadStatus() :
-		isDone( 0 ),
-		result( AK_Fail )
-	{
-	}
-	bool isDone;
-	AKRESULT result;
-};
-
-namespace
-{
-void BankLoadUnloadCb( AkUInt32 in_bankID, const void* in_pInMemoryBankPtr, AKRESULT in_eLoadResult, void* in_pCookie )
-{
-	BankLoadUnloadStatus* status = reinterpret_cast<BankLoadUnloadStatus*>( in_pCookie );
-	status->isDone = true;
-	status->result = in_eLoadResult;
-}
-
-void WaitForLoadUnload( BankLoadUnloadStatus* status )
-{
-	while( !status->isDone )
-	{
-		if( PyOS->CanYield() )
-		{
-			if( !PyOS->Yield() )
-			{
-				// Tasklet killed
-				break;
-			}
-		}
-		else
-		{
-			CcpThreadSleep( 10 );
-		}
-	}
-}
-}
-
-bool AudManager::LoadBank( const std::wstring& name )
+void AudManager::LoadBank( const std::wstring& name )
 {
 	if( g_audioEnabled )
 	{
-		AkBankID tmp;
-		BankLoadUnloadStatus* status = CCP_NEW( "LoadBank/status" ) BankLoadUnloadStatus;
-		AKRESULT out_result = AK::SoundEngine::LoadBank( name.c_str(), BankLoadUnloadCb, status, tmp );
-		if( out_result == AK_Fail )
-		{
-			CCP_LOGERR( "Soundbank %S failed to be scheduled to load", name.c_str() );
-			return false;
+		AkBankID bankID = ComputeWwiseHashForSoundBank( name );
+		SoundBankStatus soundBankStatus = GetSoundBankStatus( bankID );
+		if( soundBankStatus == SoundBankStatus::LOADED || soundBankStatus == SoundBankStatus::LOADING )
+		{ 
+			std::string soundBankStr = ( soundBankStatus == SoundBankStatus::LOADED ) ? "loaded" : "loading";
+			CCP_LOG( "SoundBank %S has been requested to load when it is already %s.", name.c_str(), soundBankStr.c_str() );
+			return;
 		}
 
-		WaitForLoadUnload( status );
+		CcpAutoMutex mutex( m_soundBankMutex );
+		m_soundBankInfoMap[bankID] = SoundBankInfo{ SoundBankStatus::LOADING, bankID, name };
 
-		if( status->result == AK_Success )
+		AkBankID outBankID;
+		AkBankCallbackFunc callback = &AudManager::LoadBankCallback;
+		AKRESULT out_result = AK::SoundEngine::LoadBank( name.c_str(), callback, this, outBankID );
+
+		if( outBankID != bankID )
 		{
-			m_loadedBanks.push_back( name );
-			CCP_LOG( "Soundbank %S was successfully loaded", name.c_str() );
+			CCP_LOGERR( "The SoundBank ID %d returned from LoadBank is different than the computed SoundBank ID %d. There is something fishy about that.", outBankID, bankID );
+			StopTrackingSoundBank( bankID );	
+			m_soundBankInfoMap[outBankID] = SoundBankInfo{ SoundBankStatus::LOADING, outBankID, name };
 		}
-		else if( status->result == AK_BankAlreadyLoaded )
+
+		if( out_result != AK_Success )
 		{
-			CCP_LOG( "Soundbank %S was requested to be loaded when it already is.", name.c_str() );
+			StopTrackingSoundBank( outBankID );
+			CCP_LOGERR( "SoundBank %S failed to be scheduled to load", name.c_str() );
 		}
-		else 
+		else
 		{
-			CCP_LOGERR("Soundbank %S failed to be loaded with Wwise error %d", name.c_str(), status->result );
-			return false;
+			CCP_LOG( "SoundBank %S scheduled to be loaded.", name.c_str() );
 		}
-		
-		CCP_DELETE status;
-		return true;
+	}
+}
+
+void AudManager::LoadBankCallback( AkUInt32 in_bankID, const void* in_pInMemoryBankPtr, AKRESULT in_eLoadResult, void* in_pCookie )
+{
+	AudManager* audManagerPtr = reinterpret_cast<AudManager*>( in_pCookie );
+	SoundBankStatus soundBankStatus = audManagerPtr->GetSoundBankStatus( in_bankID );
+	if( soundBankStatus != SoundBankStatus::NOT_LOADED )
+	{
+		std::wstring soundBankName = audManagerPtr->GetSoundBankName( in_bankID );
+		if( in_eLoadResult == AK_Success || in_eLoadResult == AK_BankAlreadyLoaded )
+		{
+			audManagerPtr->UpdateSoundBankStatus( in_bankID, SoundBankStatus::LOADED );
+			CCP_LOG( "SoundBank %S was successfully loaded.", soundBankName.c_str() );
+		}
+		else
+		{
+			CCP_LOGERR( "Soundbank %S failed to be loaded with Wwise error %d", soundBankName.c_str(), in_eLoadResult );
+			audManagerPtr->StopTrackingSoundBank( in_bankID );
+		}
 	}
 	else
 	{
-		return false;
+		CCP_LOGERR( "LoadBankCallback is being called for bank ID %d which is not being tracked.", in_bankID );
 	}
 }
 
 void AudManager::UnloadBank( const std::wstring& name )
 {
-	{
-		// Ensure iterators go out of scope before we call WaitForLoadUnload below
-		// as it may yield and that can cause issues with iterator validation in
-		// debug builds.
-
-		BankVector::iterator end = m_loadedBanks.end();
-		BankVector::iterator result = std::find( m_loadedBanks.begin(), end, name );
-		if( result == end )
-		{
-			return;
-		}
-
-		m_loadedBanks.erase( result );
-	}
-
 	if( g_audioEnabled )
 	{
-		// The pInMemoryBankPtr can be NULL is NULL is passed when loading the bank.
-		const void* pInMemoryBankPtr = NULL;
+		AkBankID bankID = ComputeWwiseHashForSoundBank( name );
+		SoundBankStatus soundBankStatus = GetSoundBankStatus( bankID );
 
-		BankLoadUnloadStatus* status = CCP_NEW( "LoadBank/status" ) BankLoadUnloadStatus;
-		AKRESULT result = AK::SoundEngine::UnloadBank( name.c_str(), pInMemoryBankPtr, BankLoadUnloadCb, status );
-		if( result == AK_Fail )
+		if( soundBankStatus == SoundBankStatus::NOT_LOADED )
 		{
-			CCP_LOGERR( "AK::SoundEngine::UnloadBank failed for %S", name.c_str() );
+			CCP_LOGERR( "SoundBank %S was requested to be unloaded when it was not actually loaded to begin with.", name.c_str() );
+			return;
+		}
+		else if( soundBankStatus == SoundBankStatus::UNLOADING )
+		{ 
+			CCP_LOG( "SoundBank %S has been requested to unload when it is already unloading.", name.c_str() );
 			return;
 		}
 
-		CCP_LOG( "AK::SoundEngine::UnloadBank scheduled for %S", name.c_str() );
+		UpdateSoundBankStatus( bankID, SoundBankStatus::UNLOADING );
 
-		WaitForLoadUnload( status );
+		// The pInMemoryBankPtr can be NULL is NULL is passed when loading the bank.
+		const void* pInMemoryBankPtr = NULL;
+		AkBankCallbackFunc callback = &AudManager::UnloadBankCallback;
+		AKRESULT result = AK::SoundEngine::UnloadBank( name.c_str(), pInMemoryBankPtr, callback, this);
+		if( result != AK_Success )
+		{
+			StopTrackingSoundBank( bankID );
+			CCP_LOGERR( "SoundBank %S failed to be scheduled to be unloaded.", name.c_str() );
+		}
+		else
+		{
+			CCP_LOG( "SoundBank %S was successfully scheduled to be unloaded.", name.c_str() );
+		}
 
-		CCP_DELETE status;
-		CCP_LOG( "AK::SoundEngine::UnloadBank done for %S", name.c_str() );
+	}
+}
+
+void AudManager::UnloadBankCallback( AkUInt32 in_bankID, const void* in_pInMemoryBankPtr, AKRESULT in_eLoadResult, void* in_pCookie )
+{
+	AudManager* audManagerPtr = reinterpret_cast<AudManager*>(in_pCookie);
+	SoundBankStatus soundBankStatus = audManagerPtr->GetSoundBankStatus( in_bankID );
+	if( soundBankStatus != SoundBankStatus::NOT_LOADED )
+	{
+		std::wstring soundBankName = audManagerPtr->GetSoundBankName( in_bankID );
+		if( in_eLoadResult != AK_Success )
+		{
+			CCP_LOGERR( "SoundBank %S failed to be unloaded.", soundBankName.c_str() );
+		}
+		else
+		{
+			CCP_LOG( "SoundBank %S was successfully unloaded.", soundBankName.c_str() );
+		}
+		audManagerPtr->StopTrackingSoundBank( in_bankID );
+	}
+	else
+	{
+		CCP_LOGERR( "UnloadBankCallback was called for bank ID %d which is not being tracked.", in_bankID );
+	}
+}
+
+std::wstring AudManager::GetSoundBankName(const AkBankID bankID)
+{
+	CcpAutoMutex mutex( m_soundBankMutex );
+	auto mapIterator = m_soundBankInfoMap.find( bankID );
+	if( mapIterator != m_soundBankInfoMap.end() )
+	{
+		return mapIterator->second.soundBankName;
+	}
+	return L"";
+}
+
+SoundBankStatus AudManager::GetSoundBankStatus( const AkBankID bankID ) 
+{
+	CcpAutoMutex mutex( m_soundBankMutex );
+	auto mapIterator = m_soundBankInfoMap.find( bankID );
+	if( mapIterator != m_soundBankInfoMap.end() )
+	{
+		return mapIterator->second.soundBankStatus;
+	}
+	return SoundBankStatus::NOT_LOADED;
+}
+
+SoundBankStatus AudManager::GetSoundBankStatus( const std::wstring& soundBankName )
+{
+	CcpAutoMutex mutex( m_soundBankMutex );
+	for (auto it = m_soundBankInfoMap.begin(); it != m_soundBankInfoMap.end(); ++it)
+	{
+		if( it->second.soundBankName == soundBankName )
+		{
+			return it->second.soundBankStatus;
+		}
+		
+	}
+	return SoundBankStatus::NOT_LOADED;
+}
+
+void AudManager::StopTrackingSoundBank( const AkBankID bankID )
+{
+	CcpAutoMutex mutex( m_soundBankMutex );
+	m_soundBankInfoMap.erase( bankID );
+}
+
+void AudManager::UpdateSoundBankStatus( const AkBankID bankID, const SoundBankStatus soundBankStatus )
+{
+	CcpAutoMutex mutex( m_soundBankMutex );
+	auto mapIterator = m_soundBankInfoMap.find( bankID );
+	if( mapIterator != m_soundBankInfoMap.end() )
+	{
+		mapIterator->second.soundBankStatus = soundBankStatus;
+
+		if (soundBankStatus == SoundBankStatus::LOADED)
+		{
+			for( auto it = mapIterator->second.waitingEventsAfterLoad.begin(); it != mapIterator->second.waitingEventsAfterLoad.end(); ++it )
+			{
+				if( it->first != nullptr )
+				{
+					it->first->PostEvent( it->second );
+				}
+			}
+			mapIterator->second.waitingEventsAfterLoad.clear();
+		}
 	}
 }
 
@@ -520,10 +603,10 @@ void AudManager::ClearBanks()
 			CCP_LOGERR( "AK::SoundEngine::ClearBanks failed" );
 			return;
 		}
-
-		m_loadedBanks.clear();
-
-		CCP_LOG( "All banks unloaded in Wwise" );
+	
+		CcpAutoMutex mutex( m_soundBankMutex );
+		m_soundBankInfoMap.clear();
+		CCP_LOG( "All SoundBanks unloaded in Wwise" );
 	}
 }
 
@@ -571,11 +654,7 @@ void AudManager::Enable(BankVector soundBanksToLoad)
 	}
 
 	g_audioEnabled = true;
-	if (!LoadBank(L"Init.bnk"))
-	{
-		CCP_LOGERR("Failed to load Init.bnk! Check that you configured the base SoundBank path correctly.");
-		return;
-	}
+	LoadBank( L"Init.bnk" );
 
 	BankVector::iterator bankEnd = soundBanksToLoad.end();
 	for( BankVector::iterator it = soundBanksToLoad.begin(); it != bankEnd; ++it )
@@ -592,9 +671,19 @@ void AudManager::Enable(BankVector soundBanksToLoad)
 	return;
 }
 
-std::vector<std::wstring> AudManager::GetLoadedSoundBanks()
+const std::vector<std::wstring> AudManager::GetLoadedSoundBanks()
 {
-	return m_loadedBanks;
+	BankVector loadedSoundBanks;
+	CcpAutoMutex mutex( m_soundBankMutex );
+	for( auto it = m_soundBankInfoMap.begin(); it != m_soundBankInfoMap.end(); ++it )
+	{
+		if( it->second.soundBankStatus == SoundBankStatus::LOADED )
+		{
+			loadedSoundBanks.push_back( it->second.soundBankName );
+		}
+	}
+
+	return loadedSoundBanks;
 }
 
 const MonitoredParameterInfo* AudManager::GetParameterInfo(const std::wstring& audioParameterName)
@@ -631,6 +720,29 @@ AudGameObjResource* AudManager::GetAudioEmitter( AkGameObjectID emitterID )
 	return nullptr;
 }
 
+//-----------------------------------------------------
+// Description:
+//   Retrieve an event name for the given playing ID if the given emitter is playing that event.
+// Arguments:
+//   emitterID - The ID of the emitter that is playing the event whose name you want to retrieve.
+//	 playingID - The playing ID of the event whose name you want to retrieve.
+// Returns:
+//   An empty wstring if the given emitter is not playing an event with the given playing ID.
+//-----------------------------------------------------
+#ifndef AK_OPTIMIZED
+const std::wstring AudManager::GetEventName( AkGameObjectID emitterID,  AkPlayingID playingID )
+{
+	AudGameObjResource* emitter = GetAudioEmitter( emitterID );
+	std::map<AkPlayingID, std::wstring> playingEvents = emitter->GetPlayingEvents();
+	auto it = playingEvents.find( playingID );
+	if( it != playingEvents.end() )
+	{
+		return it->second;
+	}
+	return L"";
+}
+#endif
+
 void AudManager::StopAll()
 {
 	if( g_audioInitialized )
@@ -665,6 +777,28 @@ void AudManager::UnregisterParameter(const std::wstring& audioParameterName)
 void AudManager::RegisterGameObject( AkGameObjectID emitterID, AudGameObjResource* emitter )
 {
 	m_gameObjects.push_back( std::make_pair( emitterID, emitter ) );
+}
+
+//-----------------------------------------------------
+// Description:
+//   Register an event to be sent to Wwise after it is done loading (e.g. in the LoadBank callback function). 
+//   Only works with soundbanks in the SoundBankStatus::Loading state.
+// Arguments:
+//   bankID - The ID of the SoundBank you want to register an event on after it loads. 
+//	 eventName - The event you want to be sent when the given bankID is done loading. 
+//	 emitter - The audio emitter you want the registered event to be sent to.
+//-----------------------------------------------------
+void AudManager::RegisterEventAfterSoundBankLoad( std::wstring& soundBankName, std::wstring& eventName, AudGameObjResource* emitter )
+{
+	CcpAutoMutex mutex( m_soundBankMutex );
+	for( auto it = m_soundBankInfoMap.begin(); it != m_soundBankInfoMap.end(); ++it )
+	{
+		if( it->second.soundBankName == soundBankName )
+		{
+			it->second.waitingEventsAfterLoad.push_back( std::make_pair( emitter, eventName ) );
+			CCP_LOG("Event %S registered to be sent to audio emitter %d after SoundBank %S is done loading.", eventName.c_str(), emitter->GetID(), soundBankName.c_str() );
+		}
+	}
 }
 
 void AudManager::UnregisterGameObject( AkGameObjectID emitterID )
