@@ -18,6 +18,8 @@ list(INSERT CMAKE_MODULE_PATH 0 ${BRANCH_ROOT_DIR}/cmake)
 include(CcpGlobalSettings)
 include(CcpPackageConfigHelpers)
 
+set(Wwise_ROOT "${BRANCH_ROOT_DIR}/vendor/wwise/2021.1.14.8108")
+
 find_package(Blue CONFIG REQUIRED)
 find_package(CcpMath CONFIG REQUIRED)
 find_package(IntelTBB REQUIRED)

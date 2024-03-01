@@ -256,7 +256,7 @@ void AudManager::OnTick( Be::Time realTime, Be::Time simTime, void* cookie )
 
 bool AudManager::InitLowLevel()
 {
-	CCP_LOG( "Audio Backend: Wwise(R) SDK Version %S. %s", g_wwiseVersion.c_str(), AK_WWISESDK_COPYRIGHT );
+	CCP_LOG( "Audio Backend: Wwise(R) SDK Version %s. %s", g_wwiseVersion.c_str(), AK_WWISESDK_COPYRIGHT );
 	//-----------------------------------------------------------------------------
 	// Create and initialize an instance of the default memory manager. Note
 	// that you can override the default memory manager with your own. Refer
