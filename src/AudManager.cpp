@@ -756,20 +756,26 @@ void AudManager::StopAll()
 
 void AudManager::RegisterParameter(const std::wstring& audioParameterName)
 {
-	CcpAutoMutex lock( m_moniteredParametersMapMutex );
-	m_monitoredParametersMap[audioParameterName].watchers++;
+	if( g_audioInitialized )
+	{
+		CcpAutoMutex lock( m_moniteredParametersMapMutex );
+		m_monitoredParametersMap[audioParameterName].watchers++;
+	}
 }
 
 void AudManager::UnregisterParameter(const std::wstring& audioParameterName)
 {
-	CcpAutoMutex lock( m_moniteredParametersMapMutex );
-	auto it = m_monitoredParametersMap.find( audioParameterName );
-	if (it != m_monitoredParametersMap.end())
+	if( g_audioInitialized )
 	{
-		it->second.watchers -= 1;
-		if (it->second.watchers == 0)
+		CcpAutoMutex lock( m_moniteredParametersMapMutex );
+		auto it = m_monitoredParametersMap.find( audioParameterName );
+		if (it != m_monitoredParametersMap.end())
 		{
-			m_monitoredParametersMap.erase(it);
+			it->second.watchers -= 1;
+			if (it->second.watchers == 0)
+			{
+				m_monitoredParametersMap.erase(it);
+			}
 		}
 	}
 }
