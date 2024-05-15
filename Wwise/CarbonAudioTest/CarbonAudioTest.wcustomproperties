@@ -2,7 +2,7 @@
 <PluginModule>
 	<WwiseObject Name="Sound" CompanyID="1" PluginID="1">
 		<Properties>
-			<Property Name="Custom:CullingVital" DocId="" DisplayName="CullingVital" Type="bool">
+			<Property Name="Custom:CullingVital" DocId="Custom:CullingVital" DisplayName="CullingVital" Type="bool">
 				<DefaultValue>False</DefaultValue>
 				<AudioEnginePropertyID>0</AudioEnginePropertyID>
 				<Restrictions>

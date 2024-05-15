@@ -1,10 +1,87 @@
 #include "stdafx.h"
 #include "AudStaticDataRepository.h"
 
+namespace {
+
+    PyObject* GetPyObjectFromDictionary(PyObject* dict, const char* key, const std::wstring& name)
+    {
+        PyObject* item = PyDict_GetItemString(dict, key);
+        if (item != nullptr)
+        {
+            return item;
+        }
+        else
+        {
+            CCP_LOGERR("Could not find key %s for %S while generating sound ID lookup table.", key, name.c_str());
+            return nullptr;
+        }
+    }
+
+    // Helper function to generate a vector of wstrings from a Python list
+	std::vector<std::wstring> GenerateVectorFromPythonList( PyObject* pyList )
+	{
+		std::vector<std::wstring> newVector = std::vector<std::wstring>();
+		if( pyList != nullptr )
+		{
+			if( PyList_CheckExact( pyList ) )
+			{
+				const unsigned int listLength = (unsigned int)PyList_GET_SIZE( pyList );
+				for( unsigned int i = 0; i < listLength; i++ )
+				{
+					std::string valueC = PyString_AsString( PyList_GetItem( pyList, i ) );
+					std::wstring value = static_cast<const wchar_t*>( CA2W( valueC.c_str() ) );
+					newVector.push_back( value );
+				}
+			}
+		}
+
+		return newVector;
+	}
+
+	// Get a boolean value from a Python dictionary using the specified key and name.
+	bool GetBoolFromDict( PyObject* dict, const char* key, const std::wstring& name )
+	{
+		PyObject* pyObj = GetPyObjectFromDictionary( dict, key, name );
+		if( pyObj != nullptr && PyObject_IsTrue( pyObj ) )
+		{
+			return true;
+		}
+		return false;
+	}
+
+    unsigned int GetUIntFromDict( PyObject* dict, const char* key, const std::wstring& name )
+	{
+		PyObject* pyObj = GetPyObjectFromDictionary( dict, key, name );
+		if( pyObj != nullptr && PyLong_Check( pyObj ) )
+		{
+			return PyLong_AsUnsignedLong( pyObj );
+		}
+		return 0;
+	}
+
+    float GetFloatFromDict( PyObject* dict, const char* key, const std::wstring& name )
+	{
+		PyObject* pyObj = GetPyObjectFromDictionary( dict, key, name );
+		if( pyObj != nullptr && PyFloat_Check( pyObj ) )
+		{
+			return PyFloat_AsDouble( pyObj );
+		}
+		return 0.0f;
+	}
+
+    std::vector<std::wstring> GetVectorFromDict(PyObject* dict, const char* key, const std::wstring& name)
+	{
+		PyObject* pyObj = GetPyObjectFromDictionary( dict, key, name );
+		return GenerateVectorFromPythonList( pyObj );
+    }
+}
+
 AudStaticDataRepository::AudStaticDataRepository( IRoot* lockobj ) : 
     m_events( {} ),
+    m_soundBanks( {} ),
+    m_sources( {} ),
     m_initialized( false ),
-    m_eventsMutex( "AudStaticDataRepository", "m_eventsMutex" )
+    m_staticDataMutex( "AudStaticDataRepository", "m_staticDataMutex" )
 {}
 
 bool AudStaticDataRepository::IsInitialized() const
@@ -14,33 +91,21 @@ bool AudStaticDataRepository::IsInitialized() const
 
 unsigned int AudStaticDataRepository::GetEventID( const std::wstring& eventName ) const
 {
-    CcpAutoMutex mutex( m_eventsMutex );
-    const EventData* eventData = GetEventData( eventName );
-    if ( eventData != nullptr )
-    {
-        return eventData->eventID; 
-    }
-    return AK_INVALID_UNIQUE_ID;
+	return GetAttribute<EventData, unsigned int>( eventName, m_events, m_staticDataMutex, &EventData::eventID, AK_INVALID_UNIQUE_ID );
 }
 
 bool AudStaticDataRepository::EventIsLoop( const std::wstring& eventName ) const
 {
-    CcpAutoMutex mutex( m_eventsMutex );
-    const EventData* eventData = GetEventData( eventName );
-    if ( eventData != nullptr )
-    {
-        return eventData->isLoop;
-    }
-    return false;
+	return GetAttribute<EventData, bool>( eventName, m_events, m_staticDataMutex, &EventData::isLoop, false );
 }
 
 float AudStaticDataRepository::GetEventRadiusSq( const std::wstring& eventName ) const
 {
-    CcpAutoMutex mutex( m_eventsMutex );
-    const EventData* eventData = GetEventData( eventName );
-    if ( eventData != nullptr )
+    CcpAutoMutex mutex(m_staticDataMutex);
+    const EventData* eventData = GetData(eventName, m_events, m_staticDataMutex);
+    if (eventData != nullptr)
     {
-        float radius = eventData->maxAttenuationRadius; 
+        float radius = eventData->maxAttenuationRadius;
         return radius * radius;
     }
     return 0.0f;
@@ -48,24 +113,12 @@ float AudStaticDataRepository::GetEventRadiusSq( const std::wstring& eventName )
 
 bool AudStaticDataRepository::EventIs2D( const std::wstring& eventName ) const
 {
-    CcpAutoMutex mutex( m_eventsMutex );
-    const EventData* eventData = GetEventData( eventName );
-    if ( eventData != nullptr )
-    {
-        return eventData->is2D;
-    }
-    return false;
+    return GetAttribute<EventData, bool>(eventName, m_events, m_staticDataMutex, &EventData::is2D, false);
 }
 
 bool AudStaticDataRepository::EventIsVital( const std::wstring& eventName ) const
 {
-    CcpAutoMutex mutex( m_eventsMutex );
-    const EventData* eventData = GetEventData( eventName );
-    if ( eventData != nullptr )
-    {
-        return eventData->isVital;
-    }
-    return false;
+    return GetAttribute<EventData, bool>(eventName, m_events, m_staticDataMutex, &EventData::isVital, false);
 }
 
 //-----------------------------------------------------
@@ -80,28 +133,33 @@ bool AudStaticDataRepository::EventIsVital( const std::wstring& eventName ) cons
 //-----------------------------------------------------
 bool AudStaticDataRepository::EventIsStopped( const std::wstring& eventPotentiallyStopped, const std::wstring& eventPotentiallyStopping ) const
 {
-    CcpAutoMutex mutex( m_eventsMutex );
-    const EventData* eventData = GetEventData( eventPotentiallyStopped );
-    if ( eventData != nullptr )
-    {
-        auto result = std::find(eventData->eventsStoppedBy.begin(), eventData->eventsStoppedBy.end(), eventPotentiallyStopping );
-		if ( result != eventData->eventsStoppedBy.end() )
+	CcpAutoMutex mutex( m_staticDataMutex );
+	const EventData* eventData = GetData( eventPotentiallyStopped, m_events, m_staticDataMutex );
+	if( eventData != nullptr )
+	{
+		auto result = std::find( eventData->eventsStoppedBy.begin(), eventData->eventsStoppedBy.end(), eventPotentiallyStopping );
+		if( result != eventData->eventsStoppedBy.end() )
 		{
-			return true;	
-        }
-    }
-    return false;
+			return true;
+		}
+	}
+	return false;
 }
+
+bool AudStaticDataRepository::SourceIsEssential( AkInt32 sourceID ) const
+{
+	return GetAttribute( std::to_wstring( sourceID ), m_sources, m_staticDataMutex, &SourceData::isEssential, false );
+}
+
+bool AudStaticDataRepository::SoundBankIsEssential( const std::wstring& soundBankName ) const
+{
+	return GetAttribute( soundBankName, m_soundBanks, m_staticDataMutex, &SoundBankData::isEssentialSoundBank, false );
+}
+
 
 std::vector<std::wstring> AudStaticDataRepository::SoundBanksRequiredForEvent( const std::wstring& eventName ) const
 {
-    CcpAutoMutex mutex( m_eventsMutex );
-    const EventData* eventData = GetEventData( eventName );
-    if ( eventData != nullptr )
-    {
-		return eventData->soundbanks;	
-    }
-    return std::vector<std::wstring>();
+	return GetAttribute( eventName, m_events, m_staticDataMutex, &EventData::soundbanks, std::vector<std::wstring>() );
 }
 
 //-----------------------------------------------------------------------------
@@ -109,136 +167,111 @@ std::vector<std::wstring> AudStaticDataRepository::SoundBanksRequiredForEvent( c
 //   Generate a look up table based off sound ID static data provided by python. Sets the m_initialized flag to true if successful.
 //   This function must be called and is necessary for audio2 to function correctly if audio culling is enabled.
 //-----------------------------------------------------------------------------
-void AudStaticDataRepository::Initialize( PyObject* wwiseEvents )
+void AudStaticDataRepository::Initialize( PyObject* audioMetadata)
 {
-    if ( !PyDict_Check( wwiseEvents ) )
+    if ( !PyDict_Check(audioMetadata) )
     {
-        CCP_LOGERR( "AudStaticDataRepository::Initialize expects wwiseEvents as a dictionary but didn't receive a dictionary" );
+        CCP_LOGERR( "AudStaticDataRepository::Initialize expects audioMetadata as a dictionary but didn't receive a dictionary" );
         return;
     }
 
     PyObject *key, *value = NULL;
     Py_ssize_t pos = 0;
 
-    CcpAutoMutex mutex( m_eventsMutex );
-    while ( PyDict_Next( wwiseEvents, &pos, &key, &value ) )
-    {
-        std::string eventNameC = PyString_AsString( key );
-        std::wstring eventName = static_cast<const wchar_t*>( CA2W( eventNameC.c_str() ) );
+    const char* eventDictNameC = "Events";
+	std::wstring eventDictName = static_cast<const wchar_t*>( CA2W( eventDictNameC ) );
+	PyObject* eventsDict = GetPyObjectFromDictionary( audioMetadata, eventDictNameC, eventDictName );
 
-        bool isLoop = false;
-        PyObject* isLoopPyObj = GetPyObjectFromDictionary( value, "isLoop", &eventName );
-        if ( isLoopPyObj != nullptr )
-        {
-            if ( PyObject_IsTrue( isLoopPyObj ) )
-            {
-                isLoop = true;
-            }
-        }
-
-        bool is2D = false;
-        PyObject* is2DPyObj = GetPyObjectFromDictionary( value, "is2D", &eventName );
-        if ( is2DPyObj != nullptr )
-        {
-            if ( PyObject_IsTrue( is2DPyObj ) )
-            {
-                is2D = true;
-            }
-        }
-
-        bool isVital = false;
-        PyObject* isVitalPyObj = GetPyObjectFromDictionary( value, "isVital", &eventName );
-        if ( isVitalPyObj != nullptr )
-        {
-            if ( PyObject_IsTrue( isVitalPyObj ) )
-            {
-                isVital = true;
-            }
-        }
-
-        unsigned int eventID = 0;
-        PyObject* eventIDPyObj = GetPyObjectFromDictionary( value, "eventID", &eventName );
-        if ( eventIDPyObj != nullptr )
-        {
-            if ( PyLong_Check( eventIDPyObj ) )
-            {
-                eventID = PyLong_AsUnsignedLong( eventIDPyObj );
-            }
-        }
-
-        float maxAttenuationRadius = 0.0f;
-        PyObject* maxAttenuationRadiusPyObj = GetPyObjectFromDictionary( value, "maxRadiusAttenuation", &eventName );
-        if ( maxAttenuationRadiusPyObj != nullptr )
-        {
-            if ( PyFloat_Check( maxAttenuationRadiusPyObj ) )
-            {
-                maxAttenuationRadius = PyFloat_AsDouble( maxAttenuationRadiusPyObj );
-            }
-        }
-
-        PyObject* eventsStoppedByObj = GetPyObjectFromDictionary( value, "eventsStoppedBy", &eventName );
-        std::vector<std::wstring> eventsStoppedBy = GenerateVectorFromPythonList( eventsStoppedByObj );
-
-        PyObject* soundbanksObj = GetPyObjectFromDictionary( value, "soundbanks", &eventName );
-        std::vector<std::wstring> soundbanks = GenerateVectorFromPythonList( soundbanksObj );
-
-        EventData eventData = {
-            eventName,
-            eventID,
-            maxAttenuationRadius,
-            isLoop,
-            is2D,
-            isVital,
-            eventsStoppedBy,
-            soundbanks
-        };
-        m_events[eventName] = eventData;
-    }
-
-    m_initialized = true;
-}
-
-PyObject* AudStaticDataRepository::GetPyObjectFromDictionary( PyObject* dict, const char* key, const std::wstring* eventName ) const
-{
-    PyObject* item = PyDict_GetItemString( dict, key );
-    if ( item != nullptr )
-    {
-        return item;
-    }
-    else
-    {
-        CCP_LOGERR( "Could not find key %s for event %S while generating sound ID lookup table.", key, eventName->c_str() );
-        return nullptr;
-    }
-}
-
-const AudStaticDataRepository::EventData* AudStaticDataRepository::GetEventData( const std::wstring& eventName ) const
-{
-    CcpAutoMutex mutex( m_eventsMutex );
-    auto it = m_events.find( eventName );
-    if ( it != m_events.end() )
-    {
-        return &((*it).second);
-    }
-    return nullptr;
-}
-
-std::vector<std::wstring> AudStaticDataRepository::GenerateVectorFromPythonList(PyObject* pyList)
-{
-    std::vector<std::wstring> newVector = std::vector<std::wstring>();
-	if ( pyList != nullptr )
+	CcpAutoMutex mutex( m_staticDataMutex );
+	if( eventsDict != nullptr && PyDict_Check( eventsDict ) )
 	{
-		if ( PyList_CheckExact( pyList ) )
+		while( PyDict_Next( eventsDict, &pos, &key, &value ) )
 		{
-			const unsigned int listLength = (unsigned int)PyList_GET_SIZE( pyList );
-			for( unsigned int i=0; i<listLength; i++ )
-			{
-				std::string valueC = PyString_AsString( PyList_GetItem( pyList, i ) );
-				std::wstring value = static_cast<const wchar_t*>( CA2W( valueC.c_str() ) );
-				newVector.push_back( value );
-			}
+			std::string eventNameC = PyString_AsString( key );
+			std::wstring eventName = static_cast<const wchar_t*>( CA2W( eventNameC.c_str() ) );
+
+			bool isLoop = GetBoolFromDict( value, "isLoop", eventName );
+			bool is2D = GetBoolFromDict( value, "is2D", eventName );
+			bool isVital = GetBoolFromDict( value, "isVital", eventName );
+
+			unsigned int eventID = GetUIntFromDict( value, "eventID", eventName );
+			float maxAttenuationRadius = GetFloatFromDict( value, "maxRadiusAttenuation", eventName );
+
+			std::vector<std::wstring> eventsStoppedBy = GetVectorFromDict( value, "eventsStoppedBy", eventName );
+			std::vector<std::wstring> soundbanks = GetVectorFromDict( value, "soundbanks", eventName );
+
+			EventData eventData = {
+				eventName,
+				eventID,
+				maxAttenuationRadius,
+				isLoop,
+				is2D,
+				isVital,
+				eventsStoppedBy,
+				soundbanks
+			};
+			m_events[eventName] = eventData;
 		}
 	}
+	else
+	{
+		CCP_LOGERR( "Initializing audio static data for Events failed, make sure the data provided to AudStaticDataRepository is in the correct format." );
+	}
 
-    return newVector;
+    key, value = nullptr;
+    pos = 0;
+
+    const char* soundbankDictNameC = "SoundBanks";
+    std::wstring soundbankDictName = static_cast<const wchar_t*>(CA2W(soundbankDictNameC));
+    PyObject* soundbanksDict = GetPyObjectFromDictionary(audioMetadata, soundbankDictNameC, soundbankDictName);
+
+	if( soundbanksDict != nullptr && PyDict_Check( soundbanksDict ) )
+	{
+		CcpAutoMutex src_mutex( m_staticDataMutex );
+		while( PyDict_Next( soundbanksDict, &pos, &key, &value ) )
+		{
+			std::string soundBankNameC = PyString_AsString( key );
+			std::wstring soundBankName = static_cast<const wchar_t*>( CA2W( soundBankNameC.c_str() ) );
+
+			bool IsEssentialSoundbank = GetBoolFromDict( value, "EssentialSoundBank", soundBankName );
+
+			SoundBankData soundBankData = {
+				IsEssentialSoundbank
+			};
+			m_soundBanks[soundBankName] = soundBankData;
+		}
+	}
+	else
+	{
+		CCP_LOGERR( "Initializing audio static data for Soundbanks failed, make sure the data provided to AudStaticDataRepository is in the correct format." );
+	}
+
+    key, value = nullptr;
+	pos = 0;
+
+	const char* sourceDictNameC = "WemFileIDs";
+	std::wstring sourceDictName = static_cast<const wchar_t*>( CA2W( sourceDictNameC ) );
+	PyObject* sourceDict = GetPyObjectFromDictionary( audioMetadata, sourceDictNameC, sourceDictName );
+
+	if( sourceDict != nullptr && PyDict_Check( sourceDict ) )
+	{
+		CcpAutoMutex soundBankMutex( m_staticDataMutex );
+		while( PyDict_Next( sourceDict, &pos, &key, &value ) )
+		{
+			std::string sourceNameC = PyString_AsString( key );
+			std::wstring sourceName = static_cast<const wchar_t*>( CA2W( sourceNameC.c_str() ) );
+
+			bool IsEssential = GetBoolFromDict( value, "IsEssential", sourceName );
+
+			SourceData sourceData = {
+				IsEssential,
+			};
+			m_sources[sourceName] = sourceData;
+		}
+	}
+	else
+	{
+		CCP_LOGERR( "Initializing audio static data for Audio Sources failed, make sure the data provided to AudStaticDataRepository is in the correct format." );
+	}
+	m_initialized = true;
 }

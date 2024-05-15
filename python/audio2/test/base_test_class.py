@@ -5,7 +5,7 @@ import blue
 from audio2.audiomanager import AudioManager
 
 from const import SOUNDBANK_FILEPATH
-from utils import GetEventMetadataFromFile
+from utils import GetAudioMetadataFromFile
 
 
 class BaseAudio2TestClass(unittest.TestCase):
@@ -21,7 +21,7 @@ class BaseAudio2TestClass(unittest.TestCase):
         cls.audioManager = AudioManager(baseSoundbankPath, languageDirectory, applicationName)
 
     def Initialize(self, defaultSoundBanks=[]):
-        audioMetadata = GetEventMetadataFromFile()
+        audioMetadata = GetAudioMetadataFromFile()
         self.audioManager.Initialize(audioMetadata, defaultSoundBanks=defaultSoundBanks)
 
     def alwaysTrueBoolean(self):
