@@ -1,9 +1,8 @@
 import audio2
-import blue
 
-from base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK, ONE_SHOT_EVENT
-from base_test_class import BaseAudio2TestClass
-from utils import PumpOSWithTimeout
+from audiotests.base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK, ONE_SHOT_EVENT
+from audiotests.base_test_class import BaseAudio2TestClass
+from audiotests.utils import PumpOSWithTimeout
 
 
 class TestAudUIPlayerExposure(BaseAudio2TestClass):
@@ -29,6 +28,8 @@ class TestAudUIPlayerExposure(BaseAudio2TestClass):
     def test_auduiplayer_sendevent(self):
         """Test that SendEvent is properly exposed through AudUIPlayer."""
         uiPlayer = audio2.GetUIPlayer()
+        uiPlayer.SetPosition((0,0,0), (0,0,0), (0,0,0))
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
         playingID = uiPlayer.SendEvent(LOOP_EVENT)
         self.assertTrue(playingID > 0)
 
@@ -44,6 +45,8 @@ class TestAudUIPlayerExposure(BaseAudio2TestClass):
     def test_auduiplayer_postdialogueevent(self):
         """Test that AudUIPlayer::PostDialogueEvent allows you to get the current playing position of an event."""
         uiPlayer = audio2.GetUIPlayer()
+        uiPlayer.SetPosition((0,0,0), (0,0,0), (0,0,0))
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
         playingID = uiPlayer.PostDialogueEvent(ONE_SHOT_EVENT)
         self.assertTrue(playingID > 0)
         PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
@@ -53,4 +56,3 @@ class TestAudUIPlayerExposure(BaseAudio2TestClass):
         # Test invalid playingID with GetEventPlayPosition
         invalidPlayPosition = uiPlayer.GetEventPlayPosition(999999)
         self.assertEquals(invalidPlayPosition, -1)
-        

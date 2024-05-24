@@ -1,10 +1,9 @@
 import audio2
 import blue
-import uthread2
 
-from base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK, ONE_SHOT_EVENT
-from base_test_class import BaseAudio2TestClass
-from utils import PumpOSWithTimeout
+from audiotests.base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK, ONE_SHOT_EVENT
+from audiotests.base_test_class import BaseAudio2TestClass
+from audiotests.utils import PumpOSWithTimeout
 
 
 
@@ -154,4 +153,3 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
         self.emitter.ForceCullingStateChange()
         blue.pyos.synchro.SleepWallclock(oneShotWindow + 200.0) # 200.0 has to be used because there is about a 10 ms drift when doing this.
         self.assertTrue(len(self.emitter.GetPlayingEvents()) == 0)
-

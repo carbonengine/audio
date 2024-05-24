@@ -1,6 +1,6 @@
 import audio2
 
-from base_test_class import BaseAudio2TestClass
+from audiotests.base_test_class import BaseAudio2TestClass
 
 
 class TestAudEmitterExposure(BaseAudio2TestClass):

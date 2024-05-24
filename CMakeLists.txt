@@ -128,11 +128,11 @@ endif()
 target_link_libraries(CarbonAudio
 		PUBLIC
 			Blue
+			Intel::TBB
 		PRIVATE
 			BlueExposure
 			CcpMath
 			Wwise::Wwise
-            Intel::TBB
 		)
 if(APPLE)
 	target_link_libraries(CarbonAudio PRIVATE "-framework AudioToolbox -framework CoreAudio -framework CoreFoundation")
@@ -174,6 +174,14 @@ target_compile_definitions(CarbonAudio PUBLIC CARBONAUDIOBUILD)
 
 set_target_properties(CarbonAudio PROPERTIES POSITION_INDEPENDENT_CODE ON EXPORT_NAME _audio2)
 
+if(CMAKE_IMPORT_LIBRARY_SUFFIX)
+	add_custom_command(TARGET CarbonAudio POST_BUILD
+			COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:CarbonAudio> $<TARGET_FILE_DIR:CarbonAudio>
+			COMMAND_EXPAND_LISTS
+			VERBATIM
+	)
+endif()
+
 # Provide an install target iff this is the top level project only
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     # Install rule to ensure that our runtime and linker files are in the expected, platform-specific folders
@@ -205,47 +213,43 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 			PATTERN "*.bnk"
 			PATTERN "*.json"
     )
-endif()
 
-if(WIN32)
-    include(CTest)
-	message(STATUS ${IntelTBB_ROOT})
+	# Unit test related functionality
+	include(CTest)
 
-    # Copy required binaries for CarbonAudio tests into CarbonAudioTest folder 
-    add_custom_command(TARGET CarbonAudio POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${Python_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/python27.dll"
-            $<TARGET_FILE_DIR:CarbonAudio>
-    )
-
-    add_custom_command(TARGET CarbonAudio POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-			"${Blue_DIR}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/$<IF:$<CONFIG:Release>,blue.dll,blue_$<LOWER_CASE:$<CONFIG>>.dll>"
-            $<TARGET_FILE_DIR:CarbonAudio>
-    )
-
-    add_custom_command(TARGET CarbonAudio POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-			"${IntelTBB_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/tbb12.dll"
-            $<TARGET_FILE_DIR:CarbonAudio>
-    )
-
-    add_custom_command(TARGET CarbonAudio POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${Exefile_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/Exefile.exe"
-            $<TARGET_FILE_DIR:CarbonAudio>
-    )
-    add_custom_command(TARGET CarbonAudio POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${ExefileConsole_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/ExefileConsole.exe"
-            $<TARGET_FILE_DIR:CarbonAudio>
-    )
-
-    # Discover and run Python tests as a single CTest test.
-    set(EXEFILE_CONSOLE_EXECUTABLE "$<TARGET_FILE_DIR:CarbonAudio>/ExefileConsole.exe")
-    add_test(NAME PythonTests
-            COMMAND ${EXEFILE_CONSOLE_EXECUTABLE} /buildflavor=$<LOWER_CASE:$<CONFIG>> /lib=${BRANCH_ROOT_DIR}/carbon/common/stdlib\\\;${CMAKE_CURRENT_SOURCE_DIR}/python\\\;${BRANCH_ROOT_DIR}/packages /bin=$<TARGET_FILE_DIR:CarbonAudio> /py run_tests.py
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python/audio2/test
-            COMMAND_EXPAND_LISTS
-            )
+	# this assumes that `updateBinaries.py client` has been run for the given branch!
+	if(WIN32)
+		set(PYTHON_EXECUTABLE "${BRANCH_ROOT_DIR}/eve/client/pythonInterpreter.bat")
+	elseif(APPLE)
+		set(PYTHON_EXECUTABLE "${BRANCH_ROOT_DIR}/eve/client/pythonInterpreter.sh")
+	else()
+		message(FATAL_ERROR "Unsupported platform!")
+	endif()
+	set(ENV{PYTHONPATH} ${CMAKE_CURRENT_SOURCE_DIR}/python)
+	execute_process(COMMAND ${PYTHON_EXECUTABLE} discover.py
+			OUTPUT_VARIABLE PYTHON_TESTS_STR
+			OUTPUT_STRIP_TRAILING_WHITESPACE
+			ERROR_STRIP_TRAILING_WHITESPACE
+			RESULT_VARIABLE PYTHON_TEST_DISCOVERY_RETVAL
+			ERROR_VARIABLE PYTHON_TEST_DISCOVERY_ERRORS
+			WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests/python
+	)
+	if(${PYTHON_TEST_DISCOVERY_RETVAL})
+		message(FATAL_ERROR "Error encountered during test discovery:\n=== stderr: ===\n${PYTHON_TEST_DISCOVERY_ERRORS}\n=== stdout: ===\n${PYTHON_TESTS_STR}")
+	endif()
+	separate_arguments(PYTHON_TESTS UNIX_COMMAND ${PYTHON_TESTS_STR})
+	foreach(PYTHON_TEST ${PYTHON_TESTS})
+		message(STATUS "Found test ${PYTHON_TEST}")
+		add_test(NAME ${PYTHON_TEST}
+				COMMAND ${PYTHON_EXECUTABLE} -m audiotests -v ${PYTHON_TEST}
+				WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests/python
+		)
+		if(WIN32)
+			set_tests_properties(${PYTHON_TEST} PROPERTIES ENVIRONMENT "PYTHONPATH=$<TARGET_FILE_DIR:CarbonAudio>\;${CMAKE_CURRENT_SOURCE_DIR}/python;BUILDFLAVOR=$<LOWER_CASE:$<CONFIG>>")
+		elseif (APPLE)
+			set_tests_properties(${PYTHON_TEST} PROPERTIES ENVIRONMENT "PYTHONPATH=$<TARGET_FILE_DIR:CarbonAudio>:${CMAKE_CURRENT_SOURCE_DIR}/python;BUILDFLAVOR=$<LOWER_CASE:$<CONFIG>>")
+		else()
+			message(FATAL_ERROR "Unsupported platform")
+		endif ()
+	endforeach()
 endif()

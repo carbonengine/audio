@@ -11,19 +11,17 @@ branch you are developing against. Then, open the project up in Visual Studio, c
 The most commonly used flavor of CarbonAudio during development is the Internal one.
 
 ## Testing
-CarbonAudio is currently only tested through its python package located at `python/audio2/test`.
+CarbonAudio is currently tested through the python package located at `tests/python/audiotests`.
 
 ### Running CarbonAudio tests
 You can run CarbonAudio tests using ctest. In Visual Studio you can do this by first building and installing the project and then choosing `Test->Run CTests for CarbonAudio`
 from the top toolbar. This will copy all the binaries needed to the installation directory and run all Python tests through EVE's Exefile.exe binary.
 
-IMPORTANT: You must run Cmake install every time you make a change to the python tests before running the tests!
-
 ### Updating the Wwise Test Project
 This repository includes a Wwise project specifically meant to be used for testing CarbonAudio found in the `Wwise` directory. This project
 acts as a helpful way to test specific Wwise capabilities in CarbonAudio. 
 
-The Wwise project outputs its SoundBanks into the directory `python/audio2/test/soundbanks` which is the same directory the CarbonAudio tests look
+The Wwise project outputs its SoundBanks into the directory `tests/python/audiotests/test/soundbanks` which is the same directory the CarbonAudio tests look
 for SoundBanks in. In addition to this, the tests depend on a file named `AudioMetadata.json` which provides metadata that is required for CarbonAudio's sound prioritization
 system to function.
 

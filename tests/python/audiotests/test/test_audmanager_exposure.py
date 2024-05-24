@@ -5,9 +5,9 @@ import audio2
 import blue
 
 from audio2.audiomanager import INIT_BANK
-from base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK
-from base_test_class import GetEventMetadataFromFile
-from utils import PumpOSWithTimeout
+from audiotests.base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK
+from audiotests.base_test_class import GetEventMetadataFromFile
+from audiotests.utils import PumpOSWithTimeout
 
 class TestAudManagerExposure(unittest.TestCase):
     @classmethod

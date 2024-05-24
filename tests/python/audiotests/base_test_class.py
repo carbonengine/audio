@@ -5,8 +5,8 @@ import unittest
 import blue
 from audio2.audiomanager import AudioManager
 
-AUDIO_METADATA_FILEPATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "soundbanks", "AudioMetadata.json"))
-SOUNDBANK_FILEPATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "soundbanks"))
+AUDIO_METADATA_FILEPATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "test", "soundbanks", "AudioMetadata.json"))
+SOUNDBANK_FILEPATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "test", "soundbanks"))
 ONE_SHOT_BNK = "TestOneShot.bnk"
 ONE_SHOT_EVENT = "Play_TestOneShot"
 COMMON_BNK = "Common.bnk"

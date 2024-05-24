@@ -1,9 +1,9 @@
 import unittest
 
 from audio2.audiomanager import INIT_BANK
-from base_test_class import COMMON_BNK, LOOP_BNK, ONE_SHOT_BNK, SOUNDBANK_FILEPATH
-from base_test_class import BaseAudio2TestClass
-from utils import PumpOSWithTimeout
+from audiotests.base_test_class import COMMON_BNK, LOOP_BNK, ONE_SHOT_BNK, SOUNDBANK_FILEPATH
+from audiotests.base_test_class import BaseAudio2TestClass
+from audiotests.utils import PumpOSWithTimeout
 
 class TestPythonAudioManager(BaseAudio2TestClass):
     @classmethod
