@@ -128,9 +128,8 @@ endif()
 target_link_libraries(CarbonAudio
 		PUBLIC
 			Blue
-			Intel::TBB
 		PRIVATE
-			BlueExposure
+			Intel::TBB
 			CcpMath
 			Wwise::Wwise
 		)
