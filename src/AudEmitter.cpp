@@ -144,3 +144,13 @@ void AudEmitter::RenderDebugInfo( ITr2DebugRenderer2& renderer )
 		}
 	}
 }
+
+void AudEmitter::ForceCullingStateChange()
+{
+	AudGameObjResource::ForceCullingStateChange();
+}
+
+void AudEmitter::ReleaseForcedCullingState()
+{
+	AudGameObjResource::ReleaseForcedCullingState();
+}
