@@ -5,11 +5,11 @@
   "SchemaVersion": "16",
   "SoundBankVersion": "145",
   "RootPaths": {
-   "ProjectRoot": "../../../../Wwise/CarbonAudioTest",
-   "SourceFilesRoot": "../../../../Wwise/CarbonAudioTest/.cache/Windows",
+   "ProjectRoot": "../../../../../Wwise/CarbonAudioTest",
+   "SourceFilesRoot": "../../../../../Wwise/CarbonAudioTest/.cache/Windows",
    "SoundBanksRoot": ".",
    "ExternalSourcesInputFile": "",
-   "ExternalSourcesOutputRoot": "../../../../Wwise/CarbonAudioTest/GeneratedSoundBanks/Windows"
+   "ExternalSourcesOutputRoot": "../../../../../Wwise/CarbonAudioTest/GeneratedSoundBanks/Windows"
   },
   "DialogueEvents": [],
   "SoundBanks": [
@@ -32,14 +32,50 @@
     ]
    },
    {
+    "Id": "831522427",
+    "Type": "User",
+    "Language": "SFX",
+    "Hash": "{1455B8DE-FD01-C165-899A-5AB6A302715D}",
+    "ShortName": "TestLoadBank",
+    "Path": "TestLoadBank.bnk",
+    "Media": [
+     {
+      "Id": "375618080",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "static1.wav",
+      "CachePath": "SFX/static1_10C4C929.wem"
+     }
+    ],
+    "Events": [
+     {
+      "Id": "1805356984",
+      "Name": "Play_TestLoadBank",
+      "MaxAttenuation": "100",
+      "MediaRefs": [
+       {
+        "Id": "375618080"
+       }
+      ]
+     }
+    ]
+   },
+   {
     "Id": "1355168291",
     "Type": "User",
     "Language": "SFX",
-    "Hash": "{986487A9-2683-E47A-8688-3D0FE6FDB954}",
+    "Hash": "{9C5E48AF-7D9E-5D08-342C-487B592641DA}",
     "ShortName": "Init",
     "Path": "Init.bnk",
     "Plugins": {
      "AudioDevices": [
+      {
+       "Id": "562365349",
+       "Name": "System_Stereo",
+       "LibName": "System",
+       "LibId": "11403271"
+      },
       {
        "Id": "2317455096",
        "Name": "No_Output",
@@ -65,10 +101,19 @@
     "Id": "2395677314",
     "Type": "User",
     "Language": "SFX",
-    "Hash": "{64303E67-50F6-0ECB-218B-FE1061232D95}",
+    "Hash": "{D98799FE-F226-7B06-9A12-BA1B2A097391}",
     "ShortName": "Common",
     "Path": "Common.bnk",
     "Events": [
+     {
+      "Id": "2637304785",
+      "Name": "in_game_video_stream_play"
+     },
+     {
+      "Id": "1805356984",
+      "Name": "Play_TestLoadBank",
+      "MaxAttenuation": "100"
+     },
      {
       "Id": "1483003980",
       "Name": "Play_TestLoop",
@@ -80,6 +125,24 @@
       "MaxAttenuation": "100"
      }
     ]
+   },
+   {
+    "Id": "2536242713",
+    "Type": "User",
+    "Language": "SFX",
+    "Hash": "{09B5CB2F-4D85-4E21-7EF1-F424417E6762}",
+    "ShortName": "Videoplayer",
+    "Path": "Videoplayer.bnk",
+    "Plugins": {
+     "Custom": [
+      {
+       "Id": "457485585",
+       "Name": "Wwise Audio Input",
+       "LibName": "Wwise Audio Input",
+       "LibId": "13107202"
+      }
+     ]
+    }
    },
    {
     "Id": "3918824947",
@@ -100,6 +163,6 @@
     ]
    }
   ],
-  "FileHash": "{2ADA3E4F-DFE9-5946-6832-32E14A7BBCC6}"
+  "FileHash": "{9BD95CA4-4959-FD65-4678-64974EA08B01}"
  }
 }

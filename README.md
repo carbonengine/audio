@@ -10,6 +10,42 @@ To build CarbonAudio locally, you must first set the environment variable `CCP_E
 branch you are developing against. Then, open the project up in Visual Studio, choose one of the build flavors defined in `CMakeSettings.json` and choose `Build`. 
 The most commonly used flavor of CarbonAudio during development is the Internal one.
 
+## Requirements for your Wwise project.
+### Requirements for Spatial Audio
+In order to be able to use what Carbon Audio calls Spatial Audio (and what Wwise calls "3D audio") your Wwise project must have the following:
+* A system audio device named "System" which has the "Allow 3D Audio" enabled.
+* A system audio device named "System_Stereo" that __does not__ have "Allow 3D Audio" enabled.
+
+If you do not have an audio device correctly configured to "Allow 3D audio" then you will not be able to use Spatial Audio when the user has 
+a spatial audio endpoint active (e.g. Dolby Atmos, Windows Sonic for Headphones, Apple Spatial Audio, etc.). In addition, if you do not have the "System_Stereo" 
+audio device it will not be possible to turn off Spatial Audio when the user has a spatial endpoint active.
+
+If you want to use different names for your 3D and stereo audio devices, refer to the next section for more details on how to do so.
+
+## Spatial Audio (sometimes known as 3D audio)
+Carbon Audio exposes some functionality directly tied to Wwise's 3D audio features. What Wwise calls 3D audio Carbon Audio refers to as "Spatial Audio" as that is the more 
+widely used industry term. 
+
+### Enabling Spatial Audio
+Spatial audio is enabled by default as long as your Wwise project has a system audio device with "Allow 3D audio" enabled and this device has the same name as that defined in 
+the C++ class `AudSettings.spatialAudioDeviceName`. The default name for this system audio device is `System`. So, if your project has a system audio device named "System" and 
+it has "Allow 3D audio enabled" then you should not need to do any further work enable spatial audio when you initialize Carbon Audio.
+
+If you want to change the name of the spatial audio device you can pass in the keyword argument `spatialAudioDeviceName` when initializing the Python audio manager (refer to `python/audio2/audiomanager.py`).
+
+If you want to manually enable spatial audio after initializion you can use the `EnableSpatialAudio()` method on the Python audio manager.
+
+In order for a user to hear spatialized audio they will need to have a spatial audio endpoint activated on their Windows system such as Dolby Atmos or Windows Sonic for Headphones.
+If they do not have any of these active then the user will continue to hear stereo even if Carbon Audio is told to enable spatial audio.
+
+### Disabling Spatial Audio
+You can force a change to stereo, whether the user has a spatial audio endpoint active or not, by using the `DisableSpatialAudio()` method in the Python audio manager or 
+by passing in the keyword argument `spatialAudioEnabled=False` when initializing the Python audio manager (refer to `python/audio2/audiomanager.py`).
+
+This function only works if you have a valid system audio device in your Wwise project with the name "System_Stereo" that has "Allow 3D audio" disabled.
+
+If you want to change the name of the stereo audio device you can pass in the keyword argument `stereoAudioDeviceName` when initializing the Python audio manager. 
+
 ## Testing
 CarbonAudio is currently tested through the python package located at `tests/python/audiotests`.
 

@@ -43,6 +43,10 @@ static void WwiseAssertHook( const char* in_pszExpression, const char* in_pszFil
 	CCP_LOGWARN_CH( s_ch, "Assert expression failed: %s in file %s at line %d", in_pszExpression, in_pszFileName, in_lineNumber );
 }
 
+// Used for spatial audio related functions, must be static to be able to be accessed by a Wwise callback that does not use cookies.
+static CcpMutex s_audioDeviceMutex( "AudManager", "s_audioDeviceMutex" );
+static bool s_systemSupportsSpatialAudio = false;
+static BlueScriptCallback s_audioDeviceChangeCallback;
 
 
 AudManager::AudManager( IRoot* lockobj ) :
@@ -50,6 +54,7 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_asyncOpen( true ),
 	m_log(),
 	m_audioCullingEnabled( true ),
+	m_spatialAudioEnabled( true ),
 	m_maxAwakeGameObjects( m_cullingInitSettings.maxAwakeGameObjects ),
 	m_oneShotWindow( m_cullingInitSettings.oneShotWindow ),
 	m_waitingOneShotWeight( m_cullingInitSettings.waitingOneShotWeight),
@@ -342,6 +347,25 @@ bool AudManager::InitSound()
 	initSettings.fnProfilerPostMarker = AkPlatformProfilerPostmarker;
 #endif
 
+#if _WIN32
+	AkUniqueID deviceSharesetID;
+	if( m_settings->m_spatialAudioEnabled )
+	{
+		deviceSharesetID = AK::SoundEngine::GetIDFromString( m_settings->m_spatialAudioDeviceName.c_str() );
+		CCP_LOG( "Carbon audio will be initialized with spatial audio enabled by using the Wwise audio "
+			    "device named %S.", m_settings->m_spatialAudioDeviceName.c_str() );
+		m_spatialAudioEnabled = true;
+	}
+	else
+	{
+		deviceSharesetID = AK::SoundEngine::GetIDFromString(m_settings->m_stereoAudioDeviceName.c_str());
+		CCP_LOG("Carbon audio will be initialized with spatial audio disabled by using the Wwise audio "
+			    "device named %S.", m_settings->m_stereoAudioDeviceName.c_str());
+		m_spatialAudioEnabled = false;
+	}
+	initSettings.settingsMainOutput.audioDeviceShareset = deviceSharesetID;
+#endif
+
 	if (!AK::SoundEngine::IsInitialized())
 	{
 		if (AK::SoundEngine::Init(&initSettings, &platformInitSettings) != AK_Success)
@@ -354,6 +378,14 @@ bool AudManager::InitSound()
 		{
 			CCP_LOGERR("Registering for Wwise's end render callback failed! Audio will continue to function correctly except audio driven visuals will not work!");
 		}
+
+#if _WIN32
+		AKRESULT result = AK::SoundEngine::RegisterAudioDeviceStatusCallback( &AudManager::AudioDeviceStatusChangeCallback );
+		if( result != AK_Success ) 
+		{
+			CCP_LOGERR( "Failed to register an audio device status callback." );
+		}
+#endif
 	}
 
 	return true;
@@ -398,6 +430,19 @@ bool AudManager::SetState( const std::wstring& stateGroup, const std::wstring& s
 		return true;
 	}
 	return false;
+}
+
+//-----------------------------------------------------
+// Description:
+//   Signals whether Carbon Audio supports spatial audio features on this operating system. 
+//-----------------------------------------------------
+const bool AudManager::SpatialAudioIsSupported()
+{
+#if _WIN32
+	return true;
+#else
+	return false;
+#endif 
 }
 
 void AudManager::UpdateSettings( AudSettings* settings )
@@ -632,6 +677,60 @@ void AudManager::Disable()
 	BeOS->UnregisterForTicks( this, (void*)"Audio::Tick" );
 }
 
+
+//-----------------------------------------------------
+// Description:
+//   Disable spatial audio, whether or not the user has a spatial audio endpoint active. 
+//   In order for this to work properly the "m_stereoAudioDeviceName" property in AudSettings.h
+//   needs to point to an existing Wwise Audio Device made through the Wwise authoring tool that has
+//   "Allow 3D Audio" disabled and an updated set of SoundBanks with this audio device needs to be loaded.
+// Returns:
+//   true if the request to change the audio device was successfully queued, false if the stereo audio device
+//   defined in AudSettings does not exist in the loaded SoundBanks or if another unknown error occured. 
+//   Keep an eye on loglite to know what the problem was if this returns false.
+//-----------------------------------------------------
+bool AudManager::DisableSpatialAudio()
+{
+#if _WIN32
+    const AkOutputDeviceID defaultOutputDeviceId = 0;
+
+    if( !g_audioInitialized )
+    {
+        return false;
+    }
+
+	if( !m_spatialAudioEnabled )
+	{
+		return true;
+	}
+
+    AkOutputSettings settings = AkOutputSettings();
+    settings.audioDeviceShareset = AK::SoundEngine::GetIDFromString( m_settings->m_stereoAudioDeviceName.c_str() );
+    AKRESULT result = AK::SoundEngine::ReplaceOutput( settings, defaultOutputDeviceId );
+
+    if( result != AK_Success )
+    {
+        if( result == AK_IDNotFound )
+        {
+            CCP_LOGERR( "Spatial audio was not able to be disabled because the Wwise Audio device named %S could not be found. " 
+                        "Either create a new 2D audio device with the expected name or change the name of the 2D audio device in "
+                        "Carbon Audio's settings before initializing it.", m_settings->m_stereoAudioDeviceName.c_str() );
+        }
+        else
+        {
+            CCP_LOGERR( "Setting audio output to stereo failed to be scheduled for an unknown reason. Spatial audio will stay enabled." );
+        }
+        return false;
+    }
+
+    m_spatialAudioEnabled = false;
+    return true;
+#else
+	CCP_LOGERR("DisableSpatialAudio method was called on an operating system that Carbon Audio does not support spatial audio on.");
+	return false;
+#endif
+}
+
 //-----------------------------------------------------
 // Description:
 //   Enable CarbonAudio which will initialize the sound engine, load the given SoundBanks,
@@ -669,6 +768,59 @@ void AudManager::Enable(BankVector soundBanksToLoad)
 
 	BeOS->RegisterForTicks( this, (void*)"Audio::Tick" );
 	return;
+}
+
+//-----------------------------------------------------
+// Description:
+//   Enable spatial audio features in Carbon Audio. This will not take effect unless the user has a spatial audio 
+//   endpoint active on their operating system that supports spatial audio (e.g. Dolby Atmos or Windows Sonic for Headphones).
+//   In order for this to work properly the "m_spatialAudioDeviceName" property in AudSettings.h
+//   needs to point to an existing Wwise Audio Device made through the Wwise authoring tool that has 
+//   "Allow 3D Audio" enabled and an updated set of SoundBanks with this audio device needs to be loaded.
+// Returns:
+//   true if the request to change the audio device was successfully queued, false if the spatial audio device
+//   defined in AudSettings does not exist in the loaded SoundBanks or if another unknown error occured. 
+//   Keep an eye on loglite to know what the problem was if this returns false.
+//-----------------------------------------------------
+bool AudManager::EnableSpatialAudio()
+{
+#if _WIN32
+    if( !g_audioInitialized )
+    {
+        return false;
+    }
+
+	if( m_spatialAudioEnabled )
+	{
+		return true;
+	}
+
+    const AkOutputDeviceID defaultOutputDeviceId = 0;
+    AkOutputSettings settings = AkOutputSettings();
+    settings.audioDeviceShareset = AK::SoundEngine::GetIDFromString( m_settings->m_spatialAudioDeviceName.c_str() );
+    AKRESULT result = AK::SoundEngine::ReplaceOutput( settings, defaultOutputDeviceId );
+
+    if( result != AK_Success )
+    {
+        if( result == AK_IDNotFound )
+        {
+            CCP_LOGERR( "Spatial audio was not able to be enabled because the Wwise Audio device named %S could not be found. " 
+                        "Either create a new 3D audio device with the expected name or change the name of the 3D audio device in "
+                        "Carbon Audio's settings before initializing it.", m_settings->m_spatialAudioDeviceName.c_str() );
+        }
+        else
+        {
+            CCP_LOGERR( "Setting audio output to 3D failed to be scheduled. Audio output will continue to output in stereo." );
+        }
+		return false;
+    }
+
+	m_spatialAudioEnabled = true;
+	return true;
+#else
+	CCP_LOGERR( "EnableSpatialAudio method was called on an operating system that Carbon Audio does not support spatial audio on." );
+	return false;
+#endif
 }
 
 const std::vector<std::wstring> AudManager::GetLoadedSoundBanks()
@@ -778,6 +930,25 @@ void AudManager::UnregisterParameter(const std::wstring& audioParameterName)
 			}
 		}
 	}
+}
+
+//-----------------------------------------------------
+// Description:
+//   Register a callback to be called every time Wwises audio device changes. This callback can be used to determine
+//   if the user's current audio device supports spatial audio every time the audio device is changed, either by the user 
+//   or manually by Carbon Audio when using the EnableSpatialAudio and DisableSpatialAudio methods. Look at the documentation
+//   for this method in AudManager_Blue.cpp for an example of how the Python function should look.
+// Arguments:
+//   callback - A Python callback that will be called every time the user has an audio device change.
+//-----------------------------------------------------
+void AudManager::RegisterAudioDeviceChangeCallback(const BlueScriptCallback callback)
+{
+#if _WIN32
+	CcpAutoMutex mutex( s_audioDeviceMutex );
+	s_audioDeviceChangeCallback = callback;
+#else
+	CCP_LOGERR( "RegisterAudioDeviceChangeCallback method was called on an operating system that Carbon Audio does not support spatial audio on." );
+#endif
 }
 
 void AudManager::RegisterGameObject( AkGameObjectID emitterID, AudGameObjResource* emitter )
@@ -1055,3 +1226,73 @@ void AudManager::GlobalCallbackEndRender(AK::IAkGlobalPluginContext* in_pContext
 	AudManager* audManager = static_cast<AudManager*>(in_pCookie);
 	audManager->UpdateMonitoredParameters();
 }
+
+#if _WIN32
+//-----------------------------------------------------
+// Description:
+//	 A callback that is registered during initialization that is triggered every Wwise's audio device is changed. This method takes care of
+//   calling the callback that can be registered with the RegisterAudioDeviceCallback method which can be used to keep track of if the 
+//   user's current audio output device supports spatial audio or not. The kinds of events that will trigger this callback method are:
+//     * Initializion of carbon audio, e.g. the first time an audio output device is created.
+//     * Swapping audio device sharesets during runtime (e.g. DisableSpatialAudio and EnableSpatialAudio).
+//     * When the user changes their audio device at an operating system level (e.g. changing from headphones to speakers).
+//-----------------------------------------------------
+void AudManager::AudioDeviceStatusChangeCallback( AK::IAkGlobalPluginContext* in_pContext, AkUniqueID in_idAudioDeviceShareset, AkUInt32 in_idDeviceID, AK::AkAudioDeviceEvent in_idEvent, AKRESULT in_AkResult )
+{
+	if( in_idEvent == AK::AkAudioDeviceEvent::AkAudioDeviceEvent_Initialization )
+	{
+		if( in_AkResult != AK_Success )
+		{
+			CCP_LOGERR( "Audio device %u with share set %u was unable to be initialized.", in_idDeviceID, in_idAudioDeviceShareset );
+		}
+		else
+		{
+			CCP_LOG( "Audio device %u with shareset %u was successfully initialized.", in_idDeviceID, in_idAudioDeviceShareset );
+		}
+	}
+	else
+	{
+		if( in_idEvent == AK::AkAudioDeviceEvent::AkAudioDeviceEvent_Removal )
+		{
+			CCP_LOG( "Audio device %u with shareset %u was manually requested to be removed.", in_idDeviceID, in_idAudioDeviceShareset );
+		}
+		else if( in_idEvent == AK::AkAudioDeviceEvent::AkAudioDeviceEvent_SystemRemoval )
+		{
+			CCP_LOG( "Audio device %u with shareset %u was removed because of a change in the user's system output.", in_idDeviceID, in_idAudioDeviceShareset );
+		}
+		else
+		{
+			CCP_LOGERR( "An unkown Audio Device Event %d was received in the AudioDeviceStatusChangeCallback.", in_idEvent );
+		}
+	}
+
+	AKRESULT result = AK::SoundEngine::GetDeviceSpatialAudioSupport( in_idDeviceID );
+	CcpAutoMutex mutex( s_audioDeviceMutex );
+	if( result == AK_Success )
+	{
+		CCP_LOG( "The user's system supports spatial audio (audio device %u).", in_idDeviceID );
+		s_systemSupportsSpatialAudio = true;
+	}
+	else if( result == AK_NotCompatible )
+	{
+		CCP_LOG( "The user's system does not support spatial audio (audio device %u).", in_idDeviceID );
+		s_systemSupportsSpatialAudio = false;
+	}
+	else
+	{
+		CCP_LOGERR( "Checking for spatial audio support with audio device id %u failed for an unknown reason.", in_idDeviceID );
+		s_systemSupportsSpatialAudio = false;
+	}
+
+	// This exists solely to be able to propagate the audio device change callback on the main thread.
+	// It is important to propagate it on the main thread because it is theoretically possible that Carbon Audio
+	// would hold up Wwise's audio thread as it waits for Python. This circumvents that and will make sure this is processed on the next tick. 
+	g_mainThreadQueue->Add( []( void* ) {
+		if( s_audioDeviceChangeCallback )
+		{
+			s_audioDeviceChangeCallback.CallVoid( s_systemSupportsSpatialAudio );
+		}
+	} , nullptr, IBlueCallbackMan::BCBF_NONE, nullptr );
+}
+
+#endif

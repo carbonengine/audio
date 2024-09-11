@@ -14,6 +14,7 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		MAP_ATTRIBUTE( "audioCullingEnabled", m_audioCullingEnabled, "Whether audio culling is enabled or disabled.", Be::READ )
 		MAP_ATTRIBUTE( "maxAwakeGameObjects", m_maxAwakeGameObjects, "The maximum number of game objects that can be awake at one time.", Be::READWRITE )
 		MAP_ATTRIBUTE( "weightMultiplier", m_weightMultiplier, "A multiplier applied to each individual weight", Be::READWRITE )
+		MAP_ATTRIBUTE( "spatialAudioEnabled", m_spatialAudioEnabled, "Whether spatial audio (sometime's referred to as 3D audio) is enabled", Be::READ )
 		MAP_PROPERTY( "oneShotWindow", GetOneShotWindow, SetOneShotWindow, "The window, in milliseconds, that a one shot has to get the chance to play.")
 		MAP_PROPERTY( "activeSoundsWeight", GetPlayingEventsWeight, SetPlayingEventsWeight, "The weight applied to a game object if it has sounds currently playing.")
 		MAP_PROPERTY( "rangeWeight", GetRangeWeight, SetRangeWeight, "The weight applied to a game object if it is within range of the listener.")
@@ -37,12 +38,26 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		)
 		MAP_METHOD_AND_WRAP
 		( 
+			"DisableSpatialAudio",
+			DisableSpatialAudio,
+			"Signal that you want spatial audio to be disabled. This method is asynchronous and will return True if the request "
+			"was properly queued."
+		)
+		MAP_METHOD_AND_WRAP
+		( 
 			"Enable",
 			Enable,
 			"Enable CarbonAudio and load the given soundbanks.\n"
 			":param soundBanksToLoad: A list of SoundBanks to load when enabling CarbonAudio. Note: the Init SoundBank\n"
 			"                         is implicitly loaded and does not need to be passed in.\n"
 			":type soundBanksToLoad: list"
+		)
+		MAP_METHOD_AND_WRAP
+		( 
+			"EnableSpatialAudio",
+			EnableSpatialAudio,
+			"Enable spatial audio. This method is asynchronous and a successful return means that the request "
+			"to change the current Wwise audio device shareset was properly queued."
 		)
 		MAP_METHOD_AND_WRAP
 		( 
@@ -80,6 +95,22 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 			":return: An audio emitter object if it exists, None otherwise."
 		)
 		MAP_METHOD_AND_WRAP
+		( 
+			"RegisterAudioDeviceChangeCallback",
+			RegisterAudioDeviceChangeCallback,
+			"Registers a callback that will be called every time the audio device changes such as by initializing carbon audio, "
+			"enabling/disabling spatial audio manually or if the system's audio output changes. This callback allows the consumer of Carbon "
+			"Audio to know if the user's system supports spatial audio or not. It is possible to enable Carbon Audio's spatial audio features "
+			"without the user's machine having the ability to utilize it, hence the existence of this callback. The registered callback must "
+			"accept a boolean argument that signifies whether or not the user's current audio output supports spatial audio.\n"
+			"An example of a valid callback for this would be:\n\n"
+			"def audioDeviceChangeCallback(outputSupportsSpatialAudio):\n"
+			"    if outputSupportsSpatialAudio:\n"
+			"        print('The user's current output device supports spatial audio.')\n"
+			"    else:\n"
+			"        print('The user's current output device does not support spatial audio.)\n"
+		)
+		MAP_METHOD_AND_WRAP
 		(
 			"SetGlobalRTPC",
 			SetGlobalRTPC,
@@ -94,6 +125,12 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 			"Set a global state in Wwise.\n"
 			":param stateGroup: The name of the state group the state belongs to in Wwise.\n"
 			":param stateName: The state you want to set in Wwise."
+		)
+		MAP_METHOD_AND_WRAP
+		( 
+			"SpatialAudioIsSupported",
+			SpatialAudioIsSupported,
+			"Signals whether Carbon Audio suports spatial audio on the current operating system."
 		)
 		MAP_METHOD_AND_WRAP
 		( 

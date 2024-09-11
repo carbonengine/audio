@@ -89,8 +89,12 @@ public:
 	void ClearBanks();
 	// Disable CarbonAudio and terminate all relevant subprocesses. 
 	void Disable();
+	// Disable spatial audio. Works whether or not the user has a spatial audio endpoint active on their system.
+	bool DisableSpatialAudio();
 	// Enable CarbonAudio and load the given soundbanks.
 	void Enable(BankVector soundBanksToLoad);
+	// Enable spatial audio. If the user does not have a spatial audio endpoint active then it will do nothing.
+	bool EnableSpatialAudio();
 	// Get any game object if it currently exists.
 	AudGameObjResource* GetAudioEmitter( AkGameObjectID emitterID );
 	// Retreive a vector of all currently loaded soundbanks.
@@ -107,6 +111,8 @@ public:
 	const MonitoredParameterInfo* GetParameterInfo( const std::wstring& audioParameterName );
 	// Register an audio parameter to be monitored. 
 	void RegisterParameter( const std::wstring& audioParameterName );
+	// Register a callback to keep track of if the user's current output device supports spatial audio.
+	void RegisterAudioDeviceChangeCallback( const BlueScriptCallback callback );
 	// Register a game object for the audio manager to keep track of.
 	void RegisterGameObject( AkGameObjectID emitterID, AudGameObjResource* emitter );
 	// Register an event to be sent to Wwise after it is done loading. Only works with soundbanks in the SoundBankStatus::Loading state.
@@ -115,6 +121,8 @@ public:
 	bool SetGlobalRTPC( const std::wstring& rtpcName, float value );
 	// Set a global state in Wwise.
 	bool SetState( const std::wstring& stateGroup, const std::wstring& stateName );
+	// Can be called to see if the current platform supports spatial audio.
+	const bool SpatialAudioIsSupported();
 	// Stop all currently playing sounds on all game objects.
 	void StopAll();
 	// Update audio engine settings, must be called before the audio engine is initialized in SetEnabled.
@@ -194,20 +202,24 @@ private:
 	bool InitMusic();
 	// Initializes Wwise's sound engine.
 	bool InitSound();
-	// The callback called by Wwise once a SoundBank has been attempted to load.
-	static void LoadBankCallback( AkUInt32 in_bankID, const void* in_pInMemoryBankPtr, AKRESULT in_eLoadResult, void* in_pCookie );
 	// Tick handler
 	void Process(); 
 	// Registers audio2 for the tick handler.
 	void RegisterForTicks();
 	// Terminates all Wwise modules.
 	void Terminate();
-	// The callback used by Wwise once it is done trying to unload a SoundBank 
-	static void UnloadBankCallback( AkUInt32 in_bankID, const void* in_pInMemoryBankPtr, AKRESULT in_eLoadResult, void* in_pCookie );
 	// Get the listener game object if it exists.
 	AudListenerPtr GetListener();
 	// Update all watched audio parameters with their current values in Wwise (if they exist).
 	void UpdateMonitoredParameters();
+
+	//*** Callbacks ***//
+	// A callback that is called whenever the audio device is changed.
+	static void AudioDeviceStatusChangeCallback( AK::IAkGlobalPluginContext * in_pContext, AkUniqueID in_idAudioDeviceShareset, AkUInt32 in_idDeviceID, AK::AkAudioDeviceEvent in_idEvent, AKRESULT in_AkResult );
+	// The callback called by Wwise once a SoundBank has been attempted to load.
+	static void LoadBankCallback( AkUInt32 in_bankID, const void* in_pInMemoryBankPtr, AKRESULT in_eLoadResult, void* in_pCookie );
+	// The callback used by Wwise once it is done trying to unload a SoundBank 
+	static void UnloadBankCallback( AkUInt32 in_bankID, const void* in_pInMemoryBankPtr, AKRESULT in_eLoadResult, void* in_pCookie );
 
 	friend class AudGameObjResource;
 
@@ -215,6 +227,8 @@ private:
 	// downloaded on demand. Asynchronous opening does not freeze the client when using download on demand in conjunction
 	// with .wem files (aka streaming) but .bnk files will still freeze the client while Wwise waits to open it.
 	bool m_asyncOpen;
+	// Signals whether Carbon Audio's spatial audio features are enabled. If the user currently doesn't have an active spatial audio endpoint then output will still be in stereo.
+	bool m_spatialAudioEnabled;
 	// A map of all existing game objects.
 	std::vector< std::pair<AkGameObjectID, AudGameObjResource*> > m_gameObjects;
 	std::map<AkBankID, SoundBankInfo> m_soundBankInfoMap;

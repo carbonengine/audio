@@ -12,8 +12,15 @@
     "LibName": "No Output",
     "LibId": "11862023",
     "Type": "AudioDevice"
+   },
+   {
+    "LibName": "Wwise Audio Input",
+    "LibId": "13107202",
+    "Type": "Source",
+    "DLL": "AkAudioInput",
+    "StaticLib": "AkAudioInputSource"
    }
   ],
-  "FileHash": "{71F42CD2-2880-BF0B-D154-F41540A353AF}"
+  "FileHash": "{AB08D2DF-44C8-FF32-060E-CA7987ACA61C}"
  }
 }

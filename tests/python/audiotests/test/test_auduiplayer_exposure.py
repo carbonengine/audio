@@ -3,6 +3,7 @@ import audio2
 from audiotests.base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK, ONE_SHOT_EVENT
 from audiotests.base_test_class import BaseAudio2TestClass
 from audiotests.utils import PumpOSWithTimeout
+from mock import MagicMock
 
 
 class TestAudUIPlayerExposure(BaseAudio2TestClass):
@@ -35,12 +36,16 @@ class TestAudUIPlayerExposure(BaseAudio2TestClass):
 
     def test_auduiplayer_sendeventwithcallback(self):
         """Test that AudUIPlayer::SendEventWithCallback works as expected."""
-        def callback(event):
-            self.assertTrue(event == LOOP_EVENT)
-
+        callback = MagicMock()
         uiPlayer = audio2.GetUIPlayer()
         uiPlayer.eventSenderCallback = callback
-        uiPlayer.SendEventWithCallback(LOOP_EVENT)
+        # Give time for UIPlayer to be woken up and not be culled because of the sound prioritization system.
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=1) 
+        playingID = uiPlayer.SendEventWithCallback(ONE_SHOT_EVENT)
+        self.assertTrue(playingID > 0)
+        # Wait 7 seconds, because the one shot event is 7 seconds long and the callback is called when it's done.
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=80)
+        callback.assert_called_once_with(ONE_SHOT_EVENT) 
 
     def test_auduiplayer_postdialogueevent(self):
         """Test that AudUIPlayer::PostDialogueEvent allows you to get the current playing position of an event."""

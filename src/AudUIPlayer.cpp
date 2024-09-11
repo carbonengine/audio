@@ -29,7 +29,7 @@ unsigned int AudUIPlayer::SendEventWithCallback( const std::wstring& name )
 		m_callbackEventName = PrepareEvent(name, false);
 		if(m_callback)
 		{
-			return PostEvent( name.c_str(), false, AK_EnableGetSourcePlayPosition );
+			return PostEvent( m_callbackEventName.c_str(), false, AK_EnableGetSourcePlayPosition );
 		}
 		else 
 		{

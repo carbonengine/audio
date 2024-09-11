@@ -26,6 +26,10 @@ def main():
             while self.result is None:
                 blue.os.Pump()
 
+            if self.result.failures:
+                for failure in self.result.failures:
+                    print(failure[1])
+
             return self.result
 
         def _run_impl(self, test):
