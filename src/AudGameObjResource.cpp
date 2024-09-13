@@ -30,6 +30,7 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 														 m_playing2DSound( false ),
 														 m_playingVitalSound( false ),
 														 m_forceCullingState( false ),
+														 m_muted(false),
 														 m_distanceSqFromListener( 0.0f ),
 														 m_additionalCullingWeight( 0.0f ),
 														 m_cumulativeWeight( 0.0f ),
@@ -63,6 +64,7 @@ AudGameObjResource::AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj
 																				   m_playing2DSound( false ),
 																				   m_playingVitalSound( false ),
 																				   m_forceCullingState( false ),
+																				   m_muted( false ),
 																				   m_distanceSqFromListener( 0.0f ),
 														 						   m_additionalCullingWeight( 0.0f ),
 																				   m_cumulativeWeight( 0.0f ),
@@ -553,7 +555,7 @@ void AudGameObjResource::Wake()
 {
 	if( g_audioEnabled )
 	{
-		if ( m_forceCullingState )
+		if ( m_forceCullingState || m_muted )
 		{
 			return;	
 		}
@@ -638,7 +640,7 @@ void AudGameObjResource::Cull()
 //------------------------------------------------------
 // Description:
 //   Calculates this game objects weight within the culling system and sets m_cumulativeWeight to the result.
-//   The smaller the number the more prioritized this game object will be. The following affects weight:
+//   The smaller the number the more prioritized this game object will be. If this game object is not muted, the following affects weight:
 //     * How close this game object is to the listener.
 //     * If any events that are playing or meant to be played on wake are within range of the listener.
 //     * If any one shot was requested to play within the last 10 milliseconds.
@@ -670,16 +672,22 @@ void AudGameObjResource::CalculateCullingWeight( std::chrono::steady_clock::time
 		}
 	}
 
-	m_listenerInRange = m_distanceSqFromListener < GetMaxAttenuationRadius();
+	if (m_muted)
+	{
+		m_cumulativeWeight = std::numeric_limits<float>::max() - m_additionalCullingWeight;
+	}
+	else
+	{
+		m_listenerInRange = m_distanceSqFromListener < GetMaxAttenuationRadius();
+		float usedEmitterWeight = m_isUsed ? g_audioManager->GetUsedEmitterWeight() : 0.0f;
+		float rangeWeight = m_listenerInRange ? g_audioManager->GetRangeWeight() : 0.0f;
+		float activeSoundsWeight = m_playingEvents.size() > 0 ? g_audioManager->GetPlayingEventsWeight() : 0.0f;
+		float visibleWeight = m_isVisible ? g_audioManager->GetVisibleWeight() : 0.0f;
+		float playing2DWeight = m_playing2DSound ? g_audioManager->GetPlaying2DWeight() : 0.0f;
+		float playingVitalSoundWeight = m_playingVitalSound ? g_audioManager->GetPlayingVitalSoundWeight() : 0.0f;
 
-	float usedEmitterWeight = m_isUsed ? g_audioManager->GetUsedEmitterWeight() : 0.0f;
-	float rangeWeight = m_listenerInRange ? g_audioManager->GetRangeWeight() : 0.0f;
-	float activeSoundsWeight = m_playingEvents.size() > 0 ? g_audioManager->GetPlayingEventsWeight() : 0.0f;
-	float visibleWeight = m_isVisible ? g_audioManager->GetVisibleWeight() : 0.0f;
-	float playing2DWeight = m_playing2DSound ? g_audioManager->GetPlaying2DWeight() : 0.0f;
-	float playingVitalSoundWeight = m_playingVitalSound ? g_audioManager->GetPlayingVitalSoundWeight() : 0.0f;
-
-	m_cumulativeWeight = ( m_distanceSqFromListener - activeSoundsWeight - rangeWeight - visibleWeight - usedEmitterWeight - waitingOneShotWeight - playing2DWeight - playingVitalSoundWeight ) - m_additionalCullingWeight;
+		m_cumulativeWeight = ( m_distanceSqFromListener - activeSoundsWeight - rangeWeight - visibleWeight - usedEmitterWeight - waitingOneShotWeight - playing2DWeight - playingVitalSoundWeight ) - m_additionalCullingWeight;
+	}
 }
 
 //------------------------------------------------------
@@ -825,6 +833,7 @@ std::map<unsigned int, std::wstring> AudGameObjResource::GetPlayingEvents()
 //-----------------------------------------------------
 void AudGameObjResource::ForceCullingStateChange()
 {
+	// Temporarily release culling state so waking and culling work.
 	m_forceCullingState = false;
 	if ( m_culled )
 	{
@@ -844,4 +853,49 @@ void AudGameObjResource::ForceCullingStateChange()
 void AudGameObjResource::ReleaseForcedCullingState()
 {
 	m_forceCullingState = false;
+}
+
+//-----------------------------------------------------
+// Description:
+//   Mute this game object so that it doesn't play any more sounds. In reality this method is actually just forcefully 
+//   culling this game object so it can be in the correct state still when unmuted or woken up.
+//-----------------------------------------------------
+void AudGameObjResource::Mute()
+{
+	if ( m_muted )
+	{
+		return;
+	}
+
+	if ( !m_culled )
+	{
+		ForceCullingStateChange();
+	}
+	m_muted = true;
+}
+
+//-----------------------------------------------------
+// Description:
+//   Unmute this game object so that it can continue to play sounds as normal. In reality this method is actually just forcefully 
+//   waking up this game object and returing control to the sound prioritization system.
+//-----------------------------------------------------
+void AudGameObjResource::Unmute()
+{
+	if ( !m_muted )
+	{
+		return;
+	}
+
+	if ( m_culled )
+	{
+		ForceCullingStateChange();
+	}
+
+	ReleaseForcedCullingState();
+	m_muted = false;
+}
+
+bool AudGameObjResource::IsMuted()
+{
+	return m_muted;
 }

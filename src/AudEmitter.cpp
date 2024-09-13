@@ -145,12 +145,12 @@ void AudEmitter::RenderDebugInfo( ITr2DebugRenderer2& renderer )
 	}
 }
 
-void AudEmitter::ForceCullingStateChange()
+void AudEmitter::Mute()
 {
-	AudGameObjResource::ForceCullingStateChange();
+	AudGameObjResource::Mute();
 }
 
-void AudEmitter::ReleaseForcedCullingState()
+void AudEmitter::Unmute()
 {
-	AudGameObjResource::ReleaseForcedCullingState();
+	AudGameObjResource::Unmute();
 }
