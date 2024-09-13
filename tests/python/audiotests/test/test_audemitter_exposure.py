@@ -1,10 +1,9 @@
-import audio2
-
 from audiotests.base_test_class import BaseAudio2TestClass
 
 
 class TestAudEmitterExposure(BaseAudio2TestClass):
     def setUp(self):
+        import audio2
         self.emitter = audio2.AudEmitter("emitter1")
         self.Initialize()
         self.audioManager.Enable()
@@ -13,5 +12,5 @@ class TestAudEmitterExposure(BaseAudio2TestClass):
     def test_audioemitter_debug(self):
         """Test that all methods having to do with debugging in AudEmitter work."""
         self.emitter.SetPosition((1,0,0), (0,1,0), (0,50,0))
-        self.assertEquals(self.emitter.debugPosition, (0,50,0))
-        self.assertEquals(self.emitter.debugFront, (1,0,0))
+        self.assertEqual(self.emitter.debugPosition, (0,50,0))
+        self.assertEqual(self.emitter.debugFront, (1,0,0))

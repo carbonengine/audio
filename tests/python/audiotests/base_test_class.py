@@ -3,7 +3,6 @@ import os
 import unittest
 
 import blue
-from audio2.audiomanager import AudioManager
 
 AUDIO_METADATA_FILEPATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "test", "soundbanks", "AudioMetadata.json"))
 SOUNDBANK_FILEPATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "test", "soundbanks"))
@@ -21,9 +20,9 @@ def GetEventMetadataFromFile():
     with open(AUDIO_METADATA_FILEPATH, "r") as f:
         audioMetadata = json.loads(f.read())
 
-    # eventID's have to be long or else CarbonAudio doesn't correctly grab it.
-    for eventName, eventInfo in audioMetadata.iteritems():
-        eventInfo["eventID"] = long(eventInfo["eventID"])
+    # eventID's have to be int or else CarbonAudio doesn't correctly grab it.
+    for eventName, eventInfo in audioMetadata.items():
+        eventInfo["eventID"] = int(eventInfo["eventID"])
 
     return audioMetadata
 
@@ -32,6 +31,7 @@ class BaseAudio2TestClass(unittest.TestCase):
     """Initializes Wwise for other test classes."""
     @classmethod
     def setUpClass(cls):
+        from audio2.audiomanager import AudioManager
         super(BaseAudio2TestClass, cls).setUpClass()
 
         blue.paths.SetSearchPath("soundbanks", SOUNDBANK_FILEPATH)

@@ -99,7 +99,7 @@ std::vector<std::wstring> AudStaticDataRepository::SoundBanksRequiredForEvent( c
     const EventData* eventData = GetEventData( eventName );
     if ( eventData != nullptr )
     {
-		return eventData->soundbanks;	
+		return eventData->soundbanks;
     }
     return std::vector<std::wstring>();
 }
@@ -123,7 +123,7 @@ void AudStaticDataRepository::Initialize( PyObject* wwiseEvents )
     CcpAutoMutex mutex( m_eventsMutex );
     while ( PyDict_Next( wwiseEvents, &pos, &key, &value ) )
     {
-        std::string eventNameC = PyString_AsString( key );
+        std::string eventNameC = PyUnicode_AsUTF8( key );
         std::wstring eventName = static_cast<const wchar_t*>( CA2W( eventNameC.c_str() ) );
 
         bool isLoop = false;
@@ -233,7 +233,7 @@ std::vector<std::wstring> AudStaticDataRepository::GenerateVectorFromPythonList(
 			const unsigned int listLength = (unsigned int)PyList_GET_SIZE( pyList );
 			for( unsigned int i=0; i<listLength; i++ )
 			{
-				std::string valueC = PyString_AsString( PyList_GetItem( pyList, i ) );
+				std::string valueC = PyUnicode_AsUTF8( PyList_GetItem( pyList, i ) );
 				std::wstring value = static_cast<const wchar_t*>( CA2W( valueC.c_str() ) );
 				newVector.push_back( value );
 			}

@@ -43,7 +43,7 @@ MAP_FUNCTION( "GetWwiseCommunicationEnabled", PyGetWwiseCommuncationEnabled, "Wh
 
 static PyObject* PyGetWwiseVersion( PyObject* self, PyObject* args )
 {
-	return PyString_FromString( g_wwiseVersion.c_str() );
+	return PyUnicode_FromString( g_wwiseVersion.c_str() );
 }
 MAP_FUNCTION( "GetWwiseVersion", PyGetWwiseVersion, "The version of Wwise being used by audio2." );
 
@@ -87,7 +87,7 @@ static PyObject* PyGetRegisteredEnums( PyObject* self, PyObject* args )
 	for( EnumRegsMap::const_iterator i = regs.begin(); i != regs.end(); ++i )
 	{
 		PyObject* enumName = NULL;
-		enumName = PyString_FromStringAndSize( i->first.c_str(), i->first.size() );
+		enumName = PyUnicode_FromStringAndSize( i->first.c_str(), i->first.size() );
 		PyList_Append( l, enumName );
 		Py_XDECREF( enumName );
 	}
@@ -118,9 +118,9 @@ static PyObject* PyGetRegisteredEnumValues( PyObject* self, PyObject* args )
 	PyObject* l = PyList_New( 0 );
 	for( EnumValues::const_iterator i = vals.begin(); i != vals.end(); ++i )
 	{
-		PyObject* valueName = PyString_FromString( i->mKey );
+		PyObject* valueName = PyUnicode_FromString( i->mKey );
 		PyObject* val = PyLong_FromLong( i->mValue.mLong );
-		PyObject* docString = PyString_FromString( i->mDescription );
+		PyObject* docString = PyUnicode_FromString( i->mDescription );
  
 		PyObject* tupleObject = Py_BuildValue("(OOO)", valueName, val, docString );
  
@@ -141,15 +141,26 @@ MAP_FUNCTION( "GetRegisteredEnumValues", PyGetRegisteredEnumValues, "GetRegister
 //-----------------------------------------------------------------------------
 // Global DLL init function.
 //-----------------------------------------------------------------------------
-static void StartDLL( /*HINSTANCE instance*/ )
+static struct PyModuleDef ModuleDef =
+{
+	PyModuleDef_HEAD_INIT,
+	CCP_STRINGIZE(CCP_CONCATENATE(_audio2, CCP_BUILD_FLAVOR)),
+	"",
+	-1,
+	NULL
+};
+
+PyObject* StartDLL( /*HINSTANCE instance*/ )
 {	
 	BeClasses->CreateInstanceFromName( "BlueCallbackMan", BlueInterfaceIID<IBlueCallbackMan>(), (void**)&g_mainThreadQueue );
 
 	BeClasses->RegisterClasses( BlueRegistration::GetClassRegs() );
 	
-	PyObject* module = Py_InitModule( CCP_STRINGIZE( CCP_CONCATENATE( _audio2, CCP_BUILD_FLAVOR ) ), NULL );
+	PyObject* module = PyModule_Create(&ModuleDef);
 	
 	BlueRegisterToModule( module, BlueRegistration::GetClassRegs(), BlueRegistration::GetFuncRegs() );
+
+	return module;
 }
 
 #ifdef _WIN32
@@ -174,13 +185,14 @@ BOOL APIENTRY DllMain( HINSTANCE instance, DWORD  reason, LPVOID )
 //-----------------------------------------------------------------------------
 // init_audio2 - python dll module entry function
 //-----------------------------------------------------------------------------
-extern "C" void
-#ifdef _MSC_VER
-__declspec(dllexport)
+extern "C"
+#ifdef _WIN32
+__declspec( dllexport )
 #else
-__attribute__((visibility("default")))
+__attribute__((visibility ("default")))
 #endif
-CCP_CONCATENATE( init_audio2, CCP_BUILD_FLAVOR )()
+PyObject*
+CCP_CONCATENATE( PyInit__audio2, CCP_BUILD_FLAVOR )()
 {
-    StartDLL();
+	return StartDLL();
 }

@@ -1,9 +1,7 @@
-import audio2
-
 from audiotests.base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK, ONE_SHOT_EVENT
 from audiotests.base_test_class import BaseAudio2TestClass
 from audiotests.utils import PumpOSWithTimeout
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 
 class TestAudUIPlayerExposure(BaseAudio2TestClass):
@@ -21,13 +19,15 @@ class TestAudUIPlayerExposure(BaseAudio2TestClass):
 
     def test_auduiplayer_creation(self):
         """Test that only one instance of AudUIPlayer can be created and it has an ID of 2."""
+        import audio2
         uiPlayer = audio2.GetUIPlayer()
         self.assertIsNotNone(uiPlayer)
-        self.assertEquals(uiPlayer, audio2.GetUIPlayer())
-        self.assertEquals(uiPlayer.ID, 2)
+        self.assertEqual(uiPlayer, audio2.GetUIPlayer())
+        self.assertEqual(uiPlayer.ID, 2)
 
     def test_auduiplayer_sendevent(self):
         """Test that SendEvent is properly exposed through AudUIPlayer."""
+        import audio2
         uiPlayer = audio2.GetUIPlayer()
         uiPlayer.SetPosition((0,0,0), (0,0,0), (0,0,0))
         PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
@@ -36,6 +36,7 @@ class TestAudUIPlayerExposure(BaseAudio2TestClass):
 
     def test_auduiplayer_sendeventwithcallback(self):
         """Test that AudUIPlayer::SendEventWithCallback works as expected."""
+        import audio2
         callback = MagicMock()
         uiPlayer = audio2.GetUIPlayer()
         uiPlayer.eventSenderCallback = callback
@@ -49,6 +50,7 @@ class TestAudUIPlayerExposure(BaseAudio2TestClass):
 
     def test_auduiplayer_postdialogueevent(self):
         """Test that AudUIPlayer::PostDialogueEvent allows you to get the current playing position of an event."""
+        import audio2
         uiPlayer = audio2.GetUIPlayer()
         uiPlayer.SetPosition((0,0,0), (0,0,0), (0,0,0))
         PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
@@ -60,4 +62,4 @@ class TestAudUIPlayerExposure(BaseAudio2TestClass):
 
         # Test invalid playingID with GetEventPlayPosition
         invalidPlayPosition = uiPlayer.GetEventPlayPosition(999999)
-        self.assertEquals(invalidPlayPosition, -1)
+        self.assertEqual(invalidPlayPosition, -1)

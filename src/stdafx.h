@@ -19,11 +19,6 @@
 
 #include <list>
 
-#include <BlueExposure.h>
-#include <BlueStatistics.h>
-#include <IBluePaths.h>
-#include <CcpMath.h>
-
 // We have to include Wwise headers here so we can apply the _CRT_SECURE_NO_WARNINGS flag to them.
 // Wwise still uses some deprecated windows API's that trigger CRT warnings.
 #include <AK/AkWwiseSDKVersion.h>
@@ -50,5 +45,10 @@
 #ifndef AK_OPTIMIZED
 #include <AK/Comm/AkCommunication.h>
 #endif
+
+#include <BlueExposure.h>
+#include <BlueStatistics.h>
+#include <IBluePaths.h>
+#include <CcpMath.h>
 
 #undef _CRT_SECURE_NO_WARNINGS

@@ -2,7 +2,7 @@ from audiotests.base_test_class import SOUNDBANK_FILEPATH
 from audiotests.base_test_class import BaseAudio2TestClass
 from audiotests.base_test_class import GetEventMetadataFromFile
 from audiotests.utils import PumpOSWithTimeout
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 class SpatialAudioTestClass(BaseAudio2TestClass):
     """Test spatial audio related features."""
