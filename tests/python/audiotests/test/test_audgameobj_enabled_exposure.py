@@ -155,3 +155,34 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
         self.emitter.ForceCullingStateChange()
         blue.pyos.synchro.SleepWallclock(oneShotWindow + 200.0) # 200.0 has to be used because there is about a 10 ms drift when doing this.
         self.assertTrue(len(self.emitter.GetPlayingEvents()) == 0)
+
+    def test_audgameobjresource_doesnt_wake_if_muted(self):
+        """Test that if a one shot is sent to an instance of AudGameObjResource while it is culled and it is woken up after the one shot window it will not play."""
+        self.emitter.ForceCullingStateChange() # This has to be used instead of Cull() or else this will wake up automatically on the next tick.
+        self.emitter.Mute()
+        self.emitter.SendEvent(ONE_SHOT_EVENT)
+        self.emitter.ForceCullingStateChange() # This should not wake it up.
+        blue.pyos.synchro.SleepWallclock(100) 
+        self.assertTrue(self.emitter.IsMuted())
+        self.assertTrue(self.emitter.IsCulled())
+
+        # Test that you even if you force culling state change it will stay muted 
+        self.emitter.ForceCullingStateChange()
+        blue.pyos.synchro.SleepWallclock(100) 
+        self.assertTrue(self.emitter.IsMuted())
+        self.assertTrue(self.emitter.IsCulled())
+
+        self.emitter.Unmute()
+        blue.pyos.synchro.SleepWallclock(100) 
+        self.assertFalse(self.emitter.IsMuted())
+        self.assertFalse(self.emitter.IsCulled())
+
+
+    def test_audgameobjresource_wakes_if_muted(self):
+        """Test that if a one shot is sent to an instance of AudGameObjResource while it is culled and it is woken up after the one shot window it will not play."""
+        self.emitter.ForceCullingStateChange() # This has to be used instead of Cull() or else this will wake up automatically on the next tick.
+        self.emitter.Mute()
+        self.emitter.SendEvent(ONE_SHOT_EVENT)
+        self.emitter.ForceCullingStateChange() # This should not wake it up.
+        blue.pyos.synchro.SleepWallclock(100) 
+        self.assertTrue(len(self.emitter.GetPlayingEvents()) == 0)

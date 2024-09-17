@@ -147,6 +147,24 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 			ReleaseForcedCullingState, 
 			"Allows this game object to go back to being woken up and culled by the sound prioritization system as it normally would."
 		)
+		MAP_METHOD_AND_WRAP
+		( 
+			"Mute",
+			Mute, 
+			"Mute this game object so it doesn't play sounds."
+		)
+		MAP_METHOD_AND_WRAP
+		( 
+			"Unmute",
+			Unmute, 
+			"Unmute this game object so it can play sounds again." 
+		)
+		MAP_METHOD_AND_WRAP
+		( 
+			"IsMuted",
+			IsMuted,
+			"Whether or not this game object is currently muted."
+		)
 			
 	EXPOSURE_END()
 }

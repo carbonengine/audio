@@ -48,6 +48,7 @@ public:
 
 	//ITr2AudEmitter
 	void Initialize( const std::string& name, const std::wstring& prefix, const Vector3& position ) override;
+	void Mute() override;
 	unsigned int SendEvent( const std::wstring& name, bool bypassPrefix = false ) override;
 	int SetPosition( const Vector3& front, const Vector3& top, const Vector3& pos ) override;
 	void SetName( const std::string& name ) override;
@@ -57,6 +58,7 @@ public:
 	bool SetAttenuationScalingFactor( const float scalingFactor ) override;
 	void SetVisibility( bool isVisible ) override;
 	std::string GetName() override;
+	void Unmute() override;
 
 	// Debug
 	virtual	void GetDebugOptions( Tr2DebugRendererOptions& options ) override;

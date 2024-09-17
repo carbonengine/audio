@@ -77,6 +77,13 @@ public:
 	Vector3 GetPosition();
 	// Set the squared length of the distance that this game object sits from the listener.
 	void SetDistanceSqFromListener( const float distanceSq );
+	// Mute this game object so it doesn't play sounds. 
+	void Mute();
+	// Unmute this game object so it can play sounds again.
+	void Unmute();
+	// Whether or not this game object is currently muted.
+	bool IsMuted();
+
 
 	// Callbacks
 	virtual void EventFinishedCallback( AkEventCallbackInfo* cbInfo );
@@ -133,6 +140,8 @@ protected:
 	bool m_playingVitalSound;
 	// Signals whether the current culling state of this game object (e.g. culled or awake) should be forced to stay this way. Used for debug purposes.
 	bool m_forceCullingState;
+	// Signals whether this audio emitter is currently muted or not.
+	bool m_muted;
 	// The distance of this game object from the listener.
 	float m_distanceSqFromListener;
 	// Any additional weight you want this game object to have in the culling system. Can be from 0.0 to infinity. The higher the value the less likely it is to be culled.

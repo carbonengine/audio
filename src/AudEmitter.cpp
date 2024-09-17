@@ -142,3 +142,13 @@ void AudEmitter::RenderDebugInfo( ITr2DebugRenderer2& renderer )
 		}
 	}
 }
+
+void AudEmitter::Mute()
+{
+	AudGameObjResource::Mute();
+}
+
+void AudEmitter::Unmute()
+{
+	AudGameObjResource::Unmute();
+}
