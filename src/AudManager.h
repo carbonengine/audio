@@ -33,6 +33,7 @@ enum class SoundBankStatus
 	LOADING,
 	LOADED,
 	UNLOADING,
+	UNLOADED,
 	NOT_LOADED
 };
 

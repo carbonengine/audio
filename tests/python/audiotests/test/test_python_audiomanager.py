@@ -85,6 +85,7 @@ class TestPythonAudioManager(BaseAudio2TestClass):
 
         self.audioManager.AddAndLoadDefaultSoundBank(COMMON_BNK)
         self.audioManager.UnloadSoundBank(COMMON_BNK)
+
         PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
         self.assertEqual(set(self.audioManager.GetLoadedSoundBanks()), set([INIT_BANK, COMMON_BNK]))
 

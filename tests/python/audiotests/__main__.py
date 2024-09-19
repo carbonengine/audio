@@ -26,13 +26,18 @@ def main():
             while self.result is None:
                 blue.os.Pump()
 
-            if self.result.failures:
+            if len(self.result.failures) > 0:
                 for failure in self.result.failures:
                     print(failure[1])
+
+            if len(self.result.errors) > 0:
+                for error in self.result.errors:
+                    print(error, file=sys.stderr)
 
             return self.result
 
         def _run_impl(self, test):
+            #blue.pyos.synchro.SleepWallclock(8000)
             self.result = super(TaskletTestRunner, self).run(test)
 
     unittest.main(module=None, testRunner=TaskletTestRunner())
