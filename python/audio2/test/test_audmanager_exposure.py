@@ -1,4 +1,6 @@
 import os
+import logging
+import sys
 import unittest
 
 import audio2
@@ -79,6 +81,25 @@ class TestAudManagerExposure(unittest.TestCase):
 
         self.audioManager.LoadBank(ONE_SHOT_BNK)
         self.assertEquals(self.audioManager.GetLoadedSoundBanks(), [])
+
+    def test_audmanager_soundbanks_race_condition(self):
+        """Test all methods relating to loading and unloading soundbanks in AudManager."""
+        from audio2.audiomanager import INIT_BANK
+        self.audioManager.LoadBank(ONE_SHOT_BNK)
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=1)
+        self.audioManager.UnloadBank(ONE_SHOT_BNK)
+        self.audioManager.LoadBank(ONE_SHOT_BNK)
+
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
+        self.assertCountEqual(self.audioManager.GetLoadedSoundBanks(), [INIT_BANK, ONE_SHOT_BNK])
+
+        self.audioManager.UnloadBank(ONE_SHOT_BNK)
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=1)
+        self.audioManager.LoadBank(ONE_SHOT_BNK)
+        self.audioManager.UnloadBank(ONE_SHOT_BNK)
+
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
+        self.assertCountEqual(self.audioManager.GetLoadedSoundBanks(), [INIT_BANK])
 
     def test_audmanager_audio_emitters(self):
         """Test that the AudManager keeps track of all audio emitters."""

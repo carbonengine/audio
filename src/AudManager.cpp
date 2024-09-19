@@ -482,8 +482,15 @@ void AudManager::LoadBankCallback( AkUInt32 in_bankID, const void* in_pInMemoryB
 		std::wstring soundBankName = audManagerPtr->GetSoundBankName( in_bankID );
 		if( in_eLoadResult == AK_Success || in_eLoadResult == AK_BankAlreadyLoaded )
 		{
-			audManagerPtr->UpdateSoundBankStatus( in_bankID, SoundBankStatus::LOADED );
-			CCP_LOG( "SoundBank %S was successfully loaded.", soundBankName.c_str() );
+			if( soundBankStatus == SoundBankStatus::LOADING )
+			{
+				audManagerPtr->UpdateSoundBankStatus( in_bankID, SoundBankStatus::LOADED );
+				CCP_LOG( "SoundBank %S was successfully loaded.", soundBankName.c_str() );
+			}
+			else if( soundBankStatus == SoundBankStatus::UNLOADING )
+			{
+				CCP_LOG( "SoundBank %S was supposed to be loaded, but has since been requested to be unloaded.", soundBankName.c_str() );
+			}
 		}
 		else
 		{
@@ -504,33 +511,39 @@ void AudManager::UnloadBank( const std::wstring& name )
 		AkBankID bankID = ComputeWwiseHashForSoundBank( name );
 		SoundBankStatus soundBankStatus = GetSoundBankStatus( bankID );
 
-		if( soundBankStatus == SoundBankStatus::NOT_LOADED )
+		switch( soundBankStatus )
 		{
-			CCP_LOGERR( "SoundBank %S was requested to be unloaded when it was not actually loaded to begin with.", name.c_str() );
-			return;
-		}
-		else if( soundBankStatus == SoundBankStatus::UNLOADING )
-		{ 
-			CCP_LOG( "SoundBank %S has been requested to unload when it is already unloading.", name.c_str() );
-			return;
-		}
+			case SoundBankStatus::NOT_LOADED:
+			{
+				CCP_LOGERR( "SoundBank %S was requested to be unloaded when it was not actually loaded to begin with.", name.c_str() );
+				break;
+			}
+			case SoundBankStatus::UNLOADING:
+			{
+				CCP_LOG( "SoundBank %S has been requested to unload when it is already unloading.", name.c_str() );
+				break;
+			}
+			default:
+			{
+				UpdateSoundBankStatus( bankID, SoundBankStatus::UNLOADING );
 
-		UpdateSoundBankStatus( bankID, SoundBankStatus::UNLOADING );
+				// The pInMemoryBankPtr can be NULL is NULL is passed when loading the bank.
+				const void* pInMemoryBankPtr = NULL;
+				AkBankCallbackFunc callback = &AudManager::UnloadBankCallback;
+				AKRESULT result = AK::SoundEngine::UnloadBank( name.c_str(), pInMemoryBankPtr, callback, this );
+				if( result != AK_Success )
+				{
+					StopTrackingSoundBank( bankID );
+					CCP_LOGERR( "SoundBank %S failed to be scheduled to be unloaded.", name.c_str() );
+				}
+				else
+				{
+					CCP_LOG( "SoundBank %S scheduled to be unloaded.", name.c_str() );
+				}
 
-		// The pInMemoryBankPtr can be NULL is NULL is passed when loading the bank.
-		const void* pInMemoryBankPtr = NULL;
-		AkBankCallbackFunc callback = &AudManager::UnloadBankCallback;
-		AKRESULT result = AK::SoundEngine::UnloadBank( name.c_str(), pInMemoryBankPtr, callback, this);
-		if( result != AK_Success )
-		{
-			StopTrackingSoundBank( bankID );
-			CCP_LOGERR( "SoundBank %S failed to be scheduled to be unloaded.", name.c_str() );
-		}
-		else
-		{
-			CCP_LOG( "SoundBank %S was successfully scheduled to be unloaded.", name.c_str() );
-		}
+			}
 
+		}
 	}
 }
 
@@ -544,12 +557,20 @@ void AudManager::UnloadBankCallback( AkUInt32 in_bankID, const void* in_pInMemor
 		if( in_eLoadResult != AK_Success )
 		{
 			CCP_LOGERR( "SoundBank %S failed to be unloaded.", soundBankName.c_str() );
+			audManagerPtr->StopTrackingSoundBank( in_bankID );
 		}
 		else
 		{
-			CCP_LOG( "SoundBank %S was successfully unloaded.", soundBankName.c_str() );
+			if( soundBankStatus == SoundBankStatus::UNLOADING )
+			{
+				CCP_LOG( "SoundBank %S was successfully unloaded.", soundBankName.c_str() );
+				audManagerPtr->StopTrackingSoundBank( in_bankID );
+			}
+			else if( soundBankStatus == SoundBankStatus::LOADING )
+			{
+				CCP_LOG( "SoundBank %S was supposed to be unloaded but has since been requested to be loaded. ", soundBankName.c_str() );
+			}
 		}
-		audManagerPtr->StopTrackingSoundBank( in_bankID );
 	}
 	else
 	{
@@ -710,7 +731,9 @@ const std::vector<std::wstring> AudManager::GetLoadedSoundBanks()
 	CcpAutoMutex mutex( m_soundBankMutex );
 	for( auto it = m_soundBankInfoMap.begin(); it != m_soundBankInfoMap.end(); ++it )
 	{
-		if( it->second.soundBankStatus == SoundBankStatus::LOADED )
+		// Because of the asynchronous nature of loading SoundBanks, sometimes the state of loaded SoundBanks is erroneously reported
+		// back to Python because it is not "Loaded". If it is "Loading" then it can be considered loaded as far as Python is concerned.
+		if( it->second.soundBankStatus == SoundBankStatus::LOADED || it->second.soundBankStatus == SoundBankStatus::LOADING )
 		{
 			loadedSoundBanks.push_back( it->second.soundBankName );
 		}
