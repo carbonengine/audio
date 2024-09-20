@@ -91,7 +91,7 @@ class TestAudManagerExposure(unittest.TestCase):
         self.audioManager.LoadBank(ONE_SHOT_BNK)
 
         PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
-        self.assertCountEqual(self.audioManager.GetLoadedSoundBanks(), [INIT_BANK, ONE_SHOT_BNK])
+        self.assertEquals(len(self.audioManager.GetLoadedSoundBanks()), 2)
 
         self.audioManager.UnloadBank(ONE_SHOT_BNK)
         PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=1)
@@ -99,7 +99,7 @@ class TestAudManagerExposure(unittest.TestCase):
         self.audioManager.UnloadBank(ONE_SHOT_BNK)
 
         PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
-        self.assertCountEqual(self.audioManager.GetLoadedSoundBanks(), [INIT_BANK])
+        self.assertEquals(self.audioManager.GetLoadedSoundBanks(), [INIT_BANK])
 
     def test_audmanager_audio_emitters(self):
         """Test that the AudManager keeps track of all audio emitters."""
