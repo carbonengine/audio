@@ -650,7 +650,7 @@ void AudManager::UpdateSoundBankStatus( const AkBankID bankID, const SoundBankSt
 			{
 				if( it->first != nullptr )
 				{
-					it->first->PostEvent( it->second );
+					it->first->PostEvent( it->second, true );
 				}
 			}
 			mapIterator->second.waitingEventsAfterLoad.clear();

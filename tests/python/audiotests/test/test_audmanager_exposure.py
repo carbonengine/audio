@@ -82,6 +82,32 @@ class TestAudManagerExposure(unittest.TestCase):
         self.audioManager.LoadBank(ONE_SHOT_BNK)
         self.assertEqual(self.audioManager.GetLoadedSoundBanks(), [])
 
+    def test_audmanager_sends_events_sent_while_loading_after_complete(self):
+        """Test that events sent while it's soundbanks are currently loading are resent once the soundbank it depends on is finished loading."""
+        import audio2
+
+        emitter1 = audio2.AudEmitter("emitter1")
+        self.audioManager.LoadBank(COMMON_BNK)
+        self.audioManager.LoadBank(LOOP_BNK)
+        self.assertEqual(emitter1.SendEvent(LOOP_EVENT), 0) 
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
+        self.assertEqual(list(emitter1.GetPlayingEvents().values())[0], LOOP_EVENT)
+
+    def test_audmanager_sends_events_sent_while_loading_after_complete_with_prefix(self):
+        """Test that events sent to an emitter with an event prefix while it's soundbanks are currently loading are correctly resent once the soundbank it depends on is finished loading."""
+        import audio2
+
+        eventPrefix = "Play_"
+        prefixEmitter = audio2.AudEmitter("prefixEmitter")
+        prefixEmitter.eventPrefix = eventPrefix
+        self.audioManager.LoadBank(COMMON_BNK)
+        self.audioManager.LoadBank(LOOP_BNK)
+        # Send event without Play_ at the beginning, as the audio emitter will prepend it for us.
+        self.assertEqual(prefixEmitter.SendEvent(LOOP_EVENT.replace(eventPrefix, "")), 0) 
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
+        # The event, at the send, should come out with the full prefix (e.g. Play_TestLoop)
+        self.assertEqual(list(prefixEmitter.GetPlayingEvents().values())[0], LOOP_EVENT)
+
     def test_audmanager_soundbanks_race_condition(self):
         """Test all methods relating to loading and unloading soundbanks in AudManager."""
         from audio2.audiomanager import INIT_BANK
