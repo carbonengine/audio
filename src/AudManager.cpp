@@ -19,6 +19,7 @@
 #include <AK/Plugin/AkTremoloFXFactory.h>
 #include <AK/Plugin/AkVorbisDecoderFactory.h>
 #include <AK/Plugin/MasteringSuiteFXFactory.h>
+#include <AK/Plugin/Ak3DAudioBedMixerFXFactory.h>
 
 #include "tbb/parallel_for.h"
 
