@@ -213,6 +213,18 @@ class AudioManager(object):
 
             self.manager.UnloadBank(bankName)
 
+    def StartProfilerCapture(self):
+        """Starts recording the sound engine profiling information into a file."""
+        return self.manager.StartProfilerCapture()
+
+    def StopProfilerCapture(self):
+        """Stop recording the sound engine profiling."""
+        return self.manager.StopProfilerCapture()
+
+    def IsProfilerCapturing(self):
+        """Returns the current state of the profiling capture."""
+        return self.manager.IsProfilerCapturing()
+
     def _CreateAudioSettings(self, baseSoundbankPath, language, applicationName, stereoAudioDeviceName="", spatialAudioDeviceName="", spatialAudioEnabled=True):
         """Create audio settings to be used by CarbonAudio.
 

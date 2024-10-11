@@ -144,6 +144,12 @@ public:
 	void EnableAudioCulling();
 	// Reset audio culling settings to their default values.
 	void ResetCullingSettings();
+	// Start a Wwise profiler capture session
+	AKRESULT StartProfilerCapture();
+	// Stop the current Wwise profiler capture session
+	AKRESULT StopProfilerCapture();
+	// Returns state of the profiler capture
+	bool IsProfilerCapturing() const;
 
 	// Debugging
 	void DisableDebugDisplayAllEmitters();
@@ -257,6 +263,10 @@ private:
 	float m_playing2DWeight;
 	float m_playingVitalSoundWeight;
 	float m_weightMultiplier;
+
+	// A boolean for the state of the profiler capture
+	bool m_isProfilerCapturing;
+
 #ifndef AK_OPTIMIZED
 	// Wwise communication interface settings. 
 	AkCommSettings m_commSettings;

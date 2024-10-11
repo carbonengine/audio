@@ -180,5 +180,26 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 			GetPrioritizedAudioEmitters	,
 			"Exposes the prioritized list of audio emitters as determined by the audio prioritization system. ONLY USE FOR DEBUG PURPOSES!"
 		)
+		MAP_METHOD_AND_WRAP
+		(
+			"StartProfilerCapture",
+			StartProfilerCapture,
+			"Starts recording the sound engine profiling information into a file."
+			":return: An AKRESULT value indicating success or failure."
+		)
+		MAP_METHOD_AND_WRAP
+		(
+			"StopProfilerCapture",
+			StopProfilerCapture,
+			"Stops recording the sound engine profiling information."
+			":return: An AKRESULT value indicating success or failure." 
+		)
+		MAP_METHOD_AND_WRAP
+		(
+			"IsProfilerCapturing",
+			IsProfilerCapturing,
+			"Checks if the profiler is currently capturing."
+			":return: True if the profiler is capturing, False otherwise."
+		)
 	EXPOSURE_END()
 }

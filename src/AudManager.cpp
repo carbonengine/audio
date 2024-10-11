@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "AudManager.h"
 
-#include <string>
-
 #include <AK/Plugin/AkCompressorFXFactory.h>
 #include <AK/Plugin/AkConvolutionReverbFXFactory.h>
 #include <AK/Plugin/AkDelayFXFactory.h>
@@ -66,7 +64,8 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_playingVitalSoundWeight( m_cullingInitSettings.playingVitalSoundWeight ),
 	m_weightMultiplier( m_cullingInitSettings.weightMultiplier ),
 	m_moniteredParametersMapMutex( "AudManager", "m_monitoredParametersMapMutex" ),
-	m_soundBankMutex( "AudManager", "m_soundBankMutex" )
+	m_soundBankMutex( "AudManager", "m_soundBankMutex" ),
+	m_isProfilerCapturing( false )
 {}
 
 AudManager::~AudManager()
@@ -1319,3 +1318,72 @@ void AudManager::AudioDeviceStatusChangeCallback( AK::IAkGlobalPluginContext* in
 }
 
 #endif
+
+AKRESULT AudManager::StartProfilerCapture()
+{
+	if( !g_audioEnabled )
+	{
+		CCP_LOGERR( "Cannot start profiler capture: Audio is not initialized." );
+		return AK_Fail;
+	}
+
+	// Use current date and time as the filename
+	time_t now = time( 0 );
+	struct tm timeinfo;
+#if defined( _WIN32 )
+	localtime_s( &timeinfo, &now );
+#else
+	localtime_r( &now, &timeinfo );
+#endif
+
+	char filename[64];
+	strftime( filename, sizeof( filename ), "WwiseCapture_%Y%m%d_%H%M%S.prof", &timeinfo );
+
+#if defined( _WIN32 )
+	AkOSChar wfilename[128];
+	MultiByteToWideChar( CP_UTF8, 0, filename, -1, wfilename, 128 );
+#else
+	const AkOSChar* wfilename = filename;
+#endif
+
+	AKRESULT result = AK::SoundEngine::StartProfilerCapture( wfilename );
+	if( result == AK_Success )
+	{
+		m_isProfilerCapturing = true;
+		CCP_LOG_CH( s_ch, "Started Wwise profiler capture: %s", filename );
+	}
+	else
+	{
+		CCP_LOGERR( "Failed to start Wwise profiler capture: %s (Error code: %d)", filename, result );
+	}
+
+	return result;
+}
+
+AKRESULT AudManager::StopProfilerCapture()
+{
+	if( !g_audioEnabled )
+	{
+		CCP_LOGERR( "Cannot stop profiler capture: Audio is not initialized." );
+		return AK_Fail;
+	}
+
+	AKRESULT result = AK::SoundEngine::StopProfilerCapture();
+
+	if( result == AK_Success )
+	{
+		m_isProfilerCapturing = false;
+		CCP_LOG_CH( s_ch, "Stopped Wwise profiler capture." );
+	}
+	else
+	{
+		CCP_LOGERR( "Failed to stop Wwise profiler capture.", result );
+	}
+
+	return result;
+}
+
+bool AudManager::IsProfilerCapturing() const
+{
+	return m_isProfilerCapturing;
+}
