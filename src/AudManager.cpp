@@ -248,8 +248,6 @@ void AudManager::Terminate()
 void AudManager::OnTick( Be::Time realTime, Be::Time simTime, void* cookie )
 {
 	Process();
-
-	BeOS->NextScheduledEvent( m_tickInterval );
 }
 
 bool AudManager::InitLowLevel()
@@ -1216,7 +1214,7 @@ std::vector<std::pair<AkGameObjectID, AudGameObjResource*>> AudManager::GetPrior
 // Callback from Wwise to use for tracking performance of the sound engine. This is called when a timer stops. Only applicable in Profile or Debug Wwise flavors.
 void AudManager::AkPlatformProfilerPopTimer()
 {
-	tmTaskletLeave(TMCM_CPP);
+	TracyLeaveZone( g_audioManager );
 }
 
 // Callback from Wwise to use for tracking performance of the sound engine. This is called when special Wwise events happen like voice starvation. 
@@ -1224,15 +1222,14 @@ void AudManager::AkPlatformProfilerPostmarker(AkPluginID in_uPluginID, const cha
 {
 	if (in_uPluginID != AKMAKECLASSID(AkPluginTypeNone, AKCOMPANYID_AUDIOKINETIC, AK::ProfilingID::AudioFrameBoundary))
 	{
-		tmTaskletEnter(TMCM_CPP, in_pszMarkerName);
-		tmTaskletLeave(TMCM_CPP);
+		tmTaskletZone(TMCM_CPP, in_pszMarkerName, __FILE__, __LINE__);
 	}
 }
 
 // Callback from Wwise to use for tracking performance of the sound engine. This is called when a timer starts. Only applicable in Profile or Debug Wwise flavors.
 void AudManager::AkPlatformProfilerPushTimer(AkPluginID in_uPluginID, const char* in_pszZoneName)
 {
-	tmTaskletEnter(TMCM_CPP, in_pszZoneName);
+	TracyEnterZone( g_audioManager, in_pszZoneName, __FILE__, __LINE__);
 }
 
 //-----------------------------------------------------
