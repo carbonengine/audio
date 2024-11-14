@@ -40,6 +40,9 @@ void WwiseLogServerMessageHandler( ErrorCode in_eErrorCode, const AkOSChar* in_p
 				CCP_LOGERR_CH(s_ch, "A Wwise API call was made on game object %d which does not exist in Wwise. Make sure game objects are registered before calling Wwise "
 					"methods on them.", in_gameObjID);
 				break;
+			case ErrorCode_3DObjectLimitExceeded:
+				// We just want to ignore this error in loglite as it is a bit too spammy. It will still be visible when remotely connected with Wwise however.
+				break;
 			default:
 				CCP_LOGERR_CH(s_ch, "%S", in_pszError);
 				break;
