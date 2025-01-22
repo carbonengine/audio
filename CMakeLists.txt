@@ -20,10 +20,24 @@ include(CcpPackageConfigHelpers)
 
 set(Wwise_ROOT "${BRANCH_ROOT_DIR}/vendor/wwise/2021.1.14.8108")
 
+if(WIN32)
+	# Hack to allow building Audio with v143 toolset. This will ensure that when we link against dependencies, we will link against the v141 version. This is necessary because our build configuration assumes that all components are built using the same version. However, things built against a newer 14X toolset should be able to link against things that were built using an older 14X toolset.
+	set(_OLD_CCP_VENDOR_LIB_PATH ${CCP_VENDOR_LIB_PATH})
+	set(_OLD_CCP_VENDOR_BIN_PATH ${CCP_VENDOR_BIN_PATH})
+	set(CCP_VENDOR_LIB_PATH "lib/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/v141/")
+	set(CCP_VENDOR_BIN_PATH "bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/v141/")
+endif()
+# Find v141 dependencies here.
 find_package(Blue CONFIG REQUIRED)
 find_package(CcpMath CONFIG REQUIRED)
 find_package(IntelTBB REQUIRED)
 find_package(Wwise REQUIRED)
+if(WIN32)
+	# Restore sanity after toolset hacking. After this we can use find_package
+# to find any v143 dependencies.
+	set(CCP_VENDOR_LIB_PATH ${_OLD_CCP_VENDOR_LIB_PATH})
+set(CCP_VENDOR_BIN_PATH ${_OLD_CCP_VENDOR_BIN_PATH})
+endif()
 
 set(PUBLIC_HEADER_FILES_INCLUDE
 	Include/ITr2AudEmitter.h
@@ -207,34 +221,35 @@ endif()
 if (WIN32)
     include(CTest)
     message(STATUS ${IntelTBB_ROOT})
+    set(_COPY_TOOLSET v141)  # This is a hack to copy the v141 binaries over until the v143 toolset update is done properly.
 
     # Copy required binaries for CarbonAudio tests into CarbonAudioTest folder
     add_custom_command(TARGET CarbonAudio POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${Python_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/python27.dll"
+            "${Python_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/python27.dll"
             $<TARGET_FILE_DIR:CarbonAudio>
     )
 
     add_custom_command(TARGET CarbonAudio POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${Blue_DIR}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/$<IF:$<CONFIG:Release>,blue.dll,blue_$<LOWER_CASE:$<CONFIG>>.dll>"
+            "${Blue_DIR}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/$<IF:$<CONFIG:Release>,blue.dll,blue_$<LOWER_CASE:$<CONFIG>>.dll>"
             $<TARGET_FILE_DIR:CarbonAudio>
     )
 
     add_custom_command(TARGET CarbonAudio POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${IntelTBB_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/tbb12.dll"
+            "${IntelTBB_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/tbb12.dll"
             $<TARGET_FILE_DIR:CarbonAudio>
     )
 
     add_custom_command(TARGET CarbonAudio POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${Exefile_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/Exefile.exe"
+            "${Exefile_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/Exefile.exe"
             $<TARGET_FILE_DIR:CarbonAudio>
     )
     add_custom_command(TARGET CarbonAudio POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${ExefileConsole_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/ExefileConsole.exe"
+            "${ExefileConsole_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/ExefileConsole.exe"
             $<TARGET_FILE_DIR:CarbonAudio>
     )
 
