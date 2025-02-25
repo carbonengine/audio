@@ -67,16 +67,16 @@ public:
 
 	const struct CullingInitSettings 
 	{
-		int maxAwakeGameObjects = 75; // Number of audio emitters that can be awake at the same time.
+		int maxAwakeGameObjects = 60; // Number of audio emitters that can be awake at the same time.
 		long long oneShotWindow = 50; // The window, in milliseconds, a one shot has to potentially be played.
 		float weightMultiplier = 10000000.0f; // A multiplier applied to each individual weight.
 		float playingVitalSoundWeight = std::numeric_limits<float>::max(); // The weight applied to a game object if it is playing a vital sound.
-		float playing2DWeight = 999.0f; // The weight applied to a game object if it is playing or slated to play any 2D sounds.
-		float rangeWeight = 400.0f; // The weight applied to a game object if it is within range of the listener.
-		float activeSoundsWeight = 200.0f; // The weight applied to a game object if it has sounds currently playing.
-		float waitingOneShotWeight = 100.0f; // The weight applied to a game object if there is a one shot sound waiting to play.
-		float visibleWeight = 100.0f; // the weight applied to a game object if it is visible to the listener.
-		float usedEmitterWeight = 50.0f; // The weight applied to a game object if it has been used in any way.
+		float playing2DWeight = 2000.0f; // The weight applied to a game object if it is playing or slated to play any 2D sounds.
+		float rangeWeight = 1500.0f; // The weight applied to a game object if it is within range of the listener.
+		float activeSoundsWeight = 300.0f; // The weight applied to a game object if it has sounds currently playing.
+		float waitingOneShotWeight = 150.0f; // The weight applied to a game object if there is a one shot sound waiting to play.
+		float visibleWeight = 150.0f; // the weight applied to a game object if it is visible to the listener.
+		float usedEmitterWeight = 200.0f; // The weight applied to a game object if it has been used in any way.
 	};
 
 	EXPOSE_TO_BLUE();
