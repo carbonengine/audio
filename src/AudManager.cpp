@@ -46,6 +46,7 @@ static void WwiseAssertHook( const char* in_pszExpression, const char* in_pszFil
 static CcpMutex s_audioDeviceMutex( "AudManager", "s_audioDeviceMutex" );
 static bool s_systemSupportsSpatialAudio = false;
 static BlueScriptCallback s_audioDeviceChangeCallback;
+std::atomic<size_t> AudManager::s_lastLoggedDeviceHash{0};
 
 
 AudManager::AudManager( IRoot* lockobj ) :
@@ -1259,15 +1260,40 @@ void AudManager::GlobalCallbackEndRender(AK::IAkGlobalPluginContext* in_pContext
 //-----------------------------------------------------
 void AudManager::AudioDeviceStatusChangeCallback( AK::IAkGlobalPluginContext* in_pContext, AkUniqueID in_idAudioDeviceShareset, AkUInt32 in_idDeviceID, AK::AkAudioDeviceEvent in_idEvent, AKRESULT in_AkResult )
 {
+    size_t currentErrorHash = std::hash<AkUniqueID>()(in_idDeviceID) ^ std::hash<AkUniqueID>()(in_idAudioDeviceShareset) ^ std::hash<AKRESULT>()(in_AkResult) ^ std::hash<AK::AkAudioDeviceEvent>()(in_idEvent);
+
+	if( currentErrorHash == s_lastLoggedDeviceHash.load() )
+	{
+		return;
+	}
+
 	if( in_idEvent == AK::AkAudioDeviceEvent::AkAudioDeviceEvent_Initialization )
 	{
-		if( in_AkResult != AK_Success )
+		if( in_AkResult == AK_Success )
 		{
-			CCP_LOGERR( "Audio device %u with share set %u was unable to be initialized.", in_idDeviceID, in_idAudioDeviceShareset );
+			CCP_LOG( "Audio device %u with shareset %u was successfully initialized.", in_idDeviceID, in_idAudioDeviceShareset );
+
+			AKRESULT result = AK::SoundEngine::GetDeviceSpatialAudioSupport( in_idDeviceID );
+			CcpAutoMutex mutex( s_audioDeviceMutex );
+			if( result == AK_Success )
+			{
+				CCP_LOG( "The user's system supports spatial audio (audio device %u).", in_idDeviceID );
+				s_systemSupportsSpatialAudio = true;
+			}
+			else if( result == AK_NotCompatible )
+			{
+				CCP_LOG( "The user's system does not support spatial audio (audio device %u).", in_idDeviceID );
+				s_systemSupportsSpatialAudio = false;
+			}
+			else
+			{
+				CCP_LOGERR( "Checking for spatial audio support with audio device id %u failed for an unknown reason.", in_idDeviceID );
+				s_systemSupportsSpatialAudio = false;
+			}
 		}
 		else
 		{
-			CCP_LOG( "Audio device %u with shareset %u was successfully initialized.", in_idDeviceID, in_idAudioDeviceShareset );
+			CCP_LOGERR( "Audio device %u with share set %u was unable to be initialized.", in_idDeviceID, in_idAudioDeviceShareset );
 		}
 	}
 	else
@@ -1286,23 +1312,7 @@ void AudManager::AudioDeviceStatusChangeCallback( AK::IAkGlobalPluginContext* in
 		}
 	}
 
-	AKRESULT result = AK::SoundEngine::GetDeviceSpatialAudioSupport( in_idDeviceID );
-	CcpAutoMutex mutex( s_audioDeviceMutex );
-	if( result == AK_Success )
-	{
-		CCP_LOG( "The user's system supports spatial audio (audio device %u).", in_idDeviceID );
-		s_systemSupportsSpatialAudio = true;
-	}
-	else if( result == AK_NotCompatible )
-	{
-		CCP_LOG( "The user's system does not support spatial audio (audio device %u).", in_idDeviceID );
-		s_systemSupportsSpatialAudio = false;
-	}
-	else
-	{
-		CCP_LOGERR( "Checking for spatial audio support with audio device id %u failed for an unknown reason.", in_idDeviceID );
-		s_systemSupportsSpatialAudio = false;
-	}
+	s_lastLoggedDeviceHash.store(currentErrorHash);
 
 	// This exists solely to be able to propagate the audio device change callback on the main thread.
 	// It is important to propagate it on the main thread because it is theoretically possible that Carbon Audio

@@ -221,6 +221,8 @@ private:
 	void UpdateMonitoredParameters();
 
 	//*** Callbacks ***//
+	// Used by the AudioDeviceStatusChangeCallback
+	static std::atomic<size_t> s_lastLoggedDeviceHash;
 	// A callback that is called whenever the audio device is changed.
 	static void AudioDeviceStatusChangeCallback( AK::IAkGlobalPluginContext * in_pContext, AkUniqueID in_idAudioDeviceShareset, AkUInt32 in_idDeviceID, AK::AkAudioDeviceEvent in_idEvent, AKRESULT in_AkResult );
 	// The callback called by Wwise once a SoundBank has been attempted to load.
