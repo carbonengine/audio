@@ -69,6 +69,7 @@ ccp_add_library(CarbonAudio SHARED
 	src/LowLevelIO/AkFilePackage.cpp
 	src/LowLevelIO/AkFilePackageLowLevelIO.inl
 	src/LowLevelIO/AkFilePackageLUT.cpp
+	src/SoundPrioritization.cpp
 )
 
 target_sources(CarbonAudio PRIVATE
@@ -100,6 +101,8 @@ target_sources(CarbonAudio PRIVATE
 	src/LowLevelIO/AkFileLocationBase.h
 	src/LowLevelIO/AkFilePackage.h
 	src/LowLevelIO/AkFilePackageLUT.h
+	src/IPrioritizedObject.h
+	src/SoundPrioritization.h
 	${PUBLIC_HEADER_FILES_INCLUDE}
 )
 

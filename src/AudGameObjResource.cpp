@@ -5,6 +5,7 @@
 #include "AudStaticDataRepository.h"
 #include "Vector3.h"
 #include "Utilities.h"
+#include "SoundPrioritization.h"
 
 //-----------------------------------------------------------------------------
 // Helper function to distribute ID's
@@ -432,11 +433,6 @@ bool AudGameObjResource::SetSwitch( const std::wstring& switchGroup, const std::
 	return false;
 }
 
-Vector3 AudGameObjResource::GetPosition()
-{
-	return m_position;
-}
-
 bool AudGameObjResource::SetRTPC( const std::wstring& rtpcName, float rtpcValue )
 {
 	if ( g_audioInitialized )
@@ -531,11 +527,6 @@ std::wstring AudGameObjResource::PrepareEvent( const std::wstring& event, bool b
 	}
 
 	return eventName;
-}
-
-bool AudGameObjResource::IsCulled()
-{
-	return m_culled;
 }
 
 //-----------------------------------------------------
@@ -665,37 +656,32 @@ void AudGameObjResource::CalculateCullingWeight( std::chrono::steady_clock::time
 		}
 	}
 
-	if (m_muted)
-	{
-		m_cumulativeWeight = std::numeric_limits<float>::max() - m_additionalCullingWeight;
-	}
-	else
+	// Update m_listenerInRange if not muted
+	if( !m_muted )
 	{
 		m_listenerInRange = m_distanceSqFromListener < GetMaxAttenuationRadius();
-		float usedEmitterWeight = m_isUsed ? g_audioManager->GetUsedEmitterWeight() : 0.0f;
-		float rangeWeight = m_listenerInRange ? g_audioManager->GetRangeWeight() : 0.0f;
-		float activeSoundsWeight = m_playingEvents.size() > 0 ? g_audioManager->GetPlayingEventsWeight() : 0.0f;
-		float visibleWeight = m_isVisible ? g_audioManager->GetVisibleWeight() : 0.0f;
-		float playing2DWeight = m_playing2DSound ? g_audioManager->GetPlaying2DWeight() : 0.0f;
-		float playingVitalSoundWeight = m_playingVitalSound ? g_audioManager->GetPlayingVitalSoundWeight() : 0.0f;
-
-		m_cumulativeWeight = ( m_distanceSqFromListener - activeSoundsWeight - rangeWeight - visibleWeight - usedEmitterWeight - waitingOneShotWeight - playing2DWeight - playingVitalSoundWeight ) - m_additionalCullingWeight;
 	}
+
+    m_cumulativeWeight = SoundPrioritization::CalculateObjectWeight(
+        m_distanceSqFromListener,
+        m_muted,
+        m_listenerInRange,
+        m_isUsed,
+        m_isVisible,
+        m_playing2DSound,
+        m_playingVitalSound,
+        m_additionalCullingWeight,
+        m_playingEvents.size(),
+        waitingOneShotWeight,
+        g_audioManager->GetUsedEmitterWeight(),
+        g_audioManager->GetRangeWeight(),
+        g_audioManager->GetPlayingEventsWeight(),
+        g_audioManager->GetVisibleWeight(),
+        g_audioManager->GetPlaying2DWeight(),
+        g_audioManager->GetPlayingVitalSoundWeight()
+    );
 }
 
-//------------------------------------------------------
-// Description:
-//  Get the cumulative weight of this game object in the culling system. This is set by CalculateCullingWeight().
-//------------------------------------------------------
-float AudGameObjResource::GetCullingWeight()
-{
-	return m_cumulativeWeight;
-}
-
-AkGameObjectID AudGameObjResource::GetID()
-{
-	return m_ID;
-}
 
 //-----------------------------------------------------
 // Description:
@@ -891,4 +877,24 @@ void AudGameObjResource::Unmute()
 bool AudGameObjResource::IsMuted()
 {
 	return m_muted;
+}
+
+bool AudGameObjResource::IsCulled() const 
+{
+    return m_culled;
+}
+
+float AudGameObjResource::GetCullingWeight() const 
+{
+    return m_cumulativeWeight;
+}
+
+AkGameObjectID AudGameObjResource::GetID() const 
+{
+    return m_ID;
+}
+
+Vector3 AudGameObjResource::GetPosition() const 
+{
+    return m_position;
 }

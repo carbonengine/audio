@@ -97,6 +97,13 @@ class AudioManager(object):
         """Return whether spatial audio (sometimes referred to as 3D audio) is enabled."""
         return self.manager.spatialAudioEnabled
 
+    def GetPrioritizedEmitters(self):
+        """
+        Returns a list of audio emitter objects that are currently being managed
+        by the sound prioritization system.
+        """
+        return self.manager.GetPrioritizedEmitters()
+
     def Initialize(self, eventMetadata, defaultSoundBanks=[]):
         """Initialize the audio manager so that is ready to be enabled.
 

@@ -46,32 +46,28 @@ static void WwiseAssertHook( const char* in_pszExpression, const char* in_pszFil
 static CcpMutex s_audioDeviceMutex( "AudManager", "s_audioDeviceMutex" );
 static bool s_systemSupportsSpatialAudio = false;
 static BlueScriptCallback s_audioDeviceChangeCallback;
-std::atomic<size_t> AudManager::s_lastLoggedDeviceHash{0};
+std::atomic<size_t> AudManager::s_lastLoggedDeviceHash{ 0 };
 
 
 AudManager::AudManager( IRoot* lockobj ) :
 	m_tickInterval( 10 ),
 	m_asyncOpen( true ),
 	m_log(),
-	m_audioCullingEnabled( true ),
 	m_spatialAudioEnabled( true ),
-	m_maxAwakeGameObjects( m_cullingInitSettings.maxAwakeGameObjects ),
-	m_oneShotWindow( m_cullingInitSettings.oneShotWindow ),
-	m_waitingOneShotWeight( m_cullingInitSettings.waitingOneShotWeight),
-	m_usedEmitterWeight( m_cullingInitSettings.usedEmitterWeight ),
-	m_rangeWeight( m_cullingInitSettings.rangeWeight ),
-	m_playingEventsWeight( m_cullingInitSettings.activeSoundsWeight),
-	m_visibleWeight( m_cullingInitSettings.visibleWeight ),
-	m_playing2DWeight( m_cullingInitSettings.playing2DWeight ),
-	m_playingVitalSoundWeight( m_cullingInitSettings.playingVitalSoundWeight ),
-	m_weightMultiplier( m_cullingInitSettings.weightMultiplier ),
 	m_moniteredParametersMapMutex( "AudManager", "m_monitoredParametersMapMutex" ),
 	m_soundBankMutex( "AudManager", "m_soundBankMutex" ),
-	m_isProfilerCapturing( false )
-{}
+	m_isProfilerCapturing( false ),
+	m_audioCullingEnabled( true )
+{
+	// Initialize sound prioritization system
+	m_soundPrioritization = new SoundPrioritization();
+}
 
 AudManager::~AudManager()
 {
+	// Clean up sound prioritization system
+	delete m_soundPrioritization;
+
 	if( g_audioInitialized )
 	{
 		Disable();
@@ -82,15 +78,15 @@ void AudManager::Process()
 {
 	if( g_audioInitialized )
 	{
-		if ( m_audioCullingEnabled && g_audioEnabled )
+		if( m_soundPrioritization->GetAudioCullingEnabled() && g_audioEnabled )
 		{
-			CullAudio();
+			m_soundPrioritization->CullAudio();
 		}
 
 		// Process bank requests, events, positions, RTPC, etc.
 		AK::SoundEngine::RenderAudio();
 
-		//Update main thread queue
+		// Update main thread queue
 		g_mainThreadQueue->Update();
 
 		if( m_log )
@@ -102,7 +98,7 @@ void AudManager::Process()
 
 //-----------------------------------------------------
 // Description:
-//   Compute a Wwise hash given a soundbank name. Wwise uses an internal hashing system for events, soundbanks and other 
+//   Compute a Wwise hash given a soundbank name. Wwise uses an internal hashing system for events, soundbanks and other
 //   Wwise objects. This will give you the ID they use for the given SoundBank name.
 // Arguments:
 //   soundBankName: The soundbank name you want hashed. This method works with a string that both ends with .bnk or not.
@@ -113,86 +109,25 @@ AkBankID AudManager::ComputeWwiseHashForSoundBank( const std::wstring& soundBank
 	return AK::SoundEngine::GetIDFromString( filteredBankName.c_str() );
 }
 
-void AudManager::CullAudio()
-{
-	CCP_STATS_ZONE( __FUNCTION__ );
-	AudListenerPtr listener = GetListener();
-	if ( listener != nullptr )
-	{
-		{
-			// Calculate distance from the listener for all game objects and update their cumulative culling weight.
-			CCP_STATS_ZONE("CullAudio_CalculateCullingWeight"); 
-			std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
-			AkGameObjectID listenerID = listener->GetID();
-			Vector3 listenerPosition = listener->GetPosition();
-			tbb::parallel_for(
-				tbb::blocked_range<size_t>( 0, m_gameObjects.size() ),
-				[&]( const tbb::blocked_range<size_t>& range ) -> void {
-					for( size_t index = range.begin(); index != range.end(); ++index )
-					{
-						AudGameObjResource* gameObject = m_gameObjects[index].second;
-						if( gameObject->GetID() != listenerID )
-						{
-							float distanceSq = LengthSq( gameObject->GetPosition() - listenerPosition );
-							gameObject->SetDistanceSqFromListener( distanceSq );
-						}
-						gameObject->CalculateCullingWeight( now );
-					}
-				} 
-			);
-		}
-		{
-			CCP_STATS_ZONE("CullAudio_SortGameObjects"); 
-			// Sort all game objects by their cumulative culling weight. The larger the number the more likely to be culled.
-			sort( m_gameObjects.begin(), m_gameObjects.end(),
-				[]( const std::pair<AkGameObjectID, AudGameObjResource*>& a, const std::pair<AkGameObjectID, AudGameObjResource*>& b ) -> bool
-					{
-						return a.second->GetCullingWeight() < b.second->GetCullingWeight();
-					});
-		}
-		{
-			CCP_STATS_ZONE("CullAudio_WakeAndCullGameObjects"); 
-			// Keep the first m_maxAwakeGameObjects game objects awake.
-			int numAwake = 0;
-			for (auto it = m_gameObjects.begin(); it != m_gameObjects.end(); ++it)
-			if ( numAwake > m_maxAwakeGameObjects )
-			{
-				if ( !it->second->IsCulled() )
-				{
-					it->second->Cull();
-				}
-			}
-			else
-			{
-				if ( it->second->IsCulled() )
-				{
-					it->second->Wake();
-				}
-				++numAwake;
-			}
-		}
-	}
-}
-
 bool AudManager::Init()
 {
-	if ( g_staticDataRepository == nullptr || !g_staticDataRepository->IsInitialized() )
+	if( g_staticDataRepository == nullptr || !g_staticDataRepository->IsInitialized() )
 	{
 		CCP_LOGERR( "The static data repository in audio2 has not been generated and needs to exist for audio2 "
-				    "to be able to run. See AudStaticDataRepository for more info on how to do this.");
+					"to be able to run. See AudStaticDataRepository for more info on how to do this." );
 		return false;
 	}
 
 	if( !InitLowLevel() )
 	{
-		CCP_LOGERR("Failed to initialize Low Level audio");
+		CCP_LOGERR( "Failed to initialize Low Level audio" );
 		return false;
 	}
 
 #ifndef AK_OPTIMIZED
 	if( !InitCommunication() )
 	{
-		CCP_LOGERR("Failed to initialize audio : Communication");
+		CCP_LOGERR( "Failed to initialize audio : Communication" );
 		return false;
 	}
 	WwiseLogServerBridgeInit( AK::Monitor::ErrorLevel_All );
@@ -200,13 +135,13 @@ bool AudManager::Init()
 
 	if( !InitSound() )
 	{
-		CCP_LOGERR("Failed to initialize audio : Sound");
+		CCP_LOGERR( "Failed to initialize audio : Sound" );
 		return false;
 	}
 
 	if( !InitMusic() )
 	{
-		CCP_LOGERR("Failed to initialize audio : Music");
+		CCP_LOGERR( "Failed to initialize audio : Music" );
 		return false;
 	}
 
@@ -253,7 +188,7 @@ void AudManager::OnTick( Be::Time realTime, Be::Time simTime, void* cookie )
 
 bool AudManager::InitLowLevel()
 {
-	CCP_LOG_CH(s_ch, "Audio Backend: Wwise(R) SDK Version %s. %s", g_wwiseVersion.c_str(), AK_WWISESDK_COPYRIGHT );
+	CCP_LOG_CH( s_ch, "Audio Backend: Wwise(R) SDK Version %s. %s", g_wwiseVersion.c_str(), AK_WWISESDK_COPYRIGHT );
 	//-----------------------------------------------------------------------------
 	// Create and initialize an instance of the default memory manager. Note
 	// that you can override the default memory manager with your own. Refer
@@ -299,7 +234,7 @@ bool AudManager::InitLowLevel()
 		CCP_LOGERR( "Soundbank path %S is invalid and soundbanks will not be loaded correctly.", m_settings->m_baseSoundBankPath.c_str() );
 		return false;
 	}
-	if ( m_lowLevelIO.SetAudioSrcPath(m_settings->m_audioSrcPath.c_str() ) != AK_Success )
+	if( m_lowLevelIO.SetAudioSrcPath( m_settings->m_audioSrcPath.c_str() ) != AK_Success )
 	{
 		CCP_LOGERR( "Audio source path %s is invalid and .wem files will not be loaded correctly.", m_settings->m_audioSrcPath.c_str() );
 		return false;
@@ -311,6 +246,28 @@ bool AudManager::InitLowLevel()
 	}
 
 	return true;
+}
+
+void AudManager::RegisterGameObject( AkGameObjectID gameObjID, AudGameObjResource* gameObj )
+{
+	if( !gameObj )
+	{
+		CCP_LOGERR( "Attempted to register a null game object with ID %d", gameObjID );
+		return;
+	}
+
+	if( m_soundPrioritization )
+	{
+		m_soundPrioritization->RegisterGameObject( static_cast<IPrioritizedObject*>( gameObj ) );
+	}
+}
+
+void AudManager::UnregisterGameObject( AkGameObjectID gameObjID )
+{
+	if( m_soundPrioritization )
+	{
+		m_soundPrioritization->UnregisterGameObject( gameObjID );
+	}
 }
 
 bool AudManager::InitCommunication()
@@ -352,35 +309,36 @@ bool AudManager::InitSound()
 	{
 		deviceSharesetID = AK::SoundEngine::GetIDFromString( m_settings->m_spatialAudioDeviceName.c_str() );
 		CCP_LOG( "Carbon audio will be initialized with spatial audio enabled by using the Wwise audio "
-			    "device named %S.", m_settings->m_spatialAudioDeviceName.c_str() );
+				 "device named %S.", m_settings->m_spatialAudioDeviceName.c_str() );
 		m_spatialAudioEnabled = true;
 	}
 	else
 	{
-		deviceSharesetID = AK::SoundEngine::GetIDFromString(m_settings->m_stereoAudioDeviceName.c_str());
-		CCP_LOG("Carbon audio will be initialized with spatial audio disabled by using the Wwise audio "
-			    "device named %S.", m_settings->m_stereoAudioDeviceName.c_str());
+		deviceSharesetID = AK::SoundEngine::GetIDFromString( m_settings->m_stereoAudioDeviceName.c_str() );
+		CCP_LOG( "Carbon audio will be initialized with spatial audio disabled by using the Wwise audio "
+				 "device named %S.",
+				 m_settings->m_stereoAudioDeviceName.c_str() );
 		m_spatialAudioEnabled = false;
 	}
 	initSettings.settingsMainOutput.audioDeviceShareset = deviceSharesetID;
 #endif
 
-	if (!AK::SoundEngine::IsInitialized())
+	if( !AK::SoundEngine::IsInitialized() )
 	{
-		if (AK::SoundEngine::Init(&initSettings, &platformInitSettings) != AK_Success)
+		if( AK::SoundEngine::Init( &initSettings, &platformInitSettings ) != AK_Success )
 		{
-			CCP_LOGERR("Failed to initialize Wwise Sound Engine");
+			CCP_LOGERR( "Failed to initialize Wwise Sound Engine" );
 			return false;
 		}
 
-		if (AK::SoundEngine::RegisterGlobalCallback(GlobalCallbackEndRender, AkGlobalCallbackLocation_EndRender, this) != AK_Success)
+		if( AK::SoundEngine::RegisterGlobalCallback( GlobalCallbackEndRender, AkGlobalCallbackLocation_EndRender, this ) != AK_Success )
 		{
-			CCP_LOGERR("Registering for Wwise's end render callback failed! Audio will continue to function correctly except audio driven visuals will not work!");
+			CCP_LOGERR( "Registering for Wwise's end render callback failed! Audio will continue to function correctly except audio driven visuals will not work!" );
 		}
 
 #if _WIN32
 		AKRESULT result = AK::SoundEngine::RegisterAudioDeviceStatusCallback( &AudManager::AudioDeviceStatusChangeCallback );
-		if( result != AK_Success ) 
+		if( result != AK_Success )
 		{
 			CCP_LOGERR( "Failed to register an audio device status callback." );
 		}
@@ -408,7 +366,7 @@ bool AudManager::SetGlobalRTPC( const std::wstring& rtpcName, float value )
 	if( g_audioInitialized )
 	{
 		AKRESULT result = AK::SoundEngine::SetRTPCValue( rtpcName.c_str(), value );
-		if ( result != AK_Success )
+		if( result != AK_Success )
 		{
 			CCP_LOGERR( "Failed to set global RTPC %S to %f. Receive Wwise result code %d", rtpcName.c_str(), value, result );
 			return false;
@@ -433,7 +391,7 @@ bool AudManager::SetState( const std::wstring& stateGroup, const std::wstring& s
 
 //-----------------------------------------------------
 // Description:
-//   Signals whether Carbon Audio supports spatial audio features on this operating system. 
+//   Signals whether Carbon Audio supports spatial audio features on this operating system.
 //-----------------------------------------------------
 const bool AudManager::SpatialAudioIsSupported()
 {
@@ -441,7 +399,7 @@ const bool AudManager::SpatialAudioIsSupported()
 	return true;
 #else
 	return false;
-#endif 
+#endif
 }
 
 void AudManager::UpdateSettings( AudSettings* settings )
@@ -456,7 +414,7 @@ void AudManager::LoadBank( const std::wstring& name )
 		AkBankID bankID = ComputeWwiseHashForSoundBank( name );
 		SoundBankStatus soundBankStatus = GetSoundBankStatus( bankID );
 		if( soundBankStatus == SoundBankStatus::LOADED || soundBankStatus == SoundBankStatus::LOADING )
-		{ 
+		{
 			std::string soundBankStr = ( soundBankStatus == SoundBankStatus::LOADED ) ? "loaded" : "loading";
 			CCP_LOG( "SoundBank %S has been requested to load when it is already %s.", name.c_str(), soundBankStr.c_str() );
 			return;
@@ -472,7 +430,7 @@ void AudManager::LoadBank( const std::wstring& name )
 		if( outBankID != bankID )
 		{
 			CCP_LOGERR( "The SoundBank ID %d returned from LoadBank is different than the computed SoundBank ID %d. There is something fishy about that.", outBankID, bankID );
-			StopTrackingSoundBank( bankID );	
+			StopTrackingSoundBank( bankID );
 			m_soundBankInfoMap[outBankID] = SoundBankInfo{ SoundBankStatus::LOADING, outBankID, name };
 		}
 
@@ -528,43 +486,38 @@ void AudManager::UnloadBank( const std::wstring& name )
 
 		switch( soundBankStatus )
 		{
-			case SoundBankStatus::NOT_LOADED:
-			{
-				CCP_LOGERR( "SoundBank %S was requested to be unloaded when it was not actually loaded to begin with.", name.c_str() );
-				break;
-			}
-			case SoundBankStatus::UNLOADING:
-			{
-				CCP_LOG( "SoundBank %S has been requested to unload when it is already unloading.", name.c_str() );
-				break;
-			}
-			default:
-			{
-				UpdateSoundBankStatus( bankID, SoundBankStatus::UNLOADING );
+		case SoundBankStatus::NOT_LOADED: {
+			CCP_LOGERR( "SoundBank %S was requested to be unloaded when it was not actually loaded to begin with.", name.c_str() );
+			break;
+		}
+		case SoundBankStatus::UNLOADING: {
+			CCP_LOG( "SoundBank %S has been requested to unload when it is already unloading.", name.c_str() );
+			break;
+		}
+		default: {
+			UpdateSoundBankStatus( bankID, SoundBankStatus::UNLOADING );
 
-				// The pInMemoryBankPtr can be NULL is NULL is passed when loading the bank.
-				const void* pInMemoryBankPtr = NULL;
-				AkBankCallbackFunc callback = &AudManager::UnloadBankCallback;
-				AKRESULT result = AK::SoundEngine::UnloadBank( name.c_str(), pInMemoryBankPtr, callback, this );
-				if( result != AK_Success )
-				{
-					StopTrackingSoundBank( bankID );
-					CCP_LOGERR( "SoundBank %S failed to be scheduled to be unloaded.", name.c_str() );
-				}
-				else
-				{
-					CCP_LOG( "SoundBank %S scheduled to be unloaded.", name.c_str() );
-				}
-
+			// The pInMemoryBankPtr can be NULL is NULL is passed when loading the bank.
+			const void* pInMemoryBankPtr = NULL;
+			AkBankCallbackFunc callback = &AudManager::UnloadBankCallback;
+			AKRESULT result = AK::SoundEngine::UnloadBank( name.c_str(), pInMemoryBankPtr, callback, this );
+			if( result != AK_Success )
+			{
+				StopTrackingSoundBank( bankID );
+				CCP_LOGERR( "SoundBank %S failed to be scheduled to be unloaded.", name.c_str() );
 			}
-
+			else
+			{
+				CCP_LOG( "SoundBank %S scheduled to be unloaded.", name.c_str() );
+			}
+		}
 		}
 	}
 }
 
 void AudManager::UnloadBankCallback( AkUInt32 in_bankID, const void* in_pInMemoryBankPtr, AKRESULT in_eLoadResult, void* in_pCookie )
 {
-	AudManager* audManagerPtr = reinterpret_cast<AudManager*>(in_pCookie);
+	AudManager* audManagerPtr = reinterpret_cast<AudManager*>( in_pCookie );
 	SoundBankStatus soundBankStatus = audManagerPtr->GetSoundBankStatus( in_bankID );
 	if( soundBankStatus != SoundBankStatus::NOT_LOADED )
 	{
@@ -593,7 +546,7 @@ void AudManager::UnloadBankCallback( AkUInt32 in_bankID, const void* in_pInMemor
 	}
 }
 
-std::wstring AudManager::GetSoundBankName(const AkBankID bankID)
+std::wstring AudManager::GetSoundBankName( const AkBankID bankID )
 {
 	CcpAutoMutex mutex( m_soundBankMutex );
 	auto mapIterator = m_soundBankInfoMap.find( bankID );
@@ -604,7 +557,7 @@ std::wstring AudManager::GetSoundBankName(const AkBankID bankID)
 	return L"";
 }
 
-SoundBankStatus AudManager::GetSoundBankStatus( const AkBankID bankID ) 
+SoundBankStatus AudManager::GetSoundBankStatus( const AkBankID bankID )
 {
 	CcpAutoMutex mutex( m_soundBankMutex );
 	auto mapIterator = m_soundBankInfoMap.find( bankID );
@@ -618,13 +571,12 @@ SoundBankStatus AudManager::GetSoundBankStatus( const AkBankID bankID )
 SoundBankStatus AudManager::GetSoundBankStatus( const std::wstring& soundBankName )
 {
 	CcpAutoMutex mutex( m_soundBankMutex );
-	for (auto it = m_soundBankInfoMap.begin(); it != m_soundBankInfoMap.end(); ++it)
+	for( auto it = m_soundBankInfoMap.begin(); it != m_soundBankInfoMap.end(); ++it )
 	{
 		if( it->second.soundBankName == soundBankName )
 		{
 			return it->second.soundBankStatus;
 		}
-		
 	}
 	return SoundBankStatus::NOT_LOADED;
 }
@@ -643,7 +595,7 @@ void AudManager::UpdateSoundBankStatus( const AkBankID bankID, const SoundBankSt
 	{
 		mapIterator->second.soundBankStatus = soundBankStatus;
 
-		if (soundBankStatus == SoundBankStatus::LOADED)
+		if( soundBankStatus == SoundBankStatus::LOADED )
 		{
 			for( auto it = mapIterator->second.waitingEventsAfterLoad.begin(); it != mapIterator->second.waitingEventsAfterLoad.end(); ++it )
 			{
@@ -668,7 +620,7 @@ void AudManager::ClearBanks()
 			CCP_LOGERR( "AK::SoundEngine::ClearBanks failed" );
 			return;
 		}
-	
+
 		CcpAutoMutex mutex( m_soundBankMutex );
 		m_soundBankInfoMap.clear();
 		CCP_LOG( "All SoundBanks unloaded in Wwise" );
@@ -680,17 +632,19 @@ void AudManager::ClearBanks()
 //   Disable CarbonAudio which culls all game objects, unloads all SoundBanks, terminates
 //   the sound engine and stops the audio thread.
 //-----------------------------------------------------
-void AudManager::Disable() 
+void AudManager::Disable()
 {
-	if ( g_audioEnabled == false )
+	if( g_audioEnabled == false )
 	{
 		return;
 	}
 
-	for( auto it = m_gameObjects.begin(); it != m_gameObjects.end(); ++it )
+	auto objects = m_soundPrioritization->GetPrioritizedAudioObjects();
+	for( auto obj : objects )
 	{
-		( *it->second ).Cull();
+		obj->Cull();
 	}
+
 	ClearBanks();
 	Terminate();
 	g_audioEnabled = false;
@@ -700,53 +654,54 @@ void AudManager::Disable()
 
 //-----------------------------------------------------
 // Description:
-//   Disable spatial audio, whether or not the user has a spatial audio endpoint active. 
+//   Disable spatial audio, whether or not the user has a spatial audio endpoint active.
 //   In order for this to work properly the "m_stereoAudioDeviceName" property in AudSettings.h
 //   needs to point to an existing Wwise Audio Device made through the Wwise authoring tool that has
 //   "Allow 3D Audio" disabled and an updated set of SoundBanks with this audio device needs to be loaded.
 // Returns:
 //   true if the request to change the audio device was successfully queued, false if the stereo audio device
-//   defined in AudSettings does not exist in the loaded SoundBanks or if another unknown error occured. 
+//   defined in AudSettings does not exist in the loaded SoundBanks or if another unknown error occured.
 //   Keep an eye on loglite to know what the problem was if this returns false.
 //-----------------------------------------------------
 bool AudManager::DisableSpatialAudio()
 {
 #if _WIN32
-    const AkOutputDeviceID defaultOutputDeviceId = 0;
+	const AkOutputDeviceID defaultOutputDeviceId = 0;
 
-    if( !g_audioInitialized )
-    {
-        return false;
-    }
+	if( !g_audioInitialized )
+	{
+		return false;
+	}
 
 	if( !m_spatialAudioEnabled )
 	{
 		return true;
 	}
 
-    AkOutputSettings settings = AkOutputSettings();
-    settings.audioDeviceShareset = AK::SoundEngine::GetIDFromString( m_settings->m_stereoAudioDeviceName.c_str() );
-    AKRESULT result = AK::SoundEngine::ReplaceOutput( settings, defaultOutputDeviceId );
+	AkOutputSettings settings = AkOutputSettings();
+	settings.audioDeviceShareset = AK::SoundEngine::GetIDFromString( m_settings->m_stereoAudioDeviceName.c_str() );
+	AKRESULT result = AK::SoundEngine::ReplaceOutput( settings, defaultOutputDeviceId );
 
-    if( result != AK_Success )
-    {
-        if( result == AK_IDNotFound )
-        {
-            CCP_LOGERR( "Spatial audio was not able to be disabled because the Wwise Audio device named %S could not be found. " 
-                        "Either create a new 2D audio device with the expected name or change the name of the 2D audio device in "
-                        "Carbon Audio's settings before initializing it.", m_settings->m_stereoAudioDeviceName.c_str() );
-        }
-        else
-        {
-            CCP_LOGERR( "Setting audio output to stereo failed to be scheduled for an unknown reason. Spatial audio will stay enabled." );
-        }
-        return false;
-    }
+	if( result != AK_Success )
+	{
+		if( result == AK_IDNotFound )
+		{
+			CCP_LOGERR( "Spatial audio was not able to be disabled because the Wwise Audio device named %S could not be found. "
+						"Either create a new 2D audio device with the expected name or change the name of the 2D audio device in "
+						"Carbon Audio's settings before initializing it.",
+						m_settings->m_stereoAudioDeviceName.c_str() );
+		}
+		else
+		{
+			CCP_LOGERR( "Setting audio output to stereo failed to be scheduled for an unknown reason. Spatial audio will stay enabled." );
+		}
+		return false;
+	}
 
-    m_spatialAudioEnabled = false;
-    return true;
+	m_spatialAudioEnabled = false;
+	return true;
 #else
-	CCP_LOGERR("DisableSpatialAudio method was called on an operating system that Carbon Audio does not support spatial audio on.");
+	CCP_LOGERR( "DisableSpatialAudio method was called on an operating system that Carbon Audio does not support spatial audio on." );
 	return false;
 #endif
 }
@@ -756,13 +711,13 @@ bool AudManager::DisableSpatialAudio()
 //   Enable CarbonAudio which will initialize the sound engine, load the given SoundBanks,
 //   Wake up all audio emitters (if sound prioritization is enabled) and registers the audio thread.
 // Arguments:
-//   soundBanks - The name of all soundbanks you want to load when enabling the sound engine 
+//   soundBanks - The name of all soundbanks you want to load when enabling the sound engine
 //				  by name (relative to the base SoundBank path). Note: The Init SoundBank is implicitly
 //				  loaded and does not need to be passed in here.
 //-----------------------------------------------------
-void AudManager::Enable(BankVector soundBanksToLoad) 
+void AudManager::Enable( BankVector soundBanksToLoad )
 {
-	if ( g_audioEnabled )
+	if( g_audioEnabled )
 	{
 		return;
 	}
@@ -781,9 +736,10 @@ void AudManager::Enable(BankVector soundBanksToLoad)
 		LoadBank( *it );
 	}
 
-	for( auto it = m_gameObjects.begin(); it != m_gameObjects.end(); ++it )
+	auto objects = m_soundPrioritization->GetPrioritizedAudioObjects();
+	for( auto obj : objects )
 	{
-		( *it->second ).Wake();
+		obj->Wake();
 	}
 
 	BeOS->RegisterForTicks( this, (void*)"Audio::Tick" );
@@ -792,48 +748,49 @@ void AudManager::Enable(BankVector soundBanksToLoad)
 
 //-----------------------------------------------------
 // Description:
-//   Enable spatial audio features in Carbon Audio. This will not take effect unless the user has a spatial audio 
+//   Enable spatial audio features in Carbon Audio. This will not take effect unless the user has a spatial audio
 //   endpoint active on their operating system that supports spatial audio (e.g. Dolby Atmos or Windows Sonic for Headphones).
 //   In order for this to work properly the "m_spatialAudioDeviceName" property in AudSettings.h
-//   needs to point to an existing Wwise Audio Device made through the Wwise authoring tool that has 
+//   needs to point to an existing Wwise Audio Device made through the Wwise authoring tool that has
 //   "Allow 3D Audio" enabled and an updated set of SoundBanks with this audio device needs to be loaded.
 // Returns:
 //   true if the request to change the audio device was successfully queued, false if the spatial audio device
-//   defined in AudSettings does not exist in the loaded SoundBanks or if another unknown error occured. 
+//   defined in AudSettings does not exist in the loaded SoundBanks or if another unknown error occured.
 //   Keep an eye on loglite to know what the problem was if this returns false.
 //-----------------------------------------------------
 bool AudManager::EnableSpatialAudio()
 {
 #if _WIN32
-    if( !g_audioInitialized )
-    {
-        return false;
-    }
+	if( !g_audioInitialized )
+	{
+		return false;
+	}
 
 	if( m_spatialAudioEnabled )
 	{
 		return true;
 	}
 
-    const AkOutputDeviceID defaultOutputDeviceId = 0;
-    AkOutputSettings settings = AkOutputSettings();
-    settings.audioDeviceShareset = AK::SoundEngine::GetIDFromString( m_settings->m_spatialAudioDeviceName.c_str() );
-    AKRESULT result = AK::SoundEngine::ReplaceOutput( settings, defaultOutputDeviceId );
+	const AkOutputDeviceID defaultOutputDeviceId = 0;
+	AkOutputSettings settings = AkOutputSettings();
+	settings.audioDeviceShareset = AK::SoundEngine::GetIDFromString( m_settings->m_spatialAudioDeviceName.c_str() );
+	AKRESULT result = AK::SoundEngine::ReplaceOutput( settings, defaultOutputDeviceId );
 
-    if( result != AK_Success )
-    {
-        if( result == AK_IDNotFound )
-        {
-            CCP_LOGERR( "Spatial audio was not able to be enabled because the Wwise Audio device named %S could not be found. " 
-                        "Either create a new 3D audio device with the expected name or change the name of the 3D audio device in "
-                        "Carbon Audio's settings before initializing it.", m_settings->m_spatialAudioDeviceName.c_str() );
-        }
-        else
-        {
-            CCP_LOGERR( "Setting audio output to 3D failed to be scheduled. Audio output will continue to output in stereo." );
-        }
+	if( result != AK_Success )
+	{
+		if( result == AK_IDNotFound )
+		{
+			CCP_LOGERR( "Spatial audio was not able to be enabled because the Wwise Audio device named %S could not be found. "
+						"Either create a new 3D audio device with the expected name or change the name of the 3D audio device in "
+						"Carbon Audio's settings before initializing it.",
+						m_settings->m_spatialAudioDeviceName.c_str() );
+		}
+		else
+		{
+			CCP_LOGERR( "Setting audio output to 3D failed to be scheduled. Audio output will continue to output in stereo." );
+		}
 		return false;
-    }
+	}
 
 	m_spatialAudioEnabled = true;
 	return true;
@@ -860,11 +817,11 @@ const std::vector<std::wstring> AudManager::GetLoadedSoundBanks()
 	return loadedSoundBanks;
 }
 
-const MonitoredParameterInfo* AudManager::GetParameterInfo(const std::wstring& audioParameterName)
+const MonitoredParameterInfo* AudManager::GetParameterInfo( const std::wstring& audioParameterName )
 {
 	CcpAutoMutex lock( m_moniteredParametersMapMutex );
 	auto it = m_monitoredParametersMap.find( audioParameterName );
-	if ( it != m_monitoredParametersMap.end() )
+	if( it != m_monitoredParametersMap.end() )
 	{
 		return &it->second;
 	}
@@ -873,23 +830,17 @@ const MonitoredParameterInfo* AudManager::GetParameterInfo(const std::wstring& a
 
 //-----------------------------------------------------
 // Description:
-//   Retrieve the given emitter if it is currently alive. 
+//   Retrieve the given emitter if it is currently alive.
 // Arguments:
-//   emitterID - The ID of the emitter you want to retrieve. 
+//   emitterID - The ID of the emitter you want to retrieve.
 //-----------------------------------------------------
 AudGameObjResource* AudManager::GetAudioEmitter( AkGameObjectID emitterID )
 {
-	auto it = m_gameObjects.begin();
-	while( it != m_gameObjects.end() )
+	auto objects = m_soundPrioritization->GetPrioritizedAudioObjects();
+	for( auto obj : objects )
 	{
-		if ( it->first == emitterID )
-		{
-			return it->second;
-		}
-		else
-		{
-			++it;
-		}
+		if( obj->GetID() == emitterID )
+			return static_cast<AudGameObjResource*>( obj );
 	}
 	return nullptr;
 }
@@ -904,7 +855,7 @@ AudGameObjResource* AudManager::GetAudioEmitter( AkGameObjectID emitterID )
 //   An empty wstring if the given emitter is not playing an event with the given playing ID.
 //-----------------------------------------------------
 #ifndef AK_OPTIMIZED
-const std::wstring AudManager::GetEventName( AkGameObjectID emitterID,  AkPlayingID playingID )
+const std::wstring AudManager::GetEventName( AkGameObjectID emitterID, AkPlayingID playingID )
 {
 	AudGameObjResource* emitter = GetAudioEmitter( emitterID );
 	std::map<AkPlayingID, std::wstring> playingEvents = emitter->GetPlayingEvents();
@@ -921,14 +872,15 @@ void AudManager::StopAll()
 {
 	if( g_audioInitialized )
 	{
-		for( auto it = m_gameObjects.begin(); it != m_gameObjects.end(); ++it )
+		auto objects = m_soundPrioritization->GetPrioritizedAudioObjects();
+		for( auto obj : objects )
 		{
-			( *it->second ).StopAll();
+			static_cast<AudGameObjResource*>( obj )->StopAll();
 		}
 	}
 }
 
-void AudManager::RegisterParameter(const std::wstring& audioParameterName)
+void AudManager::RegisterParameter( const std::wstring& audioParameterName )
 {
 	if( g_audioInitialized )
 	{
@@ -937,18 +889,18 @@ void AudManager::RegisterParameter(const std::wstring& audioParameterName)
 	}
 }
 
-void AudManager::UnregisterParameter(const std::wstring& audioParameterName)
+void AudManager::UnregisterParameter( const std::wstring& audioParameterName )
 {
 	if( g_audioInitialized )
 	{
 		CcpAutoMutex lock( m_moniteredParametersMapMutex );
 		auto it = m_monitoredParametersMap.find( audioParameterName );
-		if (it != m_monitoredParametersMap.end())
+		if( it != m_monitoredParametersMap.end() )
 		{
 			it->second.watchers -= 1;
-			if (it->second.watchers == 0)
+			if( it->second.watchers == 0 )
 			{
-				m_monitoredParametersMap.erase(it);
+				m_monitoredParametersMap.erase( it );
 			}
 		}
 	}
@@ -957,13 +909,13 @@ void AudManager::UnregisterParameter(const std::wstring& audioParameterName)
 //-----------------------------------------------------
 // Description:
 //   Register a callback to be called every time Wwises audio device changes. This callback can be used to determine
-//   if the user's current audio device supports spatial audio every time the audio device is changed, either by the user 
+//   if the user's current audio device supports spatial audio every time the audio device is changed, either by the user
 //   or manually by Carbon Audio when using the EnableSpatialAudio and DisableSpatialAudio methods. Look at the documentation
 //   for this method in AudManager_Blue.cpp for an example of how the Python function should look.
 // Arguments:
 //   callback - A Python callback that will be called every time the user has an audio device change.
 //-----------------------------------------------------
-void AudManager::RegisterAudioDeviceChangeCallback(const BlueScriptCallback callback)
+void AudManager::RegisterAudioDeviceChangeCallback( const BlueScriptCallback callback )
 {
 #if _WIN32
 	CcpAutoMutex mutex( s_audioDeviceMutex );
@@ -973,18 +925,13 @@ void AudManager::RegisterAudioDeviceChangeCallback(const BlueScriptCallback call
 #endif
 }
 
-void AudManager::RegisterGameObject( AkGameObjectID emitterID, AudGameObjResource* emitter )
-{
-	m_gameObjects.push_back( std::make_pair( emitterID, emitter ) );
-}
-
 //-----------------------------------------------------
 // Description:
-//   Register an event to be sent to Wwise after it is done loading (e.g. in the LoadBank callback function). 
+//   Register an event to be sent to Wwise after it is done loading (e.g. in the LoadBank callback function).
 //   Only works with soundbanks in the SoundBankStatus::Loading state.
 // Arguments:
-//   bankID - The ID of the SoundBank you want to register an event on after it loads. 
-//	 eventName - The event you want to be sent when the given bankID is done loading. 
+//   bankID - The ID of the SoundBank you want to register an event on after it loads.
+//	 eventName - The event you want to be sent when the given bankID is done loading.
 //	 emitter - The audio emitter you want the registered event to be sent to.
 //-----------------------------------------------------
 void AudManager::RegisterEventAfterSoundBankLoad( std::wstring& soundBankName, std::wstring& eventName, AudGameObjResource* emitter )
@@ -995,32 +942,20 @@ void AudManager::RegisterEventAfterSoundBankLoad( std::wstring& soundBankName, s
 		if( it->second.soundBankName == soundBankName )
 		{
 			it->second.waitingEventsAfterLoad.push_back( std::make_pair( emitter, eventName ) );
-			CCP_LOG("Event %S registered to be sent to audio emitter %d after SoundBank %S is done loading.", eventName.c_str(), emitter->GetID(), soundBankName.c_str() );
+			CCP_LOG( "Event %S registered to be sent to audio emitter %d after SoundBank %S is done loading.", eventName.c_str(), emitter->GetID(), soundBankName.c_str() );
 		}
 	}
-}
-
-void AudManager::UnregisterGameObject( AkGameObjectID emitterID )
-{
-	m_gameObjects.erase(
-		std::remove_if( 
-			begin( m_gameObjects ), end( m_gameObjects ), [emitterID]( const std::pair<AkGameObjectID, AudGameObjResource*>& p ) 
-			{
-				return p.first == emitterID;
-			} 
-		), end( m_gameObjects ) 
-	);
 }
 
 void AudManager::UpdateMonitoredParameters()
 {
 	CCP_STATS_ZONE( __FUNCTION__ );
-	CcpAutoMutex lock(m_moniteredParametersMapMutex);
-	for (auto it = m_monitoredParametersMap.begin(); it != m_monitoredParametersMap.end(); ++it)
+	CcpAutoMutex lock( m_moniteredParametersMapMutex );
+	for( auto it = m_monitoredParametersMap.begin(); it != m_monitoredParametersMap.end(); ++it )
 	{
 		AK::SoundEngine::Query::RTPCValue_type rtpcValueType = AK::SoundEngine::Query::RTPCValue_type::RTPCValue_Global;
 		float audioParameterValue = 0.0f;
-		AKRESULT result = AK::SoundEngine::Query::GetRTPCValue( it->first.c_str(), AK_INVALID_GAME_OBJECT, AK_INVALID_PLAYING_ID, audioParameterValue, rtpcValueType);
+		AKRESULT result = AK::SoundEngine::Query::GetRTPCValue( it->first.c_str(), AK_INVALID_GAME_OBJECT, AK_INVALID_PLAYING_ID, audioParameterValue, rtpcValueType );
 		bool audioParameterExists = ( result == AK_Success ) ? true : false;
 
 		it->second.parameterValue = audioParameterValue;
@@ -1030,34 +965,29 @@ void AudManager::UpdateMonitoredParameters()
 
 void AudManager::DisableAudioCulling()
 {
-	for ( auto it = m_gameObjects.begin(); it != m_gameObjects.end(); ++it )
+	auto objects = m_soundPrioritization->GetPrioritizedAudioObjects();
+	for( auto obj : objects )
 	{
-		if ( it->second->IsCulled() )
+		if( obj->IsCulled() )
 		{
-			( *it->second ).Wake();
+			obj->Wake();
 		}
 	}
+	m_soundPrioritization->DisableAudioCulling();
 	m_audioCullingEnabled = false;
 	CCP_LOG_CH( s_ch, "The sound prioritization system has been disabled." );
 }
 
 void AudManager::EnableAudioCulling()
 {
+	m_soundPrioritization->EnableAudioCulling();
 	m_audioCullingEnabled = true;
 	CCP_LOG_CH( s_ch, "The sound prioritization system has been enabled." );
 }
 
 void AudManager::ResetCullingSettings()
 {
-	m_maxAwakeGameObjects = m_cullingInitSettings.maxAwakeGameObjects;
-	m_waitingOneShotWeight = m_cullingInitSettings.waitingOneShotWeight;
-	m_usedEmitterWeight = m_cullingInitSettings.usedEmitterWeight;
-	m_rangeWeight = m_cullingInitSettings.rangeWeight;
-	m_playingEventsWeight = m_cullingInitSettings.activeSoundsWeight;
-	m_visibleWeight = m_cullingInitSettings.visibleWeight;
-	m_playing2DWeight = m_cullingInitSettings.playing2DWeight;
-	m_playingVitalSoundWeight = m_cullingInitSettings.playingVitalSoundWeight;
-	m_weightMultiplier = m_cullingInitSettings.weightMultiplier;
+	m_soundPrioritization->ResetCullingSettings();
 }
 
 void AudManager::LogPostEvent( AkGameObjectID emitterID, AkPlayingID playID, AkUniqueID eventID, const std::wstring& name )
@@ -1117,87 +1047,13 @@ bool AudManager::GetDebugDisplayAllEmitters()
 
 bool AudManager::GetAudioCullingEnabled() const
 {
+	m_audioCullingEnabled = m_soundPrioritization->GetAudioCullingEnabled();
 	return m_audioCullingEnabled;
 }
 
-long long AudManager::GetOneShotWindow() const
+bool AudManager::GetAudioCullingEnabledProperty() const
 {
-	return m_oneShotWindow;
-}
-
-float AudManager::GetPlaying2DWeight() const
-{
-	return m_weightMultiplier * m_playing2DWeight;
-}
-
-float AudManager::GetPlayingEventsWeight() const
-{
-	return m_weightMultiplier * m_playingEventsWeight;
-}
-
-float AudManager::GetPlayingVitalSoundWeight() const
-{
-	return m_weightMultiplier * m_playingVitalSoundWeight;
-}
-
-float AudManager::GetRangeWeight() const
-{
-	return m_weightMultiplier * m_rangeWeight;
-}
-
-float AudManager::GetUsedEmitterWeight() const 
-{
-	return m_weightMultiplier * m_usedEmitterWeight;
-}
-
-float AudManager::GetVisibleWeight() const
-{
-	return m_weightMultiplier * m_visibleWeight;
-}
-
-float AudManager::GetWaitingOneShotWeight() const 
-{
-	return m_weightMultiplier * m_waitingOneShotWeight;
-}
-
-void AudManager::SetOneShotWindow( long long numMilliseconds )
-{
-	m_oneShotWindow = numMilliseconds;
-}
-
-void AudManager::SetPlaying2DWeight( float weight )
-{
-	m_playing2DWeight = weight;
-}
-
-void AudManager::SetPlayingEventsWeight( float weight )
-{
-	m_playingEventsWeight = weight;
-}
-
-void AudManager::SetPlayingVitalSoundWeight( float weight )
-{
-	m_playingVitalSoundWeight = weight;
-}
-
-void AudManager::SetRangeWeight( float weight )
-{
-	m_rangeWeight = weight;
-}
-
-void AudManager::SetUsedEmitterWeight( float weight )
-{
-	m_usedEmitterWeight = weight;
-}
-
-void AudManager::SetVisibleWeight( float weight )
-{
-	m_visibleWeight = weight;
-}
-
-void AudManager::SetWaitingOneShotWeight( float weight )
-{
-	m_waitingOneShotWeight = weight;
+	return GetAudioCullingEnabled();
 }
 
 AudListenerPtr AudManager::GetListener()
@@ -1207,44 +1063,50 @@ AudListenerPtr AudManager::GetListener()
 	return listener;
 }
 
-std::vector<std::pair<AkGameObjectID, AudGameObjResource*>> AudManager::GetPrioritizedAudioEmitters()
+std::vector<AudGameObjResource*> AudManager::GetPrioritizedAudioEmitters()
 {
-	return m_gameObjects;
+	std::vector<AudGameObjResource*> result;
+	auto objects = m_soundPrioritization->GetPrioritizedAudioObjects();
+	result.reserve( objects.size() );
+	for( auto obj : objects )
+	{
+		result.push_back( static_cast<AudGameObjResource*>( obj ) );
+	}
+	return result;
 }
-
 // Callback from Wwise to use for tracking performance of the sound engine. This is called when a timer stops. Only applicable in Profile or Debug Wwise flavors.
 void AudManager::AkPlatformProfilerPopTimer()
 {
 	TracyLeaveZone( g_audioManager );
 }
 
-// Callback from Wwise to use for tracking performance of the sound engine. This is called when special Wwise events happen like voice starvation. 
-void AudManager::AkPlatformProfilerPostmarker(AkPluginID in_uPluginID, const char* in_pszMarkerName)
+// Callback from Wwise to use for tracking performance of the sound engine. This is called when special Wwise events happen like voice starvation.
+void AudManager::AkPlatformProfilerPostmarker( AkPluginID in_uPluginID, const char* in_pszMarkerName )
 {
-	if (in_uPluginID != AKMAKECLASSID(AkPluginTypeNone, AKCOMPANYID_AUDIOKINETIC, AK::ProfilingID::AudioFrameBoundary))
+	if( in_uPluginID != AKMAKECLASSID( AkPluginTypeNone, AKCOMPANYID_AUDIOKINETIC, AK::ProfilingID::AudioFrameBoundary ) )
 	{
-		tmTaskletZone(TMCM_CPP, in_pszMarkerName, __FILE__, __LINE__);
+		tmTaskletZone( TMCM_CPP, in_pszMarkerName, __FILE__, __LINE__ );
 	}
 }
 
 // Callback from Wwise to use for tracking performance of the sound engine. This is called when a timer starts. Only applicable in Profile or Debug Wwise flavors.
-void AudManager::AkPlatformProfilerPushTimer(AkPluginID in_uPluginID, const char* in_pszZoneName)
+void AudManager::AkPlatformProfilerPushTimer( AkPluginID in_uPluginID, const char* in_pszZoneName )
 {
-	TracyEnterZone( g_audioManager, in_pszZoneName, __FILE__, __LINE__);
+	TracyEnterZone( g_audioManager, in_pszZoneName, __FILE__, __LINE__ );
 }
 
 //-----------------------------------------------------
 // Description:
 //	 A callback that is registered during initialization to be called every Wwise tick after it is done rendering
-//   audio. This particular function takes care of updating monitored audio parameters because any AK::SoundEngine::Query 
-//   functions from the Wwise SDK should only be called after rendering is done to minmize CPU spikes. This info 
+//   audio. This particular function takes care of updating monitored audio parameters because any AK::SoundEngine::Query
+//   functions from the Wwise SDK should only be called after rendering is done to minmize CPU spikes. This info
 //   is taken from https://www.audiokinetic.com/en/library/edge/?source=SDK&id=goingfurther_eventmgrthread.html.
 // Arguments
 //   in_pCookie - A pointer to this AudManager instance.
 //-----------------------------------------------------
-void AudManager::GlobalCallbackEndRender(AK::IAkGlobalPluginContext* in_pContext, AkGlobalCallbackLocation in_eLocation, void* in_pCookie)
+void AudManager::GlobalCallbackEndRender( AK::IAkGlobalPluginContext* in_pContext, AkGlobalCallbackLocation in_eLocation, void* in_pCookie )
 {
-	AudManager* audManager = static_cast<AudManager*>(in_pCookie);
+	AudManager* audManager = static_cast<AudManager*>( in_pCookie );
 	audManager->UpdateMonitoredParameters();
 }
 
@@ -1252,7 +1114,7 @@ void AudManager::GlobalCallbackEndRender(AK::IAkGlobalPluginContext* in_pContext
 //-----------------------------------------------------
 // Description:
 //	 A callback that is registered during initialization that is triggered every Wwise's audio device is changed. This method takes care of
-//   calling the callback that can be registered with the RegisterAudioDeviceCallback method which can be used to keep track of if the 
+//   calling the callback that can be registered with the RegisterAudioDeviceCallback method which can be used to keep track of if the
 //   user's current audio output device supports spatial audio or not. The kinds of events that will trigger this callback method are:
 //     * Initializion of carbon audio, e.g. the first time an audio output device is created.
 //     * Swapping audio device sharesets during runtime (e.g. DisableSpatialAudio and EnableSpatialAudio).
@@ -1260,7 +1122,7 @@ void AudManager::GlobalCallbackEndRender(AK::IAkGlobalPluginContext* in_pContext
 //-----------------------------------------------------
 void AudManager::AudioDeviceStatusChangeCallback( AK::IAkGlobalPluginContext* in_pContext, AkUniqueID in_idAudioDeviceShareset, AkUInt32 in_idDeviceID, AK::AkAudioDeviceEvent in_idEvent, AKRESULT in_AkResult )
 {
-    size_t currentErrorHash = std::hash<AkUniqueID>()(in_idDeviceID) ^ std::hash<AkUniqueID>()(in_idAudioDeviceShareset) ^ std::hash<AKRESULT>()(in_AkResult) ^ std::hash<AK::AkAudioDeviceEvent>()(in_idEvent);
+	size_t currentErrorHash = std::hash<AkUniqueID>()( in_idDeviceID ) ^ std::hash<AkUniqueID>()( in_idAudioDeviceShareset ) ^ std::hash<AKRESULT>()( in_AkResult ) ^ std::hash<AK::AkAudioDeviceEvent>()( in_idEvent );
 
 	if( currentErrorHash == s_lastLoggedDeviceHash.load() )
 	{
@@ -1312,17 +1174,20 @@ void AudManager::AudioDeviceStatusChangeCallback( AK::IAkGlobalPluginContext* in
 		}
 	}
 
-	s_lastLoggedDeviceHash.store(currentErrorHash);
+	s_lastLoggedDeviceHash.store( currentErrorHash );
 
 	// This exists solely to be able to propagate the audio device change callback on the main thread.
 	// It is important to propagate it on the main thread because it is theoretically possible that Carbon Audio
-	// would hold up Wwise's audio thread as it waits for Python. This circumvents that and will make sure this is processed on the next tick. 
+	// would hold up Wwise's audio thread as it waits for Python. This circumvents that and will make sure this is processed on the next tick.
 	g_mainThreadQueue->Add( []( void* ) {
 		if( s_audioDeviceChangeCallback )
 		{
 			s_audioDeviceChangeCallback.CallVoid( s_systemSupportsSpatialAudio );
 		}
-	} , nullptr, IBlueCallbackMan::BCBF_NONE, nullptr );
+	},
+							nullptr,
+							IBlueCallbackMan::BCBF_NONE,
+							nullptr );
 }
 
 #endif

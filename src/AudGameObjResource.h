@@ -9,6 +9,7 @@
 
 #include "Audio2.h"
 #include "AudParameter.h"
+#include "IPrioritizedObject.h"
 
 struct Vector3;
 
@@ -22,7 +23,8 @@ struct Vector3;
 //   AudEmitter, AudUIPlayer, AudListener 
 // ------------------------------------------------------------------------
 BLUE_CLASS( AudGameObjResource ) : public IInitialize
-	                             , public IListNotify 
+	                             , public IListNotify
+	                             , public IPrioritizedObject
 {
 public:
 	AudGameObjResource( IRoot* lockobj = NULL );
@@ -62,21 +64,21 @@ public:
 	// Stop all sounds playing on this audio game object.
 	void StopAll(); 
 	// Wake up a game object from being culled and put it back in Wwises purview.
-	void Wake();
+	void Wake() override;
 	// Cull a game object removing it from Wwises purview and doing minimal calcuations on our side.
-	void Cull();
+	void Cull() override;
 	// Calculate the weight of this game object in the culling system based on a number of factors.
-	void CalculateCullingWeight( std::chrono::steady_clock::time_point now );
+	void CalculateCullingWeight(std::chrono::steady_clock::time_point now) override;
 	// Whether this game object is culled or not.
-	bool IsCulled();
+	bool IsCulled() const override; 
 	// Get the cumulative weight of this game object in the culling system.
-	float GetCullingWeight();
+	float GetCullingWeight() const override; 
 	// Get the ID of this game object.
-	AkGameObjectID GetID();
+	AkGameObjectID GetID() const override;
 	// Get the current position of this game object.
-	Vector3 GetPosition();
+	Vector3 GetPosition() const override;
 	// Set the squared length of the distance that this game object sits from the listener.
-	void SetDistanceSqFromListener( const float distanceSq );
+	void SetDistanceSqFromListener(float distanceSq) override;
 	// Mute this game object so it doesn't play sounds. 
 	void Mute();
 	// Unmute this game object so it can play sounds again.
