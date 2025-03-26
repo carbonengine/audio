@@ -285,3 +285,73 @@ Here is an example AudioMetadata.json with two events, a one shot and a loop:
 ```
 
 This JSON was generated using the `generate_metadata_for_fsd.py` script found in an EVE or Frontier branch at `carbon/tools/audiotools/scripts/generate_metadata_for_fsd.py`.
+
+### Audio Metadata Custom Properties
+
+Wwise's Custom properties allow you to store additional information in Wwise objects. In Carbon-Audio, custom properties such as `EssentialSoundBank` and `EssentialMedia` are used to indicate if a soundbank or a source file (`.wem` files) should be included in the essential music directory. The essential directory is a precache folder containing vital audio files necessary for a game version with limited content.
+
+These custom properties are defined in the EVE Wwise project and are also reflected in the `SoundPrioritizationMetadata` JSON file. Here is an example of how it looks:
+
+```
+    "WemFileIDs": {
+        "460136326": {
+            "IsEssential": false
+        }
+    },
+    "SoundBanks": {
+        "TestLoop.bnk": {
+            "id": "{5B6959F0-EE85-40E6-822B-90DC0157584F}",
+            "path": "\\SoundBanks\\Default Work Unit\\TestLoop",
+            "name": "TestLoop",
+            "shortId": 3918824947,
+            "parent": {
+                "id": "{4B764402-C2B1-488E-A768-588CB657A0CD}",
+                "name": "Default Work Unit"
+            },
+            "EssentialMedia": false,
+            "EssentialSoundBank": true
+        },
+In `AudStaticDataRepository`, all the above audio metadata is stored. Then, in the low-level file handling logic of Carbon Audio, it decides whether to pull audio assets from this "Essentials" folder.
+
+To use carbon-audio with a Wwise project, you need to add a `.wcustomproperties` file to your project. This file should be named `ccp.wcustomproperties` and placed in the `Add-Ons\Properties` folder. For more information on defining custom properties in Wwise, refer to the [Wwise documentation](https://www.audiokinetic.com/en/library/edge/?source=SDK&id=defining_custom_properties.html).
+
+Here are the exact contents needed in this file:
+
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<PluginModule>
+	<WwiseObject Name="SoundBank" CompanyID="1" PluginID="18">
+		<Properties>
+			<Property Name="CCP:EssentialSoundBank" DocId="CCP:EssentialSoundBank" DisplayName="EssentialSoundBank" Type="bool">
+				<DefaultValue>True</DefaultValue>
+				<AudioEnginePropertyID>1</AudioEnginePropertyID>
+				<Restrictions>
+					<ValueRestriction>
+						<Range Type="bool">
+							<Min>False</Min>
+							<Max>True</Max>
+						</Range>
+					</ValueRestriction>
+				</Restrictions>
+			</Property>
+		</Properties>
+	</WwiseObject>
+    <WwiseObject Name="SoundBank" CompanyID="1" PluginID="18">
+		<Properties>
+			<Property Name="CCP:EssentialMedia" DocId="CCP:EssentialMedia" DisplayName="EssentialMedia" Type="bool">
+				<DefaultValue>False</DefaultValue>
+				<AudioEnginePropertyID>1</AudioEnginePropertyID>
+				<Restrictions>
+					<ValueRestriction>
+						<Range Type="bool">
+							<Min>False</Min>
+							<Max>True</Max>
+						</Range>
+					</ValueRestriction>
+				</Restrictions>
+			</Property>
+		</Properties>
+    </WwiseObject>
+</PluginModule>
+```
+

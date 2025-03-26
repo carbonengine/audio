@@ -234,6 +234,11 @@ bool AudManager::InitLowLevel()
 		CCP_LOGERR( "Soundbank path %S is invalid and soundbanks will not be loaded correctly.", m_settings->m_baseSoundBankPath.c_str() );
 		return false;
 	}
+	if( m_lowLevelIO.SetEssentialPath( m_settings->m_essentialPath.c_str() ) != AK_Success )
+	{
+		CCP_LOGERR( "Essentials path %S is invalid and soundbanks will not be loaded correctly.", m_settings->m_essentialPath.c_str() );
+		return false;
+	}
 	if( m_lowLevelIO.SetAudioSrcPath( m_settings->m_audioSrcPath.c_str() ) != AK_Success )
 	{
 		CCP_LOGERR( "Audio source path %s is invalid and .wem files will not be loaded correctly.", m_settings->m_audioSrcPath.c_str() );
