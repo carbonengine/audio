@@ -1082,7 +1082,7 @@ std::vector<AudGameObjResource*> AudManager::GetPrioritizedAudioEmitters()
 // Callback from Wwise to use for tracking performance of the sound engine. This is called when a timer stops. Only applicable in Profile or Debug Wwise flavors.
 void AudManager::AkPlatformProfilerPopTimer()
 {
-	TracyLeaveZone( g_audioManager );
+	// TracyLeaveZone( g_audioManager );
 }
 
 // Callback from Wwise to use for tracking performance of the sound engine. This is called when special Wwise events happen like voice starvation.
@@ -1090,14 +1090,14 @@ void AudManager::AkPlatformProfilerPostmarker( AkPluginID in_uPluginID, const ch
 {
 	if( in_uPluginID != AKMAKECLASSID( AkPluginTypeNone, AKCOMPANYID_AUDIOKINETIC, AK::ProfilingID::AudioFrameBoundary ) )
 	{
-		tmTaskletZone( TMCM_CPP, in_pszMarkerName, __FILE__, __LINE__ );
+                CCP_STATS_ZONE(in_pszMarkerName);
 	}
 }
 
 // Callback from Wwise to use for tracking performance of the sound engine. This is called when a timer starts. Only applicable in Profile or Debug Wwise flavors.
 void AudManager::AkPlatformProfilerPushTimer( AkPluginID in_uPluginID, const char* in_pszZoneName )
 {
-	TracyEnterZone( g_audioManager, in_pszZoneName, __FILE__, __LINE__ );
+        // TracyEnterZone( g_audioManager, in_pszZoneName, __FILE__, __LINE__);
 }
 
 //-----------------------------------------------------
