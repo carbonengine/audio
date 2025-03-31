@@ -52,6 +52,5 @@ const Be::ClassInfo* AudSettings::ExposeToBlue()
 			"Note: spatial audio only works on Windows.",
 			Be::READWRITE 
 		)
-		MAP_ATTRIBUTE("essentialPath", m_essentialPath, "The path for essential media.", Be::READWRITE )
 	EXPOSURE_END()
 }

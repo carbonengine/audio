@@ -14,25 +14,6 @@
   "DialogueEvents": [],
   "SoundBanks": [
    {
-    "Id": "476335406",
-    "Type": "User",
-    "Language": "SFX",
-    "Hash": "{7C08B424-0F00-FF23-0BD4-AF44A786ED25}",
-    "ShortName": "TestMusicEssential",
-    "Path": "TestMusicEssential.bnk",
-    "Media": [
-     {
-      "Id": "460136326",
-      "Language": "SFX",
-      "Streaming": "true",
-      "Location": "Loose",
-      "ShortName": "testSFX.wav",
-      "Path": "Media/460136326.wem",
-      "CachePath": "SFX/testSFX_D79FB2B7.wem"
-     }
-    ]
-   },
-   {
     "Id": "592435907",
     "Type": "User",
     "Language": "SFX",
@@ -120,7 +101,7 @@
     "Id": "2395677314",
     "Type": "User",
     "Language": "SFX",
-    "Hash": "{BD9C1F71-1021-999B-91B8-CE5D00DBA154}",
+    "Hash": "{D98799FE-F226-7B06-9A12-BA1B2A097391}",
     "ShortName": "Common",
     "Path": "Common.bnk",
     "Events": [
@@ -136,11 +117,6 @@
      {
       "Id": "1483003980",
       "Name": "Play_TestLoop",
-      "MaxAttenuation": "100"
-     },
-     {
-      "Id": "4076365145",
-      "Name": "Play_TestMusicEssential",
       "MaxAttenuation": "100"
      },
      {
@@ -187,6 +163,6 @@
     ]
    }
   ],
-  "FileHash": "{BD5CF2A3-C8AB-9430-33F1-A2D101519400}"
+  "FileHash": "{9BD95CA4-4959-FD65-4678-64974EA08B01}"
  }
 }

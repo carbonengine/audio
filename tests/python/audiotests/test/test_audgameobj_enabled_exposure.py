@@ -1,6 +1,6 @@
 import blue
 
-from audiotests.base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK, ONE_SHOT_EVENT, ESSENTIAL_EVENT, ESSENTIAL_BNK
+from audiotests.base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK, ONE_SHOT_EVENT
 from audiotests.base_test_class import BaseAudio2TestClass
 from audiotests.utils import PumpOSWithTimeout
 
@@ -10,7 +10,7 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
     @classmethod
     def setUpClass(cls):
         super(TestEnabledAudGameObjExposure, cls).setUpClass()
-        cls.Initialize(cls, defaultSoundBanks=[COMMON_BNK, LOOP_BNK, ONE_SHOT_BNK, ESSENTIAL_BNK])
+        cls.Initialize(cls, defaultSoundBanks=[COMMON_BNK, LOOP_BNK, ONE_SHOT_BNK])
 
     def setUp(self):
         # Even though this is a test for AudGameObjResource exposure, it is
@@ -26,11 +26,6 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
         self.emitter.eventPrefix = ""
         self.emitter.StopAll()
         self.audioManager.Disable()
-
-    def test_enabled_audgameobjresource_sendevent_essential(self):
-        # test event streamed from essential
-        playingID = self.emitter.SendEvent(ESSENTIAL_EVENT)
-        self.assertTrue(playingID > 0)
 
     def test_enabled_audgameobjresource_sendevent(self):
         """Test that AudGameObjResource::SendEvent works while audio is enabled."""

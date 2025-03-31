@@ -104,18 +104,18 @@ class AudioManager(object):
         """
         return self.manager.GetPrioritizedEmitters()
 
-    def Initialize(self, audioMetadata, defaultSoundBanks=[]):
+    def Initialize(self, eventMetadata, defaultSoundBanks=[]):
         """Initialize the audio manager so that is ready to be enabled.
 
-        :param audioMetadata: Event and Source related Wwise metadata used while Carbon Audio is running. Used for sound prioritization 
+        :param eventMetadata: Metadata about all Wwise that will ever be used while Carbon Audio is running. Used for sound prioritization 
                               and ideally generated using Waapi (Wwise authoring api).
-        :type audioMetadata: dict
+        :type eventMetadata: dict
         :param defaultSoundBanks: An optional argument that signals specific soundbanks that should always be loaded while the audio manager is enabled.
                                   These SoundBanks will only ever be unloaded when disabling the audio manager.
         :type defaultSoundBanks: list of strings
         """
         self.defaultSoundBanks = defaultSoundBanks
-        self.staticDataRepository.Initialize(audioMetadata)
+        self.staticDataRepository.Initialize(eventMetadata)
 
     def LoadSoundBank(self, bankName):
         if not self.enabled:

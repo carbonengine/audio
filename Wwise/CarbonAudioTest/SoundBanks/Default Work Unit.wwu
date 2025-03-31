@@ -38,13 +38,6 @@
 					<ObjectExclusionList/>
 					<GameSyncExclusionList/>
 				</SoundBank>
-				<SoundBank Name="TestMusicEssential" ID="{A249FB1A-086B-4FD1-A6DC-04735261822D}">
-					<ObjectInclusionList>
-						<ObjectRef Name="testSFX" ID="{68D74DEE-7E26-4DF8-A8DF-D93CA97F71D9}" WorkUnitID="{C3703968-666D-47C8-9715-ABD3DA334A25}" Origin="Manual" Filter="6"/>
-					</ObjectInclusionList>
-					<ObjectExclusionList/>
-					<GameSyncExclusionList/>
-				</SoundBank>
 			</ChildrenList>
 		</WorkUnit>
 	</SoundBanks>
