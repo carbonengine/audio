@@ -230,6 +230,8 @@ private:
 #ifndef AK_OPTIMIZED
 	// Wwise communication interface settings.
 	AkCommSettings m_commSettings;
+    // Defines the Wwise resource monitor callback function
+	static void ResourceMonitorCallback( const AkResourceMonitorDataSummary* in_pdataSummary );
 #endif
 	//Debug
 	IAudActionLogPtr m_log;

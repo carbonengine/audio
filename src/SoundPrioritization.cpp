@@ -3,6 +3,11 @@
 #include "IPrioritizedObject.h"
 #include "tbb/parallel_for.h"
 
+#ifndef AK_OPTIMIZED
+CCP_STATS_DECLARE(numActiveAudioEmmiters, "CarbonAudio/AudManager/NumActiveAudioEmitters", false, CST_COUNTER_LOW, " Number of active audio emitters");
+#endif
+
+
 SoundPrioritization::SoundPrioritization() :
 	m_audioCullingEnabled( true ), m_listener( nullptr ), m_objectsMutex( "SoundPrioritization", "m_objectsMutex" )
 {
@@ -157,6 +162,9 @@ void SoundPrioritization::CullAudio()
 				}
 				++numAwake;
 			}
+#ifndef AK_OPTIMIZED
+			CCP_STATS_SET( numActiveAudioEmmiters, numAwake );
+#endif
 		}
 	}
 }

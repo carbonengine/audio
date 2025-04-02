@@ -47,8 +47,10 @@ public:
 	void Py__init__( const std::string& name );
 
 	//ITr2AudEmitter
+	void ForceCullingStateChange() override;
 	void Initialize( const std::string& name, const std::wstring& prefix, const Vector3& position ) override;
 	void Mute() override;
+	void ReleaseForcedCullingState() override;
 	unsigned int SendEvent( const std::wstring& name, bool bypassPrefix = false ) override;
 	int SetPosition( const Vector3& front, const Vector3& top, const Vector3& pos ) override;
 	void SetName( const std::string& name ) override;

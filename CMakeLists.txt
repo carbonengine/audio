@@ -20,10 +20,25 @@ include(CcpPackageConfigHelpers)
 
 set(Wwise_ROOT "${BRANCH_ROOT_DIR}/vendor/wwise/2022.1.4.8202")
 
+if(WIN32)
+    # Hack to allow building Audio with v143 toolset. This will ensure that when we link against dependencies, we will link against the v141 version. This is necessary because our build configuration assumes that all components are built using the same version. However, things built against a newer 14X toolset should be able to link against things that were built using an older 14X toolset.
+    set(_OLD_CCP_VENDOR_LIB_PATH ${CCP_VENDOR_LIB_PATH})
+    set(_OLD_CCP_VENDOR_BIN_PATH ${CCP_VENDOR_BIN_PATH})
+    set(CCP_VENDOR_LIB_PATH "lib/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/v141/")
+    set(CCP_VENDOR_BIN_PATH "bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/v141/")
+endif()
+
 find_package(Blue CONFIG REQUIRED)
 find_package(CcpMath CONFIG REQUIRED)
 find_package(IntelTBB REQUIRED)
 find_package(Wwise REQUIRED)
+
+if(WIN32)
+    # Restore sanity after toolset hacking. After this we can use find_package
+    # to find any v143 dependencies.
+    set(CCP_VENDOR_LIB_PATH ${_OLD_CCP_VENDOR_LIB_PATH})
+    set(CCP_VENDOR_BIN_PATH ${_OLD_CCP_VENDOR_BIN_PATH})
+endif()
 
 set(PUBLIC_HEADER_FILES_INCLUDE
 	Include/ITr2AudEmitter.h
@@ -126,8 +141,6 @@ else()
 	message(FATAL_ERROR "CarbonAudio does not support platform specified.")
 endif()
 
-
-
 target_link_libraries(CarbonAudio
 		PUBLIC
 			Blue
@@ -219,14 +232,57 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 	# Unit test related functionality
 	include(CTest)
 
-	# this assumes that `updateBinaries.py client` has been run for the given branch!
 	if(WIN32)
-		set(PYTHON_EXECUTABLE "${BRANCH_ROOT_DIR}/eve/client/pythonInterpreter.bat")
-	elseif(APPLE)
-		set(PYTHON_EXECUTABLE "${BRANCH_ROOT_DIR}/eve/client/pythonInterpreter.sh")
+    	set(_COPY_TOOLSET v141)  # This is a hack to copy the v141 binaries over until the v143 toolset update is done properly.
+
+		# Detect Python version
+		if(EXISTS "${Python_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/python312.dll")
+			set(PYTHON_VERSION 3)
+		elseif(EXISTS "${Python_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/python27.dll")
+			set(PYTHON_VERSION 2)
+		else()
+			message(FATAL_ERROR "No compatible Python DLL found at ${Python_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/ - Checked for python27.dll and python312.dll")
+		endif()
+
+		if(PYTHON_VERSION EQUAL 3)
+			message(STATUS "Python 3.12 detected, copying python312.dll")
+			add_custom_command(TARGET CarbonAudio POST_BUILD
+					COMMAND ${CMAKE_COMMAND} -E copy_if_different
+					"${Python_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/python312.dll"
+					$<TARGET_FILE_DIR:CarbonAudio>
+			)
+			message(STATUS "Python 3.12 build - skipping Blue and TBB DLL copying")
+			
+			set(PYTHON_EXECUTABLE "${BRANCH_ROOT_DIR}/eve/client/pythonInterpreter.bat")
+			
+		elseif(PYTHON_VERSION EQUAL 2)
+			message(STATUS "Python 2.7 detected - enforcing strict DLL dependencies")
+			
+			target_link_libraries(CarbonAudio PRIVATE BlueExposure)
+
+			add_custom_command(TARGET CarbonAudio POST_BUILD
+					COMMAND ${CMAKE_COMMAND} -E copy_if_different
+					"${Python_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/python27.dll"
+					"${Blue_DIR}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/$<IF:$<CONFIG:Release>,blue.dll,blue_$<LOWER_CASE:$<CONFIG>>.dll>"
+					"${IntelTBB_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/tbb12.dll"
+					"${Exefile_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/Exefile.exe"
+					"${ExefileConsole_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/ExefileConsole.exe"
+					$<TARGET_FILE_DIR:CarbonAudio>
+			)
+
+			set(EXEFILE_CONSOLE_EXECUTABLE "$<TARGET_FILE_DIR:CarbonAudio>/ExefileConsole.exe")
+			add_test(NAME PythonTests
+				COMMAND ${EXEFILE_CONSOLE_EXECUTABLE} /buildflavor=$<LOWER_CASE:$<CONFIG>> /lib=${BRANCH_ROOT_DIR}/carbon/common/stdlib\\\;${CMAKE_CURRENT_SOURCE_DIR}/python\\\;${BRANCH_ROOT_DIR}/packages /bin=$<TARGET_FILE_DIR:CarbonAudio> /py run_tests.py
+				WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python/audio2/test
+				COMMAND_EXPAND_LISTS
+			)
+			
+			set(PYTHON_EXECUTABLE "${BRANCH_ROOT_DIR}/eve/client/pythonInterpreter.bat")
+		endif()
 	else()
-		message(FATAL_ERROR "Unsupported platform!")
+		set(PYTHON_EXECUTABLE "${BRANCH_ROOT_DIR}/eve/client/pythonInterpreter.sh")
 	endif()
+
 	set(ENV{PYTHONPATH} ${CMAKE_CURRENT_SOURCE_DIR}/python)
 	set(ENV{"CTEST_OUTPUT_ON_FAILURE"} 1)
 	execute_process(COMMAND ${PYTHON_EXECUTABLE} discover.py
@@ -251,8 +307,6 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 			set_tests_properties(${PYTHON_TEST} PROPERTIES ENVIRONMENT "PYTHONPATH=$<TARGET_FILE_DIR:CarbonAudio>\;${CMAKE_CURRENT_SOURCE_DIR}/python;BUILDFLAVOR=$<LOWER_CASE:$<CONFIG>>")
 		elseif (APPLE)
 			set_tests_properties(${PYTHON_TEST} PROPERTIES ENVIRONMENT "PYTHONPATH=$<TARGET_FILE_DIR:CarbonAudio>:${CMAKE_CURRENT_SOURCE_DIR}/python;BUILDFLAVOR=$<LOWER_CASE:$<CONFIG>>")
-		else()
-			message(FATAL_ERROR "Unsupported platform")
-		endif ()
+		endif()
 	endforeach()
 endif()

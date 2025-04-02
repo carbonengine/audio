@@ -152,3 +152,14 @@ void AudEmitter::Unmute()
 {
 	AudGameObjResource::Unmute();
 }
+
+
+void AudEmitter::ForceCullingStateChange()
+{
+	AudGameObjResource::ForceCullingStateChange();
+}
+
+void AudEmitter::ReleaseForcedCullingState()
+{
+	AudGameObjResource::ReleaseForcedCullingState();
+}

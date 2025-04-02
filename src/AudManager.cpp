@@ -35,6 +35,23 @@
 #include "AudStaticDataRepository.h"
 #include "LogBridge.h"
 
+#ifndef AK_OPTIMIZED
+// Declare statistics for SoundEngine
+CCP_STATS_DECLARE( sampleRate, "CarbonAudio/AudManager/SampleRate", false, CST_COUNTER_LOW, "The current audio sample rate." );
+CCP_STATS_DECLARE( numSamplesPerFrame, "CarbonAudio/AudManager/NumSamplesPerFrame", false, CST_COUNTER_LOW, "Number of samples per audio frame (256, 512, 1024, or 2048)." );
+#ifndef AK_MAC_OS_X
+CCP_STATS_DECLARE( maxSpatialAudioObjects, "CarbonAudio/AudManager/maxSpatialAudioObjects", false, CST_COUNTER_LOW, " Dictates how many Spatial Sound dynamic objects will be reserved by the System sink." );
+#endif
+
+// Declare statistics for AkResourceMonitorDataSummary
+CCP_STATS_DECLARE( totalCPU, "CarbonAudio/AudManager/TotalCPU", false, CST_COUNTER_LOW, "Percentage of the CPU time used for processing audio." );
+CCP_STATS_DECLARE( pluginCPU, "CarbonAudio/AudManager/PluginCPU", false, CST_COUNTER_LOW, "Percentage of the CPU time used by plugin processing." );
+CCP_STATS_DECLARE( physicalVoices, "CarbonAudio/AudManager/PhysicalVoices", false, CST_COUNTER_LOW, "Number of active physical voices." );
+CCP_STATS_DECLARE( virtualVoices, "CarbonAudio/AudManager/VirtualVoices", false, CST_COUNTER_LOW, "Number of active virtual voices." );
+CCP_STATS_DECLARE( totalVoices, "CarbonAudio/AudManager/TotalVoices", false, CST_COUNTER_LOW, "Number of active physical and virtual voices." );
+CCP_STATS_DECLARE( nbActiveEvents, "CarbonAudio/AudManager/ActiveEvents", false, CST_COUNTER_LOW, "Number of events triggered at a certain time." );
+#endif
+
 static CcpLogChannel_t s_ch = CCP_LOG_DEFINE_CHANNEL( "AudioManager" );
 
 static void WwiseAssertHook( const char* in_pszExpression, const char* in_pszFileName, int in_lineNumber )
@@ -350,6 +367,19 @@ bool AudManager::InitSound()
 #endif
 	}
 
+#ifndef AK_OPTIMIZED
+	AKRESULT result = AK::SoundEngine::RegisterResourceMonitorCallback( ResourceMonitorCallback );
+	if( result != AK_Success )
+	{
+		CCP_LOGERR( "Failed to register resource monitor callback" );
+	}
+	CCP_STATS_SET( sampleRate, AK::SoundEngine::GetSampleRate() );
+	CCP_STATS_SET( numSamplesPerFrame, initSettings.uNumSamplesPerFrame );
+#ifndef AK_MAC_OS_X
+	CCP_STATS_SET( maxSpatialAudioObjects, platformInitSettings.uMaxSystemAudioObjects );
+#endif
+#endif
+
 	return true;
 }
 
@@ -651,6 +681,9 @@ void AudManager::Disable()
 	}
 
 	ClearBanks();
+#ifndef AK_OPTIMIZED
+	AK::SoundEngine::UnregisterResourceMonitorCallback(ResourceMonitorCallback);
+#endif
 	Terminate();
 	g_audioEnabled = false;
 	BeOS->UnregisterForTicks( this, (void*)"Audio::Tick" );
@@ -1265,3 +1298,15 @@ bool AudManager::IsProfilerCapturing() const
 {
 	return m_isProfilerCapturing;
 }
+
+#ifndef AK_OPTIMIZED
+void AudManager::ResourceMonitorCallback( const AkResourceMonitorDataSummary* dataSummary )
+{
+	CCP_STATS_SET( totalCPU, dataSummary->totalCPU );
+	CCP_STATS_SET( pluginCPU, dataSummary->pluginCPU );
+	CCP_STATS_SET( physicalVoices, dataSummary->physicalVoices );
+	CCP_STATS_SET( virtualVoices, dataSummary->virtualVoices );
+	CCP_STATS_SET( totalVoices, dataSummary->totalVoices );
+	CCP_STATS_SET( nbActiveEvents, dataSummary->nbActiveEvents );
+}
+#endif
