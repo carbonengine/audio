@@ -1,6 +1,6 @@
 from audiotests.base_test_class import SOUNDBANK_FILEPATH
 from audiotests.base_test_class import BaseAudio2TestClass
-from audiotests.base_test_class import GetEventMetadataFromFile
+from audiotests.base_test_class import GetAudioMetadataFromFile
 from audiotests.utils import PumpOSWithTimeout
 from unittest.mock import MagicMock
 

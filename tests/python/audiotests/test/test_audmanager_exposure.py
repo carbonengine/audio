@@ -6,7 +6,7 @@ import unittest
 import blue
 
 from audiotests.base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK
-from audiotests.base_test_class import GetEventMetadataFromFile
+from audiotests.base_test_class import GetAudioMetadataFromFile
 from audiotests.utils import PumpOSWithTimeout
 
 class TestAudManagerExposure(unittest.TestCase):
@@ -23,7 +23,7 @@ class TestAudManagerExposure(unittest.TestCase):
         cls.audioManager = audio2.GetOrCreateManager()
         cls.staticDataRepository = audio2.GetStaticDataRepository()
         cls.audioManager.UpdateSettings(settings)
-        cls.staticDataRepository.Initialize(GetEventMetadataFromFile())
+        cls.staticDataRepository.Initialize(GetAudioMetadataFromFile())
         cls.audioManager.DisableAudioCulling()
 
     def loadedSoundBanksAreEmpty(self):

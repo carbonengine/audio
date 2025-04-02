@@ -47,6 +47,17 @@
 						</Action>
 					</ChildrenList>
 				</Event>
+				<Event Name="Play_TestEssential" ID="{46D20828-44CD-4358-BA1C-3B075985C595}">
+					<ChildrenList>
+						<Action Name="" ID="{EE930D75-A5BC-42F7-91E6-936B50359680}" ShortID="524167693">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="testSFX" ID="{68D74DEE-7E26-4DF8-A8DF-D93CA97F71D9}" WorkUnitID="{C3703968-666D-47C8-9715-ABD3DA334A25}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
 			</ChildrenList>
 		</WorkUnit>
 	</Events>

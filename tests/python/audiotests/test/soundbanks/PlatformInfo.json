@@ -1,0 +1,37 @@
+{
+ "PlatformInfo": {
+  "Platform": {
+   "Name": "Windows",
+   "BasePlatform": "Windows",
+   "Generator": "2022.1.4.8202"
+  },
+  "RootPaths": {
+   "ProjectRoot": "../../../../../Wwise/CarbonAudioTest",
+   "SourceFilesRoot": "../../../../../Wwise/CarbonAudioTest/.cache/Windows",
+   "SoundBanksRoot": ".",
+   "ExternalSourcesInputFile": "",
+   "ExternalSourcesOutputRoot": "../../../../../Wwise/CarbonAudioTest/GeneratedSoundBanks/Windows"
+  },
+  "DefaultAlign": "16",
+  "Settings": {
+   "AutoSoundBankDefinition": "false",
+   "CopyLooseStreamedMediaFiles": "true",
+   "SubFoldersForGeneratedFiles": "false",
+   "RemoveUnusedGeneratedFiles": "false",
+   "SourceControlGeneratedFiles": "false",
+   "GenerateHeaderFile": "false",
+   "GenerateContentTxtFile": "false",
+   "GenerateMetadataXML": "true",
+   "GenerateMetadataJSON": "true",
+   "GenerateAllBanksMetadata": "true",
+   "GeneratePerBankMetadata": "false",
+   "UseSoundBankNames": "true",
+   "AllowExceedingMaxSize": "false",
+   "MaxAttenuationInfo": "true",
+   "EstimatedDurationInfo": "false",
+   "PrintObjectGuid": "false",
+   "PrintObjectPath": "false"
+  },
+  "FileHash": "{B89D781D-9F52-C358-D86A-A237A171995A}"
+ }
+}
