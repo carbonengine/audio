@@ -32,6 +32,7 @@ find_package(Blue CONFIG REQUIRED)
 find_package(CcpMath CONFIG REQUIRED)
 find_package(IntelTBB REQUIRED)
 find_package(Wwise REQUIRED)
+find_package(CarbonTrinityAudioAPI REQUIRED)
 
 if(WIN32)
     # Restore sanity after toolset hacking. After this we can use find_package
@@ -41,8 +42,6 @@ if(WIN32)
 endif()
 
 set(PUBLIC_HEADER_FILES_INCLUDE
-	Include/ITr2AudEmitter.h
-	include/IAudioInputMgr.h
 )
 
 ccp_add_library(CarbonAudio SHARED
@@ -144,6 +143,7 @@ endif()
 target_link_libraries(CarbonAudio
 		PUBLIC
 			Blue
+			CarbonTrinityAudioAPI
 		PRIVATE
 			Intel::TBB
 			CcpMath

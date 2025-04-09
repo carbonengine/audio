@@ -1,5 +1,5 @@
 # CarbonAudio
-CarbonAudio (previously audio2) is the middleware through which EVE Online communicates with Wwise. In addition to interacting with Wwise, CarbonAudio houses its
+CarbonAudio (previously audio2) is a wrapper through which EVE Online communicates with Wwise. In addition to interacting with Wwise, CarbonAudio houses its
 own sound prioritization system that helps protect Wwise from being hammered too hard in larger scenes.
 
 CarbonAudio depends on [Blue](https://github.com/ccpgames/carbon-blue) 

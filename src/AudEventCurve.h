@@ -11,7 +11,7 @@
 
 #include "AudEmitter.h"
 #include "AudEventKey.h"
-#include "ITr2AudEmitter.h"
+#include <ITr2AudEmitter.h>
 
 BLUE_DECLARE( AudEventCurve );
 

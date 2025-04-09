@@ -12,7 +12,7 @@
 
 #include <IBlueEventListener.h>
 #include <ITr2DebugRenderer2.h>
-#include "ITr2AudEmitter.h"
+#include <ITr2AudEmitter.h>
 
 #include "AudGameObjResource.h"
 #include "AudPosition.h"

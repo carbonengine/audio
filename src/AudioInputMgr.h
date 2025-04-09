@@ -8,7 +8,7 @@
 #ifndef AudioInputMgr_h_
 #define AudioInputMgr_h_
 
-#include "IAudioInputMgr.h"
+#include <IAudioInputMgr.h>
 
 // ------------------------------------------------------------------------
 // Description:
