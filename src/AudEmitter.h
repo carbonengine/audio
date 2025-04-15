@@ -71,6 +71,10 @@ protected:
 	float m_maxNormalizedValue;
 	float m_minNormalizedScalingFactor;
 	float m_maxNormalizedScalingFactor;
+
+	bool m_playedLoadEvent;
+	std::wstring m_playOnLoadEvent;
+
 	// Debug properties.
 	Vector3 m_debugPosition;
 	Vector3 m_debugFront;

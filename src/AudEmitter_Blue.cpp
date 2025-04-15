@@ -24,6 +24,7 @@ const Be::ClassInfo* AudEmitter::ExposeToBlue()
 		MAP_ATTRIBUTE( "maxNormalizedValue", m_maxNormalizedValue, "The maximum number to use for attenuation normalization.", Be::READWRITE | Be::PERSIST )
 		MAP_ATTRIBUTE( "minNormalizedScalingFactor", m_minNormalizedScalingFactor, "The minimum scaling factor that can be used to scale attenuation by.", Be::READWRITE | Be::PERSIST )
 		MAP_ATTRIBUTE( "maxNormalizedScalingFactor", m_maxNormalizedScalingFactor, "The maximum scaling factor that can be used to scale attenuation by.", Be::READWRITE | Be::PERSIST )
+		MAP_ATTRIBUTE(" playOnLoadEvent", m_playOnLoadEvent, "A Wwise event to send when this emitter is initially spawned.", Be::READWRITE | Be::PERSIST )
 		MAP_ATTRIBUTE( "debugPosition", m_debugPosition, "The location of the audio emitter in space.", Be::READ )
 		MAP_ATTRIBUTE( "debugFront", m_debugFront, "A vector pointing in the same direction that the audio emitter is facing. Can be (0.0, 0.0, 0.0)", Be::READ )
 

@@ -1223,7 +1223,7 @@ void AudManager::AkPlatformProfilerPostmarker(AkPluginID in_uPluginID, const cha
 {
 	if (in_uPluginID != AKMAKECLASSID(AkPluginTypeNone, AKCOMPANYID_AUDIOKINETIC, AK::ProfilingID::AudioFrameBoundary))
 	{
-		tmTaskletZone(TMCM_CPP, in_pszMarkerName, __FILE__, __LINE__);
+		CCP_STATS_ZONE(in_pszMarkerName);
 	}
 }
 

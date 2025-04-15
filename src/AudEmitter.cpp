@@ -13,6 +13,8 @@ AudEmitter::AudEmitter( IRoot* lockobj ) :
 	m_maxNormalizedValue( 9000.f), // ^
 	m_minNormalizedScalingFactor( 0.4f ),
 	m_maxNormalizedScalingFactor( 3.5f ),
+	m_playedLoadEvent( false ),
+	m_playOnLoadEvent( L"" ),
 	m_debugPosition(0, 0, 0),
 	m_debugFront(0, 0, 0),
 	m_debugColor()
@@ -26,6 +28,8 @@ AudEmitter::AudEmitter( AkGameObjectID gameObjID, IRoot* lockobj ) :
 	m_maxNormalizedValue( 9000.f), // ^
 	m_minNormalizedScalingFactor( 0.4f ),
 	m_maxNormalizedScalingFactor( 3.5f ),
+	m_playedLoadEvent( false ),
+	m_playOnLoadEvent( L"" ),
 	m_debugPosition(0, 0, 0),
 	m_debugFront(0, 0, 0),
 	m_debugColor()
@@ -99,6 +103,12 @@ bool AudEmitter::SetAttenuationScalingFactor( const float scalingFactor )
 void AudEmitter::UpdatePlacement(const Vector3& front, const Vector3& top, const Vector3& pos )
 {
 	SetPosition( front, top, pos );
+
+	if( !m_playedLoadEvent && !m_playOnLoadEvent.empty() && !m_culled)
+	{
+		PostEvent( m_playOnLoadEvent );
+		m_playedLoadEvent = true;
+	}
 }
 
 void AudEmitter::SetVisibility( bool isVisible )
