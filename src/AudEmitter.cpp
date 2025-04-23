@@ -162,3 +162,9 @@ void AudEmitter::Unmute()
 {
 	AudGameObjResource::Unmute();
 }
+
+void AudEmitter::StopAll()
+{
+	AudGameObjResource::StopAll();
+	m_playedLoadEvent = false;
+}

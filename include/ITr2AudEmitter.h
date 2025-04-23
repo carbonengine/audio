@@ -27,6 +27,7 @@ BLUE_INTERFACE( ITr2AudEmitter ) : public IRoot
 	virtual void SetVisibility( bool visible ) = 0;
 	virtual void Mute() = 0;
 	virtual void Unmute() = 0;
+	virtual void StopAll() = 0;
 };
 
 #endif

@@ -59,6 +59,7 @@ public:
 	void SetVisibility( bool isVisible ) override;
 	std::string GetName() override;
 	void Unmute() override;
+	void StopAll() override;
 
 	// Debug
 	virtual	void GetDebugOptions( Tr2DebugRendererOptions& options ) override;
