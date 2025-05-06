@@ -2,9 +2,12 @@ from audiotests.base_test_class import SOUNDBANK_FILEPATH
 from audiotests.base_test_class import BaseAudio2TestClass
 from audiotests.base_test_class import GetAudioMetadataFromFile
 from audiotests.utils import PumpOSWithTimeout
-from unittest.mock import MagicMock
+try:
+    from unittest.mock import MagicMock  # Python 3
+except ImportError:
+    from mock import MagicMock  # Python 2 (requires 'mock' package)
 
-class SpatialAudioTestClass(BaseAudio2TestClass):
+class TestSpatialAudio(BaseAudio2TestClass):
     """Test spatial audio related features."""
 
     def _audio_device_supports_spatial_audio(self, deviceChangeCallback):

@@ -1,46 +1,64 @@
 import unittest
 import blue
-import scheduler
+import sys
+import time
 
+# import scheduler only for Python 3
+PY3 = sys.version_info[0] >= 3
+if PY3:
+    import scheduler
+
+class BaseTestRunner:
+    """Common functionality for both Python 2 and 3 test runners"""
+    def handle_pump(self):
+        blue.os.Pump()
+        blue.pyos.synchro.SleepWallclock(10)
 
 def main():
-    import sys
-
     if sys.argv[0].endswith("__main__.py"):
         import os.path
-        # We change sys.argv[0] to make help message more useful
-        # use executable without path, unquoted
-        # (it's just a hint anyway)
-        # (if you have spaces in your executable you get what you deserve!)
         executable = os.path.basename(sys.executable)
         sys.argv[0] = executable + " -m unittest"
         del os
 
-    class TaskletTestRunner(unittest.TextTestRunner):
-        def __init__(self, *args, **kwargs):
-            self.result = None
-            super(TaskletTestRunner, self).__init__(*args, **kwargs)
+    if PY3:
+        class TaskletTestRunner(unittest.TextTestRunner, BaseTestRunner):
+            def __init__(self, *args, **kwargs):
+                self.result = None
+                self.timeout = kwargs.pop('timeout', 30.0)
+                super(TaskletTestRunner, self).__init__(*args, **kwargs)
 
-        def run(self, test):
-            scheduler.tasklet(self._run_impl)(test)
-            while self.result is None:
-                blue.os.Pump()
+            def run(self, test):
+                start_time = time.time()
+                scheduler.tasklet(self._run_impl)(test)
+                
+                while self.result is None:
+                    if time.time() - start_time > self.timeout:
+                        raise TimeoutError("Test execution timed out")
+                    self.handle_pump()
 
-            if len(self.result.failures) > 0:
-                for failure in self.result.failures:
-                    print(failure[1])
+                if len(self.result.failures) > 0:
+                    for failure in self.result.failures:
+                        print(failure[1])
 
-            if len(self.result.errors) > 0:
-                for error in self.result.errors:
-                    print(error, file=sys.stderr)
+                if len(self.result.errors) > 0:
+                    for error in self.result.errors:
+                        sys.stderr.write(str(error) + '\n')
 
-            return self.result
+                return self.result
 
-        def _run_impl(self, test):
-            #blue.pyos.synchro.SleepWallclock(8000)
-            self.result = super(TaskletTestRunner, self).run(test)
+            def _run_impl(self, test):
+                self.result = super(TaskletTestRunner, self).run(test)
 
-    unittest.main(module=None, testRunner=TaskletTestRunner())
+        test_runner = TaskletTestRunner
+    else:
+        # Use standard test runner for Python 2
+        class Py2TestRunner(unittest.TextTestRunner, BaseTestRunner):
+            def run(self, test):
+                result = super(Py2TestRunner, self).run(test)
+                self.handle_pump()
+                return result
 
+        test_runner = Py2TestRunner
 
-main()
+    unittest.main(module=None, testRunner=test_runner)

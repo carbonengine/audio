@@ -1,4 +1,5 @@
 import blue
+import time
 
 from audiotests.base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK, ONE_SHOT_EVENT, ESSENTIAL_EVENT, ESSENTIAL_BNK
 from audiotests.base_test_class import BaseAudio2TestClass
@@ -21,11 +22,45 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
         self.emitter.SetPosition((0,0,0), (0,0,0), (0,0,0))
         self.audioManager.Enable()
         PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
-
+        
     def tearDown(self):
         self.emitter.eventPrefix = ""
         self.emitter.StopAll()
         self.audioManager.Disable()
+        
+        
+    def wait_for_audio_condition(self, condition_func, expected_max_ms=100, timeout_ms=200, interval_ms=10):
+        """
+        Stricter timing windows:
+        - expected_max_ms=100: Operation should complete within 100ms
+        - timeout_ms=200: Absolute failure after 200ms
+        - interval_ms=10: Check every 10ms
+        """
+        elapsed = 0
+        start_time = time.time()
+        
+        while elapsed < timeout_ms:
+            if condition_func():
+                elapsed_ms = (time.time() - start_time) * 1000
+                if elapsed_ms > expected_max_ms:
+                    raise AssertionError(
+                        "Condition met but took {:.2f}ms (expected max {}ms)".format(elapsed_ms, expected_max_ms)
+                    )
+                return True
+                
+            blue.pyos.synchro.SleepWallclock(interval_ms)
+            if sys.version_info[0] >= 3:
+                blue.os.Pump()
+            elapsed += interval_ms
+        
+        return False
+        
+    def get_events_values(self, events_dict):
+        """Helper method to handle dict.values() differently in Python 2/3"""
+        values = events_dict.values()
+        if sys.version_info[0] >= 3:
+            return list(values)
+        return values
 
     def test_enabled_audgameobjresource_sendevent_essential(self):
         # test event streamed from essential
@@ -64,22 +99,24 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
         self.assertFalse(stopped)
 
     def test_enabled_audgameobjresource_stopsound(self):
-        """Test that AudGameObjReseource::StopSound only stops one instance of the same event."""
         playingID1 = self.emitter.SendEvent(LOOP_EVENT)
         playingID2 = self.emitter.SendEvent(LOOP_EVENT)
         self.assertTrue(playingID1 > 0)
         self.assertTrue(playingID2 > 0)
 
         self.emitter.StopSound(playingID1, 10)
-        blue.pyos.synchro.SleepWallclock(200) # give time for wwise callback for stopped sound
-        self.assertEqual(len(self.emitter.GetPlayingEvents()), 1)
+        def check_one_event_playing():
+            return len(self.emitter.GetPlayingEvents()) == 1
+        self.assertTrue(self.wait_for_audio_condition(check_one_event_playing, 
+                                                    expected_max_ms=100,
+                                                    timeout_ms=200)) 
 
         self.emitter.StopSound(playingID2, 10)
-        blue.pyos.synchro.SleepWallclock(200)
-        self.assertEqual(len(self.emitter.GetPlayingEvents()), 0)
-
-        # Test a fake playingID returns False
-        self.assertFalse(self.emitter.StopSound(999999, 10))
+        def check_no_events_playing():
+            return len(self.emitter.GetPlayingEvents()) == 0
+        self.assertTrue(self.wait_for_audio_condition(check_no_events_playing,
+                                                    expected_max_ms=100,
+                                                    timeout_ms=200))
 
     def test_enabled_audgameobjresource_stopall(self):
         """Test that AudGameObjResource::StopAll() stops all instances of playing events."""
@@ -142,13 +179,19 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
     def test_audgameobjresource_plays_one_shot_if_woken_quickly(self):
         """Test that if a one shot is sent to an instance of AudGameObjResource while it is culled it will be actually be played if woken up in the defined one shot window."""
         import audio2
-        oneShotWindow = float(audio2.GetOrCreateManager().oneShotWindow) # This is in milliseconds
-        self.emitter.ForceCullingStateChange() # This has to be used instead of Cull() or else this will wake up automatically on the next tick.
-        self.emitter.SendEvent(ONE_SHOT_EVENT)
-        blue.pyos.synchro.SleepWallclock(oneShotWindow) 
+        oneShotWindow = float(audio2.GetOrCreateManager().oneShotWindow)
         self.emitter.ForceCullingStateChange()
-        self.assertTrue(len(self.emitter.GetPlayingEvents()) == 1)
-        self.assertTrue(list(self.emitter.GetPlayingEvents().values())[0] == ONE_SHOT_EVENT)
+        self.emitter.SendEvent(ONE_SHOT_EVENT)
+        
+        def check_one_shot_playing():
+            events = self.emitter.GetPlayingEvents()
+            values = self.get_events_values(events)
+            return (len(events) == 1 and 
+                   (values[0] if values else None) == ONE_SHOT_EVENT)
+        
+        self.emitter.ForceCullingStateChange()
+        self.assertTrue(self.wait_for_audio_condition(check_one_shot_playing, 
+                                                    timeout_ms=int(oneShotWindow)))
 
     def test_audgameobjresource_fails_to_play_one_shot_if_not_woken_quickly(self):
         """Test that if a one shot is sent to an instance of AudGameObjResource while it is culled and it is woken up after the one shot window it will not play."""

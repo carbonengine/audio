@@ -117,7 +117,10 @@ class TestAudManagerExposure(unittest.TestCase):
         self.audioManager.LoadBank(ONE_SHOT_BNK)
 
         PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
-        self.assertCountEqual(self.audioManager.GetLoadedSoundBanks(), [INIT_BANK, ONE_SHOT_BNK])
+        if sys.version_info[0] >= 3:
+            self.assertCountEqual(self.audioManager.GetLoadedSoundBanks(), [INIT_BANK, ONE_SHOT_BNK])
+        else:
+            self.assertEqual(set(self.audioManager.GetLoadedSoundBanks()), set([INIT_BANK, ONE_SHOT_BNK]))
 
         self.audioManager.UnloadBank(ONE_SHOT_BNK)
         PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=1)
