@@ -18,7 +18,7 @@ list(INSERT CMAKE_MODULE_PATH 0 ${BRANCH_ROOT_DIR}/cmake)
 include(CcpGlobalSettings)
 include(CcpPackageConfigHelpers)
 
-set(Wwise_ROOT "${BRANCH_ROOT_DIR}/vendor/wwise/2022.1.4.8202")
+set(Wwise_ROOT "${BRANCH_ROOT_DIR}/vendor/wwise/2023.1.12.8706")
 
 if(WIN32)
     # Hack to allow building Audio with v143 toolset. This will ensure that when we link against dependencies, we will link against the v141 version. This is necessary because our build configuration assumes that all components are built using the same version. However, things built against a newer 14X toolset should be able to link against things that were built using an older 14X toolset.
@@ -33,6 +33,14 @@ find_package(CcpMath CONFIG REQUIRED)
 find_package(IntelTBB REQUIRED)
 find_package(Wwise REQUIRED)
 find_package(CarbonTrinityAudioAPI REQUIRED)
+
+# Adds /libs to link plugins in the new Wwise 2023 structure
+get_target_property(WWISE_LINK_DIRS Wwise::Wwise INTERFACE_LINK_DIRECTORIES)
+string(REPLACE "//" "/" WWISE_LINK_DIRS_FIXED "${WWISE_LINK_DIRS}")
+set(WWISE_PATCHED_DIRS "${WWISE_LINK_DIRS_FIXED}/lib")
+
+set_target_properties(Wwise::Wwise PROPERTIES 
+    INTERFACE_LINK_DIRECTORIES "${WWISE_PATCHED_DIRS}")
 
 if(WIN32)
     # Restore sanity after toolset hacking. After this we can use find_package
@@ -78,12 +86,15 @@ ccp_add_library(CarbonAudio SHARED
 	src/AudioInputMgr_Blue.cpp
 	src/AudStaticDataRepository.cpp
 	src/AudStaticDataRepository_Blue.cpp
+	src/CCPFilePackageLowLevelIO.h
 	src/DebugUtilities.cpp
-	src/LowLevelIO/AkFileLocationBase.cpp
-	src/LowLevelIO/AkFilePackage.cpp
-	src/LowLevelIO/AkFilePackageLowLevelIO.inl
-	src/LowLevelIO/AkFilePackageLUT.cpp
+	src/LowLevelIO/Common/AkFileLocationBase.cpp
+	src/LowLevelIO/Common/AkFilePackage.cpp
+	src/LowLevelIO/Common/AkFilePackageLowLevelIO.inl
+	src/LowLevelIO/Common/AkFilePackageLUT.cpp
 	src/SoundPrioritization.cpp
+	src/LowLevelIO/Common/AkMultipleFileLocation.cpp
+    src/LowLevelIO/Common/AkGeneratedSoundBanksResolver.cpp
 )
 
 target_sources(CarbonAudio PRIVATE
@@ -112,9 +123,11 @@ target_sources(CarbonAudio PRIVATE
 	src/Utilities.h
 	src/Vector3.h
 	src/version.h
-	src/LowLevelIO/AkFileLocationBase.h
-	src/LowLevelIO/AkFilePackage.h
-	src/LowLevelIO/AkFilePackageLUT.h
+	src/LowLevelIO/Common/AkFileLocationBase.h
+	src/LowLevelIO/Common/AkFilePackage.h
+	src/LowLevelIO/Common/AkFilePackageLUT.h
+	src/LowLevelIO/Common/AkMultipleFileLocation.h
+    src/LowLevelIO/Common/AkGeneratedSoundBanksResolver.h
 	src/IPrioritizedObject.h
 	src/SoundPrioritization.h
 	${PUBLIC_HEADER_FILES_INCLUDE}
@@ -124,17 +137,15 @@ target_sources(CarbonAudio PRIVATE
 # Add Platform specific code
 if(WIN32)
 	target_sources(CarbonAudio PRIVATE
-		src/LowLevelIO/Win32/AkDefaultIOHookBlocking.cpp
-		src/LowLevelIO/Win32/AkDefaultIOHookBlocking.h
+		src/LowLevelIO/Win32/AkDefaultIOHookDeferred.cpp
+		src/LowLevelIO/Win32/AkDefaultIOHookDeferred.h
 		src/LowLevelIO/Win32/AkFileHelpers.h
-		src/LowLevelIO/Win32/AkFilePackageLowLevelIOBlocking.h
 	)
 elseif(APPLE)
 	target_sources(CarbonAudio PRIVATE
-		src/LowLevelIO/POSIX/AkDefaultIOHookBlocking.cpp
-		src/LowLevelIO/POSIX/AkDefaultIOHookBlocking.h
+		src/LowLevelIO/POSIX/AkDefaultIOHookDeferred.cpp
+		src/LowLevelIO/POSIX/AkDefaultIOHookDeferred.h
 		src/LowLevelIO/POSIX/AkFileHelpers.h
-		src/LowLevelIO/POSIX/AkFilePackageLowLevelIOBlocking.h
 	)
 else()
 	message(FATAL_ERROR "CarbonAudio does not support platform specified.")
@@ -149,8 +160,14 @@ target_link_libraries(CarbonAudio
 			CcpMath
 			Wwise::Wwise
 		)
+
 if(APPLE)
-	target_link_libraries(CarbonAudio PRIVATE "-framework AudioToolbox -framework CoreAudio -framework CoreFoundation")
+	target_link_libraries(CarbonAudio PRIVATE 
+		"-framework AudioToolbox"
+		"-framework CoreAudio" 
+		"-framework CoreFoundation"
+		"-framework AVFoundation"
+	)
 endif()
 
 target_precompile_headers(CarbonAudio PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/stdafx.h)
@@ -160,6 +177,17 @@ target_include_directories(CarbonAudio
 		PRIVATE
 			${CMAKE_CURRENT_SOURCE_DIR}/src
 		)
+
+# Platform-specific LowLevelIO include directories
+if(WIN32)
+	target_include_directories(CarbonAudio PRIVATE 
+		${CMAKE_CURRENT_SOURCE_DIR}/src/LowLevelIO/Win32
+	)
+elseif(APPLE)
+	target_include_directories(CarbonAudio PRIVATE 
+		${CMAKE_CURRENT_SOURCE_DIR}/src/LowLevelIO/POSIX
+	)
+endif()
 
 if(APPLE)
 	set_target_properties(
@@ -185,6 +213,15 @@ target_compile_definitions(CarbonAudio
 		BLUE_OVERRIDE_VECTOR_TYPES=1
 		TBB_ENABLED=1
 )
+
+# Unicode support for Windows
+if(WIN32)
+	target_compile_definitions(CarbonAudio PRIVATE
+		UNICODE=1
+		_UNICODE=1
+	)
+endif()
+
 target_compile_definitions(CarbonAudio PUBLIC CARBONAUDIOBUILD)
 
 set_target_properties(CarbonAudio PROPERTIES POSITION_INDEPENDENT_CODE ON EXPORT_NAME _audio2)

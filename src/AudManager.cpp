@@ -24,9 +24,9 @@
 #include "tbb/parallel_for.h"
 
 #if _WIN32
-#include "LowLevelIO/Win32/AkDefaultIOHookBlocking.h"
+#include "LowLevelIO/Win32/AkDefaultIOHookDeferred.h"
 #elif __APPLE__
-#include "LowLevelIO/POSIX/AkDefaultIOHookBlocking.h"
+#include "LowLevelIO/POSIX/AkDefaultIOHookDeferred.h"
 #endif
 
 #include "AudActionLog.h"
@@ -190,7 +190,7 @@ void AudManager::Terminate()
 		AK::IAkStreamMgr::Get()->Destroy();
 	}
 
-	//m_pLowLevelIO.p->Term();
+	m_lowLevelIO.Term();
 
 	// Terminate the Memory Manager
 	AK::MemoryMgr::Term();
@@ -240,30 +240,33 @@ bool AudManager::InitLowLevel()
 	AkDeviceSettings deviceSettings;
 	AK::StreamMgr::GetDefaultDeviceSettings( deviceSettings );
 
-	if( m_lowLevelIO.Init( deviceSettings, m_asyncOpen ) != AK_Success )
+	if (m_lowLevelIO.Init(deviceSettings) != AK_Success)
 	{
-		CCP_LOGERR( "Failed to create Wwise Low Level IO Hook" );
+		CCP_LOGERR("Failed to create Wwise Low Level IO Hook");
 		return false;
 	}
 
-	if( m_lowLevelIO.SetBasePath( m_settings->m_baseSoundBankPath.c_str() ) != AK_Success )
+	if (m_lowLevelIO.SetBasePath(m_settings->m_baseSoundBankPath.c_str()) != AK_Success)
 	{
-		CCP_LOGERR( "Soundbank path %S is invalid and soundbanks will not be loaded correctly.", m_settings->m_baseSoundBankPath.c_str() );
+		CCP_LOGERR("Soundbank path %S is invalid", m_settings->m_baseSoundBankPath.c_str());
 		return false;
 	}
-	if( m_lowLevelIO.SetEssentialPath( m_settings->m_essentialPath.c_str() ) != AK_Success )
+
+	if (m_lowLevelIO.SetEssentialPath(m_settings->m_essentialPath.c_str()) != AK_Success)
 	{
-		CCP_LOGERR( "Essentials path %S is invalid and soundbanks will not be loaded correctly.", m_settings->m_essentialPath.c_str() );
+		CCP_LOGERR("Essential path %S is invalid", m_settings->m_essentialPath.c_str());
 		return false;
 	}
-	if( m_lowLevelIO.SetAudioSrcPath( m_settings->m_audioSrcPath.c_str() ) != AK_Success )
+
+	if (m_lowLevelIO.SetAudioSrcPath(m_settings->m_audioSrcPath.c_str()) != AK_Success)
 	{
-		CCP_LOGERR( "Audio source path %s is invalid and .wem files will not be loaded correctly.", m_settings->m_audioSrcPath.c_str() );
+		CCP_LOGERR("Audio source path %S is invalid", m_settings->m_audioSrcPath.c_str());
 		return false;
 	}
-	if( AK::StreamMgr::SetCurrentLanguage( m_settings->m_soundbankLanguage.c_str() ) != AK_Success )
+
+	if (AK::StreamMgr::SetCurrentLanguage(m_settings->m_soundbankLanguage.c_str()) != AK_Success)
 	{
-		CCP_LOGERR( "Setting soundbank language to %S failed and soundbanks will not be able to be loaded.", m_settings->m_soundbankLanguage.c_str() );
+		CCP_LOGERR("Setting soundbank language to %S failed and soundbanks will not be able to be loaded.", m_settings->m_soundbankLanguage.c_str());
 		return false;
 	}
 
@@ -325,7 +328,6 @@ bool AudManager::InitSound()
 	initSettings.fnProfilerPostMarker = AkPlatformProfilerPostmarker;
 #endif
 
-#if _WIN32
 	AkUniqueID deviceSharesetID;
 	if( m_settings->m_spatialAudioEnabled )
 	{
@@ -343,7 +345,6 @@ bool AudManager::InitSound()
 		m_spatialAudioEnabled = false;
 	}
 	initSettings.settingsMainOutput.audioDeviceShareset = deviceSharesetID;
-#endif
 
 	if( !AK::SoundEngine::IsInitialized() )
 	{
@@ -358,13 +359,11 @@ bool AudManager::InitSound()
 			CCP_LOGERR( "Registering for Wwise's end render callback failed! Audio will continue to function correctly except audio driven visuals will not work!" );
 		}
 
-#if _WIN32
 		AKRESULT result = AK::SoundEngine::RegisterAudioDeviceStatusCallback( &AudManager::AudioDeviceStatusChangeCallback );
 		if( result != AK_Success )
 		{
 			CCP_LOGERR( "Failed to register an audio device status callback." );
 		}
-#endif
 	}
 
 #ifndef AK_OPTIMIZED
@@ -430,11 +429,7 @@ bool AudManager::SetState( const std::wstring& stateGroup, const std::wstring& s
 //-----------------------------------------------------
 const bool AudManager::SpatialAudioIsSupported()
 {
-#if _WIN32
-	return true;
-#else
-	return false;
-#endif
+	return s_systemSupportsSpatialAudio;
 }
 
 void AudManager::UpdateSettings( AudSettings* settings )
@@ -684,6 +679,7 @@ void AudManager::Disable()
 #ifndef AK_OPTIMIZED
 	AK::SoundEngine::UnregisterResourceMonitorCallback(ResourceMonitorCallback);
 #endif
+
 	Terminate();
 	g_audioEnabled = false;
 	BeOS->UnregisterForTicks( this, (void*)"Audio::Tick" );
@@ -703,7 +699,6 @@ void AudManager::Disable()
 //-----------------------------------------------------
 bool AudManager::DisableSpatialAudio()
 {
-#if _WIN32
 	const AkOutputDeviceID defaultOutputDeviceId = 0;
 
 	if( !g_audioInitialized )
@@ -738,10 +733,6 @@ bool AudManager::DisableSpatialAudio()
 
 	m_spatialAudioEnabled = false;
 	return true;
-#else
-	CCP_LOGERR( "DisableSpatialAudio method was called on an operating system that Carbon Audio does not support spatial audio on." );
-	return false;
-#endif
 }
 
 //-----------------------------------------------------
@@ -798,7 +789,6 @@ void AudManager::Enable( BankVector soundBanksToLoad )
 //-----------------------------------------------------
 bool AudManager::EnableSpatialAudio()
 {
-#if _WIN32
 	if( !g_audioInitialized )
 	{
 		return false;
@@ -832,10 +822,6 @@ bool AudManager::EnableSpatialAudio()
 
 	m_spatialAudioEnabled = true;
 	return true;
-#else
-	CCP_LOGERR( "EnableSpatialAudio method was called on an operating system that Carbon Audio does not support spatial audio on." );
-	return false;
-#endif
 }
 
 const std::vector<std::wstring> AudManager::GetLoadedSoundBanks()
@@ -955,12 +941,8 @@ void AudManager::UnregisterParameter( const std::wstring& audioParameterName )
 //-----------------------------------------------------
 void AudManager::RegisterAudioDeviceChangeCallback( const BlueScriptCallback callback )
 {
-#if _WIN32
 	CcpAutoMutex mutex( s_audioDeviceMutex );
 	s_audioDeviceChangeCallback = callback;
-#else
-	CCP_LOGERR( "RegisterAudioDeviceChangeCallback method was called on an operating system that Carbon Audio does not support spatial audio on." );
-#endif
 }
 
 //-----------------------------------------------------
@@ -1148,7 +1130,6 @@ void AudManager::GlobalCallbackEndRender( AK::IAkGlobalPluginContext* in_pContex
 	audManager->UpdateMonitoredParameters();
 }
 
-#if _WIN32
 //-----------------------------------------------------
 // Description:
 //	 A callback that is registered during initialization that is triggered every Wwise's audio device is changed. This method takes care of
@@ -1227,8 +1208,6 @@ void AudManager::AudioDeviceStatusChangeCallback( AK::IAkGlobalPluginContext* in
 							IBlueCallbackMan::BCBF_NONE,
 							nullptr );
 }
-
-#endif
 
 AKRESULT AudManager::StartProfilerCapture()
 {

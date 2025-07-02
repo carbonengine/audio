@@ -23,7 +23,7 @@ public:
 	std::wstring m_stereoAudioDeviceName = L"System_Stereo";
 	std::wstring m_spatialAudioDeviceName = L"System"; 
 #elif __APPLE__
-	bool m_spatialAudioEnabled = false;
+	bool m_spatialAudioEnabled = true;
 	std::string m_audioSrcPath = "Media";
 	std::string m_baseSoundBankPath = "res:/Audio";
 	std::string m_essentialPath = "Essential_Media";
