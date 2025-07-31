@@ -397,7 +397,7 @@ bool AudManager::InitMusic()
 
 bool AudManager::SetGlobalRTPC( const std::wstring& rtpcName, float value )
 {
-	if( g_audioInitialized )
+	if( g_audioInitialized && !g_shuttingDown)
 	{
 		AKRESULT result = AK::SoundEngine::SetRTPCValue( rtpcName.c_str(), value );
 		if( result != AK_Success )
@@ -414,7 +414,7 @@ bool AudManager::SetGlobalRTPC( const std::wstring& rtpcName, float value )
 
 bool AudManager::SetState( const std::wstring& stateGroup, const std::wstring& stateName )
 {
-	if( g_audioInitialized )
+	if( g_audioInitialized && !g_shuttingDown )
 	{
 		// SetState always returns True so no need to check the result.
 		AK::SoundEngine::SetState( stateGroup.c_str(), stateName.c_str() );
@@ -669,6 +669,8 @@ void AudManager::Disable()
 		return;
 	}
 
+	g_shuttingDown = true;
+
 	auto objects = m_soundPrioritization->GetPrioritizedAudioObjects();
 	for( auto obj : objects )
 	{
@@ -682,6 +684,7 @@ void AudManager::Disable()
 
 	Terminate();
 	g_audioEnabled = false;
+	g_shuttingDown = false;
 	BeOS->UnregisterForTicks( this, (void*)"Audio::Tick" );
 }
 

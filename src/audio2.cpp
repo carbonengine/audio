@@ -26,6 +26,7 @@ AudStaticDataRepository* g_staticDataRepository = nullptr;
 
 bool g_audioEnabled = false;
 bool g_audioInitialized = false;
+bool g_shuttingDown = false;
 bool g_debugDisplayAllEmitters = false;
 bool g_wwiseCommunicationEnabled = false;
 
