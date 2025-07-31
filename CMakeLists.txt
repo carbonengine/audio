@@ -18,7 +18,7 @@ list(INSERT CMAKE_MODULE_PATH 0 ${BRANCH_ROOT_DIR}/cmake)
 include(CcpGlobalSettings)
 include(CcpPackageConfigHelpers)
 
-set(Wwise_ROOT "${BRANCH_ROOT_DIR}/vendor/wwise/2023.1.12.8706")
+set(Wwise_ROOT "${BRANCH_ROOT_DIR}/vendor/wwise/2023.1.13.8732")
 
 if(WIN32)
     # Hack to allow building Audio with v143 toolset. This will ensure that when we link against dependencies, we will link against the v141 version. This is necessary because our build configuration assumes that all components are built using the same version. However, things built against a newer 14X toolset should be able to link against things that were built using an older 14X toolset.
