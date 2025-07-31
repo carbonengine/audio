@@ -147,18 +147,17 @@ void AudGameObjResource::UnregisterWwiseObject()
 //-----------------------------------------------------
 unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool bypassPrefix, AkUInt32 additionalFlags )
 {
-	AkPlayingID playingID = AK_INVALID_PLAYING_ID;
 
 	if( eventName.empty() )
 	{
 		CCP_LOG( "An empty event string was requested to be sent to Wwise. This request has been ignored." );
-		return playingID;
+		return AK_INVALID_PLAYING_ID;
 	}
 
 	// This function relies heavily on static data and cannot function without it
 	if (g_staticDataRepository == nullptr)
 	{
-		return playingID;
+		return AK_INVALID_PLAYING_ID;
 	}
 
 	CcpAutoMutex mutex( m_mutex );
@@ -167,6 +166,7 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 	std::wstring fullEventName = PrepareEvent( eventName, bypassPrefix );
 
 	bool eventIsVital = g_staticDataRepository->EventIsVital( fullEventName );
+	AkPlayingID playingID = AK_INVALID_PLAYING_ID;
 	if ( m_culled || !g_audioEnabled )
 	{
 		for ( auto it = m_eventsOnWake.cbegin(); it != m_eventsOnWake.cend();)
@@ -198,6 +198,12 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 		bool soundbanksLoaded = true;
 
 		std::vector<std::wstring> eventSoundBanks = g_staticDataRepository->SoundBanksRequiredForEvent( fullEventName );
+		if (eventSoundBanks.empty())
+		{
+			CCP_LOGERR( "Wwise event %S failed to send because it does not exist in any SoundBanks.", fullEventName.c_str() );
+			return AK_INVALID_PLAYING_ID;
+		}
+
 		for( auto it = eventSoundBanks.begin(); it != eventSoundBanks.end(); ++it )
 		{	
 			SoundBankStatus soundBankStatus = g_audioManager->GetSoundBankStatus( *it );
@@ -211,6 +217,7 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 				else
 				{
 					CCP_LOGERR( "Wwise event %S will not be sent to Wwise because SoundBank %S is currently not loaded.", fullEventName.c_str(), it->c_str() );
+					return AK_INVALID_PLAYING_ID;
 				}
 				break;
 			}
