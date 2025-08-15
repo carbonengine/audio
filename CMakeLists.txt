@@ -34,14 +34,6 @@ find_package(IntelTBB REQUIRED)
 find_package(Wwise REQUIRED)
 find_package(CarbonTrinityAudioAPI REQUIRED)
 
-# Adds /libs to link plugins in the new Wwise 2023 structure
-get_target_property(WWISE_LINK_DIRS Wwise::Wwise INTERFACE_LINK_DIRECTORIES)
-string(REPLACE "//" "/" WWISE_LINK_DIRS_FIXED "${WWISE_LINK_DIRS}")
-set(WWISE_PATCHED_DIRS "${WWISE_LINK_DIRS_FIXED}/lib")
-
-set_target_properties(Wwise::Wwise PROPERTIES 
-    INTERFACE_LINK_DIRECTORIES "${WWISE_PATCHED_DIRS}")
-
 if(WIN32)
     # Restore sanity after toolset hacking. After this we can use find_package
     # to find any v143 dependencies.
