@@ -42,7 +42,7 @@ public:
     // Returns true if the specified soundbank is essential, false otherwise.
     bool SoundBankIsEssential(const std::wstring& soundBankName) const;
     // Return a list of the SoundBanks the given event needs to be able to be played
-    std::vector<std::wstring> SoundBanksRequiredForEvent(const std::wstring& eventName) const;
+    const std::vector<std::wstring>& SoundBanksRequiredForEvent(const std::wstring& eventName) const;
 protected:
     struct EventData
     {

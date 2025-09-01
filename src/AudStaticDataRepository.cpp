@@ -163,9 +163,16 @@ bool AudStaticDataRepository::SoundBankIsEssential(const std::wstring& soundBank
 }
 
 
-std::vector<std::wstring> AudStaticDataRepository::SoundBanksRequiredForEvent(const std::wstring& eventName) const
+const std::vector<std::wstring>& AudStaticDataRepository::SoundBanksRequiredForEvent(const std::wstring& eventName) const
 {
-	return GetAttribute(eventName, m_events, m_staticDataMutex, &EventData::soundbanks, std::vector<std::wstring>());
+    static const std::vector<std::wstring> emptyVector;
+    
+    const EventData* eventData = GetData(eventName, m_events, m_staticDataMutex);
+    if (eventData != nullptr)
+    {
+        return eventData->soundbanks;
+    }
+    return emptyVector;
 }
 
 //-----------------------------------------------------------------------------

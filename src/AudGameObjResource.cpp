@@ -198,7 +198,7 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 	{
 		bool soundbanksLoaded = true;
 
-		std::vector<std::wstring> eventSoundBanks = g_staticDataRepository->SoundBanksRequiredForEvent( fullEventName );
+		const std::vector<std::wstring>& eventSoundBanks = g_staticDataRepository->SoundBanksRequiredForEvent( fullEventName );
 		if (eventSoundBanks.empty())
 		{
 			CCP_LOGERR( "Wwise event %S failed to send because it does not exist in any SoundBanks.", fullEventName.c_str() );
@@ -213,7 +213,8 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 				soundbanksLoaded = false;
 				if( soundBankStatus == SoundBankStatus::LOADING )
 				{
-					g_audioManager->RegisterEventAfterSoundBankLoad( *it, fullEventName, this );
+					std::wstring soundBank = *it;
+					g_audioManager->RegisterEventAfterSoundBankLoad(soundBank, fullEventName, this);
 				}
 				else
 				{
