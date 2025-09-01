@@ -154,6 +154,8 @@ protected:
 	float m_scalingFactor;
 	// The max attenuation radius this game object has.
 	float m_maxAttenuationRadiusSq;
+
+	bool m_hasReceivedPosition;
 	// Events waiting to play on this game object when it wakes up from being culled.
 	std::set<std::wstring> m_eventsOnWake;
 	// Currently playing events on this game object.

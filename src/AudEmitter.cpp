@@ -60,6 +60,7 @@ int AudEmitter::SetPosition( const Vector3& front, const Vector3& top, const Vec
 {
 	m_debugPosition = pos;
 	m_debugFront = front;
+	m_hasReceivedPosition = true;
 	return SetPositionHelper( front, top, pos );
 }
 

@@ -34,6 +34,7 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 														 m_additionalCullingWeight( 0.0f ),
 														 m_cumulativeWeight( 0.0f ),
 														 m_maxAttenuationRadiusSq( 0.0f ),
+														 m_hasReceivedPosition(false),
 														 m_waitingOneShotInRange( std::pair( std::chrono::steady_clock::now(), L"" ) )
 {
 	m_ID = GenerateEntityID();
@@ -554,6 +555,11 @@ void AudGameObjResource::Wake()
 		if ( m_forceCullingState || m_muted )
 		{
 			return;	
+		}
+
+		if(!m_hasReceivedPosition) 
+		{
+			return;
 		}
 
 		RegisterWwiseObject();	
