@@ -5,8 +5,7 @@ AudMusicPlayer::AudMusicPlayer( IRoot* lockobj ) : AudEmitter( MUSIC_GAME_OBJ_ID
 {
 	m_name = "Music";
 	m_additionalCullingWeight = std::numeric_limits<float>::max();
-	SetPosition( Vector3( 1,0,0 ), Vector3( 0,1,0 ), Vector3( 0, 0, 0 ) ); 
-	RegisterWwiseObject();
+	SetPosition( Vector3( 1, 0, 0 ), Vector3( 0, 1, 0 ), Vector3( 0, 0, 0 ) );
 }
 
 AudMusicPlayer::~AudMusicPlayer()

@@ -6,8 +6,7 @@ AudUIPlayer::AudUIPlayer( IRoot* lockobj ) : AudEmitter( UI_GAME_OBJ_ID, lockobj
 {
 	m_name = "UI";
 	m_additionalCullingWeight = std::numeric_limits<float>::max();
-	m_position = Vector3( 0, 0, 0 );
-	RegisterWwiseObject();
+	SetPosition( Vector3( 1, 0, 0 ), Vector3( 0, 1, 0 ), Vector3( 0, 0, 0 ) );
 }
 
 AudUIPlayer::~AudUIPlayer()

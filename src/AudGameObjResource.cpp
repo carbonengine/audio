@@ -369,9 +369,10 @@ bool AudGameObjResource::SetAttenuationScalingFactor( float value )
 
 int AudGameObjResource::SetPositionHelper( const Vector3& front, const Vector3& top, const Vector3& position )
 {
+	m_position = position;
+
 	if( g_audioInitialized )
 	{
-		m_position = position;
 		if( m_gameObjRegistered )
 		{
 			AkSoundPosition tmp;
