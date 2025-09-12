@@ -1,18 +1,11 @@
-import unittest
-import blue
+from __future__ import print_function
+import os
 import sys
-import time
+import unittest
 
-# import scheduler only for Python 3
+import blue
 PY3 = sys.version_info[0] >= 3
-if PY3:
-    import scheduler
 
-class BaseTestRunner:
-    """Common functionality for both Python 2 and 3 test runners"""
-    def handle_pump(self):
-        blue.os.Pump()
-        blue.pyos.synchro.SleepWallclock(10)
 
 def main():
     if sys.argv[0].endswith("__main__.py"):
@@ -21,44 +14,55 @@ def main():
         sys.argv[0] = executable + " -m unittest"
         del os
 
-    if PY3:
-        class TaskletTestRunner(unittest.TextTestRunner, BaseTestRunner):
-            def __init__(self, *args, **kwargs):
-                self.result = None
-                self.timeout = kwargs.pop('timeout', 30.0)
-                super(TaskletTestRunner, self).__init__(*args, **kwargs)
+if PY3:
+    import scheduler
+    tasklet_start = lambda func, *args: scheduler.tasklet(func)(*args)
+else:
+    import uthread2
+    tasklet_start = uthread2.start_tasklet
 
-            def run(self, test):
-                start_time = time.time()
-                scheduler.tasklet(self._run_impl)(test)
-                
-                while self.result is None:
-                    if time.time() - start_time > self.timeout:
-                        raise TimeoutError("Test execution timed out")
-                    self.handle_pump()
+class TaskletTestRunner(unittest.TextTestRunner):
+    def __init__(self, *args, **kwargs):
+        self.result = None
+        if PY3:
+            super().__init__(*args, **kwargs)
+        else:
+            super(TaskletTestRunner, self).__init__(*args, **kwargs)
 
-                if len(self.result.failures) > 0:
-                    for failure in self.result.failures:
-                        print(failure[1])
+    def run(self, test):
+        tasklet_start(self._run_impl, test)
+        # Required to avoid sleep when all tasklets yield
+        blue.os.sleeptime = 0
+        while self.result is None:
+            blue.os.Pump()
+        return self.result
 
-                if len(self.result.errors) > 0:
-                    for error in self.result.errors:
-                        sys.stderr.write(str(error) + '\n')
+    def _run_impl(self, test):
+        if PY3:
+            self.result = super().run(test)
+        else:
+            self.result = super(TaskletTestRunner, self).run(test)
 
-                return self.result
+def check_audio2_import():
+    """Check if audio2 can be imported"""
+    try:
+        # Test import to catch DLL version conflicts early
+        blue.LoadExtension("_audio2")
+    except ImportError as e:
+        error_msg = str(e)
+        branch_path = os.environ.get('CCP_EVE_PERFORCE_BRANCH_PATH', '[BRANCH_PATH]')
+        buildflavor = os.environ.get('BUILDFLAVOR', 'NOT_SET')
+        pythonpath = os.environ.get('PYTHONPATH', 'NOT_SET')
+        
+        print("ERROR: Loading audio2 failed!\n"
+              "This usually means stale build artifacts are causing DLL conflicts.\n"
+              "To fix this:\n"
+              "  Step 1: Use VS Code task 'Clean Build Directory' or manually delete the 'out' directory in this repo\n"
+              "  Step 2: Re-run your test\n"
+              "Original error: {2}".format(buildflavor, pythonpath, error_msg), file=sys.stderr)
+        sys.exit(1)
 
-            def _run_impl(self, test):
-                self.result = super(TaskletTestRunner, self).run(test)
-
-        test_runner = TaskletTestRunner
-    else:
-        # Use standard test runner for Python 2
-        class Py2TestRunner(unittest.TextTestRunner, BaseTestRunner):
-            def run(self, test):
-                result = super(Py2TestRunner, self).run(test)
-                self.handle_pump()
-                return result
-
-        test_runner = Py2TestRunner
-
-    unittest.main(module=None, testRunner=test_runner)
+if __name__ == "__main__":
+    check_audio2_import()
+    unittest.main(module=None, testRunner=TaskletTestRunner())
+    main()

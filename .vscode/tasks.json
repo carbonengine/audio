@@ -1,0 +1,110 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Enable Debug Delay for Tests",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-Command",
+                "Set-Content -Path '${workspaceFolder}\\.vscode\\debug_delay_enabled.flag' -Value '7'; Write-Host 'Debug delay ENABLED - 7 seconds' -ForegroundColor Green; Write-Host 'Now run any test in CMake Test Explorer - it will wait 10 seconds for debugger' -ForegroundColor Yellow; Write-Host 'Use Disable Debug Delay task to turn off' -ForegroundColor Gray"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Clean Build Directory",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-Command",
+                "if (Test-Path '${workspaceFolder}\\out') { Remove-Item '${workspaceFolder}\\out' -Recurse -Force; Write-Host 'Build directory cleaned successfully' -ForegroundColor Green } else { Write-Host 'No build directory to clean' -ForegroundColor Yellow }"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Update Binaries",
+            "type": "shell",
+            "command": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}\\launchUpdateBinaries.bat",
+            "args": [
+                "client",
+                "-d"
+            ],
+            "options": {
+                "cwd": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}"
+            },
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Disable Debug Delay for Tests",
+            "type": "shell",
+            "command": "powershell", 
+            "args": [
+                "-Command",
+                "Remove-Item '${workspaceFolder}\\.vscode\\debug_delay_enabled.flag' -ErrorAction SilentlyContinue; Write-Host 'Debug delay DISABLED' -ForegroundColor Green; Write-Host 'Tests will now run normally without delay' -ForegroundColor Yellow"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Set CCP_EVE_PERFORCE_BRANCH_PATH",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-ExecutionPolicy", "Bypass",
+                "-File", "${workspaceFolder}\\.vscode\\set-env-var.ps1"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Attach Debugger to Process",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-Command",
+                "Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('^+p'); Start-Sleep -Milliseconds 500; [System.Windows.Forms.SendKeys]::SendWait('Debug: Start Debugging{ENTER}')"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": false,
+                "reveal": "never",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

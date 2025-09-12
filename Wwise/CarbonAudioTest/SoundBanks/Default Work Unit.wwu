@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<WwiseDocument Type="WorkUnit" ID="{4B764402-C2B1-488E-A768-588CB657A0CD}" SchemaVersion="110">
+<WwiseDocument Type="WorkUnit" ID="{4B764402-C2B1-488E-A768-588CB657A0CD}" SchemaVersion="119">
 	<SoundBanks>
 		<WorkUnit Name="Default Work Unit" ID="{4B764402-C2B1-488E-A768-588CB657A0CD}" PersistMode="Standalone">
 			<ChildrenList>
@@ -39,6 +39,9 @@
 					<GameSyncExclusionList/>
 				</SoundBank>
 				<SoundBank Name="TestMusicEssential" ID="{A249FB1A-086B-4FD1-A6DC-04735261822D}">
+					<PropertyList>
+						<Property Name="CCP:EssentialMedia" Type="bool" Value="True"/>
+					</PropertyList>
 					<ObjectInclusionList>
 						<ObjectRef Name="testSFX" ID="{68D74DEE-7E26-4DF8-A8DF-D93CA97F71D9}" WorkUnitID="{C3703968-666D-47C8-9715-ABD3DA334A25}" Origin="Manual" Filter="6"/>
 					</ObjectInclusionList>

@@ -1,5 +1,6 @@
 import blue
 import time
+import sys
 
 from audiotests.base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK, ONE_SHOT_EVENT, ESSENTIAL_EVENT, ESSENTIAL_BNK
 from audiotests.base_test_class import BaseAudio2TestClass
@@ -64,8 +65,10 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
 
     def test_enabled_audgameobjresource_sendevent_essential(self):
         # test event streamed from essential
+        def check_event_playing():
+            return len(self.emitter.GetPlayingEvents()) == 1
         playingID = self.emitter.SendEvent(ESSENTIAL_EVENT)
-        self.assertTrue(playingID > 0)
+        self.wait_for_audio_condition(check_event_playing)
 
     def test_enabled_audgameobjresource_sendevent(self):
         """Test that AudGameObjResource::SendEvent works while audio is enabled."""
@@ -189,6 +192,9 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
             return (len(events) == 1 and 
                    (values[0] if values else None) == ONE_SHOT_EVENT)
         
+        # Give it time to pump after sending event. If one frame is not allowed to pass between sending a one shot and 
+        # waking it up then sound prioritization will not be able to determine that the audio emitter is in range of the listener.
+        blue.pyos.synchro.SleepWallclock(15)
         self.emitter.ForceCullingStateChange()
         self.assertTrue(self.wait_for_audio_condition(check_one_shot_playing, 
                                                     timeout_ms=int(oneShotWindow)))

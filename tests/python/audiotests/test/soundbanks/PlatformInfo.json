@@ -3,7 +3,7 @@
   "Platform": {
    "Name": "Windows",
    "BasePlatform": "Windows",
-   "Generator": "2022.1.4.8202"
+   "Generator": "2023.1.13.8732"
   },
   "RootPaths": {
    "ProjectRoot": "../../../../../Wwise/CarbonAudioTest",
@@ -32,6 +32,6 @@
    "PrintObjectGuid": "false",
    "PrintObjectPath": "false"
   },
-  "FileHash": "{B89D781D-9F52-C358-D86A-A237A171995A}"
+  "FileHash": "{C02090C8-F84A-61B1-40DB-D5252AEC3C0F}"
  }
 }

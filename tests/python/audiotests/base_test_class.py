@@ -4,6 +4,7 @@ import unittest
 
 import blue
 from .utils import GetAudioMetadataFromFile
+from .debug_utils import debug_delay_if_enabled
 
 SOUNDBANK_FILEPATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "test", "soundbanks"))
 ONE_SHOT_BNK = "TestOneShot.bnk"
@@ -14,7 +15,7 @@ LOOP_EVENT = "Play_TestLoop"
 LOAD_BANK_BNK = "TestLoadBank.bnk"
 LOAD_BANK_EVENT = "Play_TestLoadBank"
 ESSENTIAL_BNK = "TestMusicEssential.bnk"
-ESSENTIAL_EVENT = "Play_TestMusicEssential"
+ESSENTIAL_EVENT = "Play_TestEssential"
 
 
 class BaseAudio2TestClass(unittest.TestCase):
@@ -23,6 +24,9 @@ class BaseAudio2TestClass(unittest.TestCase):
     def setUpClass(cls):
         from audio2.audiomanager import AudioManager
         super(BaseAudio2TestClass, cls).setUpClass()
+
+        # Add a delay to the test if configured.
+        debug_delay_if_enabled()
 
         blue.paths.SetSearchPath("soundbanks", SOUNDBANK_FILEPATH)
         applicationName = "Audio2 Testing"

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<WwiseDocument Type="WorkUnit" ID="{C3703968-666D-47C8-9715-ABD3DA334A25}" SchemaVersion="110">
+<WwiseDocument Type="WorkUnit" ID="{C3703968-666D-47C8-9715-ABD3DA334A25}" SchemaVersion="119">
 	<AudioObjects>
 		<WorkUnit Name="Default Work Unit" ID="{C3703968-666D-47C8-9715-ABD3DA334A25}" PersistMode="Standalone">
 			<ChildrenList>
@@ -267,9 +267,6 @@
 									<Language>SFX</Language>
 								</SourcePlugin>
 								<AudioFileSource Name="testSFX" ID="{19111FF6-66FD-4D4F-9B63-1D11C4AF0340}">
-									<PropertyList>
-										<Property Name="Custom:IsEssential" Type="bool" Value="True"/>
-									</PropertyList>
 									<Language>SFX</Language>
 									<AudioFile>testSFX.wav</AudioFile>
 									<MediaIDList>
@@ -322,9 +319,6 @@
 							</ReferenceList>
 							<ChildrenList>
 								<AudioFileSource Name="testSFX" ID="{3F258AC2-6E6B-4423-A547-72E2D6150A47}">
-									<PropertyList>
-										<Property Name="Custom:IsEssential" Type="bool" Value="True"/>
-									</PropertyList>
 									<Language>SFX</Language>
 									<AudioFile>testSFX.wav</AudioFile>
 									<MediaIDList>
@@ -332,7 +326,6 @@
 									</MediaIDList>
 								</AudioFileSource>
 							</ChildrenList>
-							<ObjectLists/>
 							<ActiveSourceList>
 								<ActiveSource Name="testSFX" ID="{3F258AC2-6E6B-4423-A547-72E2D6150A47}" Platform="Linked"/>
 							</ActiveSourceList>

@@ -226,6 +226,7 @@ if(CMAKE_IMPORT_LIBRARY_SUFFIX)
 	)
 endif()
 
+
 # Provide an install target iff this is the top level project only
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     # Install rule to ensure that our runtime and linker files are in the expected, platform-specific folders
@@ -283,6 +284,18 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 			message(STATUS "Python 3.12 build - skipping Blue and TBB DLL copying")
 			
 			set(PYTHON_EXECUTABLE "${BRANCH_ROOT_DIR}/eve/client/pythonInterpreter.bat")
+
+			# Hardcode scheduler paths to use v141 instead of find_package
+			set(SCHEDULER_ROOT "${BRANCH_ROOT_DIR}/vendor/github.com/ccpgames/carbon-scheduler/v1.2.1-0-g4bb93aa")
+			set(SCHEDULER_BIN_DIR "${SCHEDULER_ROOT}/bin/Windows/x64/v141")
+			set(SCHEDULER_INCLUDE_DIR "${SCHEDULER_ROOT}/include")
+			
+			# Create imported target manually
+			add_library(Scheduler SHARED IMPORTED)
+			set_target_properties(Scheduler PROPERTIES
+				IMPORTED_LOCATION "${SCHEDULER_BIN_DIR}/_scheduler_$<LOWER_CASE:$<CONFIG>>.pyd"
+				INTERFACE_INCLUDE_DIRECTORIES "${SCHEDULER_INCLUDE_DIR}"
+			)
 			
 		elseif(PYTHON_VERSION EQUAL 2)
 			message(STATUS "Python 2.7 detected - enforcing strict DLL dependencies")
@@ -325,9 +338,27 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 	if(${PYTHON_TEST_DISCOVERY_RETVAL})
 		message(FATAL_ERROR "Error encountered during test discovery:\n=== stderr: ===\n${PYTHON_TEST_DISCOVERY_ERRORS}\n=== stdout: ===\n${PYTHON_TESTS_STR}")
 	endif()
-	separate_arguments(PYTHON_TESTS UNIX_COMMAND ${PYTHON_TESTS_STR})
+	
+	# Filter out command line arguments and only keep actual test names
+	# This is an unfortunate necessity because MacOS was not properly handling test discovery and taking all arguments as tests.
+	string(REPLACE "\n" ";" PYTHON_TESTS_RAW ${PYTHON_TESTS_STR})
+	set(PYTHON_TESTS "")
+	foreach(LINE ${PYTHON_TESTS_RAW})
+		string(STRIP "${LINE}" LINE_STRIPPED)
+		# Skip empty lines, argument files (@...), command flags (/...), script names (*.py)
+		# Only include lines that look like test names (contain dots for module.class.method)
+		if(NOT "${LINE_STRIPPED}" STREQUAL "" AND 
+		   NOT "${LINE_STRIPPED}" MATCHES "^@.*" AND 
+		   NOT "${LINE_STRIPPED}" MATCHES "^/.*" AND 
+		   NOT "${LINE_STRIPPED}" MATCHES ".*\\.py$" AND
+		   "${LINE_STRIPPED}" MATCHES ".*\\..*")
+			list(APPEND PYTHON_TESTS "${LINE_STRIPPED}")
+			message(STATUS "Found valid test ${LINE_STRIPPED}")
+		else()
+			message(STATUS "Filtering out non-test line: ${LINE_STRIPPED}")
+		endif()
+	endforeach()
 	foreach(PYTHON_TEST ${PYTHON_TESTS})
-		message(STATUS "Found test ${PYTHON_TEST}")
 		add_test(NAME ${PYTHON_TEST}
 				COMMAND ${PYTHON_EXECUTABLE} -m audiotests -v ${PYTHON_TEST}
 				WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests/python

@@ -3,7 +3,7 @@
   "Project": {
    "Name": "CarbonAudioTest",
    "GUID": "{1C592793-3886-4D25-A212-3BF5963F03C8}",
-   "Generator": "2022.1.4.8202"
+   "Generator": "2023.1.13.8732"
   },
   "CacheRoot": "../.cache",
   "Platforms": [
@@ -24,6 +24,6 @@
     "UseAsStandIn": "true"
    }
   ],
-  "FileHash": "{B1EDA7F6-4F16-92F9-5372-A9EDE3A14789}"
+  "FileHash": "{6B1C0186-3681-221E-93D9-F8C3401545AC}"
  }
 }

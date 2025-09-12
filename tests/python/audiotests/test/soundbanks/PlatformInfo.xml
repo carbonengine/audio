@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PlatformInfo>
-	<Platform Name="Windows" BasePlatform="Windows" Generator="2022.1.4.8202"/>
+	<Platform Name="Windows" BasePlatform="Windows" Generator="2023.1.13.8732"/>
 	<RootPaths>
 		<ProjectRoot>../../../../../Wwise/CarbonAudioTest</ProjectRoot>
 		<SourceFilesRoot>../../../../../Wwise/CarbonAudioTest/.cache/Windows</SourceFilesRoot>
@@ -28,5 +28,5 @@
 		<PrintObjectGuid>false</PrintObjectGuid>
 		<PrintObjectPath>false</PrintObjectPath>
 	</Settings>
-	<FileHash>{10B0543D-EC53-2BE9-854E-4472E0E0EA49}</FileHash>
+	<FileHash>{3E179EC2-ECC6-A7B2-C06F-8A75C71394AD}</FileHash>
 </PlatformInfo>

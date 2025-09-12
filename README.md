@@ -1,88 +1,103 @@
 # CarbonAudio
-CarbonAudio (previously audio2) is a wrapper through which EVE Online communicates with Wwise. In addition to interacting with Wwise, CarbonAudio houses its
-own sound prioritization system that helps protect Wwise from being hammered too hard in larger scenes.
+CarbonAudio (previously audio2) is a wrapper through which EVE Online communicates with Wwise. In addition to interacting with Wwise, CarbonAudio houses its own sound prioritization system that helps protect Wwise from being hammered too hard in larger scenes.
 
-CarbonAudio depends on [Blue](https://github.com/ccpgames/carbon-blue) 
-which is the layer that exposes it to Python. In addition to this there are header only includes that can be used to interact with CarbonAudio through C++.
+CarbonAudio depends on [Blue](https://github.com/ccpgames/carbon-blue) which is the layer that exposes it to Python. In addition to this there are header only includes that can be used to interact with CarbonAudio through C++.
 
-## Building CarbonAudio locally
-To build CarbonAudio locally, you must first set the environment variable `CCP_EVE_PERFORCE_BRANCH_PATH` to point to the the root of the EVE or Perforce
-branch you are developing against. Then, open the project up in Visual Studio, choose one of the build flavors defined in `CMakeSettings.json` and choose `Build`. 
-The most commonly used flavor of CarbonAudio during development is the Internal one.
+## Development Setup with VS Code
 
-## Requirements for your Wwise project.
-### Requirements for Spatial Audio
-In order to be able to use what Carbon Audio calls Spatial Audio (and what Wwise calls "3D audio") your Wwise project must have the following:
-* A system audio device named "System" which has the "Allow 3D Audio" enabled.
-* A system audio device named "System_Stereo" that __does not__ have "Allow 3D Audio" enabled.
+### Prerequisites
+1. **Environment Variable**: Set `CCP_EVE_PERFORCE_BRANCH_PATH` to point to the root of your EVE or Frontier branch
+2. **VS Code Extensions**: Install the recommended extensions when prompted, or manually install:
+   - C/C++ Extension Pack
+   - CMake Tools
+   - CMake Language Support
 
-If you do not have an audio device correctly configured to "Allow 3D audio" then you will not be able to use Spatial Audio when the user has 
-a spatial audio endpoint active (e.g. Dolby Atmos, Windows Sonic for Headphones, Apple Spatial Audio, etc.). In addition, if you do not have the "System_Stereo" 
-audio device it will not be possible to turn off Spatial Audio when the user has a spatial endpoint active.
+### Quick Setup
+1. **Clone the repository**
+2. **Run `launch-vscode-with-branch.bat`** and pass in the root of the EVE or Frontier branch you want to work against as an argument. This will open a VS Code instance that has the `CCP_EVE_PERFORCE_BRANCH_PATH` environment variable set to the branch you passed in as an argument.
 
-If you want to use different names for your 3D and stereo audio devices, refer to the next section for more details on how to do so.
+_Note: Setting this command up in launchgrid is highly suggested_
 
-## Spatial Audio (sometimes known as 3D audio)
-Carbon Audio exposes some functionality directly tied to Wwise's 3D audio features. What Wwise calls 3D audio Carbon Audio refers to as "Spatial Audio" as that is the more 
-widely used industry term. 
+### Building and Installing CarbonAudio
+1. **Configure CMake**: Open Command Palette (`Ctrl+Shift+P`) and run `CMake: Configure`
+2. **Select Build Preset**: Choose your desired build configuration (typically "Internal" for development)
+3. **Install**: Use `CMake: Install`. This will install the selected CMake configuration into the EVE or Frontier branch that the environment variable `CCP_EVE_PERFORCE_BRANCH_PATH` is set to. It will be installed into `<branch-root>/vendor/github.com/ccpgames/carbon-audio/develop`.
+4. **Modify carbon.json in the branch**: Change the carbon-audio version in the file `carbon.json` located in your EVE or Frontier branch to `develop`. 
 
-### Enabling Spatial Audio
-Spatial audio is enabled by default as long as your Wwise project has a system audio device with "Allow 3D audio" enabled and this device has the same name as that defined in 
-the C++ class `AudSettings.spatialAudioDeviceName`. The default name for this system audio device is `System`. So, if your project has a system audio device named "System" and 
-it has "Allow 3D audio enabled" then you should not need to do any further work enable spatial audio when you initialize Carbon Audio.
+### VS Code Tasks
+The repository includes several helpful tasks accessible via `Ctrl+Shift+P` → `Tasks: Run Task`:
 
-If you want to change the name of the spatial audio device you can pass in the keyword argument `spatialAudioDeviceName` when initializing the Python audio manager (refer to `python/audio2/audiomanager.py`).
-
-If you want to manually enable spatial audio after initializion you can use the `EnableSpatialAudio()` method on the Python audio manager.
-
-In order for a user to hear spatialized audio they will need to have a spatial audio endpoint activated on their Windows system such as Dolby Atmos or Windows Sonic for Headphones.
-If they do not have any of these active then the user will continue to hear stereo even if Carbon Audio is told to enable spatial audio.
-
-### Disabling Spatial Audio
-You can force a change to stereo, whether the user has a spatial audio endpoint active or not, by using the `DisableSpatialAudio()` method in the Python audio manager or 
-by passing in the keyword argument `spatialAudioEnabled=False` when initializing the Python audio manager (refer to `python/audio2/audiomanager.py`).
-
-This function only works if you have a valid system audio device in your Wwise project with the name "System_Stereo" that has "Allow 3D audio" disabled.
-
-If you want to change the name of the stereo audio device you can pass in the keyword argument `stereoAudioDeviceName` when initializing the Python audio manager. 
+- **Set CCP_EVE_PERFORCE_BRANCH_PATH**: This allows you to set the `CCP_EVE_PERFORCE_BRANCH_PATH` as a user environment variable without needing to do it through Windows settings. *Once set, you must restart VS Code completely to have it take effect*. 
+- **Clean Build Directory**: Removes the local `out` build directory to fix DLL conflicts. Use this if tests fail with "Module use of python312.dll conflicts" errors.
+- **Update Binaries**: Runs `launchUpdateBinaries.bat` to update EVE or Frontier client binaries.
+- **Enable Debug Delay for Tests**: Enable a 7 second delay for test debugging. This makes it so that tests will wait 7 seconds before running, giving you time to attach to the `exefile.exe` process so you can set breakpoints.
+- **Disable Debug Delay for Tests**: Disable the debug delay for tests.
 
 ## Testing
-CarbonAudio is currently tested through the python package located at `tests/python/audiotests`.
 
-### Running CarbonAudio tests
-You can run CarbonAudio tests using ctest. In Visual Studio you can do this by first building and installing the project and then choosing `Test->Run CTests for CarbonAudio`
-from the top toolbar. This will copy all the binaries needed to the installation directory and run all Python tests through EVE's Exefile.exe binary.
+### Running Tests
+CarbonAudio tests are located in `tests/python/audiotests` and can be run through:
 
-### Updating the Wwise Test Project
-This repository includes a Wwise project specifically meant to be used for testing CarbonAudio found in the `Wwise` directory. This project
-acts as a helpful way to test specific Wwise capabilities in CarbonAudio. 
+1. **VS Code Test Explorer**: When CMake configuration succesfully runs you should be able to see all tests in the "Testing" section of VS Code and run them individually or all at once. 
+2. **Command Line**: Use `ctest` from your build directory
 
-The Wwise project outputs its SoundBanks into the directory `tests/python/audiotests/test/soundbanks` which is the same directory the CarbonAudio tests look
-for SoundBanks in. In addition to this, the tests depend on a file named `AudioMetadata.json` which provides metadata that is required for CarbonAudio's sound prioritization
-system to function.
+### Debug Testing
+For debugging C++ code during test execution, you can enable a debug delay:
 
-#### Opening the Wwise CarbonAudio Test Project
-To open the test Wwise project, you must install the [Audiokinetic Launcher](https://www.audiokinetic.com/en/library/wwise_launcher/?source=InstallGuide&id=the_wwise_launcher),
-then install the Wwise authoring application for Wwise version 2021.1.6.7774.
+#### Enable Debug Delay
+1. **Run the task**: `Ctrl+Shift+P` → `Tasks: Run Task` → "Enable Debug Delay for Tests"
+2. **Run your test**: The test will pause for 7 seconds before execution
+3. **Attach debugger**: Use `Ctrl+Shift+P` → `Debug: Select and Start Debugging` → "Attach to Process"
+4. **Select process**: Choose `exefile.exe` from the process list
 
-Once done you can launch the Wwise authoring application and point it to `Wwise/CarbonAudioTest/CarbonAudioTest.wproj`.
+#### Disable Debug Delay
+Run the task: `Ctrl+Shift+P` → `Tasks: Run Task` → "Disable Debug Delay for Tests"
+
+### Debugging Configuration
+The repository includes pre-configured launch configurations in `.vscode/launch.json`:
+
+- **Attach to Process**: Attach to any running process using Visual Studio debugger
+- **Attach to Process (GDB)**: Alternative using GDB debugger
+
+### Troubleshooting
+
+#### "Module use of python312.dll conflicts with this version of Python" Error
+This error occurs when you have built CarbonAudio with Frontier (which uses Python 3) and then tried to build it against EVE (which uses Python 2).
+
+1. **Run "Clean Build Directory" task**: `Ctrl+Shift+P` → `Tasks: Run Task` → "Clean Build Directory"
+2. **Re-run your test**: The test should now work
+
+### Wwise Test Project
+This repository includes a test Wwise project in the `Wwise/` directory:
+
+1. **Install Wwise**: Download [Audiokinetic Launcher](https://www.audiokinetic.com/en/library/wwise_launcher/) and install Wwise version 2021.1.6.7774
+2. **Open Project**: Launch Wwise and open `Wwise/CarbonAudioTest/CarbonAudioTest.wproj`
+3. **Generate SoundBanks**: The project outputs to `tests/python/audiotests/test/soundbanks/`
 
 #### Generating SoundBanks from the Wwise CarbonAudio Test Project
 If you are updating tests to use new events or soundbanks defined in the test Wwise project, you have to manually generate those soundbanks as well
-as generating `AudioMetadata.json`.
+as generating `SoundPrioritizationMetadata.json` (an example can be found at [tests/python/soundbanks/SoundPrioritizationMetadata.json]())
 
 To generate the soundbanks, go to the soundbanks view in the Wwise authoring program and simply generate soundbanks. The project is set up to automatically 
-deposit it into `python/audio2/test/soundbanks`.
+deposit it into `tests/python/audiotests/test/soundbanks`.
 
-To generate the `AudioMetadata.json` file, you must use a script found in either an EVE or Frontier branch. This script is located at 
-`<BRANCH-ROOT>/carbon/tools/audiotools/scripts/generate_metadata_for_fsd.py` where `<BRANCH-ROOT>` is the root of the EVE or Frontier branch you are using.
-You must run this script using `<BRANCH-ROOT>/eve/client/pythonInterpreter.bat`. When running this script you can point it to the test project and tell it to 
-output in any directory using the `--wwise-project-path` and `--output-directory` flags. 
+To generate the `SoundPrioritizationMetadata.json` file, you must use the [audio-scripts](https://github.com/ccpgames/audio-scripts/tree/main/standalone) command line tool. Refer to the auido-scripts standalone documentation to learn how to install and use the `generate-sp-metadata` command.
 
-The following is an example of running this script from a PowerShell terminal on my machine from the root of an EVE branch:
-```
-.\eve\client\pythonInterpreter.bat .\carbon\tools\audiotools\scripts\generate_metadata_for_fsd.py --wwise_project_path="C:\Users\eric\code\carbon-audio\Wwise\CarbonAudioTest\CarbonAudioTest.wproj" --output-directory="C:\Users\eric\code\carbon-audio\python\audio2\test\soundbanks"
-```
+## Spatial Audio (3D Audio)
+CarbonAudio provides access to Wwise's 3D audio capabilities, which CarbonAudio refers to as "spatial audio." 
+
+### Enabling Spatial Audio
+Spatial audio is enabled by default when:
+- Your Wwise project has a system audio device named "System" 
+- The device has "Allow 3D audio" enabled
+- The user has a spatial audio endpoint active (Dolby Atmos, Windows Sonic, etc.)
+
+You can customize device names using the `spatialAudioDeviceName` parameter in the AudioManager.
+
+### Disabling Spatial Audio
+To force stereo output use the `DisableSpatialAudio()` method or pass in `spatialAudioEnabled=False` during initialization. Requires a "System_Stereo" audio device with "Allow 3D audio" disabled. Use `stereoAudioDeviceName` parameter to customize the device name. 
+
+*Refer to the test Wwise project found in `Wwise/CarbonAudioTest` to see how audio devices should be named and configured* 
 
 ## Initializing and Enabling CarbonAudio
 CarbonAudio must be initialized and enabled using APIs exposed to Python. There are two ways to do this: 
@@ -99,7 +114,7 @@ In order to run CarbonAudio you must:
 
 An example of a Blue path is `res:/` or `soundbanks:/` or really whatever word you want to put before the `:/`. 
 
-You can find an example of registering a blue path in the `setUpClass` method in `python/audio2/test/base_test_class.py`.
+You can find an example of registering a blue path in the `setUpClass` method in `tests/python/audiotests/base_test_class.py`.
 
 ### Using the AudioManager Python class
 Here is an example of using the AudioManager Python class from within an EVE or Frontier branch to both initialize and enable CarbonAudio:
@@ -284,13 +299,13 @@ Here is an example AudioMetadata.json with two events, a one shot and a loop:
 }
 ```
 
-This JSON was generated using the `generate_metadata_for_fsd.py` script found in an EVE or Frontier branch at `carbon/tools/audiotools/scripts/generate_metadata_for_fsd.py`.
+This JSON was generated using the `generate_audio_metadata.py` file from the [audio-scripts monolith repo](https://github.com/ccpgames/audio-scripts/tree/main/monolith). Follow the documentation there to run it.
 
 ### Audio Metadata Custom Properties
 
 Wwise's Custom properties allow you to store additional information in Wwise objects. In Carbon-Audio, custom properties such as `EssentialSoundBank` and `EssentialMedia` are used to indicate if a soundbank or a source file (`.wem` files) should be included in the essential music directory. The essential directory is a precache folder containing vital audio files necessary for a game version with limited content.
 
-These custom properties are defined in the EVE Wwise project and are also reflected in the `SoundPrioritizationMetadata` JSON file. Here is an example of how it looks:
+These custom properties are defined in the EVE Wwise project and are also reflected in the `AudioMetadata.json` file. Here is an example of how it looks:
 
 ```
     "WemFileIDs": {
@@ -311,47 +326,9 @@ These custom properties are defined in the EVE Wwise project and are also reflec
             "EssentialMedia": false,
             "EssentialSoundBank": true
         },
+      }
+```
+        
 In `AudStaticDataRepository`, all the above audio metadata is stored. Then, in the low-level file handling logic of Carbon Audio, it decides whether to pull audio assets from this "Essentials" folder.
 
-To use carbon-audio with a Wwise project, you need to add a `.wcustomproperties` file to your project. This file should be named `ccp.wcustomproperties` and placed in the `Add-Ons\Properties` folder. For more information on defining custom properties in Wwise, refer to the [Wwise documentation](https://www.audiokinetic.com/en/library/edge/?source=SDK&id=defining_custom_properties.html).
-
-Here are the exact contents needed in this file:
-
-```
-<?xml version="1.0" encoding="UTF-8"?>
-<PluginModule>
-	<WwiseObject Name="SoundBank" CompanyID="1" PluginID="18">
-		<Properties>
-			<Property Name="CCP:EssentialSoundBank" DocId="CCP:EssentialSoundBank" DisplayName="EssentialSoundBank" Type="bool">
-				<DefaultValue>True</DefaultValue>
-				<AudioEnginePropertyID>1</AudioEnginePropertyID>
-				<Restrictions>
-					<ValueRestriction>
-						<Range Type="bool">
-							<Min>False</Min>
-							<Max>True</Max>
-						</Range>
-					</ValueRestriction>
-				</Restrictions>
-			</Property>
-		</Properties>
-	</WwiseObject>
-    <WwiseObject Name="SoundBank" CompanyID="1" PluginID="18">
-		<Properties>
-			<Property Name="CCP:EssentialMedia" DocId="CCP:EssentialMedia" DisplayName="EssentialMedia" Type="bool">
-				<DefaultValue>False</DefaultValue>
-				<AudioEnginePropertyID>1</AudioEnginePropertyID>
-				<Restrictions>
-					<ValueRestriction>
-						<Range Type="bool">
-							<Min>False</Min>
-							<Max>True</Max>
-						</Range>
-					</ValueRestriction>
-				</Restrictions>
-			</Property>
-		</Properties>
-    </WwiseObject>
-</PluginModule>
-```
-
+To use CarbonAudio with your Wwise project, copy the [`ccp.wcustomproperties`](Wwise/CarbonAudioTest/Add-ons/Properties/ccp.wcustomproperties) file to your project's `Add-ons/Properties` folder. This defines custom properties required by CarbonAudio. For more information on custom properties in Wwise, refer to the [Wwise documentation](https://www.audiokinetic.com/en/library/edge/?source=SDK&id=defining_custom_properties.html).

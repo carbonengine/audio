@@ -1,0 +1,121 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "x64-Internal",
+      "displayName": "x64 Internal",
+      "generator": "Visual Studio 17 2022",
+      "binaryDir": "${sourceDir}/out/build/x64-Internal",
+      "installDir": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Internal"
+      },
+      "condition": {
+        "type": "notEquals",
+        "lhs": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}",
+        "rhs": ""
+      }
+    },
+    {
+      "name": "x64-TrinityDev",
+      "displayName": "x64 Trinity Dev",
+      "generator": "Visual Studio 17 2022",
+      "binaryDir": "${sourceDir}/out/build/x64-TrinityDev",
+      "installDir": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "TrinityDev"
+      },
+      "condition": {
+        "type": "notEquals",
+        "lhs": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}",
+        "rhs": ""
+      }
+    },
+    {
+      "name": "x64-Release",
+      "displayName": "x64 Release",
+      "generator": "Visual Studio 17 2022",
+      "binaryDir": "${sourceDir}/out/build/x64-Release",
+      "installDir": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      },
+      "condition": {
+        "type": "notEquals",
+        "lhs": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}",
+        "rhs": ""
+      }
+    },
+    {
+      "name": "x64-Debug",
+      "displayName": "x64 Debug",
+      "generator": "Visual Studio 17 2022",
+      "binaryDir": "${sourceDir}/out/build/x64-Debug",
+      "installDir": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "condition": {
+        "type": "notEquals",
+        "lhs": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}",
+        "rhs": ""
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "x64-Internal",
+      "configurePreset": "x64-Internal",
+      "configuration": "Internal"
+    },
+    {
+      "name": "x64-TrinityDev",
+      "configurePreset": "x64-TrinityDev",
+      "configuration": "TrinityDev"
+    },
+    {
+      "name": "x64-Release",
+      "configurePreset": "x64-Release",
+      "configuration": "Release"
+    },
+    {
+      "name": "x64-Debug",
+      "configurePreset": "x64-Debug",
+      "configuration": "Debug"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "x64-Internal",
+      "configurePreset": "x64-Internal",
+      "configuration": "Internal",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "x64-TrinityDev",
+      "configurePreset": "x64-TrinityDev",
+      "configuration": "TrinityDev",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "x64-Release",
+      "configurePreset": "x64-Release",
+      "configuration": "Release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "x64-Debug",
+      "configurePreset": "x64-Debug",
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}
