@@ -22,6 +22,9 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
         self.emitter = audio2.AudEmitter("emitter1")
         self.emitter.SetPosition((0,0,0), (0,0,0), (0,0,0))
         self.audioManager.Enable()
+
+        self.listener = audio2.GetListener()
+        self.listener.SetPosition((0,0,0), (0,0,0), (0,0,0))
         PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
         
     def tearDown(self):
