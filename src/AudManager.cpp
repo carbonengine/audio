@@ -140,16 +140,6 @@ bool AudManager::Init()
 		CCP_LOGERR( "Failed to initialize Low Level audio" );
 		return false;
 	}
-
-#ifndef AK_OPTIMIZED
-	if( !InitCommunication() )
-	{
-		CCP_LOGERR( "Failed to initialize audio : Communication" );
-		return false;
-	}
-	WwiseLogServerBridgeInit( AK::Monitor::ErrorLevel_All );
-#endif
-
 	if( !InitSound() )
 	{
 		CCP_LOGERR( "Failed to initialize audio : Sound" );
@@ -161,6 +151,15 @@ bool AudManager::Init()
 		CCP_LOGERR( "Failed to initialize audio : Music" );
 		return false;
 	}
+
+#ifndef AK_OPTIMIZED
+	if( !InitCommunication() )
+	{
+		CCP_LOGERR( "Failed to initialize audio : Communication" );
+		return false;
+	}
+	WwiseLogServerBridgeInit( AK::Monitor::ErrorLevel_All );
+#endif
 
 	g_audioInitialized = true;
 	return true;
@@ -185,12 +184,11 @@ void AudManager::Terminate()
 	}
 
 	// Terminate the streaming manager
+	m_lowLevelIO.Term();
 	if( AK::IAkStreamMgr::Get() )
 	{
 		AK::IAkStreamMgr::Get()->Destroy();
 	}
-
-	m_lowLevelIO.Term();
 
 	// Terminate the Memory Manager
 	AK::MemoryMgr::Term();
