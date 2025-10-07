@@ -16,6 +16,43 @@
                 "focus": false,
                 "panel": "shared"
             },
+            "problemMatcher": [],
+            "windows": {
+                "command": "powershell"
+            }
+        },
+        {
+            "label": "Enable Debug Delay for Tests (macOS)",
+            "type": "shell",
+            "command": "sh",
+            "args": [
+                "-c",
+                "echo 7 > ${workspaceFolder}/.vscode/debug_delay_enabled.flag && echo 'Debug delay ENABLED - 7 seconds' && echo 'Now run any test in CMake Test Explorer - it will wait 10 seconds for debugger' && echo 'Use Disable Debug Delay task to turn off'"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Disable Debug Delay for Tests (macOS)",
+            "type": "shell",
+            "command": "sh",
+            "args": [
+                "-c",
+                "rm -f ${workspaceFolder}/.vscode/debug_delay_enabled.flag && echo 'Debug delay DISABLED' && echo 'Tests will now run normally without delay'"
+            ],
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
             "problemMatcher": []
         },
         {
@@ -70,7 +107,10 @@
                 "focus": false,
                 "panel": "shared"
             },
-            "problemMatcher": []
+            "problemMatcher": [],
+            "windows": {
+                "command": "powershell"
+            }
         },
         {
             "label": "Set CCP_EVE_PERFORCE_BRANCH_PATH",
