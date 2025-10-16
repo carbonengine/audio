@@ -33,7 +33,7 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
         self.audioManager.Disable()
         
         
-    def wait_for_audio_condition(self, condition_func, expected_max_ms=100, timeout_ms=200, interval_ms=10):
+    def wait_for_audio_condition(self, condition_func, *args, **kwargs):
         """
         Stricter timing windows:
         - expected_max_ms=100: Operation should complete within 100ms
@@ -41,10 +41,13 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
         - interval_ms=10: Check every 10ms
         """
         elapsed = 0
+        expected_max_ms = kwargs.get("expected_max_ms", 100)
+        timeout_ms = kwargs.get("timeout_ms", 200)
+        interval_ms = kwargs.get("interval_ms", 10)
         start_time = time.time()
         
         while elapsed < timeout_ms:
-            if condition_func():
+            if condition_func(*args):
                 elapsed_ms = (time.time() - start_time) * 1000
                 if elapsed_ms > expected_max_ms:
                     raise AssertionError(
@@ -243,3 +246,29 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
         self.emitter.ForceCullingStateChange() # This should not wake it up.
         blue.pyos.synchro.SleepWallclock(100) 
         self.assertTrue(len(self.emitter.GetPlayingEvents()) == 0)
+
+
+    def test_audgameobjresource_sanitizes_events(self):
+        def check_playing_id(playingID):
+            self.assertTrue(playingID > 0)
+
+        playingID = self.emitter.SendEvent(" {}".format(ONE_SHOT_EVENT))
+        self.wait_for_audio_condition(check_playing_id, playingID)
+
+        playingID = self.emitter.SendEvent("{} ".format(ONE_SHOT_EVENT))
+        self.wait_for_audio_condition(check_playing_id, playingID)
+
+        playingID = self.emitter.SendEvent(" {} ".format(ONE_SHOT_EVENT))
+        self.wait_for_audio_condition(check_playing_id, playingID)
+
+        playingID = self.emitter.SendEvent(" {}\n  \t  \r".format(ONE_SHOT_EVENT))
+        self.wait_for_audio_condition(check_playing_id, playingID)
+
+        playingID = self.emitter.SendEvent("\n\n\n\n\n\n{}\n\n\n\n\n".format(ONE_SHOT_EVENT))
+        self.wait_for_audio_condition(check_playing_id, playingID)
+
+        # Test with event prefixes
+        prefix = ONE_SHOT_EVENT[:5]
+        self.emitter.eventPrefix = prefix 
+        playingID = self.emitter.SendEvent(" {}\n".format(ONE_SHOT_EVENT[5:]))
+        self.wait_for_audio_condition(check_playing_id, playingID)

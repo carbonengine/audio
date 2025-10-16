@@ -531,17 +531,13 @@ bool AudGameObjResource::SeekOnEventMs( const unsigned int playingID, const unsi
 // defined on the emitter to the event.
 std::wstring AudGameObjResource::PrepareEvent( const std::wstring& event, bool bypassPrefix )
 {
-	std::wstring eventName;
+	std::wstring eventName = StringUtils::trim( event );
 	if ( m_eventPrefix != L"" && bypassPrefix == false )
 	{
-		eventName = std::wstring(m_eventPrefix) + std::wstring(event);
-	}
-	else
-	{
-		eventName = event;
+		eventName = std::wstring( m_eventPrefix ) + std::wstring( eventName );
 	}
 
-	return eventName;
+	return eventName; 
 }
 
 //-----------------------------------------------------

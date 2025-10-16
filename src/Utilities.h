@@ -53,4 +53,23 @@ public:
 	}
 };
 
+class StringUtils
+{
+public:
+	// Trim whitespace from both ends of string
+	static std::wstring trim(const std::wstring& str)
+	{
+		const std::wstring whitespace = L" \t\n\r\f\v";
+
+		size_t start = str.find_first_not_of( whitespace );
+		if( start == std::wstring::npos ) 
+		{
+			return L"";
+		}
+
+		size_t end = str.find_last_not_of( whitespace );
+		return str.substr( start, end - start + 1 );
+	}
+};
+
 #endif
