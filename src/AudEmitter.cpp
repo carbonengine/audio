@@ -13,6 +13,8 @@ AudEmitter::AudEmitter( IRoot* lockobj ) :
 	m_maxNormalizedValue( 9000.f), // ^
 	m_minNormalizedScalingFactor( 0.4f ),
 	m_maxNormalizedScalingFactor( 3.5f ),
+	m_eventName(L""),
+	m_playOnWake(false),
 	m_debugPosition(0, 0, 0),
 	m_debugFront(0, 0, 0),
 	m_debugColor()
@@ -26,6 +28,8 @@ AudEmitter::AudEmitter( AkGameObjectID gameObjID, IRoot* lockobj ) :
 	m_maxNormalizedValue( 9000.f), // ^
 	m_minNormalizedScalingFactor( 0.4f ),
 	m_maxNormalizedScalingFactor( 3.5f ),
+	m_eventName(L""),
+	m_playOnWake(false),
 	m_debugPosition(0, 0, 0),
 	m_debugFront(0, 0, 0),
 	m_debugColor()
@@ -39,6 +43,11 @@ AudEmitter::~AudEmitter()
 void AudEmitter::Initialize( const std::string& name, const std::wstring& prefix, const Vector3& position )
 {
 	AudGameObjResource::Initialize( name, prefix, position );
+
+	if (m_playOnWake && !m_eventName.empty()) 
+	{
+		PostEvent( m_eventName );
+	}
 }
 
 void AudEmitter::HandleEvent( const wchar_t* evtName )
@@ -49,6 +58,25 @@ void AudEmitter::HandleEvent( const wchar_t* evtName )
 void AudEmitter::SetName( const std::string& name )
 {
 	m_name = name;
+}
+
+void AudEmitter::SetEventName( const std::wstring& eventName )
+{
+	// Detect if the event name has changed
+	bool eventNameChanged = (m_eventName != eventName);
+
+	m_eventName = eventName;
+
+	// If the event name has changed, trigger the new event
+	if (eventNameChanged)
+	{
+		PostEvent( m_eventName );
+	}
+}
+
+std::wstring AudEmitter::GetEventName()
+{
+	return m_eventName;
 }
 
 void AudEmitter::SetPrefix( const std::wstring& prefix )
@@ -97,9 +125,43 @@ bool AudEmitter::SetAttenuationScalingFactor( const float scalingFactor )
 	return AudGameObjResource::SetAttenuationScalingFactor( finalScalingFactor );
 }
 
+void AudEmitter::SetPlayOnWake( bool enable )
+{
+	m_playOnWake = enable;
+}
+
+bool AudEmitter::GetPlayOnWake()
+{
+	return m_playOnWake;
+}
+
 void AudEmitter::UpdatePlacement(const Vector3& front, const Vector3& top, const Vector3& pos )
 {
 	SetPosition( front, top, pos );
+}
+
+bool AudEmitter::OnModified( Be::Var* value )
+{
+	if ( IsMatch( value, m_eventName ) )
+	{
+		if (m_eventName.empty())
+		{
+			StopAll();
+		}
+		else
+		{
+			StopAll();
+			PostEvent( m_eventName );
+		}
+	}
+	else ( IsMatch( value, m_playOnWake ) );
+	{
+		if (m_playOnWake && !m_eventName.empty())
+		{
+			PostEvent( m_eventName );
+		}
+	}
+	return true;
 }
 
 void AudEmitter::SetVisibility( bool isVisible )

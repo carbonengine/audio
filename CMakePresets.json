@@ -6,7 +6,7 @@
       "displayName": "x64 Internal (Windows)",
       "generator": "Visual Studio 17 2022",
       "binaryDir": "${sourceDir}/out/build/x64-Internal",
-      "installDir": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
+      "installDir": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Internal"
       },
@@ -15,7 +15,7 @@
         "conditions": [
           {
             "type": "notEquals",
-            "lhs": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}",
+            "lhs": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}",
             "rhs": ""
           },
           {
@@ -31,7 +31,7 @@
       "displayName": "x64 Trinity Dev (Windows)",
       "generator": "Visual Studio 17 2022",
       "binaryDir": "${sourceDir}/out/build/x64-TrinityDev",
-      "installDir": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
+      "installDir": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "TrinityDev"
       },
@@ -40,7 +40,7 @@
         "conditions": [
           {
             "type": "notEquals",
-            "lhs": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}",
+            "lhs": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}",
             "rhs": ""
           },
           {
@@ -56,7 +56,7 @@
       "displayName": "x64 Release (Windows)",
       "generator": "Visual Studio 17 2022",
       "binaryDir": "${sourceDir}/out/build/x64-Release",
-      "installDir": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
+      "installDir": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       },
@@ -65,7 +65,7 @@
         "conditions": [
           {
             "type": "notEquals",
-            "lhs": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}",
+            "lhs": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}",
             "rhs": ""
           },
           {
@@ -81,7 +81,7 @@
       "displayName": "x64 Debug (Windows)",
       "generator": "Visual Studio 17 2022",
       "binaryDir": "${sourceDir}/out/build/x64-Debug",
-      "installDir": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
+      "installDir": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
       },
@@ -90,7 +90,7 @@
         "conditions": [
           {
             "type": "notEquals",
-            "lhs": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}",
+            "lhs": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}",
             "rhs": ""
           },
           {
@@ -106,7 +106,7 @@
       "displayName": "ARM64 Internal (macOS)",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/arm64-Internal",
-      "installDir": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
+      "installDir": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Internal",
         "CMAKE_OSX_ARCHITECTURES": "arm64"
@@ -116,7 +116,7 @@
         "conditions": [
           {
             "type": "notEquals",
-            "lhs": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}",
+            "lhs": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}",
             "rhs": ""
           },
           {
@@ -132,7 +132,7 @@
       "displayName": "ARM64 Trinity Dev (macOS)",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/arm64-TrinityDev",
-      "installDir": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
+      "installDir": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "TrinityDev",
         "CMAKE_OSX_ARCHITECTURES": "arm64"
@@ -142,7 +142,7 @@
         "conditions": [
           {
             "type": "notEquals",
-            "lhs": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}",
+            "lhs": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}",
             "rhs": ""
           },
           {
@@ -158,7 +158,7 @@
       "displayName": "ARM64 Release (macOS)",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/arm64-Release",
-      "installDir": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
+      "installDir": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_OSX_ARCHITECTURES": "arm64"
@@ -168,7 +168,7 @@
         "conditions": [
           {
             "type": "notEquals",
-            "lhs": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}",
+            "lhs": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}",
             "rhs": ""
           },
           {
@@ -184,7 +184,7 @@
       "displayName": "ARM64 Debug (macOS)",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/arm64-Debug",
-      "installDir": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
+      "installDir": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_OSX_ARCHITECTURES": "arm64"
@@ -194,7 +194,7 @@
         "conditions": [
           {
             "type": "notEquals",
-            "lhs": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}",
+            "lhs": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}",
             "rhs": ""
           },
           {
