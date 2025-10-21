@@ -49,6 +49,7 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 	}
 
 	m_parameters.SetNotify( this );
+	Initialize();
 }
 
 AudGameObjResource::AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj ) : PARENTLOCK( m_parameters ),
@@ -83,6 +84,7 @@ AudGameObjResource::AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj
 	}
 
 	m_parameters.SetNotify( this );
+	Initialize();
 }
 
 AudGameObjResource::~AudGameObjResource()

@@ -85,6 +85,8 @@ ccp_add_library(CarbonAudio SHARED
 	src/LowLevelIO/Common/AkFilePackageLowLevelIO.inl
 	src/LowLevelIO/Common/AkFilePackageLUT.cpp
 	src/SoundPrioritization.cpp
+	src/Components/StretchAudio.cpp
+	src/Components/StretchAudio_Blue.cpp
 	src/LowLevelIO/Common/AkMultipleFileLocation.cpp
     src/LowLevelIO/Common/AkGeneratedSoundBanksResolver.cpp
 )
@@ -115,6 +117,7 @@ target_sources(CarbonAudio PRIVATE
 	src/Utilities.h
 	src/Vector3.h
 	src/version.h
+	src/Components/StretchAudio.h
 	src/LowLevelIO/Common/AkFileLocationBase.h
 	src/LowLevelIO/Common/AkFilePackage.h
 	src/LowLevelIO/Common/AkFilePackageLUT.h

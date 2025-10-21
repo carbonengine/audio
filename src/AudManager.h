@@ -87,6 +87,8 @@ public:
 	bool EnableSpatialAudio();
 	// Get any game object if it currently exists.
 	AudGameObjResource* GetAudioEmitter( AkGameObjectID emitterID );
+	// Get the listener game object if it exists.
+	AudListenerPtr GetListener();
 	// Retreive a vector of all currently loaded soundbanks.
 	const std::vector<std::wstring> GetLoadedSoundBanks();
 	// Get the name of a SoundBank given its bank ID
@@ -186,8 +188,6 @@ private:
 	void RegisterForTicks();
 	// Terminates all Wwise modules.
 	void Terminate();
-	// Get the listener game object if it exists.
-	AudListenerPtr GetListener();
 	// Update all watched audio parameters with their current values in Wwise (if they exist).
 	void UpdateMonitoredParameters();
 
