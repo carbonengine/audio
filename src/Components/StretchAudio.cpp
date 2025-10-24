@@ -28,17 +28,17 @@ bool StretchAudio::Initialize()
 	if ( nullptr == m_sourceEmitter )
 	{
         m_sourceEmitter.CreateInstance();
-		m_sourceEmitter->SetName( "stretch_source_sfx" );
+		m_sourceEmitter->Initialize( "stretch_source_sfx", L"", Vector3(0,0,0) );
 	}
 	if ( nullptr == m_destEmitter)
 	{
 		m_destEmitter.CreateInstance();
-		m_destEmitter->SetName( "stretch_dest_sfx" );
+		m_destEmitter->Initialize( "stretch_dest_sfx", L"", Vector3(0,0,0) );
 	}
 	if ( nullptr == m_stretchEmitter)
 	{
         m_stretchEmitter.CreateInstance();
-		m_stretchEmitter->SetName( "stretch_mid_sfx" );
+		m_stretchEmitter->Initialize( "stretch_mid_sfx", L"", Vector3(0,0,0) );
 	}
 
 	return true;
