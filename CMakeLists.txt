@@ -89,6 +89,8 @@ ccp_add_library(CarbonAudio SHARED
 	src/Components/StretchAudio_Blue.cpp
 	src/LowLevelIO/Common/AkMultipleFileLocation.cpp
     src/LowLevelIO/Common/AkGeneratedSoundBanksResolver.cpp
+    src/WAAPI/WaapiManager.cpp
+    src/WAAPI/WaapiManager_Blue.cpp
 )
 
 target_sources(CarbonAudio PRIVATE
@@ -125,6 +127,7 @@ target_sources(CarbonAudio PRIVATE
     src/LowLevelIO/Common/AkGeneratedSoundBanksResolver.h
 	src/IPrioritizedObject.h
 	src/SoundPrioritization.h
+    src/WAAPI/WaapiManager.h
 	${PUBLIC_HEADER_FILES_INCLUDE}
 )
 

@@ -15,6 +15,7 @@
 #include "AudListener.h"
 #include "SoundPrioritization.h"
 #include "CCPFilePackageLowLevelIO.h"
+#include <memory>
 
 
 #if _WIN32
