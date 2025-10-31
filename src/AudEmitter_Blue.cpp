@@ -20,15 +20,13 @@ const Be::ClassInfo* AudEmitter::ExposeToBlue()
 		MAP_INTERFACE( INotify )
 		MAP_INTERFACE( ITr2AudEmitter )
 
-		MAP_ATTRIBUTE( "normalizeAttenuationScaling", m_normalizeAttenuationScaling, "Determines whether attenuation scaling for this audio emitter should be normalized.", Be::READWRITE | Be::PERSIST )
-		MAP_ATTRIBUTE( "minNormalizedValue", m_minNormalizedValue, "The minimum number to use for attenuation normalization.", Be::READWRITE | Be::PERSIST )
-		MAP_ATTRIBUTE( "maxNormalizedValue", m_maxNormalizedValue, "The maximum number to use for attenuation normalization.", Be::READWRITE | Be::PERSIST )
-		MAP_ATTRIBUTE( "minNormalizedScalingFactor", m_minNormalizedScalingFactor, "The minimum scaling factor that can be used to scale attenuation by.", Be::READWRITE | Be::PERSIST )
-		MAP_ATTRIBUTE( "maxNormalizedScalingFactor", m_maxNormalizedScalingFactor, "The maximum scaling factor that can be used to scale attenuation by.", Be::READWRITE | Be::PERSIST )
-		MAP_ATTRIBUTE( "eventName", m_eventName, "A variable that holds the wwise event name.", Be::READWRITE | Be::PERSIST | Be::NOTIFY )
-		MAP_ATTRIBUTE( "playOnWake", m_playOnWake, "If true, the audio event defined in eventName will be played during the objects initialization.", Be::READWRITE | Be::PERSIST | Be::NOTIFY )
-		MAP_ATTRIBUTE( "debugPosition", m_debugPosition, "The location of the audio emitter in space.", Be::READ )
-		MAP_ATTRIBUTE( "debugFront", m_debugFront, "A vector pointing in the same direction that the audio emitter is facing. Can be (0.0, 0.0, 0.0)", Be::READ )
+		MAP_ATTRIBUTE( "normalizeAttenuationScaling", m_normalizeAttenuationScaling, "Determines whether attenuation scaling for this audio emitter should be normalized\n:jessica-group: Attenuation Normalization", Be::READWRITE | Be::PERSIST )
+		MAP_ATTRIBUTE( "minNormalizedValue", m_minNormalizedValue, "The minimum number to use for attenuation normalization.\n:jessica-group: Attenuation Normalization", Be::READWRITE | Be::PERSIST )
+		MAP_ATTRIBUTE( "maxNormalizedValue", m_maxNormalizedValue, "The maximum number to use for attenuation normalization.\n:jessica-group: Attenuation Normalization", Be::READWRITE | Be::PERSIST )
+		MAP_ATTRIBUTE( "minNormalizedScalingFactor", m_minNormalizedScalingFactor, "The minimum scaling factor that can be used to scale attenuation by.\n:jessica-group: Attenuation Normalization", Be::READWRITE | Be::PERSIST )
+		MAP_ATTRIBUTE( "maxNormalizedScalingFactor", m_maxNormalizedScalingFactor, "The maximum scaling factor that can be used to scale attenuation by.\n:jessica-group: Attenuation Normalization", Be::READWRITE | Be::PERSIST )
+		MAP_ATTRIBUTE( "debugPosition", m_debugPosition, "The location of the audio emitter in space.\n:jessica-hidden: True", Be::READ )
+		MAP_ATTRIBUTE( "debugFront", m_debugFront, "A vector pointing in the same direction that the audio emitter is facing. Can be (0.0, 0.0, 0.0)\n:jessica-hidden: True", Be::READ )
 
 		MAP_METHOD_AND_WRAP_OPTIONAL_ARGS
 		(

@@ -35,7 +35,8 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 														 m_cumulativeWeight( 0.0f ),
 														 m_maxAttenuationRadiusSq( 0.0f ),
 														 m_hasReceivedPosition(false),
-														 m_waitingOneShotInRange( std::pair( std::chrono::steady_clock::now(), L"" ) )
+														 m_waitingOneShotInRange( std::pair( std::chrono::steady_clock::now(), L"" ) ),
+														 m_eventName(L"")
 {
 	m_ID = GenerateEntityID();
 
@@ -69,7 +70,8 @@ AudGameObjResource::AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj
 														 						   m_additionalCullingWeight( 0.0f ),
 																				   m_cumulativeWeight( 0.0f ),
 																				   m_maxAttenuationRadiusSq( 0.0f ),
-																				   m_waitingOneShotInRange( std::pair( std::chrono::steady_clock::now(), L"" ) )
+																				   m_waitingOneShotInRange( std::pair( std::chrono::steady_clock::now(), L"" ) ),
+																				   m_eventName(L"")
 {
 	m_ID = gameObjID;
 
@@ -395,6 +397,12 @@ bool AudGameObjResource::Initialize()
 {
 	RegisterWwiseObject();
 	SetPositionHelper( Vector3( 1,0,0 ), Vector3( 0,1,0 ), m_position );
+
+	if ( !m_eventName.empty() ) 
+	{
+		PostEvent( m_eventName );
+	}
+
 	return true;
 }
 
@@ -914,3 +922,14 @@ Vector3 AudGameObjResource::GetPosition() const
 {
     return m_position;
 }
+
+std::wstring AudGameObjResource::GetEventName()
+{
+	return m_eventName;
+}
+
+void AudGameObjResource::SetEventName( const std::wstring& eventName )
+{
+	m_eventName = eventName;
+}
+

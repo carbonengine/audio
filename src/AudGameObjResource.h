@@ -75,10 +75,13 @@ public:
 	float GetCullingWeight() const override; 
 	// Get the ID of this game object.
 	AkGameObjectID GetID() const override;
+	std::wstring GetEventName();
 	// Get the current position of this game object.
 	Vector3 GetPosition() const override;
 	// Set the squared length of the distance that this game object sits from the listener.
 	void SetDistanceSqFromListener(float distanceSq) override;
+	// Set the Wwise event to be sent to this game object when it is initialized.
+	void SetEventName(const std::wstring& eventName);
 	// Mute this game object so it doesn't play sounds. 
 	void Mute();
 	// Unmute this game object so it can play sounds again.
@@ -124,6 +127,8 @@ protected:
 	AkGameObjectID m_ID;
 	std::string m_name;
 	std::wstring m_eventPrefix;
+	// The Wwise event name to you want to play on this game object when it is first loaded.
+	std::wstring m_eventName;
 	PAudParameterVector m_parameters;
 	Vector3 m_position;
 	// Whether this game object is currently registered with Wwise.
