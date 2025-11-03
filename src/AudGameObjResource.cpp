@@ -421,6 +421,19 @@ void AudGameObjResource::OnListModified( long event, ssize_t key, ssize_t key2, 
 	}
 }
 
+bool AudGameObjResource::OnModified( Be::Var* value )
+{
+	if ( IsMatch( value, m_eventName ) )
+	{
+		StopAll();
+		if ( !m_eventName.empty() )
+		{
+			PostEvent( m_eventName );
+		}
+	}
+	return true;
+}
+
 void AudGameObjResource::Initialize( const std::string& name, const std::wstring& prefix, const Vector3& position )
 {
 	m_name = name;
@@ -930,6 +943,14 @@ std::wstring AudGameObjResource::GetEventName()
 
 void AudGameObjResource::SetEventName( const std::wstring& eventName )
 {
-	m_eventName = eventName;
-}
+	// Detect if the event name has changed
+	bool eventNameChanged = (m_eventName != eventName);
 
+	m_eventName = eventName;
+
+	// If the event name has changed, trigger the new event
+	if (eventNameChanged)
+	{
+		PostEvent( m_eventName );
+	}
+}

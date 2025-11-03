@@ -17,7 +17,6 @@ const Be::ClassInfo* AudEmitter::ExposeToBlue()
 	EXPOSURE_BEGIN( AudEmitter, "RAII wrapper for Wwise gameobjects. Python constructor takes in a name of the object as a string" )
 		MAP_INTERFACE( IBlueEventListener )
 		MAP_INTERFACE( IBluePlacementObserver )
-		MAP_INTERFACE( INotify )
 		MAP_INTERFACE( ITr2AudEmitter )
 
 		MAP_ATTRIBUTE( "normalizeAttenuationScaling", m_normalizeAttenuationScaling, "Determines whether attenuation scaling for this audio emitter should be normalized\n:jessica-group: Attenuation Normalization", Be::READWRITE | Be::PERSIST )

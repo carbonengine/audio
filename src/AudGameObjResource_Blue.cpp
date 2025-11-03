@@ -11,6 +11,7 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 
 		MAP_INTERFACE( IInitialize )
 		MAP_INTERFACE( IListNotify )
+		MAP_INTERFACE( INotify )
 		MAP_INTERFACE( AudGameObjResource )
 
 		MAP_ATTRIBUTE( "ID", m_ID, "ID number of emitter.\n:jessica-hidden: True", Be::READ )

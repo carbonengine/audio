@@ -51,19 +51,6 @@ void AudEmitter::SetName( const std::string& name )
 	m_name = name;
 }
 
-void AudEmitter::SetEventName( const std::wstring& eventName )
-{
-	// Detect if the event name has changed
-	bool eventNameChanged = (m_eventName != eventName);
-
-	m_eventName = eventName;
-
-	// If the event name has changed, trigger the new event
-	if (eventNameChanged)
-	{
-		PostEvent( m_eventName );
-	}
-}
 
 void AudEmitter::SetPrefix( const std::wstring& prefix )
 {
@@ -115,23 +102,6 @@ bool AudEmitter::SetAttenuationScalingFactor( const float scalingFactor )
 void AudEmitter::UpdatePlacement(const Vector3& front, const Vector3& top, const Vector3& pos )
 {
 	SetPosition( front, top, pos );
-}
-
-bool AudEmitter::OnModified( Be::Var* value )
-{
-	if ( IsMatch( value, m_eventName ) )
-	{
-		if (m_eventName.empty())
-		{
-			StopAll();
-		}
-		else
-		{
-			StopAll();
-			PostEvent( m_eventName );
-		}
-	}
-	return true;
 }
 
 void AudEmitter::SetVisibility( bool isVisible )

@@ -24,6 +24,7 @@ struct Vector3;
 // ------------------------------------------------------------------------
 BLUE_CLASS( AudGameObjResource ) : public IInitialize
 	                             , public IListNotify
+								 , public INotify
 	                             , public IPrioritizedObject
 {
 public:
@@ -36,6 +37,8 @@ public:
 	bool Initialize() override;
 	// IListNotify
 	void OnListModified( long event, ssize_t key, ssize_t key2, IRoot* value, const IList* theList ) override;
+	// INotify
+	virtual bool OnModified( Be::Var* value ) override;
 
 	// AudGameObjResource
 	void Initialize( const std::string& name, const std::wstring& prefix, const Vector3& position );

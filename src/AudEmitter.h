@@ -29,7 +29,6 @@ struct Vector3;
 BLUE_CLASS( AudEmitter ) :
 	public IBlueEventListener,
 	public IBluePlacementObserver,
-	public INotify,
 	public AudGameObjResource,
 	public ITr2DebugRenderable,
 	public ITr2AudEmitter
@@ -46,9 +45,6 @@ public:
 	// IBluePlacementObserver
 	virtual void UpdatePlacement( const Vector3& front, const Vector3& top, const Vector3& pos ) override;
 
-	// INotify
-	virtual bool OnModified( Be::Var* value ) override;
-
 	void Py__init__( const std::string& name );
 
 	//ITr2AudEmitter
@@ -59,7 +55,6 @@ public:
 	unsigned int SendEvent( const std::wstring& name, bool bypassPrefix = false ) override;
 	int SetPosition( const Vector3& front, const Vector3& top, const Vector3& pos ) override;
 	void SetName( const std::string& name ) override;
-	void SetEventName( const std::wstring& eventName );
 	void SetPrefix( const std::wstring& prefix ) override;
 	bool SetSwitch( const std::wstring& switchGroup, const std::wstring& switchState ) override;
 	bool SetRTPC( const std::wstring& rtpcName, float rtpcValue ) override;
