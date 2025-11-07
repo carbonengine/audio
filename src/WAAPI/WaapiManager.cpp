@@ -520,3 +520,127 @@ std::string WaapiManager::EscapeWaqlString(const std::string& str)
     }
     return result;
 }
+
+std::string WaapiManager::CreateAttenuation(const std::string& attenuationName,
+                                             const std::string& parentPath)
+{
+    if (!IsConnected()) {
+        CCP_LOGERR_CH(s_ch, "Cannot create attenuation: not connected to Wwise");
+        return "";
+    }
+
+    if (attenuationName.empty()) {
+        CCP_LOGERR_CH(s_ch, "Cannot create attenuation: name is empty");
+        return "";
+    }
+
+    if (parentPath.empty()) {
+        CCP_LOGERR_CH(s_ch, "Cannot create attenuation: parent path is empty");
+        return "";
+    }
+
+    auto* client = m_client.get();
+
+    AkJson parentResult;
+    AkVariant parentId;
+
+    // Check if parentPath is a GUID or a path
+    if (parentPath[0] == '{') {
+        parentId = AkVariant(parentPath.c_str());
+    } else {
+        AkJson getArgs(AkJson::Map{
+            { "from", AkJson::Map{
+                { "path", AkJson::Array{ AkVariant(parentPath.c_str()) } }
+            }}
+        });
+
+        AkJson getOptions(AkJson::Map{
+            { "return", AkJson::Array{ AkVariant("id") } }
+        });
+
+        if (!client->Call(ak::wwise::core::object::get, getArgs, getOptions, parentResult)) {
+            CCP_LOGERR_CH(s_ch, "Failed to resolve parent path: %s", parentPath.c_str());
+            return "";
+        }
+
+        if (!parentResult.HasKey("return") || parentResult["return"].GetArray().empty()) {
+            CCP_LOGERR_CH(s_ch, "Parent path not found: %s", parentPath.c_str());
+            return "";
+        }
+
+        parentId = parentResult["return"].GetArray()[0]["id"].GetVariant();
+    }
+
+    // Create the attenuation object
+    AkJson args(AkJson::Map{
+        { "parent", parentId },
+        { "type", AkVariant("Attenuation") },
+        { "name", AkVariant(attenuationName.c_str()) },
+        { "onNameConflict", AkVariant("rename") },
+    });
+
+    AkJson createResult;
+    if (!client->Call(ak::wwise::core::object::create, args, AkJson(AkJson::Type::Map), createResult)) {
+        CCP_LOGERR_CH(s_ch, "Failed to create attenuation: %s", attenuationName.c_str());
+        return "";
+    }
+
+    // Extract the object ID
+    if (createResult.HasKey("id")) {
+        std::string attenuationId = createResult["id"].GetVariant().GetString();
+        CCP_LOG_CH(s_ch, "Successfully created attenuation '%s' with ID: %s",
+                  attenuationName.c_str(), attenuationId.c_str());
+        return attenuationId;
+    }
+
+    CCP_LOGERR_CH(s_ch, "Create succeeded but no ID returned for attenuation: %s", attenuationName.c_str());
+    return "";
+}
+
+bool WaapiManager::SetReference(const std::string& objectId, 
+                                 const std::string& referenceName, 
+                                 const std::string& referenceId)
+{
+    if (!IsConnected()) {
+        CCP_LOGERR_CH(s_ch, "Cannot set reference: not connected to Wwise");
+        return false;
+    }
+
+    if (objectId.empty()) {
+        CCP_LOGERR_CH(s_ch, "Cannot set reference: object ID is empty");
+        return false;
+    }
+
+    if (referenceName.empty()) {
+        CCP_LOGERR_CH(s_ch, "Cannot set reference: reference name is empty");
+        return false;
+    }
+
+    auto* client = m_client.get();
+
+    AkJson args(AkJson::Map{
+        { "object", AkVariant(objectId.c_str()) },
+        { "reference", AkVariant(referenceName.c_str()) },
+        { "value", AkVariant(referenceId.c_str()) }
+    });
+
+    AkJson opts = AkJson::Map{};
+    AkJson result;
+
+    if (!client->Call(ak::wwise::core::object::setReference, args, opts, result)) {
+        CCP_LOGERR_CH(s_ch, "Failed to set reference '%s' on object: %s", 
+                     referenceName.c_str(), objectId.c_str());
+        return false;
+    }
+
+    if (referenceId.empty()) {
+        CCP_LOG_CH(s_ch, "Successfully cleared reference '%s' from object: %s", 
+                  referenceName.c_str(), objectId.c_str());
+    } else {
+        CCP_LOG_CH(s_ch, "Successfully set reference '%s' = '%s' on object: %s", 
+                  referenceName.c_str(), referenceId.c_str(), objectId.c_str());
+    }
+
+    return true;
+}
+

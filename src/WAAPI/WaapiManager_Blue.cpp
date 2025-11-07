@@ -145,6 +145,25 @@ const Be::ClassInfo* WaapiManager::ExposeToBlue()
 			":param attenuationId: ID of the attenuation to query.\n"
 			":return: List of shape integers (0=Linear, 1=Log1, 2=Log2, 3=Log3, 4=Exp1, 5=Exp2, 6=Exp3, 7=SCurve, 8=InvSCurve) for each curve point, empty if unsuccessful."
 		)
+		MAP_METHOD_AND_WRAP
+		(
+			"CreateAttenuation",
+			CreateAttenuation,
+			"Create a new attenuation in Wwise.\n"
+			":param attenuationName: Name for the new attenuation.\n"
+			":param path: Path or ID of parent (e.g., '\\\\Attenuations\\\\Default Work Unit').\n"
+			":return: The created attenuation ID if successful, empty string otherwise."
+		)
+		MAP_METHOD_AND_WRAP
+		(
+			"SetReference",
+			SetReference,
+			"Set a reference property on a Wwise object.\n"
+			":param objectId: ID of the object to modify.\n"
+			":param referenceName: Name of the reference property (e.g., 'Attenuation', 'OutputBus').\n"
+			":param referenceId: ID of the object to reference (empty string to clear reference).\n"
+			":return: True if successful, False otherwise."
+		)
 
 	EXPOSURE_END()
 }

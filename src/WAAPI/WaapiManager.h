@@ -172,6 +172,19 @@ BLUE_CLASS( WaapiManager ) :
      */
     bool SetAttenuationMaxRadius(const std::string& attenuationId, double radius);
 
+    /**
+     * @brief Create a new attenuation in Wwise
+     * @param attenuationName Name for the new attenuation
+     * @param path Path or ID of parent (e.g., '\\Attenuations\\Default Work Unit')
+     * @return The created attenuation ID if successful, empty string otherwise
+     */
+    std::string CreateAttenuation(const std::string& attenuationName,
+                                   const std::string& path);
+
+    bool SetReference(const std::string& objectId,
+                    const std::string& referenceName,
+                    const std::string& referenceId);
+
     private:
     // Internal helper methods
     bool GetFirstPlatformId(std::string& outPlatformId);
