@@ -11,8 +11,15 @@
 #include <vector>
 #include <cstdint>
 #include <memory>
+#include <functional>
+#include <queue>
+#include <atomic>
+#include <mutex>
+#include <unordered_map>
 
-namespace AK { namespace WwiseAuthoringAPI { class Client; } }
+namespace AK { namespace WwiseAuthoringAPI {
+    class Client;
+} }
 
 /**
  * @brief Curve interpolation shape types
@@ -172,6 +179,47 @@ BLUE_CLASS( WaapiManager ) :
      */
     bool SetAttenuationMaxRadius(const std::string& attenuationId, double radius);
 
+    // Subscription and Monitoring
+
+    /**
+     * @brief Subscribe to property changes for a specified Wwise object ID
+     *
+     * Monitors the specified object for property changes in Wwise Authoring tool.
+     * When the property changes, the provided Python callback is invoked
+     * on the main thread. Use existing getter methods to retrieve the updated value.
+     *
+     * @param objectId ID of the Wwise object to monitor
+     * @param propertyName Name of the property to monitor (e.g. "Volume")
+     * @param callback Python callable to invoke when property changes (receives objectId, propertyName)
+     * @return True if subscription succeeded, false otherwise
+     */
+    bool SubscribeToPropertyChanges(const std::string& objectId,
+                                   const std::string& propertyName,
+                                   const BlueScriptCallback& callback);
+
+    /**
+     * @brief Wrapper method to subscribe to attenuation RadiusMax changes
+     * @param attenuationId ID of the attenuation to monitor
+     * @param callback Python callable to invoke when RadiusMax changes (receives attenuationId, "RadiusMax")
+     * @return True if subscription succeeded, false otherwise
+     */
+    bool SubscribeToAttenuationMaxRadius(const std::string& attenuationId,
+                                         const BlueScriptCallback& callback);
+
+    /**
+     * @brief Unsubscribe from property changes for a specific object
+     * @param objectId ID of the object to stop monitoring
+     * @return True if unsubscription succeeded, false otherwise
+     */
+    bool UnsubscribeFromPropertyChanges(const std::string& objectId);
+
+    /**
+     * @brief Check if an object is currently being monitored
+     * @param objectId ID of the object to check
+     * @return True if subscribed, false otherwise
+     */
+    bool IsSubscribedToProperty(const std::string& objectId) const;
+
     /**
      * @brief Create a new attenuation in Wwise
      * @param attenuationName Name for the new attenuation
@@ -181,13 +229,18 @@ BLUE_CLASS( WaapiManager ) :
     std::string CreateAttenuation(const std::string& attenuationName,
                                    const std::string& path);
 
+    /**
+	 * @brief Set a reference from one Wwise object to another
+	 * @param The object ID to set the reference on
+	 * @param Reference name (e.g., "Attenuation")
+	 * @return Reference ID to set
+     */
+
     bool SetReference(const std::string& objectId,
                     const std::string& referenceName,
                     const std::string& referenceId);
 
     private:
-    // Internal helper methods
-    bool GetFirstPlatformId(std::string& outPlatformId);
 
     /**
      * @brief Escape special characters in a string for use in WAQL queries
@@ -243,6 +296,35 @@ BLUE_CLASS( WaapiManager ) :
     bool m_connected;
     std::string m_host;
     int m_port;
+
+    // Subscription and monitoring infrastructure
+
+    /**
+     * @brief Data structure for passing callback information to main thread
+     */
+    struct CallbackData {
+        WaapiManagerPtr manager;
+        std::string objectId;
+        std::string propertyName;
+
+        CallbackData(WaapiManagerPtr mgr, const std::string& id, const std::string& prop)
+            : manager(mgr), objectId(id), propertyName(prop) {}
+    };
+
+    /**
+     * @brief Static callback function for mainThreadQueue
+     * Invokes the appropriate Python callback on the main thread
+     */
+    static void PropagatePropertyChangeCallback(void* pCallbackData);
+
+    // Subscription tracking: objectId -> WAAPI subscription ID
+    std::unordered_map<std::string, uint64_t> m_Subscriptions;
+
+    // Callback storage: objectId -> Python callback
+    std::unordered_map<std::string, std::shared_ptr<BlueScriptCallback>> m_changeCallbacks;
+
+    // Mutex to protect subscription maps (used during subscribe/unsubscribe)
+    mutable std::mutex m_subscriptionMutex;
 };
 
 TYPEDEF_BLUECLASS( WaapiManager );

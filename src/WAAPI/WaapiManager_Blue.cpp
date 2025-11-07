@@ -147,6 +147,47 @@ const Be::ClassInfo* WaapiManager::ExposeToBlue()
 		)
 		MAP_METHOD_AND_WRAP
 		(
+			"SubscribeToPropertyChanges",
+			SubscribeToPropertyChanges,
+			"Subscribe to property changes for a specific Wwise object.\n"
+			"When the property changes in Wwise, the specified callback is invoked on the main thread.\n"
+			"\n"
+			":param objectId: ID of the Wwise object to monitor.\n"
+			":param propertyName: Name of the property to monitor.\n"
+			":param callback: Python function to call when property changes. Receives (objectId, propertyName).\n"
+			":return: True if subscription succeeded, False otherwise.\n"
+			"\n"
+		)
+		MAP_METHOD_AND_WRAP
+		(
+			"SubscribeToAttenuationMaxRadius",
+			SubscribeToAttenuationMaxRadius,
+			"Subscribe to RadiusMax property changes for a specific attenuation.\n"
+			"Convenience wrapper for SubscribeToPropertyChanges.\n"
+			"\n"
+			":param attenuationId: ID of the attenuation to monitor.\n"
+			":param callback: Python function to call when RadiusMax changes.\n"
+			":return: True if subscription succeeded, False otherwise.\n"
+			"\n"
+		)
+		MAP_METHOD_AND_WRAP
+		(
+			"UnsubscribeFromPropertyChanges",
+			UnsubscribeFromPropertyChanges,
+			"Unsubscribe from property changes for a specific object.\n"
+			":param objectId: ID of the object to stop monitoring.\n"
+			":return: True if unsubscription succeeded, False otherwise."
+		)
+		MAP_METHOD_AND_WRAP
+		(
+			"IsSubscribedToProperty",
+			IsSubscribedToProperty,
+			"Check if currently subscribed to an object's property changes.\n"
+			":param objectId: ID of the object to check.\n"
+			":return: True if subscribed, False otherwise."
+		)
+		MAP_METHOD_AND_WRAP
+		(
 			"CreateAttenuation",
 			CreateAttenuation,
 			"Create a new attenuation in Wwise.\n"
