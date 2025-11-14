@@ -18,6 +18,7 @@ const Be::ClassInfo* AudEmitter::ExposeToBlue()
 		MAP_INTERFACE( IBlueEventListener )
 		MAP_INTERFACE( IBluePlacementObserver )
 		MAP_INTERFACE( ITr2AudEmitter )
+		MAP_INTERFACE( ITr2DebugRenderable )
 
 		MAP_ATTRIBUTE( "normalizeAttenuationScaling", m_normalizeAttenuationScaling, "Determines whether attenuation scaling for this audio emitter should be normalized\n:jessica-group: Attenuation Normalization", Be::READWRITE | Be::PERSIST )
 		MAP_ATTRIBUTE( "minNormalizedValue", m_minNormalizedValue, "The minimum number to use for attenuation normalization.\n:jessica-group: Attenuation Normalization", Be::READWRITE | Be::PERSIST )

@@ -15,7 +15,7 @@ AudEmitter::AudEmitter( IRoot* lockobj ) :
 	m_maxNormalizedScalingFactor( 3.5f ),
 	m_debugPosition(0, 0, 0),
 	m_debugFront(0, 0, 0),
-	m_debugColor()
+	m_debugColor(0, 0, 0, 0)
 {
 }
 
@@ -28,7 +28,7 @@ AudEmitter::AudEmitter( AkGameObjectID gameObjID, IRoot* lockobj ) :
 	m_maxNormalizedScalingFactor( 3.5f ),
 	m_debugPosition(0, 0, 0),
 	m_debugFront(0, 0, 0),
-	m_debugColor()
+	m_debugColor(0, 0, 0, 0)
 {
 }
 
@@ -129,7 +129,7 @@ void AudEmitter::RenderDebugInfo( ITr2DebugRenderer2& renderer )
 
 		if ( !m_culled )
 		{
-			if ( !m_debugColor )
+			if ( Dot(m_debugColor, m_debugColor) == 0 )
 			{
 				float minRange = 0.4f;
 				float maxRange = 0.9f;
