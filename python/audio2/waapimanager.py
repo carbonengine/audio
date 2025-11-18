@@ -50,8 +50,7 @@ class WaapiManager:
 
             return self._is_connected
 
-        except Exception as e:
-            print(f"Exception during WAAPI connection toggle: {e}")
+        except Exception:
             self._is_connected = False
             return False
 
@@ -65,8 +64,8 @@ class WaapiManager:
             event_name,
             event_name.lower(),
             event_name.upper(),
-            f"\\Events\\{event_name}",
-            f"\\Events\\Default Work Unit\\{event_name}",
+            "\\Events\\{}".format(event_name),
+            "\\Events\\Default Work Unit\\{}".format(event_name),
         ]
 
         target_names = []
@@ -118,36 +117,29 @@ class WaapiManager:
 
             # Get attenuation name if not already retrieved
             if not attenuation_name:
-                try:
-                    attenuation_name = manager.GetAttenuationName(attenuation_id)
-                except Exception:
-                    pass
+                attenuation_name = manager.GetAttenuationName(attenuation_id)
 
             # Get volume curves
             volume_curve_data = None
-            try:
-                distances = manager.GetAttenuationVolumeCurveDistances(attenuation_id)
-                volumes = manager.GetAttenuationVolumeCurveValues(attenuation_id)
-                shapes = manager.GetAttenuationVolumeCurveShapeInts(attenuation_id)
+            distances = manager.GetAttenuationVolumeCurveDistances(attenuation_id)
+            volumes = manager.GetAttenuationVolumeCurveValues(attenuation_id)
+            shapes = manager.GetAttenuationVolumeCurveShapeInts(attenuation_id)
 
-                if distances and volumes and shapes:
-                    volume_curve_data = {
-                        'distances': list(distances),
-                        'volumes': list(volumes),
-                        'shapes': list(shapes)
-                    }
-            except Exception:
-                pass
+            if distances and volumes and shapes:
+                volume_curve_data = {
+                    'distances': list(distances),
+                    'volumes': list(volumes),
+                    'shapes': list(shapes)
+                }
 
             return [{
-                "displayName": attenuation_name or f"Attenuation ({attenuation_id})",
+                "displayName": attenuation_name or "Attenuation ({})".format(attenuation_id),
                 "name": attenuation_id,
                 "maxRadius": max_radius,
                 "volumeCurveData": volume_curve_data,
             }]
 
-        except Exception as e:
-            print(f"Exception loading attenuations for sound: {e}")
+        except Exception:
             return []
 
     def getMaxRadiusFromWwise(self, attenuation_id):
@@ -161,8 +153,7 @@ class WaapiManager:
             if max_radius is None:
                 max_radius = 0.0
             return max_radius
-        except Exception as e:
-            print(f"Exception getting max radius from Wwise: {e}")
+        except Exception:
             return 0.0
 
     def updateMaxRadiusInWwise(self, attenuation_id, value):
@@ -175,19 +166,12 @@ class WaapiManager:
             success = manager.SetAttenuationMaxRadius(attenuation_id, value)
 
             # Refresh to get actual value from Wwise
-            refreshed_radius = None
-            try:
-                refreshed_radius = manager.GetAttenuationMaxRadius(attenuation_id)
-            except Exception:
-                pass
-
+            refreshed_radius = manager.GetAttenuationMaxRadius(attenuation_id)
             if refreshed_radius is None:
                 refreshed_radius = 0.0
-
             return refreshed_radius
 
-        except Exception as e:
-            print(f"Exception updating max radius in Wwise: {e}")
+        except Exception:
             return value
 
     def updateVolumeCurveInWwise(self, attenuation_id, curve_data, max_radius):
@@ -203,14 +187,12 @@ class WaapiManager:
 
             # Validate that curve points don't exceed max radius
             if self._validateCurveData(distances, max_radius):
-                print("Curve validation failed: distances exceed max radius")
                 return False
 
             success = manager.SetAttenuationVolumeCurve(attenuation_id, distances, volumes, shapes)
             return success
 
-        except Exception as e:
-            print(f"Exception updating volume curve in Wwise: {e}")
+        except Exception:
             return False
 
     def _validateCurveData(self, distances, max_radius):
@@ -223,7 +205,6 @@ class WaapiManager:
         """Subscribe to max radius changes for the given attenuation."""
         manager = self._getWaapiManagerInstance()
         if not manager or not self._is_connected or not attenuation_id:
-            print("Cannot subscribe: Not connected or no attenuation ID")
             return False
 
         # Unsubscribe from previous attenuation if any
@@ -239,14 +220,10 @@ class WaapiManager:
 
             if success:
                 self._subscribed_attenuation_id = attenuation_id
-                print(f"Successfully subscribed to MaxRadius changes for attenuation: {attenuation_id}")
-                return True
-            else:
-                print(f"Failed to subscribe to MaxRadius changes for attenuation: {attenuation_id}")
-                return False
 
-        except Exception as e:
-            print(f"Exception subscribing to MaxRadius changes: {e}")
+            return success
+
+        except Exception:
             return False
 
     def unsubscribeFromMaxRadius(self):
@@ -259,29 +236,16 @@ class WaapiManager:
             return
 
         try:
-            success = manager.UnsubscribeFromPropertyChanges(self._subscribed_attenuation_id)
-            if success:
-                print(f"Successfully unsubscribed from attenuation: {self._subscribed_attenuation_id}")
-            else:
-                print(f"Failed to unsubscribe from attenuation: {self._subscribed_attenuation_id}")
-
-        except Exception as e:
-            print(f"Exception unsubscribing from MaxRadius changes: {e}")
-
+            manager.UnsubscribeFromPropertyChanges(self._subscribed_attenuation_id)
         finally:
             self._subscribed_attenuation_id = None
             self._subscription_callback = None
 
     def _onMaxRadiusChanged(self, object_id, property_name):
         """Internal callback invoked when MaxRadius changes in Wwise."""
-        print(f"WAAPI notification: {property_name} changed for object {object_id}")
-
         # Invoke the user's callback if registered
         if self._subscription_callback:
-            try:
-                self._subscription_callback(object_id, property_name)
-            except Exception as e:
-                print(f"Exception in user callback: {e}")
+            self._subscription_callback(object_id, property_name)
 
     def createAttenuation(self, attenuation_name, parent_path):
         """Creates a new attenuation in Wwise.
@@ -300,13 +264,9 @@ class WaapiManager:
         try:
             # Call the overloaded function that returns the ID directly
             attenuation_id = manager.CreateAttenuation(attenuation_name, parent_path)
+            return attenuation_id if attenuation_id else None
 
-            if attenuation_id:
-                return attenuation_id
-            else:
-                return None
-
-        except Exception as e:
+        except Exception:
             return None
 
     def setReference(self, object_id, reference_name, reference_id):
@@ -321,22 +281,9 @@ class WaapiManager:
         """
         manager = self._getWaapiManagerInstance()
         if not manager or not self._is_connected:
-            print("Cannot set reference: Not connected to Wwise")
             return False
 
         try:
-            success = manager.SetReference(object_id, reference_name, reference_id)
-
-            if success:
-                if reference_id:
-                    print(f"Successfully set reference '{reference_name}' on object {object_id}")
-                else:
-                    print(f"Successfully cleared reference '{reference_name}' on object {object_id}")
-            else:
-                print(f"Failed to set reference '{reference_name}' on object {object_id}")
-
-            return success
-
-        except Exception as e:
-            print(f"Exception setting reference: {e}")
+            return manager.SetReference(object_id, reference_name, reference_id)
+        except Exception:
             return False
