@@ -27,6 +27,7 @@ const Be::ClassInfo* AudEmitter::ExposeToBlue()
 		MAP_ATTRIBUTE( "maxNormalizedScalingFactor", m_maxNormalizedScalingFactor, "The maximum scaling factor that can be used to scale attenuation by.\n:jessica-group: Attenuation Normalization", Be::READWRITE | Be::PERSIST )
 		MAP_ATTRIBUTE( "debugPosition", m_debugPosition, "The location of the audio emitter in space.\n:jessica-hidden: True", Be::READ )
 		MAP_ATTRIBUTE( "debugFront", m_debugFront, "A vector pointing in the same direction that the audio emitter is facing. Can be (0.0, 0.0, 0.0)\n:jessica-hidden: True", Be::READ )
+		MAP_ATTRIBUTE( "simulationRadius", m_simulationRadius, "Shows a simulated debug attenuation sphere if value is above 0.", Be::READWRITE | Be::PERSIST )
 
 		MAP_METHOD_AND_WRAP_OPTIONAL_ARGS
 		(

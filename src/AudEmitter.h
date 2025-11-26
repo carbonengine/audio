@@ -79,6 +79,8 @@ protected:
 	Vector3 m_debugPosition;
 	Vector3 m_debugFront;
 	Color m_debugColor;
+	Color m_simulationColor;
+	float m_simulationRadius;
 };
 
 TYPEDEF_BLUECLASS( AudEmitter );

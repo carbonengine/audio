@@ -15,7 +15,9 @@ AudEmitter::AudEmitter( IRoot* lockobj ) :
 	m_maxNormalizedScalingFactor( 3.5f ),
 	m_debugPosition(0, 0, 0),
 	m_debugFront(0, 0, 0),
-	m_debugColor(0, 0, 0, 0)
+	m_debugColor(0, 0, 0, 0),
+	m_simulationColor(0xff00ff00), // Green
+	m_simulationRadius(0.f)
 {
 }
 
@@ -28,7 +30,9 @@ AudEmitter::AudEmitter( AkGameObjectID gameObjID, IRoot* lockobj ) :
 	m_maxNormalizedScalingFactor( 3.5f ),
 	m_debugPosition(0, 0, 0),
 	m_debugFront(0, 0, 0),
-	m_debugColor(0, 0, 0, 0)
+	m_debugColor(0, 0, 0, 0),
+	m_simulationColor(0xff00ff00), // Green
+	m_simulationRadius(0.f)
 {
 }
 
@@ -112,7 +116,7 @@ void AudEmitter::SetVisibility( bool isVisible )
 // Debug
 void AudEmitter::GetDebugOptions( Tr2DebugRendererOptions& options )
 {
-	options.insert( "AudioEmitters" );
+	options.insert( "Audio Attenuation Sphere" );
 }
 
 void AudEmitter::RenderDebugInfo( ITr2DebugRenderer2& renderer )
@@ -121,10 +125,18 @@ void AudEmitter::RenderDebugInfo( ITr2DebugRenderer2& renderer )
 	{
 		if ( !g_debugDisplayAllEmitters )
 		{
-			if ( !renderer.HasOption( GetRawRoot(), "AudioEmitters" ) )
+			if ( !renderer.HasOption( GetRawRoot(), "Audio Attenuation Sphere" ) )
 			{
 				return;
 			}
+		}
+
+		uint32_t debugSphereSegments = static_cast<uint32_t>(8.f + m_simulationRadius / 5000.f);
+		debugSphereSegments = (debugSphereSegments < 25) ? debugSphereSegments : 25; 
+
+		if( m_simulationRadius > 0.f )
+		{
+			renderer.DrawSphere( this, m_debugPosition, m_simulationRadius, debugSphereSegments, ITr2DebugRenderer2::Wireframe, Tr2DebugColor( m_simulationColor ) );
 		}
 
 		if ( !m_culled )
@@ -137,10 +149,11 @@ void AudEmitter::RenderDebugInfo( ITr2DebugRenderer2& renderer )
 			}
 
 			const float emitterRange = AK::SoundEngine::Query::GetMaxRadius( m_ID );
-			uint32_t debugSphereSegments = static_cast<uint32_t>(8.f + emitterRange / 5000.f);
-			debugSphereSegments = (debugSphereSegments < 25) ? debugSphereSegments : 25; // limit segment growth to 25
+			if( emitterRange >= m_simulationRadius )
+			{
+				renderer.DrawSphere( this, m_debugPosition, emitterRange, debugSphereSegments, ITr2DebugRenderer2::Wireframe, Tr2DebugColor( m_debugColor ) );
+			}
 
-			renderer.DrawSphere( this, m_debugPosition, emitterRange, debugSphereSegments, ITr2DebugRenderer2::Wireframe, Tr2DebugColor( m_debugColor ) );
 			renderer.DrawText( TRI_DBG_FONT_SMALL, m_debugPosition, m_debugColor, m_name.c_str() );
 		}
 	}
