@@ -76,8 +76,6 @@ protected:
 	float m_maxNormalizedScalingFactor;
 
 	// Debug properties.
-	Vector3 m_debugPosition;
-	Vector3 m_debugFront;
 	Color m_debugColor;
 	Color m_simulationColor;
 	float m_simulationRadius;
