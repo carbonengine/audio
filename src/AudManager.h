@@ -219,8 +219,6 @@ private:
 	// Initialization settings for Wwise
 	AudSettingsPtr m_settings;
 
-	int m_tickInterval;
-
 	// A map of all currently monitored audio parameters in Wwise (e.g. RTPCs)
 	std::map<std::wstring, MonitoredParameterInfo> m_monitoredParametersMap;
 	CcpMutex m_moniteredParametersMapMutex;

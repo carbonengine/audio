@@ -67,7 +67,6 @@ std::atomic<size_t> AudManager::s_lastLoggedDeviceHash{ 0 };
 
 
 AudManager::AudManager( IRoot* lockobj ) :
-	m_tickInterval( 10 ),
 	m_asyncOpen( true ),
 	m_log(),
 	m_spatialAudioEnabled( true ),
