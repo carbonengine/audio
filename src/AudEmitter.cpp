@@ -15,7 +15,10 @@ AudEmitter::AudEmitter( IRoot* lockobj ) :
 	m_maxNormalizedScalingFactor( 3.5f ),
 	m_debugColor(0, 0, 0, 0),
 	m_simulationColor(0xff00ff00), // Green
-	m_simulationRadius(0.f)
+	m_simulationRadius(0.f),
+	m_listenerDistanceScaleFactor(0.003f),
+	m_radiusToTextWidthRatio(1.85f),
+	m_debugFontCharWidth(0.8f)
 {
 }
 
@@ -28,7 +31,10 @@ AudEmitter::AudEmitter( AkGameObjectID gameObjID, IRoot* lockobj ) :
 	m_maxNormalizedScalingFactor( 3.5f ),
 	m_debugColor(0, 0, 0, 0),
 	m_simulationColor(0xff00ff00), // Green
-	m_simulationRadius(0.f)
+	m_simulationRadius(0.f),
+	m_listenerDistanceScaleFactor(0.003f),
+	m_radiusToTextWidthRatio(1.85f),
+	m_debugFontCharWidth(0.8f)
 {
 }
 
@@ -146,10 +152,28 @@ void AudEmitter::RenderDebugInfo( ITr2DebugRenderer2& renderer )
 			const float emitterRange = AK::SoundEngine::Query::GetMaxRadius( m_ID );
 			renderer.DrawSphere( this, m_position, emitterRange, debugSphereSegments, ITr2DebugRenderer2::Wireframe, Tr2DebugColor( m_debugColor ) );
 
+			DrawClickableRadius(renderer);
+
 			std::string debugName = m_name + "(" + std::to_string(m_ID) + ")";
 			renderer.DrawText(TRI_DBG_FONT_SMALL, m_position, m_debugColor, debugName.c_str());
 		}
 	}
+}
+
+void AudEmitter::DrawClickableRadius(ITr2DebugRenderer2& renderer)
+{
+	// In order to scale the clickable radius we need to know the distance to the camera. This is not so 
+	// easy to get from our library so we use the listener position because the listener follows the camera.
+	AudListenerPtr listener = g_audioManager->GetListener(); 
+	Vector3 listenerPos = listener->GetPosition();
+	float distanceToListener = Length( m_position - listenerPos );
+	float scaleFactor = distanceToListener * m_listenerDistanceScaleFactor; 
+
+	float textWidth = m_name.length() * m_debugFontCharWidth * scaleFactor;
+	float radius = textWidth * m_radiusToTextWidthRatio; 
+
+	// Draw barely visible transparent sphere
+	renderer.DrawSphere( this, m_position, radius, 8, ITr2DebugRenderer2::Solid, Tr2DebugColor( 0x08000000 ) );
 }
 
 void AudEmitter::Mute()

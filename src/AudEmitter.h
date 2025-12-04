@@ -68,6 +68,10 @@ public:
 	virtual	void RenderDebugInfo( ITr2DebugRenderer2& renderer ) override;
 protected:
 	AudEmitter( AkGameObjectID gameObjID, IRoot* lockobj = NULL );
+	/**
+	 * @brief Draw a transparent sphere that makes this clickable in our editor. Scales based on distance to camera.
+	 */
+	void DrawClickableRadius(ITr2DebugRenderer2& renderer);
 	// Properties used for normalizing attenuation scaling for this audio emitter.
 	bool m_normalizeAttenuationScaling;
 	float m_minNormalizedValue;
@@ -79,6 +83,13 @@ protected:
 	Color m_debugColor;
 	Color m_simulationColor;
 	float m_simulationRadius;
+private:
+	// Factor that determines how quickly the debug sphere grows as listener distance increases.
+	float m_listenerDistanceScaleFactor;
+	// Ratio between the radius of the clickable sphere and the width of the debug text.
+	float m_radiusToTextWidthRatio;
+	// Approximate width of a character in the small debug font
+	float m_debugFontCharWidth; 
 };
 
 TYPEDEF_BLUECLASS( AudEmitter );
