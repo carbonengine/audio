@@ -46,6 +46,11 @@ bool StretchAudio::Initialize()
 
 void StretchAudio::Update( Vector3& sourcePosition, Vector3& destPosition )
 {
+	if ( !g_audioEnabled )
+	{
+		return;
+	}
+
 	Vector3 front(0,1,0), top(0,0,1);
 	if ( nullptr != m_sourceEmitter )
 	{
