@@ -16,6 +16,10 @@ LOAD_BANK_BNK = "TestLoadBank.bnk"
 LOAD_BANK_EVENT = "Play_TestLoadBank"
 ESSENTIAL_BNK = "TestMusicEssential.bnk"
 ESSENTIAL_EVENT = "Play_TestEssential"
+NONESSENTIAL_BNK = "NonEssentialSoundBank.bnk"
+NONESSENTIAL_BNK_EVENT = "Play_NonEssentialBank"
+NONESSENTIAL_STREAM_BNK = "NonEssentialStream.bnk"
+NONESSENTIAL_STREAM_EVENT = "Play_NonEssentialStream"
 
 
 class BaseAudio2TestClass(unittest.TestCase):

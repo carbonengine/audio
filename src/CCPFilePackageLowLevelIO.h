@@ -17,6 +17,7 @@
 #include <AK/Tools/Common/AkPlatformFuncs.h>
 #include <AK/Tools/Common/AkAssert.h>
 #include "Audio2.h"
+#include "AudStaticDataRepository.h"
 
 
 #define MAX_NUMBER_STRING_SIZE      (10) 
@@ -70,15 +71,18 @@ public:
             else
             {
                 // Only for NON-language-specific files:
-                if (in_FileOpen.pFlags->uCodecID == AKCODECID_BANK)
+
+                if( IsFileEssential( in_FileOpen ) )
                 {
-                    // Bank files go in Essential_Media
                     AKPLATFORM::SafeStrCat(szFullFilePath, m_szEssentialPath, AK_MAX_PATH);
                 }
                 else
                 {
-                    // Other files (WEM) go in Media
-                    AKPLATFORM::SafeStrCat(szFullFilePath, m_szAudioSrcPath, AK_MAX_PATH);
+                    // Nonessential .bnk files live at the root of the base path, .wem files live in m_szAudioSrcPath 
+                    if( in_FileOpen.pFlags->uCodecID != AKCODECID_BANK ) 
+                    {
+                        AKPLATFORM::SafeStrCat(szFullFilePath, m_szAudioSrcPath, AK_MAX_PATH);
+                    }
                 }
 
                 // Add separator after subfolder
@@ -122,6 +126,20 @@ public:
         AkDelete(AkMemID_Streaming, out_pFileDesc);
         out_pFileDesc = nullptr;
         return AK_FileNotFound;
+    }
+
+    bool IsFileEssential( const AkFileOpenData& in_FileOpen )
+    {
+        if( in_FileOpen.pFlags->uCodecID == AKCODECID_BANK ) 
+        {
+            std::wstring fileName = AKOSCharToWString( in_FileOpen.pszFileName );
+            return g_staticDataRepository->SoundBankIsEssential( fileName );
+
+        }
+        else
+        {
+            return g_staticDataRepository->SourceIsEssential( in_FileOpen.fileID );
+        }
     }
 
     // BluePaths integration
@@ -178,5 +196,15 @@ public:
     {
         AKPLATFORM::SafeStrCpy(m_szAudioSrcPath, in_pszAudioSrcPath, AK_MAX_PATH);
         return AK_Success;
+    }
+private:
+    std::wstring AKOSCharToWString( const AkOSChar* in_pszStr )
+    {
+#if _WIN32
+        return std::wstring( in_pszStr );
+#else
+        std::string temp( in_pszStr );
+        return std::wstring( temp.begin(), temp.end() );
+#endif
     }
 };

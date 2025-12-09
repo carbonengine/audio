@@ -330,6 +330,61 @@
 								<ActiveSource Name="testSFX" ID="{3F258AC2-6E6B-4423-A547-72E2D6150A47}" Platform="Linked"/>
 							</ActiveSourceList>
 						</Sound>
+						<Sound Name="testNonEssentialBank" ID="{8D394FEA-9C55-4AD8-99EA-BE3B1BB4BE93}" ShortID="949056770">
+							<PropertyList>
+								<Property Name="IsLoopingEnabled" Type="bool" Value="True"/>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{9C20F434-C2E0-4332-91CA-4EA3F4523348}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{6BF5E114-60A4-4E30-8AD9-FD2431628A04}"/>
+								</Reference>
+							</ReferenceList>
+							<ChildrenList>
+								<AudioFileSource Name="testSFX_NonEssentialBank" ID="{B16C827C-1AF7-41C9-8A25-EC10C9619229}">
+									<Language>SFX</Language>
+									<AudioFile>testSFX_NonEssentialBank.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="737420022"/>
+									</MediaIDList>
+								</AudioFileSource>
+							</ChildrenList>
+							<ActiveSourceList>
+								<ActiveSource Name="testSFX_NonEssentialBank" ID="{B16C827C-1AF7-41C9-8A25-EC10C9619229}" Platform="Linked"/>
+							</ActiveSourceList>
+						</Sound>
+						<Sound Name="testNonEssentialStream" ID="{5CF97C4E-0A4F-45E1-843D-B3154883F549}" ShortID="633076187">
+							<PropertyList>
+								<Property Name="IsLoopingEnabled" Type="bool" Value="True"/>
+								<Property Name="IsStreamingEnabled" Type="bool">
+									<ValueList>
+										<Value>True</Value>
+									</ValueList>
+								</Property>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{9C20F434-C2E0-4332-91CA-4EA3F4523348}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{6BF5E114-60A4-4E30-8AD9-FD2431628A04}"/>
+								</Reference>
+							</ReferenceList>
+							<ChildrenList>
+								<AudioFileSource Name="testSFX_NonEssentialStream" ID="{C09526FF-2EA8-4BD2-91DD-6E6937D5B06B}">
+									<Language>SFX</Language>
+									<AudioFile>testSFX_NonEssentialStream.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="192745030"/>
+									</MediaIDList>
+								</AudioFileSource>
+							</ChildrenList>
+							<ActiveSourceList>
+								<ActiveSource Name="testSFX_NonEssentialStream" ID="{C09526FF-2EA8-4BD2-91DD-6E6937D5B06B}" Platform="Linked"/>
+							</ActiveSourceList>
+						</Sound>
 					</ChildrenList>
 				</ActorMixer>
 			</ChildrenList>

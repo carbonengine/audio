@@ -34,17 +34,17 @@
 				<Property Name="SoundBankHeaderFilePath" Type="string" Value="GeneratedSoundBanks"/>
 				<Property Name="SoundBankPaths" Type="string">
 					<ValueList>
-						<Value Platform="Windows">..\..\python\audio2\test\soundbanks\</Value>
+						<Value Platform="Windows">..\..\tests\python\audiotests\test\soundbanks\</Value>
 					</ValueList>
 				</Property>
 				<Property Name="SoundBankPostGenerateCustomCmdDescription" Type="string">
 					<ValueList>
-						<Value Platform="Windows">$(SoundBankPath)$(SoundBankPath)</Value>
+						<Value Platform="Windows">Create essential media directory and generate sound prioritization metadata</Value>
 					</ValueList>
 				</Property>
 				<Property Name="SoundBankPostGenerateCustomCmdLines" Type="string">
 					<ValueList>
-						<Value Platform="Windows"></Value>
+						<Value Platform="Windows">$(WwiseProjectPath)\CustomScripts\PostGenerationStep.bat "$(WwiseExePath)" "$(SoundBankPath)"</Value>
 					</ValueList>
 				</Property>
 				<Property Name="SoundBankPreGenerateCustomCmdDescription" Type="string">

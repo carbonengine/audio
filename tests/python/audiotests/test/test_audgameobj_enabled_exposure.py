@@ -2,7 +2,10 @@ import blue
 import time
 import sys
 
-from audiotests.base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK, ONE_SHOT_EVENT, ESSENTIAL_EVENT, ESSENTIAL_BNK
+from audiotests.base_test_class import (
+    COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK, ONE_SHOT_EVENT, ESSENTIAL_EVENT, ESSENTIAL_BNK,
+    NONESSENTIAL_BNK, NONESSENTIAL_BNK_EVENT, NONESSENTIAL_STREAM_BNK, NONESSENTIAL_STREAM_EVENT
+)
 from audiotests.base_test_class import BaseAudio2TestClass
 from audiotests.utils import PumpOSWithTimeout
 
@@ -12,7 +15,9 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
     @classmethod
     def setUpClass(cls):
         super(TestEnabledAudGameObjExposure, cls).setUpClass()
-        cls.Initialize(cls, defaultSoundBanks=[COMMON_BNK, LOOP_BNK, ONE_SHOT_BNK, ESSENTIAL_BNK])
+        cls.Initialize(cls, defaultSoundBanks=[
+            COMMON_BNK, LOOP_BNK, ONE_SHOT_BNK, ESSENTIAL_BNK, NONESSENTIAL_BNK, NONESSENTIAL_STREAM_BNK
+        ])
 
     def setUp(self):
         # Even though this is a test for AudGameObjResource exposure, it is
@@ -61,6 +66,9 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
             elapsed += interval_ms
         
         return False
+
+    def check_event_playing(self):
+        return len(self.emitter.GetPlayingEvents()) == 1
         
     def get_events_values(self, events_dict):
         """Helper method to handle dict.values() differently in Python 2/3"""
@@ -71,10 +79,22 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
 
     def test_enabled_audgameobjresource_sendevent_essential(self):
         # test event streamed from essential
-        def check_event_playing():
-            return len(self.emitter.GetPlayingEvents()) == 1
         playingID = self.emitter.SendEvent(ESSENTIAL_EVENT)
-        self.wait_for_audio_condition(check_event_playing)
+        self.assertTrue(self.wait_for_audio_condition(self.check_event_playing))
+        self.assertTrue(playingID > 0)
+
+    def test_enabled_audgameobjresource_sendevent_nonessential_bnk(self):
+        """Test that a SoundBank marked as non-essential gets loaded correctly by LowLevelIO"""
+        playingID = self.emitter.SendEvent(NONESSENTIAL_BNK_EVENT)
+        print(playingID)
+        self.assertTrue(self.wait_for_audio_condition(self.check_event_playing))
+        self.assertTrue(playingID > 0)
+    
+    def test_enabled_audgameobjresource_sendevent_nonessential_stream(self):
+        """Test that a streamed event marked as non essential media gets loaded correctly by LowLevelIO"""
+        playingID = self.emitter.SendEvent(NONESSENTIAL_STREAM_EVENT)
+        self.assertTrue(self.wait_for_audio_condition(self.check_event_playing))
+        self.assertTrue(playingID > 0)
 
     def test_enabled_audgameobjresource_sendevent(self):
         """Test that AudGameObjResource::SendEvent works while audio is enabled."""

@@ -14,6 +14,24 @@
   "DialogueEvents": [],
   "SoundBanks": [
    {
+    "Id": "117489857",
+    "Type": "User",
+    "Language": "SFX",
+    "Hash": "{4D449487-082E-B8F5-724B-4AAFA9E8EF09}",
+    "ShortName": "NonEssentialSoundBank",
+    "Path": "NonEssentialSoundBank.bnk",
+    "Media": [
+     {
+      "Id": "737420022",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "testSFX_NonEssentialBank.wav",
+      "CachePath": "SFX/testSFX_NonEssentialBank_FBC78EF0.wem"
+     }
+    ]
+   },
+   {
     "Id": "476335406",
     "Type": "User",
     "Language": "SFX",
@@ -120,13 +138,23 @@
     "Id": "2395677314",
     "Type": "User",
     "Language": "SFX",
-    "Hash": "{CEA3D4BE-F0AC-2ADD-1D24-02BF5FE4FCB6}",
+    "Hash": "{6FFC37B0-F374-025F-5E4D-7D11268F1918}",
     "ShortName": "Common",
     "Path": "Common.bnk",
     "Events": [
      {
       "Id": "2637304785",
       "Name": "in_game_video_stream_play"
+     },
+     {
+      "Id": "956983863",
+      "Name": "Play_NonEssentialBank",
+      "MaxAttenuation": "100"
+     },
+     {
+      "Id": "4107487277",
+      "Name": "Play_NonEssentialStream",
+      "MaxAttenuation": "100"
      },
      {
       "Id": "3602841542",
@@ -169,6 +197,25 @@
     }
    },
    {
+    "Id": "2569610222",
+    "Type": "User",
+    "Language": "SFX",
+    "Hash": "{2FCDB544-1799-B01F-53D5-1BCF85FE5B12}",
+    "ShortName": "NonEssentialStream",
+    "Path": "NonEssentialStream.bnk",
+    "Media": [
+     {
+      "Id": "192745030",
+      "Language": "SFX",
+      "Streaming": "true",
+      "Location": "Loose",
+      "ShortName": "testSFX_NonEssentialStream.wav",
+      "Path": "Media/192745030.wem",
+      "CachePath": "SFX/testSFX_NonEssentialStream_FBC78EF0.wem"
+     }
+    ]
+   },
+   {
     "Id": "3918824947",
     "Type": "User",
     "Language": "SFX",
@@ -187,6 +234,6 @@
     ]
    }
   ],
-  "FileHash": "{5A24EB8F-35D2-7D83-3021-4D2201550663}"
+  "FileHash": "{F25C3751-4E69-78C0-9E45-48410355DEB9}"
  }
 }

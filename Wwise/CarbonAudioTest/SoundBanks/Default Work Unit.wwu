@@ -48,6 +48,23 @@
 					<ObjectExclusionList/>
 					<GameSyncExclusionList/>
 				</SoundBank>
+				<SoundBank Name="NonEssentialSoundBank" ID="{84D4F080-B9E4-4DE3-905D-4B1BE1C9BDEC}">
+					<PropertyList>
+						<Property Name="CCP:EssentialSoundBank" Type="bool" Value="False"/>
+					</PropertyList>
+					<ObjectInclusionList>
+						<ObjectRef Name="testNonEssentialBank" ID="{8D394FEA-9C55-4AD8-99EA-BE3B1BB4BE93}" WorkUnitID="{C3703968-666D-47C8-9715-ABD3DA334A25}" Origin="Manual" Filter="6"/>
+					</ObjectInclusionList>
+					<ObjectExclusionList/>
+					<GameSyncExclusionList/>
+				</SoundBank>
+				<SoundBank Name="NonEssentialStream" ID="{9B27CD6A-4639-44D8-9F89-32D219974ADB}">
+					<ObjectInclusionList>
+						<ObjectRef Name="testNonEssentialStream" ID="{5CF97C4E-0A4F-45E1-843D-B3154883F549}" WorkUnitID="{C3703968-666D-47C8-9715-ABD3DA334A25}" Origin="Manual" Filter="6"/>
+					</ObjectInclusionList>
+				<ObjectExclusionList/>
+					<GameSyncExclusionList/>
+				</SoundBank>
 			</ChildrenList>
 		</WorkUnit>
 	</SoundBanks>

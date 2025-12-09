@@ -58,6 +58,28 @@
 						</Action>
 					</ChildrenList>
 				</Event>
+				<Event Name="Play_NonEssentialBank" ID="{FDBA61DD-9005-410D-92D9-EF094690E072}">
+					<ChildrenList>
+						<Action Name="" ID="{A220A538-6A6A-4B12-A2C6-7490D09B971E}" ShortID="637559467">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="testNonEssentialBank" ID="{8D394FEA-9C55-4AD8-99EA-BE3B1BB4BE93}" WorkUnitID="{C3703968-666D-47C8-9715-ABD3DA334A25}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="Play_NonEssentialStream" ID="{2DD2329E-E7BD-4DE8-BBAA-1717FC4D15FC}">
+					<ChildrenList>
+						<Action Name="" ID="{19A33F08-D3DD-41FE-9334-397FBC4B1729}" ShortID="171001322">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="testNonEssentialStream" ID="{5CF97C4E-0A4F-45E1-843D-B3154883F549}" WorkUnitID="{C3703968-666D-47C8-9715-ABD3DA334A25}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
 			</ChildrenList>
 		</WorkUnit>
 	</Events>
