@@ -70,6 +70,7 @@ ccp_add_library(CarbonAudio SHARED
 	src/AudGameObjResource.cpp
 	src/audio2.cpp
 	src/AudGameObjResource_Blue.cpp
+	src/AudGeometry.cpp
 	src/stdafx.cpp
 	src/AudListener.cpp
 	src/AudioCurveSetDriver.cpp
@@ -111,6 +112,7 @@ target_sources(CarbonAudio PRIVATE
 	src/AudStaticDataRepository.h
 	src/AudUIPlayer.h
 	src/AudMusicPlayer.h
+	src/AudGeometry.h
 	src/autoversion.h
 	src/DebugUtilities.h
 	src/LogBridge.h
