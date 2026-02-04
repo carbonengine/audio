@@ -42,6 +42,8 @@
 #include <AK/Tools/Common/AkPlatformFuncs.h>
 #include <AK/Tools/Common/AkProfilingID.h>
 
+#include <AK/SpatialAudio/Common/AkSpatialAudio.h>
+
 #ifndef AK_OPTIMIZED
 #include <AK/Comm/AkCommunication.h>
 #endif

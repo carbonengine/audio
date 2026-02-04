@@ -151,6 +151,12 @@ bool AudManager::Init()
 		return false;
 	}
 
+	if( !InitSpatialAudioGeometry() )
+	{
+		CCP_LOGERR( "Failed to initialize audio : Spatial Audio Geometry" );
+		return false;
+	}
+
 #ifndef AK_OPTIMIZED
 	if( !InitCommunication() )
 	{
@@ -389,6 +395,26 @@ bool AudManager::InitMusic()
 		return false;
 	}
 
+	return true;
+}
+
+bool AudManager::InitSpatialAudioGeometry()
+{
+	AkSpatialAudioInitSettings spatialSettings;
+
+	// Configure geometry-based audio processing
+	// spatialSettings.uMaxSoundPropagationDepth = 8;
+	// spatialSettings.uNumberOfPrimaryRays = 100;
+	// spatialSettings.uMaxDiffractionOrder = 8;
+	// spatialSettings.bEnableGeometricDiffractionAndTransmission = true;
+
+	if( AK::SpatialAudio::Init( spatialSettings ) != AK_Success )
+	{
+		CCP_LOGERR( "Failed to initialize Wwise Spatial Audio for geometry processing" );
+		return false;
+	}
+
+	CCP_LOG_CH( s_ch, "Wwise Spatial Audio initialized for geometry-based occlusion/diffraction" );
 	return true;
 }
 

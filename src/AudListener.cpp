@@ -13,8 +13,9 @@ AudListener::AudListener( IRoot* lockobj ) : AudGameObjResource( LISTENER_GAME_O
 
 AudListener::~AudListener()
 {
-	AK::SoundEngine::RemoveDefaultListener(m_ID);
-	AK::SoundEngine::UnregisterGameObj(m_ID);
+	AK::SpatialAudio::UnregisterListener( m_ID );
+	AK::SoundEngine::RemoveDefaultListener( m_ID );
+	AK::SoundEngine::UnregisterGameObj( m_ID );
 }
 
 void AudListener::RegisterWwiseObject()
@@ -25,6 +26,10 @@ void AudListener::RegisterWwiseObject()
 		{
 			AK::SoundEngine::RegisterGameObj(m_ID, m_name.c_str());
 			AK::SoundEngine::AddDefaultListener(m_ID);
+
+			// Register listener for occlusion/diffraction processing
+			AK::SpatialAudio::RegisterListener( m_ID );
+
 			m_gameObjRegistered = true;
 		}
 	}

@@ -183,6 +183,8 @@ private:
 	bool InitMusic();
 	// Initializes Wwise's sound engine.
 	bool InitSound();
+	// Initializes Wwise's Spatial Audio for geometry-based occlusion and diffraction.
+	bool InitSpatialAudioGeometry();
 	// Tick handler
 	void Process();
 	// Registers audio2 for the tick handler.
