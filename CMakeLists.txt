@@ -71,6 +71,7 @@ ccp_add_library(CarbonAudio SHARED
 	src/audio2.cpp
 	src/AudGameObjResource_Blue.cpp
 	src/AudGeometry.cpp
+	src/AudGeometry_Blue.cpp
 	src/stdafx.cpp
 	src/AudListener.cpp
 	src/AudioCurveSetDriver.cpp
