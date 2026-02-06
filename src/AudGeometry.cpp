@@ -35,7 +35,7 @@ namespace
 				static_cast<AkVertIdx>( indices[i * 3 + 0] ),
 				static_cast<AkVertIdx>( indices[i * 3 + 2] ),
 				static_cast<AkVertIdx>( indices[i * 3 + 1] ),
-				AK_INVALID_SURFACE
+				0  // default surface index
 			);
 		}
 		return akTriangles;
@@ -85,9 +85,33 @@ void AudGeometry::SetGeometry(
 		return;
 	}
 
+	if( geometryData.m_indices.size() % 3 != 0 )
+	{
+		CCP_LOGERR_CH( s_ch, "SetGeometry: index count %zu is not a multiple of 3 for ID %llu",
+			geometryData.m_indices.size(), geometryId );
+		return;
+	}
+
+	// Validate that all triangle indices are within vertex bounds
+	for( size_t i = 0; i < geometryData.m_indices.size(); ++i )
+	{
+		if( geometryData.m_indices[i] >= geometryData.m_vertices.size() )
+		{
+			CCP_LOGERR_CH( s_ch, "SetGeometry: index[%zu] = %u is out of bounds (vertex count: %zu) for ID %llu",
+				i, geometryData.m_indices[i], geometryData.m_vertices.size(), geometryId );
+			return;
+		}
+	}
+
 	// Convert vertices and triangles to Wwise format
 	std::vector<AkVertex> akVertices = ConvertVertices( geometryData.m_vertices );
 	std::vector<AkTriangle> akTriangles = ConvertTriangles( geometryData.m_indices );
+
+	// Default acoustic surface - all triangles share the same surface properties
+	AkAcousticSurface surface;
+	surface.strName = "default";
+	surface.textureID = AK_INVALID_UNIQUE_ID;
+	surface.transmissionLoss = 1.0f;
 
 	// Set up geometry parameters
 	AkGeometryParams params;
@@ -95,21 +119,23 @@ void AudGeometry::SetGeometry(
 	params.NumVertices = static_cast<AkVertIdx>( akVertices.size() );
 	params.Triangles = akTriangles.data();
 	params.NumTriangles = static_cast<AkTriIdx>( akTriangles.size() );
-	params.Surfaces = nullptr;
-	params.NumSurfaces = 0;
+	params.Surfaces = &surface;
+	params.NumSurfaces = 1;
 	params.EnableDiffraction = true;
 	params.EnableDiffractionOnBoundaryEdges = true;
+
+	CCP_LOG_CH( s_ch, "SetGeometry ID %llu: %u vertices, %u triangles",
+		geometryId, params.NumVertices, params.NumTriangles );
 
 	// Register the geometry set with Wwise
 	AKRESULT result = AK::SpatialAudio::SetGeometry( geometryId, params );
 	if( result != AK_Success )
 	{
-		CCP_LOGERR_CH( s_ch, "Failed to set geometry for ID %llu, error: %d", geometryId, result );
+		CCP_LOGERR_CH( s_ch, "Failed to set geometry for ID %llu, AKRESULT: %d", geometryId, result );
 		return;
 	}
 
-	CCP_LOG_CH( s_ch, "Registered geometry ID %llu with %zu vertices, %zu triangles",
-		geometryId, akVertices.size(), akTriangles.size() );
+	CCP_LOG_CH( s_ch, "Registered geometry ID %llu successfully", geometryId );
 
 	// TODO: Create geometry instance to place it in the world
 	// AkGeometryInstanceParams instanceParams;
