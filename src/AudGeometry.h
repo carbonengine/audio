@@ -25,7 +25,16 @@ public:
 
 	EXPOSE_TO_BLUE();
 
-	
+
+	// ITr2AudGeometry interface
+
+	void SetGeometry(
+		uint64_t geometryId,
+		const Tr2AudGeometryData& geometryData,
+		const Matrix& worldTransform) override;
+
+	void SetGeometryTransform(uint64_t geometryId, const Matrix& worldTransform) override;
+	void RemoveGeometry(uint64_t geometryId) override;
 };
 
-
+TYPEDEF_BLUECLASS( AudGeometry );
