@@ -137,28 +137,40 @@ void AudGeometry::SetGeometry(
 
 	CCP_LOG_CH( s_ch, "Registered geometry ID %llu successfully", geometryId );
 
-	// TODO: Create geometry instance to place it in the world
-	// AkGeometryInstanceParams instanceParams;
-	// instanceParams.GeometrySetID = geometryId;
-	// instanceParams.PositionAndOrientation = ConvertTransform( worldTransform );
-	// instanceParams.RoomID = AK::SpatialAudio::kOutdoorRoomID;
-	// AK::SpatialAudio::SetGeometryInstance( geometryId, instanceParams );
+	// Create geometry instance to place it in the world
+	AkGeometryInstanceParams instanceParams;
+	instanceParams.GeometrySetID = geometryId;
+	instanceParams.PositionAndOrientation = ConvertTransform( worldTransform );
+
+	AKRESULT instanceResult = AK::SpatialAudio::SetGeometryInstance( geometryId, instanceParams );
+	if( instanceResult != AK_Success )
+	{
+		CCP_LOGERR_CH( s_ch, "Failed to set geometry instance for ID %llu, AKRESULT: %d", geometryId, instanceResult );
+		return;
+	}
+
+	CCP_LOG_CH( s_ch, "Placed geometry instance ID %llu in world", geometryId );
 }
 
 void AudGeometry::SetGeometryTransform( uint64_t geometryId, const Matrix& worldTransform )
 {
-	// TODO: Update existing geometry instance's position/orientation
-	// AkGeometryInstanceParams instanceParams;
-	// instanceParams.GeometrySetID = geometryId;
-	// instanceParams.PositionAndOrientation = ConvertTransform( worldTransform );
-	// instanceParams.RoomID = AK::SpatialAudio::kOutdoorRoomID;
-	// AK::SpatialAudio::SetGeometryInstance( geometryId, instanceParams );
+	AkGeometryInstanceParams instanceParams;
+	instanceParams.GeometrySetID = geometryId;
+	instanceParams.PositionAndOrientation = ConvertTransform( worldTransform );
+
+	AKRESULT result = AK::SpatialAudio::SetGeometryInstance( geometryId, instanceParams );
+	if( result != AK_Success )
+	{
+		CCP_LOGERR_CH( s_ch, "Failed to update geometry instance transform for ID %llu, AKRESULT: %d", geometryId, result );
+	}
 }
 
 void AudGeometry::RemoveGeometry( uint64_t geometryId )
 {
-	// TODO: Remove instance first, then geometry set
-	// AK::SpatialAudio::RemoveGeometryInstance( geometryId );
-	// AK::SpatialAudio::RemoveGeometry( geometryId );
+	// Remove instance first, then geometry set
+	AK::SpatialAudio::RemoveGeometryInstance( geometryId );
+	AK::SpatialAudio::RemoveGeometry( geometryId );
+
+	CCP_LOG_CH( s_ch, "Removed geometry and instance for ID %llu", geometryId );
 }
 
