@@ -47,17 +47,17 @@ namespace
 	{
 		AkTransform transform;
 
-		// Extract position from matrix 
+		// Extract position from matrix
 		AkVector position;
 		position.X = matrix._41;
 		position.Y = matrix._42;
-		position.Z = -matrix._43; 
+		position.Z = -matrix._43;
 
-		// Extract forward 
+		// Extract forward
 		AkVector orientationFront;
 		orientationFront.X = matrix._31;
 		orientationFront.Y = matrix._32;
-		orientationFront.Z = -matrix._33; 
+		orientationFront.Z = -matrix._33;
 
 		AkVector orientationTop;
 		orientationTop.X = matrix._21;
@@ -70,25 +70,37 @@ namespace
 	}
 }
 
-AudGeometry::AudGeometry( IRoot* lockobj ) {}
+AudGeometry::AudGeometry( IRoot* lockobj )
+	: m_mutex( "AudGeometry", "m_mutex" )
+{}
 
-AudGeometry::~AudGeometry() {}
+AudGeometry::~AudGeometry()
+{
+	for( const auto& pair : m_geometrySetRefCounts )
+	{
+		AK::SpatialAudio::RemoveGeometry( pair.first );
+		CCP_LOGWARN_CH( s_ch, "Cleanup: removed orphaned geometry set %llu with %u remaining refs",
+			pair.first, pair.second );
+	}
+	m_geometrySetRefCounts.clear();
+}
 
 void AudGeometry::SetGeometry(
-	uint64_t geometryId,
+	uint64_t geometrySetId,
+	uint64_t instanceId,
 	const Tr2AudGeometryData& geometryData,
 	const Matrix& worldTransform )
 {
 	if( geometryData.m_vertices.empty() || geometryData.m_indices.empty() )
 	{
-		CCP_LOGWARN_CH( s_ch, "SetGeometry called with empty geometry data for ID %llu", geometryId );
+		CCP_LOGWARN_CH( s_ch, "SetGeometry called with empty geometry data for instance %llu", instanceId );
 		return;
 	}
 
 	if( geometryData.m_indices.size() % 3 != 0 )
 	{
-		CCP_LOGERR_CH( s_ch, "SetGeometry: index count %zu is not a multiple of 3 for ID %llu",
-			geometryData.m_indices.size(), geometryId );
+		CCP_LOGERR_CH( s_ch, "SetGeometry: index count %zu is not a multiple of 3 for instance %llu",
+			geometryData.m_indices.size(), instanceId );
 		return;
 	}
 
@@ -97,80 +109,116 @@ void AudGeometry::SetGeometry(
 	{
 		if( geometryData.m_indices[i] >= geometryData.m_vertices.size() )
 		{
-			CCP_LOGERR_CH( s_ch, "SetGeometry: index[%zu] = %u is out of bounds (vertex count: %zu) for ID %llu",
-				i, geometryData.m_indices[i], geometryData.m_vertices.size(), geometryId );
+			CCP_LOGERR_CH( s_ch, "SetGeometry: index[%zu] = %u is out of bounds (vertex count: %zu) for instance %llu",
+				i, geometryData.m_indices[i], geometryData.m_vertices.size(), instanceId );
 			return;
 		}
 	}
 
-	// Convert vertices and triangles to Wwise format
-	std::vector<AkVertex> akVertices = ConvertVertices( geometryData.m_vertices );
-	std::vector<AkTriangle> akTriangles = ConvertTriangles( geometryData.m_indices );
+	CcpAutoMutex lock( m_mutex );
 
-	// Default acoustic surface - all triangles share the same surface properties
-	AkAcousticSurface surface;
-	surface.strName = "default";
-	surface.textureID = AK_INVALID_UNIQUE_ID;
-	surface.transmissionLoss = 1.0f;
-
-	// Set up geometry parameters
-	AkGeometryParams params;
-	params.Vertices = akVertices.data();
-	params.NumVertices = static_cast<AkVertIdx>( akVertices.size() );
-	params.Triangles = akTriangles.data();
-	params.NumTriangles = static_cast<AkTriIdx>( akTriangles.size() );
-	params.Surfaces = &surface;
-	params.NumSurfaces = 1;
-	params.EnableDiffraction = true;
-	params.EnableDiffractionOnBoundaryEdges = true;
-
-	CCP_LOG_CH( s_ch, "SetGeometry ID %llu: %u vertices, %u triangles",
-		geometryId, params.NumVertices, params.NumTriangles );
-
-	// Register the geometry set with Wwise
-	AKRESULT result = AK::SpatialAudio::SetGeometry( geometryId, params );
-	if( result != AK_Success )
+	// Only register the geometry set with Wwise if this is the first instance using it
+	auto it = m_geometrySetRefCounts.find( geometrySetId );
+	if( it == m_geometrySetRefCounts.end() )
 	{
-		CCP_LOGERR_CH( s_ch, "Failed to set geometry for ID %llu, AKRESULT: %d", geometryId, result );
-		return;
+		// Convert vertices and triangles to Wwise format
+		std::vector<AkVertex> akVertices = ConvertVertices( geometryData.m_vertices );
+		std::vector<AkTriangle> akTriangles = ConvertTriangles( geometryData.m_indices );
+
+		// Default acoustic surface - all triangles share the same surface properties
+		AkAcousticSurface surface;
+		surface.strName = "default";
+		surface.textureID = AK_INVALID_UNIQUE_ID;
+		surface.transmissionLoss = 1.0f;
+
+		// Set up geometry parameters
+		AkGeometryParams params;
+		params.Vertices = akVertices.data();
+		params.NumVertices = static_cast<AkVertIdx>( akVertices.size() );
+		params.Triangles = akTriangles.data();
+		params.NumTriangles = static_cast<AkTriIdx>( akTriangles.size() );
+		params.Surfaces = &surface;
+		params.NumSurfaces = 1;
+		params.EnableDiffraction = true;
+		params.EnableDiffractionOnBoundaryEdges = true;
+
+		CCP_LOG_CH( s_ch, "Registering geometry set %llu: %u vertices, %u triangles",
+			geometrySetId, params.NumVertices, params.NumTriangles );
+
+		AKRESULT result = AK::SpatialAudio::SetGeometry( geometrySetId, params );
+		if( result != AK_Success )
+		{
+			CCP_LOGERR_CH( s_ch, "Failed to set geometry for set %llu, AKRESULT: %d", geometrySetId, result );
+			return;
+		}
+
+		m_geometrySetRefCounts[geometrySetId] = 1;
+	}
+	else
+	{
+		it->second++;
+		CCP_LOG_CH( s_ch, "Geometry set %llu ref count incremented to %u", geometrySetId, it->second );
 	}
 
-	CCP_LOG_CH( s_ch, "Registered geometry ID %llu successfully", geometryId );
-
-	// Create geometry instance to place it in the world
+	// Create a geometry instance for this specific object
 	AkGeometryInstanceParams instanceParams;
-	instanceParams.GeometrySetID = geometryId;
+	instanceParams.GeometrySetID = geometrySetId;
 	instanceParams.PositionAndOrientation = ConvertTransform( worldTransform );
 
-	AKRESULT instanceResult = AK::SpatialAudio::SetGeometryInstance( geometryId, instanceParams );
+	AKRESULT instanceResult = AK::SpatialAudio::SetGeometryInstance( instanceId, instanceParams );
 	if( instanceResult != AK_Success )
 	{
-		CCP_LOGERR_CH( s_ch, "Failed to set geometry instance for ID %llu, AKRESULT: %d", geometryId, instanceResult );
+		CCP_LOGERR_CH( s_ch, "Failed to set geometry instance %llu (set %llu), AKRESULT: %d",
+			instanceId, geometrySetId, instanceResult );
 		return;
 	}
 
-	CCP_LOG_CH( s_ch, "Placed geometry instance ID %llu in world", geometryId );
+	CCP_LOG_CH( s_ch, "Placed geometry instance %llu referencing set %llu", instanceId, geometrySetId );
 }
 
-void AudGeometry::SetGeometryTransform( uint64_t geometryId, const Matrix& worldTransform )
+void AudGeometry::SetGeometryTransform(
+	uint64_t geometrySetId,
+	uint64_t instanceId,
+	const Matrix& worldTransform )
 {
 	AkGeometryInstanceParams instanceParams;
-	instanceParams.GeometrySetID = geometryId;
+	instanceParams.GeometrySetID = geometrySetId;
 	instanceParams.PositionAndOrientation = ConvertTransform( worldTransform );
 
-	AKRESULT result = AK::SpatialAudio::SetGeometryInstance( geometryId, instanceParams );
+	AKRESULT result = AK::SpatialAudio::SetGeometryInstance( instanceId, instanceParams );
 	if( result != AK_Success )
 	{
-		CCP_LOGERR_CH( s_ch, "Failed to update geometry instance transform for ID %llu, AKRESULT: %d", geometryId, result );
+		CCP_LOGERR_CH( s_ch, "Failed to update geometry instance transform for instance %llu (set %llu), AKRESULT: %d",
+			instanceId, geometrySetId, result );
 	}
 }
 
-void AudGeometry::RemoveGeometry( uint64_t geometryId )
+void AudGeometry::RemoveGeometry(
+	uint64_t geometrySetId,
+	uint64_t instanceId )
 {
-	// Remove instance first, then geometry set
-	AK::SpatialAudio::RemoveGeometryInstance( geometryId );
-	AK::SpatialAudio::RemoveGeometry( geometryId );
+	AK::SpatialAudio::RemoveGeometryInstance( instanceId );
+	CCP_LOG_CH( s_ch, "Removed geometry instance %llu", instanceId );
 
-	CCP_LOG_CH( s_ch, "Removed geometry and instance for ID %llu", geometryId );
+	CcpAutoMutex lock( m_mutex );
+
+	auto it = m_geometrySetRefCounts.find( geometrySetId );
+	if( it != m_geometrySetRefCounts.end() )
+	{
+		it->second--;
+		if( it->second == 0 )
+		{
+			AK::SpatialAudio::RemoveGeometry( geometrySetId );
+			m_geometrySetRefCounts.erase( it );
+			CCP_LOG_CH( s_ch, "Removed geometry set %llu (last instance removed)", geometrySetId );
+		}
+		else
+		{
+			CCP_LOG_CH( s_ch, "Geometry set %llu ref count decremented to %u", geometrySetId, it->second );
+		}
+	}
+	else
+	{
+		CCP_LOGWARN_CH( s_ch, "RemoveGeometry called for unknown geometry set %llu", geometrySetId );
+	}
 }
-
