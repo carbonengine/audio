@@ -46,9 +46,10 @@ public:
 
 private:
 	// Tracks how many active instances reference each geometry set
-	std::unordered_map<uint64_t, uint32_t> m_geometrySetRefCounts;
-
-	CcpMutex m_mutex;
+	// Static: shared across all AudGeometry instances because multiple EveSpaceObject2s
+	// each own their own AudGeometry but share the same Wwise geometry sets by ID
+	static std::unordered_map<uint64_t, uint32_t> s_geometrySetRefCounts;
+	static CcpMutex s_mutex;
 };
 
 TYPEDEF_BLUECLASS( AudGeometry );
