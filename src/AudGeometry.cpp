@@ -42,6 +42,23 @@ namespace
 		return akTriangles;
 	}
 
+	// Check if a triangle is degenerate
+	bool IsTriangleDegenerate( const AkVertex& a, const AkVertex& b, const AkVertex& c )
+	{
+		constexpr float kEpsilonSq = 1e-12f;
+
+		// Edge vectors
+		float e1x = b.X - a.X, e1y = b.Y - a.Y, e1z = b.Z - a.Z;
+		float e2x = c.X - a.X, e2y = c.Y - a.Y, e2z = c.Z - a.Z;
+
+		// Cross product
+		float cx = e1y * e2z - e1z * e2y;
+		float cy = e1z * e2x - e1x * e2z;
+		float cz = e1x * e2y - e1y * e2x;
+
+		return ( cx * cx + cy * cy + cz * cz ) <= kEpsilonSq;
+	}
+
 	// Convert Matrix to AkTransform for geometry instance placement
 	// Applies RH to LH coordinate conversion
 	AkTransform ConvertTransform( const Matrix& matrix )
@@ -138,7 +155,21 @@ void AudGeometry::SetGeometry(
 	if( it == s_geometrySetRefCounts.end() )
 	{
 		std::vector<AkVertex> akVertices = ConvertVertices( geometryData.m_vertices );
-		std::vector<AkTriangle> akTriangles = ConvertTriangles( geometryData.m_indices );
+		std::vector<AkTriangle> allTriangles = ConvertTriangles( geometryData.m_indices );
+
+		// Skip degenerate triangles
+		std::vector<AkTriangle> akTriangles;
+		akTriangles.reserve( allTriangles.size() );
+		size_t degenerateCount = 0;
+		for( const AkTriangle& tri : allTriangles )
+		{
+			if( IsTriangleDegenerate( akVertices[tri.point0], akVertices[tri.point1], akVertices[tri.point2] ) )
+			{
+				++degenerateCount;
+				continue;
+			}
+			akTriangles.push_back( tri );
+		}
 
 		// Default acoustic surface
 		AkAcousticSurface surface;
