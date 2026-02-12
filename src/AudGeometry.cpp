@@ -8,30 +8,23 @@ static CcpLogChannel_t s_ch = CCP_LOG_DEFINE_CHANNEL( "AudGeometry" );
 
 namespace
 {
-	// Convert Vector3 array to AkVertex array
-	// Applies RH to LH coordinate conversion 
 	std::vector<AkVertex> ConvertVertices( const std::vector<Vector3>& vertices )
 	{
 		std::vector<AkVertex> akVertices( vertices.size() );
 		for( size_t i = 0; i < vertices.size(); ++i )
 		{
 			const Vector3& v = vertices[i];
-			// RH to LH: negate Z
 			akVertices[i] = AkVertex( v.x, v.y, -v.z );
 		}
 		return akVertices;
 	}
 
-	// Convert index array to AkTriangle array
-	// Every 3 indices form one triangle
-	// Winding order is reversed due to coordinate system change
 	std::vector<AkTriangle> ConvertTriangles( const std::vector<uint32_t>& indices )
 	{
 		size_t numTriangles = indices.size() / 3;
 		std::vector<AkTriangle> akTriangles( numTriangles );
 		for( size_t i = 0; i < numTriangles; ++i )
 		{
-
 			akTriangles[i] = AkTriangle(
 				static_cast<AkVertIdx>( indices[i * 3 + 0] ),
 				static_cast<AkVertIdx>( indices[i * 3 + 2] ),
@@ -42,16 +35,13 @@ namespace
 		return akTriangles;
 	}
 
-	// Check if a triangle is degenerate
 	bool IsTriangleDegenerate( const AkVertex& a, const AkVertex& b, const AkVertex& c )
 	{
 		constexpr float kEpsilonSq = 1e-12f;
 
-		// Edge vectors
 		float e1x = b.X - a.X, e1y = b.Y - a.Y, e1z = b.Z - a.Z;
 		float e2x = c.X - a.X, e2y = c.Y - a.Y, e2z = c.Z - a.Z;
 
-		// Cross product
 		float cx = e1y * e2z - e1z * e2y;
 		float cy = e1z * e2x - e1x * e2z;
 		float cz = e1x * e2y - e1y * e2x;
@@ -59,19 +49,15 @@ namespace
 		return ( cx * cx + cy * cy + cz * cz ) <= kEpsilonSq;
 	}
 
-	// Convert Matrix to AkTransform for geometry instance placement
-	// Applies RH to LH coordinate conversion
 	AkTransform ConvertTransform( const Matrix& matrix )
 	{
 		AkTransform transform;
 
-		// Extract position from matrix
 		AkVector position;
 		position.X = matrix._41;
 		position.Y = matrix._42;
 		position.Z = -matrix._43;
 
-		// Extract forward
 		AkVector orientationFront;
 		orientationFront.X = matrix._31;
 		orientationFront.Y = matrix._32;
@@ -95,10 +81,7 @@ AudGeometry::AudGeometry( IRoot* lockobj )
 {}
 
 AudGeometry::~AudGeometry()
-{
-	// Ref counts are static/shared - individual instances must not clear global state.
-	// Geometry sets are cleaned up via RemoveGeometry() as each space object is destroyed.
-}
+{}
 
 void AudGeometry::SetGeometry(
 	uint64_t geometrySetId,
@@ -108,7 +91,6 @@ void AudGeometry::SetGeometry(
 {
 	if( geometryData.m_vertices.empty() || geometryData.m_indices.empty() )
 	{
-		CCP_LOGWARN_CH( s_ch, "SetGeometry called with empty geometry data for instance %llu", instanceId );
 		return;
 	}
 
@@ -119,13 +101,12 @@ void AudGeometry::SetGeometry(
 		return;
 	}
 
-	// Wwise uses AkVertIdx (uint16) and AkTriIdx (uint16), max 65535 each
 	constexpr size_t kMaxVertices = std::numeric_limits<AkVertIdx>::max();
 	constexpr size_t kMaxTriangles = std::numeric_limits<AkTriIdx>::max();
 
 	if( geometryData.m_vertices.size() > kMaxVertices )
 	{
-		CCP_LOGERR_CH( s_ch, "SetGeometry: vertex count %zu exceeds Wwise max %zu (AkVertIdx is uint16) for geometry set %llu, skipping",
+		CCP_LOGERR_CH( s_ch, "SetGeometry: vertex count %zu exceeds max %zu for geometry set %llu, skipping",
 			geometryData.m_vertices.size(), kMaxVertices, geometrySetId );
 		return;
 	}
@@ -133,7 +114,7 @@ void AudGeometry::SetGeometry(
 	size_t numTriangles = geometryData.m_indices.size() / 3;
 	if( numTriangles > kMaxTriangles )
 	{
-		CCP_LOGERR_CH( s_ch, "SetGeometry: triangle count %zu exceeds Wwise max %zu (AkTriIdx is uint16) for geometry set %llu, skipping",
+		CCP_LOGERR_CH( s_ch, "SetGeometry: triangle count %zu exceeds max %zu for geometry set %llu, skipping",
 			numTriangles, kMaxTriangles, geometrySetId );
 		return;
 	}
@@ -142,7 +123,7 @@ void AudGeometry::SetGeometry(
 	{
 		if( geometryData.m_indices[i] >= geometryData.m_vertices.size() )
 		{
-			CCP_LOGERR_CH( s_ch, "SetGeometry: index[%zu] = %u is out of bounds (vertex count: %zu) for instance %llu",
+			CCP_LOGERR_CH( s_ch, "SetGeometry: index[%zu] = %u out of bounds (vertex count: %zu) for instance %llu",
 				i, geometryData.m_indices[i], geometryData.m_vertices.size(), instanceId );
 			return;
 		}
@@ -150,34 +131,27 @@ void AudGeometry::SetGeometry(
 
 	CcpAutoMutex lock( s_mutex );
 
-	// Only register the geometry set with Wwise if this is the first instance using it
 	auto it = s_geometrySetRefCounts.find( geometrySetId );
 	if( it == s_geometrySetRefCounts.end() )
 	{
 		std::vector<AkVertex> akVertices = ConvertVertices( geometryData.m_vertices );
 		std::vector<AkTriangle> allTriangles = ConvertTriangles( geometryData.m_indices );
 
-		// Skip degenerate triangles
 		std::vector<AkTriangle> akTriangles;
 		akTriangles.reserve( allTriangles.size() );
-		size_t degenerateCount = 0;
 		for( const AkTriangle& tri : allTriangles )
 		{
-			if( IsTriangleDegenerate( akVertices[tri.point0], akVertices[tri.point1], akVertices[tri.point2] ) )
+			if( !IsTriangleDegenerate( akVertices[tri.point0], akVertices[tri.point1], akVertices[tri.point2] ) )
 			{
-				++degenerateCount;
-				continue;
+				akTriangles.push_back( tri );
 			}
-			akTriangles.push_back( tri );
 		}
 
-		// Default acoustic surface
 		AkAcousticSurface surface;
 		surface.strName = "default";
 		surface.textureID = AK_INVALID_UNIQUE_ID;
 		surface.transmissionLoss = 1.0f;
 
-		// Set up geometry parameters
 		AkGeometryParams params;
 		params.Vertices = akVertices.data();
 		params.NumVertices = static_cast<AkVertIdx>( akVertices.size() );
@@ -186,10 +160,7 @@ void AudGeometry::SetGeometry(
 		params.Surfaces = &surface;
 		params.NumSurfaces = 1;
 		params.EnableDiffraction = true;
-		params.EnableDiffractionOnBoundaryEdges = true;
-
-		CCP_LOG_CH( s_ch, "Registering geometry set %llu: %u vertices, %u triangles",
-			geometrySetId, params.NumVertices, params.NumTriangles );
+		params.EnableDiffractionOnBoundaryEdges = false;
 
 		AKRESULT result = AK::SpatialAudio::SetGeometry( geometrySetId, params );
 		if( result != AK_Success )
@@ -203,7 +174,6 @@ void AudGeometry::SetGeometry(
 	else
 	{
 		it->second++;
-		CCP_LOG_CH( s_ch, "Geometry set %llu ref count incremented to %u", geometrySetId, it->second );
 	}
 
 	AkGeometryInstanceParams instanceParams;
@@ -215,10 +185,7 @@ void AudGeometry::SetGeometry(
 	{
 		CCP_LOGERR_CH( s_ch, "Failed to set geometry instance %llu (set %llu), AKRESULT: %d",
 			instanceId, geometrySetId, instanceResult );
-		return;
 	}
-
-	CCP_LOG_CH( s_ch, "Placed geometry instance %llu referencing set %llu", instanceId, geometrySetId );
 }
 
 void AudGeometry::SetGeometryTransform(
@@ -251,7 +218,6 @@ void AudGeometry::RemoveGeometry(
 	uint64_t instanceId )
 {
 	AK::SpatialAudio::RemoveGeometryInstance( instanceId );
-	CCP_LOG_CH( s_ch, "Removed geometry instance %llu", instanceId );
 
 	CcpAutoMutex lock( s_mutex );
 
@@ -263,15 +229,6 @@ void AudGeometry::RemoveGeometry(
 		{
 			AK::SpatialAudio::RemoveGeometry( geometrySetId );
 			s_geometrySetRefCounts.erase( it );
-			CCP_LOG_CH( s_ch, "Removed geometry set %llu (last instance removed)", geometrySetId );
 		}
-		else
-		{
-			CCP_LOG_CH( s_ch, "Geometry set %llu ref count decremented to %u", geometrySetId, it->second );
-		}
-	}
-	else
-	{
-		CCP_LOGWARN_CH( s_ch, "RemoveGeometry called for unknown geometry set %llu", geometrySetId );
 	}
 }
