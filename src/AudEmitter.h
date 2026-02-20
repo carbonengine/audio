@@ -82,7 +82,7 @@ protected:
 	// Debug properties.
 	Color m_debugColor;
 	Color m_simulationColor;
-	float m_simulationRadius;
+	float m_visualizationRadius;
 private:
 	// Factor that determines how quickly the debug sphere grows as listener distance increases.
 	float m_listenerDistanceScaleFactor;

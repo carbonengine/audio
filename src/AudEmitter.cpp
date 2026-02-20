@@ -15,7 +15,7 @@ AudEmitter::AudEmitter( IRoot* lockobj ) :
 	m_maxNormalizedScalingFactor( 3.5f ),
 	m_debugColor(0, 0, 0, 0),
 	m_simulationColor(0xff00ff00), // Green
-	m_simulationRadius(0.f),
+	m_visualizationRadius(0.f),
 	m_listenerDistanceScaleFactor(0.003f),
 	m_radiusToTextWidthRatio(1.85f),
 	m_debugFontCharWidth(0.8f)
@@ -31,7 +31,7 @@ AudEmitter::AudEmitter( AkGameObjectID gameObjID, IRoot* lockobj ) :
 	m_maxNormalizedScalingFactor( 3.5f ),
 	m_debugColor(0, 0, 0, 0),
 	m_simulationColor(0xff00ff00), // Green
-	m_simulationRadius(0.f),
+	m_visualizationRadius(0.f),
 	m_listenerDistanceScaleFactor(0.003f),
 	m_radiusToTextWidthRatio(1.85f),
 	m_debugFontCharWidth(0.8f)
@@ -131,12 +131,12 @@ void AudEmitter::RenderDebugInfo( ITr2DebugRenderer2& renderer )
 			}
 		}
 
-		uint32_t debugSphereSegments = static_cast<uint32_t>(8.f + m_simulationRadius / 5000.f);
+		uint32_t debugSphereSegments = static_cast<uint32_t>(8.f + m_visualizationRadius / 5000.f);
 		debugSphereSegments = (debugSphereSegments < 25) ? debugSphereSegments : 25; 
 
-		if( m_simulationRadius > 0.f )
+		if( m_visualizationRadius > 0.f )
 		{
-			float scaledRadius = m_simulationRadius * m_scalingFactor;
+			float scaledRadius = m_visualizationRadius * m_scalingFactor;
 			renderer.DrawSphere( this, m_position, scaledRadius, debugSphereSegments, ITr2DebugRenderer2::Wireframe, Tr2DebugColor( m_simulationColor ) );
 		}
 
