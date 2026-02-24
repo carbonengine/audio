@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "AudGeometry.h"
+#include "Utilities.h"
 #include "Vector3.h"
 #include "AudManager.h"
 #include <cmath>
@@ -9,75 +10,6 @@ static CcpLogChannel_t s_ch = CCP_LOG_DEFINE_CHANNEL( "AudGeometry" );
 
 namespace
 {
-	AkVector MakeAkVector( float x, float y, float z )
-	{
-		AkVector v;
-		v.X = x;
-		v.Y = y;
-		v.Z = z;
-		return v;
-	}
-
-	bool IsFiniteAkVector( const AkVector& v )
-	{
-		return std::isfinite( v.X ) && std::isfinite( v.Y ) && std::isfinite( v.Z );
-	}
-
-	float Dot( const AkVector& a, const AkVector& b )
-	{
-		return a.X * b.X + a.Y * b.Y + a.Z * b.Z;
-	}
-
-	float LengthSq( const AkVector& v )
-	{
-		return Dot( v, v );
-	}
-
-	AkVector Cross( const AkVector& a, const AkVector& b )
-	{
-		return MakeAkVector(
-			a.Y * b.Z - a.Z * b.Y,
-			a.Z * b.X - a.X * b.Z,
-			a.X * b.Y - a.Y * b.X
-		);
-	}
-
-	bool NormalizeSafe( AkVector& v )
-	{
-		const float lenSq = LengthSq( v );
-		if( lenSq <= 1e-10f || !std::isfinite( lenSq ) )
-		{
-			return false;
-		}
-
-		const float invLen = 1.0f / std::sqrt( lenSq );
-		v.X *= invLen;
-		v.Y *= invLen;
-		v.Z *= invLen;
-		return IsFiniteAkVector( v );
-	}
-
-	float AxisScaleOrDefault( float x, float y, float z )
-	{
-		const float lenSq = x * x + y * y + z * z;
-		if( lenSq <= 1e-10f || !std::isfinite( lenSq ) )
-		{
-			return 1.0f;
-		}
-
-		const float len = std::sqrt( lenSq );
-		return std::isfinite( len ) ? len : 1.0f;
-	}
-
-	AkVector ExtractScale( const Matrix& matrix )
-	{
-		return MakeAkVector(
-			AxisScaleOrDefault( matrix._11, matrix._12, matrix._13 ),
-			AxisScaleOrDefault( matrix._21, matrix._22, matrix._23 ),
-			AxisScaleOrDefault( matrix._31, matrix._32, matrix._33 )
-		);
-	}
-
 	std::vector<AkVertex> ConvertVertices( const std::vector<Vector3>& vertices )
 	{
 		std::vector<AkVertex> akVertices( vertices.size() );
@@ -97,8 +29,8 @@ namespace
 		{
 			akTriangles[i] = AkTriangle(
 				static_cast<AkVertIdx>( indices[i * 3 + 0] ),
-				static_cast<AkVertIdx>( indices[i * 3 + 2] ),
 				static_cast<AkVertIdx>( indices[i * 3 + 1] ),
+				static_cast<AkVertIdx>( indices[i * 3 + 2] ),
 				0
 			);
 		}
@@ -117,62 +49,6 @@ namespace
 		float cz = e1x * e2y - e1y * e2x;
 
 		return ( cx * cx + cy * cy + cz * cz ) <= kEpsilonSq;
-	}
-
-	void ConvertTransform( const Matrix& matrix, AkTransform& transformOut )
-	{
-		AkVector position = MakeAkVector( matrix._41, matrix._42, -matrix._43 );
-		if( !IsFiniteAkVector( position ) )
-		{
-			position = MakeAkVector( 0.0f, 0.0f, 0.0f );
-		}
-
-		AkVector front = MakeAkVector( matrix._31, matrix._32, -matrix._33 );
-		AkVector up = MakeAkVector( matrix._21, matrix._22, -matrix._23 );
-
-		if( !IsFiniteAkVector( front ) || !IsFiniteAkVector( up ) )
-		{
-			front = MakeAkVector( 0.0f, 0.0f, 1.0f );
-			up = MakeAkVector( 0.0f, 1.0f, 0.0f );
-		}
-
-		if( !NormalizeSafe( front ) )
-		{
-			front = MakeAkVector( 0.0f, 0.0f, 1.0f );
-		}
-
-		const float upDotFront = Dot( up, front );
-		up.X -= front.X * upDotFront;
-		up.Y -= front.Y * upDotFront;
-		up.Z -= front.Z * upDotFront;
-
-		if( !NormalizeSafe( up ) )
-		{
-			AkVector reference = ( std::fabs( front.Y ) < 0.99f ) ?
-				MakeAkVector( 0.0f, 1.0f, 0.0f ) :
-				MakeAkVector( 1.0f, 0.0f, 0.0f );
-
-			AkVector right = Cross( reference, front );
-			if( !NormalizeSafe( right ) )
-			{
-				reference = MakeAkVector( 0.0f, 0.0f, 1.0f );
-				right = Cross( reference, front );
-			}
-
-			if( !NormalizeSafe( right ) )
-			{
-				right = MakeAkVector( 1.0f, 0.0f, 0.0f );
-			}
-
-			up = Cross( front, right );
-			if( !NormalizeSafe( up ) )
-			{
-				up = MakeAkVector( 0.0f, 1.0f, 0.0f );
-			}
-		}
-
-		transformOut.SetPosition( position );
-		transformOut.SetOrientation( front, up );
 	}
 }
 
@@ -281,9 +157,9 @@ void AudGeometry::SetGeometry(
 	AkGeometryInstanceParams instanceParams;
 	instanceParams.GeometrySetID = geometrySetId;
 	AkTransform transform;
-	ConvertTransform( worldTransform, transform );
+	RH2LH::convertTransform( worldTransform, transform );
 	instanceParams.PositionAndOrientation = transform;
-	instanceParams.Scale = ExtractScale( worldTransform );
+	instanceParams.Scale = RH2LH::extractScale( worldTransform );
 
 	AKRESULT instanceResult = AK::SpatialAudio::SetGeometryInstance( instanceId, instanceParams );
 	if( instanceResult != AK_Success )
@@ -309,9 +185,9 @@ void AudGeometry::SetGeometryTransform(
 	AkGeometryInstanceParams instanceParams;
 	instanceParams.GeometrySetID = geometrySetId;
 	AkTransform transform;
-	ConvertTransform( worldTransform, transform );
+	RH2LH::convertTransform( worldTransform, transform );
 	instanceParams.PositionAndOrientation = transform;
-	instanceParams.Scale = ExtractScale( worldTransform );
+	instanceParams.Scale = RH2LH::extractScale( worldTransform );
 
 	AKRESULT result = AK::SpatialAudio::SetGeometryInstance( instanceId, instanceParams );
 	if( result != AK_Success )

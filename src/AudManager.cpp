@@ -402,11 +402,18 @@ bool AudManager::InitSpatialAudioGeometry()
 {
 	AkSpatialAudioInitSettings spatialSettings;
 
-	// Configure geometry-based audio processing
-	// spatialSettings.uMaxSoundPropagationDepth = 8;
-	// spatialSettings.uNumberOfPrimaryRays = 100;
-	// spatialSettings.uMaxDiffractionOrder = 8;
-	// spatialSettings.bEnableGeometricDiffractionAndTransmission = true;
+	spatialSettings.uNumberOfPrimaryRays = 8;
+	spatialSettings.fCPULimitPercentage = 0.0f;    // disabled — fixed ray count is more predictable at low counts
+	spatialSettings.uLoadBalancingSpread = 8;       // spread path validation over 8 frames
+
+	spatialSettings.fMovementThreshold = 1.0f;
+	spatialSettings.uMaxDiffractionOrder = 1;
+
+	spatialSettings.uMaxReflectionOrder = 0;
+	spatialSettings.uDiffractionOnReflectionsOrder = 0;
+	spatialSettings.fMaxPathLength = 1000.0f;
+
+	spatialSettings.bEnableGeometricDiffractionAndTransmission = true;
 
 	if( AK::SpatialAudio::Init( spatialSettings ) != AK_Success )
 	{
