@@ -408,7 +408,17 @@ bool AudManager::InitSpatialAudioGeometry()
 {
 	AkSpatialAudioInitSettings spatialSettings;
 
+	// We use geometry only for transmission detection (line-of-sight raycasting).
+	// Reflections, diffraction edges, rooms, and portals are not used.
+	// These settings minimize CPU cost while keeping transmission queries working.
 	spatialSettings.bEnableGeometricDiffractionAndTransmission = true;
+	spatialSettings.bCalcEmitterVirtualPosition = false;
+	spatialSettings.uNumberOfPrimaryRays = 8;
+	spatialSettings.uMaxReflectionOrder = 0;
+	spatialSettings.uMaxDiffractionOrder = 1;
+	spatialSettings.uDiffractionOnReflectionsOrder = 0;
+	spatialSettings.uMaxEmitterRoomAuxSends = 0;
+	spatialSettings.uMaxSoundPropagationDepth = 1;
 
 	if( AK::SpatialAudio::Init( spatialSettings ) != AK_Success )
 	{
@@ -416,7 +426,7 @@ bool AudManager::InitSpatialAudioGeometry()
 		return false;
 	}
 
-	CCP_LOG_CH( s_ch, "Wwise Spatial Audio initialized for geometry-based occlusion/diffraction" );
+	CCP_LOG_CH( s_ch, "Wwise Spatial Audio initialized for geometry-based transmission" );
 	return true;
 }
 
