@@ -673,6 +673,12 @@ void AudGameObjResource::Cull()
 //------------------------------------------------------
 void AudGameObjResource::CalculateCullingWeight( std::chrono::steady_clock::time_point now )
 {
+	// Update m_listenerInRange if not muted
+	if( !m_muted )
+	{
+		m_listenerInRange = m_playing2DSound || m_distanceSqFromListener < GetMaxAttenuationRadius();
+	}
+
 	// Determine if any one shots were requested within the last 10 milliseconds
 	float waitingOneShotWeight = 0.0f;
 	if ( m_culled )
@@ -691,12 +697,6 @@ void AudGameObjResource::CalculateCullingWeight( std::chrono::steady_clock::time
 				}
 			}
 		}
-	}
-
-	// Update m_listenerInRange if not muted
-	if( !m_muted )
-	{
-		m_listenerInRange = m_distanceSqFromListener < GetMaxAttenuationRadius();
 	}
 
     m_cumulativeWeight = SoundPrioritization::CalculateObjectWeight(
