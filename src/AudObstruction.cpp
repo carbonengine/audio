@@ -38,7 +38,7 @@ void AudObstruction::Update(
 
 		EmitterState& state = m_emitters[emitterID];
 
-		// First time seeing this emitter: query immediately and snap to result.
+		// First time seeing this emitter: query and snap to result.
 		if( !state.initialized )
 		{
 			QueryEmitter( emitterID, state );
@@ -50,14 +50,12 @@ void AudObstruction::Update(
 		}
 		else
 		{
-			// Throttled query: only re-query when the refresh interval has elapsed.
 			if( m_time >= state.nextQueryTime )
 			{
 				QueryEmitter( emitterID, state );
 				state.nextQueryTime = m_time + m_refreshInterval;
 			}
 
-			// Linear fade every frame regardless of query rate.
 			float fadeStep = m_fadeRate * dt;
 
 			if( state.obstruction < state.targetObstruction )
@@ -125,7 +123,6 @@ void AudObstruction::CleanupStaleEmitters(
 	for( IPrioritizedObject* obj : gameObjects )
 		activeIDs.insert( obj->GetID() );
 
-	// Remove any tracked emitters that are no longer in the active set.
 	auto it = m_emitters.begin();
 	while( it != m_emitters.end() )
 	{
