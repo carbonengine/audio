@@ -77,12 +77,14 @@ AudManager::AudManager( IRoot* lockobj ) :
 {
 	// Initialize sound prioritization system
 	m_soundPrioritization = new SoundPrioritization();
+	m_obstruction = new AudObstruction();
 }
 
 AudManager::~AudManager()
 {
 	// Clean up sound prioritization system
 	delete m_soundPrioritization;
+	delete m_obstruction;
 
 	if( g_audioInitialized )
 	{
@@ -98,6 +100,10 @@ void AudManager::Process()
 		{
 			m_soundPrioritization->CullAudio();
 		}
+
+		// Smooth obstruction values using Wwise's computed diffraction/transmission paths
+		m_obstruction->Update( LISTENER_GAME_OBJ_ID,
+			m_soundPrioritization->GetPrioritizedAudioObjects() );
 
 		// Process bank requests, events, positions, RTPC, etc.
 		AK::SoundEngine::RenderAudio();
@@ -401,17 +407,6 @@ bool AudManager::InitMusic()
 bool AudManager::InitSpatialAudioGeometry()
 {
 	AkSpatialAudioInitSettings spatialSettings;
-
-	spatialSettings.uNumberOfPrimaryRays = 8;
-	spatialSettings.fCPULimitPercentage = 0.0f;    // disabled — fixed ray count is more predictable at low counts
-	spatialSettings.uLoadBalancingSpread = 8;       // spread path validation over 8 frames
-
-	spatialSettings.fMovementThreshold = 1.0f;
-	spatialSettings.uMaxDiffractionOrder = 1;
-
-	spatialSettings.uMaxReflectionOrder = 0;
-	spatialSettings.uDiffractionOnReflectionsOrder = 0;
-	spatialSettings.fMaxPathLength = 1000.0f;
 
 	spatialSettings.bEnableGeometricDiffractionAndTransmission = true;
 

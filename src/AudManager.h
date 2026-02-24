@@ -13,6 +13,7 @@
 #include "Audio2.h"
 #include "AudSettings.h"
 #include "AudListener.h"
+#include "AudObstruction.h"
 #include "SoundPrioritization.h"
 #include "CCPFilePackageLowLevelIO.h"
 #include <memory>
@@ -226,6 +227,7 @@ private:
 	CcpMutex m_moniteredParametersMapMutex;
 
 	SoundPrioritization* m_soundPrioritization;
+	AudObstruction* m_obstruction;
 
 	// A boolean for the state of the profiler capture
 	bool m_isProfilerCapturing;
