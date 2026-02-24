@@ -1,7 +1,8 @@
 #include "stdafx.h"
 #include "AudObstruction.h"
 #include "Audio2.h"
-#include <cmath>
+#include <cstdlib>
+#include <unordered_set>
 
 AudObstruction::AudObstruction()
 	: m_lastUpdateTime( std::chrono::steady_clock::now() )
@@ -20,9 +21,7 @@ void AudObstruction::Update(
 	float dt = std::chrono::duration<float>( now - m_lastUpdateTime ).count();
 	m_lastUpdateTime = now;
 	dt = std::min( dt, 0.1f ); // Clamp to avoid huge jumps after pauses
-
-	// Exponential smoothing factor: 1 - e^(-rate * dt)
-	float alpha = 1.0f - std::exp( -kSmoothingRate * dt );
+	m_time += dt;
 
 	for( IPrioritizedObject* obj : gameObjects )
 	{
@@ -33,57 +32,126 @@ void AudObstruction::Update(
 
 		if( obj->IsCulled() )
 		{
-			m_smoothed.erase( emitterID );
+			m_emitters.erase( emitterID );
 			continue;
 		}
 
-		// Query the diffraction/transmission paths that Wwise already computed.
-		AkDiffractionPathInfo paths[8];
-		AkUInt32 numPaths = 8;
-		AkVector64 listenerPos, emitterPos;
+		EmitterState& state = m_emitters[emitterID];
 
-		AKRESULT result = AK::SpatialAudio::QueryDiffractionPaths(
-			emitterID, 0, listenerPos, emitterPos, paths, numPaths );
-
-		float targetObstruction = 0.0f;
-		float targetOcclusion = 0.0f;
-
-		if( result == AK_Success && numPaths > 0 )
+		// First time seeing this emitter: query immediately and snap to result.
+		if( !state.initialized )
 		{
-			// Find the best (least-obstructed) values across all paths.
-			float bestDiffraction = 1.0f;
-			float bestTransmission = 1.0f;
-
-			for( AkUInt32 i = 0; i < numPaths; ++i )
-			{
-				if( paths[i].diffraction < bestDiffraction )
-					bestDiffraction = paths[i].diffraction;
-				if( paths[i].transmissionLoss < bestTransmission )
-					bestTransmission = paths[i].transmissionLoss;
-			}
-
-			targetObstruction = bestDiffraction;
-			targetOcclusion = bestTransmission;
-		}
-
-		// Smooth
-		auto it = m_smoothed.find( emitterID );
-		if( it == m_smoothed.end() )
-		{
-			// First frame for this emitter -- snap to target (no pop on spawn)
-			m_smoothed[emitterID] = { targetObstruction, targetOcclusion };
+			QueryEmitter( emitterID, state );
+			state.obstruction = state.targetObstruction;
+			state.occlusion = state.targetOcclusion;
+			// Stagger future queries so emitters don't all query on the same frame.
+			state.nextQueryTime = m_time + m_refreshInterval * ( (float)std::rand() / RAND_MAX );
+			state.initialized = true;
 		}
 		else
 		{
-			it->second.obstruction += ( targetObstruction - it->second.obstruction ) * alpha;
-			it->second.occlusion += ( targetOcclusion - it->second.occlusion ) * alpha;
+			// Throttled query: only re-query when the refresh interval has elapsed.
+			if( m_time >= state.nextQueryTime )
+			{
+				QueryEmitter( emitterID, state );
+				state.nextQueryTime = m_time + m_refreshInterval;
+			}
+
+			// Linear fade every frame regardless of query rate.
+			float fadeStep = m_fadeRate * dt;
+
+			if( state.obstruction < state.targetObstruction )
+				state.obstruction = std::min( state.obstruction + fadeStep, state.targetObstruction );
+			else if( state.obstruction > state.targetObstruction )
+				state.obstruction = std::max( state.obstruction - fadeStep, state.targetObstruction );
+
+			if( state.occlusion < state.targetOcclusion )
+				state.occlusion = std::min( state.occlusion + fadeStep, state.targetOcclusion );
+			else if( state.occlusion > state.targetOcclusion )
+				state.occlusion = std::max( state.occlusion - fadeStep, state.targetOcclusion );
 		}
 
-		SmoothedValues& sv = m_smoothed[emitterID];
-		float obstruction = std::max( 0.0f, std::min( 1.0f, sv.obstruction ) );
-		float occlusion = std::max( 0.0f, std::min( 1.0f, sv.occlusion ) );
+		float obstruction = std::max( 0.0f, std::min( 1.0f, state.obstruction ) );
+		float occlusion = std::max( 0.0f, std::min( 1.0f, state.occlusion ) );
 
 		AK::SoundEngine::SetObjectObstructionAndOcclusion(
 			emitterID, listenerID, obstruction, occlusion );
 	}
+
+	// Periodically clean up emitters that are no longer in the active set.
+	if( ++m_cleanupCounter >= kCleanupEveryNFrames )
+	{
+		m_cleanupCounter = 0;
+		CleanupStaleEmitters( gameObjects );
+	}
+}
+
+void AudObstruction::QueryEmitter( AkGameObjectID emitterID, EmitterState& state )
+{
+	AkDiffractionPathInfo paths[8];
+	AkUInt32 numPaths = 8;
+	AkVector64 listenerPos, emitterPos;
+
+	AKRESULT result = AK::SpatialAudio::QueryDiffractionPaths(
+		emitterID, 0, listenerPos, emitterPos, paths, numPaths );
+
+	state.targetObstruction = 0.0f;
+	state.targetOcclusion = 0.0f;
+
+	if( result == AK_Success && numPaths > 0 )
+	{
+		float bestDiffraction = 1.0f;
+		float bestTransmission = 1.0f;
+
+		for( AkUInt32 i = 0; i < numPaths; ++i )
+		{
+			if( paths[i].diffraction < bestDiffraction )
+				bestDiffraction = paths[i].diffraction;
+			if( paths[i].transmissionLoss < bestTransmission )
+				bestTransmission = paths[i].transmissionLoss;
+		}
+
+		state.targetObstruction = bestDiffraction;
+		state.targetOcclusion = bestTransmission;
+	}
+}
+
+void AudObstruction::CleanupStaleEmitters(
+	const std::vector<IPrioritizedObject*>& gameObjects )
+{
+	// Build a set of currently active emitter IDs.
+	std::unordered_set<AkGameObjectID> activeIDs;
+	activeIDs.reserve( gameObjects.size() );
+	for( IPrioritizedObject* obj : gameObjects )
+		activeIDs.insert( obj->GetID() );
+
+	// Remove any tracked emitters that are no longer in the active set.
+	auto it = m_emitters.begin();
+	while( it != m_emitters.end() )
+	{
+		if( activeIDs.find( it->first ) == activeIDs.end() )
+			it = m_emitters.erase( it );
+		else
+			++it;
+	}
+}
+
+void AudObstruction::SetRefreshInterval( float seconds )
+{
+	m_refreshInterval = std::max( 0.0f, seconds );
+}
+
+float AudObstruction::GetRefreshInterval() const
+{
+	return m_refreshInterval;
+}
+
+void AudObstruction::SetFadeRate( float unitsPerSecond )
+{
+	m_fadeRate = std::max( 0.0f, unitsPerSecond );
+}
+
+float AudObstruction::GetFadeRate() const
+{
+	return m_fadeRate;
 }
