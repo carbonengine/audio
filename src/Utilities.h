@@ -74,6 +74,19 @@ public:
 		else
 			up.Normalize();
 
+		// Orthogonalize: Wwise rejects transforms where dot(front, up)^2 >= 0.1
+		Ak3DVector32 right = up.Cross( front );
+		if( right.LengthSquared() <= kEpsilon )
+		{
+			up = ( std::fabs( front.Y ) < 0.9f )
+				? Ak3DVector32( 0.0f, 1.0f, 0.0f )
+				: Ak3DVector32( 0.0f, 0.0f, 1.0f );
+			right = up.Cross( front );
+		}
+		right.Normalize();
+		up = front.Cross( right );
+		up.Normalize();
+
 		out.SetPosition( position );
 		out.SetOrientation( front, up );
 	}
