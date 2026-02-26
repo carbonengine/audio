@@ -46,6 +46,7 @@ public:
 
 private:
 	// Tracks how many active instances reference each geometry set
+	static std::unordered_map<uint64_t, uint32_t> s_geometrySetRefCounts;
 	static CcpMutex s_mutex;
 };
 
