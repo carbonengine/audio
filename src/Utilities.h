@@ -62,7 +62,7 @@ public:
 		if( !position.IsFinite() )
 			position = Ak3DVector32( 0.0f, 0.0f, 0.0f );
 
-		Ak3DVector32 front( matrix._31, matrix._32, -matrix._33 );
+		Ak3DVector32 front( -matrix._31, -matrix._32, matrix._33 );
 		if( !front.IsFinite() || front.LengthSquared() <= kEpsilon )
 			front = Ak3DVector32( 0.0f, 0.0f, 1.0f );
 		else
@@ -74,7 +74,6 @@ public:
 		else
 			up.Normalize();
 
-		// Orthogonalize: Wwise rejects transforms where dot(front, up)^2 >= 0.1
 		Ak3DVector32 right = up.Cross( front );
 		if( right.LengthSquared() <= kEpsilon )
 		{

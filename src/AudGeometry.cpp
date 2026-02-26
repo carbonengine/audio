@@ -37,19 +37,6 @@ namespace
 		return akTriangles;
 	}
 
-	bool IsTriangleDegenerate( const AkVertex& a, const AkVertex& b, const AkVertex& c )
-	{
-		constexpr float kEpsilonSq = 1e-12f;
-
-		float e1x = b.X - a.X, e1y = b.Y - a.Y, e1z = b.Z - a.Z;
-		float e2x = c.X - a.X, e2y = c.Y - a.Y, e2z = c.Z - a.Z;
-
-		float cx = e1y * e2z - e1z * e2y;
-		float cy = e1z * e2x - e1x * e2z;
-		float cz = e1x * e2y - e1y * e2x;
-
-		return ( cx * cx + cy * cy + cz * cz ) <= kEpsilonSq;
-	}
 }
 
 std::unordered_map<uint64_t, uint32_t> AudGeometry::s_geometrySetRefCounts;
@@ -71,59 +58,13 @@ void AudGeometry::SetGeometry(
 	{
 		return;
 	}
-
-	if( geometryData.m_indices.size() % 3 != 0 )
-	{
-		CCP_LOGERR_CH( s_ch, "SetGeometry: index count %zu is not a multiple of 3 for instance %llu",
-			geometryData.m_indices.size(), instanceId );
-		return;
-	}
-
-	constexpr size_t kMaxVertices = std::numeric_limits<AkVertIdx>::max();
-	constexpr size_t kMaxTriangles = std::numeric_limits<AkTriIdx>::max();
-
-	if( geometryData.m_vertices.size() > kMaxVertices )
-	{
-		CCP_LOGERR_CH( s_ch, "SetGeometry: vertex count %zu exceeds max %zu for geometry set %llu, skipping",
-			geometryData.m_vertices.size(), kMaxVertices, geometrySetId );
-		return;
-	}
-
-	size_t numTriangles = geometryData.m_indices.size() / 3;
-	if( numTriangles > kMaxTriangles )
-	{
-		CCP_LOGERR_CH( s_ch, "SetGeometry: triangle count %zu exceeds max %zu for geometry set %llu, skipping",
-			numTriangles, kMaxTriangles, geometrySetId );
-		return;
-	}
-
-	for( size_t i = 0; i < geometryData.m_indices.size(); ++i )
-	{
-		if( geometryData.m_indices[i] >= geometryData.m_vertices.size() )
-		{
-			CCP_LOGERR_CH( s_ch, "SetGeometry: index[%zu] = %u out of bounds (vertex count: %zu) for instance %llu",
-				i, geometryData.m_indices[i], geometryData.m_vertices.size(), instanceId );
-			return;
-		}
-	}
-
 	CcpAutoMutex lock( s_mutex );
 
 	auto it = s_geometrySetRefCounts.find( geometrySetId );
 	if( it == s_geometrySetRefCounts.end() )
 	{
 		std::vector<AkVertex> akVertices = ConvertVertices( geometryData.m_vertices );
-		std::vector<AkTriangle> allTriangles = ConvertTriangles( geometryData.m_indices );
-
-		std::vector<AkTriangle> akTriangles;
-		akTriangles.reserve( allTriangles.size() );
-		for( const AkTriangle& tri : allTriangles )
-		{
-			if( !IsTriangleDegenerate( akVertices[tri.point0], akVertices[tri.point1], akVertices[tri.point2] ) )
-			{
-				akTriangles.push_back( tri );
-			}
-		}
+		std::vector<AkTriangle> akTriangles = ConvertTriangles( geometryData.m_indices );
 
 		AkAcousticSurface surface;
 		surface.strName = "default";
