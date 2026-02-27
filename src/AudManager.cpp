@@ -77,14 +77,14 @@ AudManager::AudManager( IRoot* lockobj ) :
 {
 	// Initialize sound prioritization system
 	m_soundPrioritization = new SoundPrioritization();
-	m_obstruction = new AudObstruction();
+	m_obstructionOcclusion = new AudObstructionOcclusion();
 }
 
 AudManager::~AudManager()
 {
 	// Clean up sound prioritization system
 	delete m_soundPrioritization;
-	delete m_obstruction;
+	delete m_obstructionOcclusion;
 
 	if( g_audioInitialized )
 	{
@@ -102,7 +102,7 @@ void AudManager::Process()
 		}
 
 		// Smooth obstruction values using Wwise's computed diffraction/transmission paths
-		m_obstruction->Update( LISTENER_GAME_OBJ_ID,
+		m_obstructionOcclusion->Update( LISTENER_GAME_OBJ_ID,
 			m_soundPrioritization->GetPrioritizedAudioObjects() );
 
 		// Process bank requests, events, positions, RTPC, etc.

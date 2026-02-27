@@ -1,26 +1,26 @@
 #include "stdafx.h"
-#include "AudObstruction.h"
+#include "AudObstructionOcclusion.h"
 #include "Audio2.h"
 #include <cstdlib>
 #include <unordered_set>
 
-AudObstruction::AudObstruction()
+AudObstructionOcclusion::AudObstructionOcclusion()
 	: m_lastUpdateTime( std::chrono::steady_clock::now() )
 {
 }
 
-void AudObstruction::Update(
+void AudObstructionOcclusion::Update(
 	AkGameObjectID listenerID,
 	const std::vector<IPrioritizedObject*>& gameObjects )
 {
 	if( !g_audioInitialized )
 		return;
 
-	// Delta time
 	auto now = std::chrono::steady_clock::now();
 	float dt = std::chrono::duration<float>( now - m_lastUpdateTime ).count();
+
 	m_lastUpdateTime = now;
-	dt = std::min( dt, 0.1f ); // Clamp to avoid huge jumps after pauses
+	dt = std::min( dt, 0.1f );
 	m_time += dt;
 
 	for( IPrioritizedObject* obj : gameObjects )
@@ -38,12 +38,12 @@ void AudObstruction::Update(
 
 		EmitterState& state = m_emitters[emitterID];
 
-		// First time seeing this emitter: query and snap to result.
 		if( !state.initialized )
 		{
 			QueryEmitter( emitterID, state );
 			state.obstruction = state.targetObstruction;
 			state.occlusion = state.targetOcclusion;
+
 			// Stagger future queries so emitters don't all query on the same frame.
 			state.nextQueryTime = m_time + m_refreshInterval * ( (float)std::rand() / RAND_MAX );
 			state.initialized = true;
@@ -76,7 +76,6 @@ void AudObstruction::Update(
 			emitterID, listenerID, obstruction, occlusion );
 	}
 
-	// Periodically clean up emitters that are no longer in the active set.
 	if( ++m_cleanupCounter >= kCleanupEveryNFrames )
 	{
 		m_cleanupCounter = 0;
@@ -84,7 +83,7 @@ void AudObstruction::Update(
 	}
 }
 
-void AudObstruction::QueryEmitter( AkGameObjectID emitterID, EmitterState& state )
+void AudObstructionOcclusion::QueryEmitter( AkGameObjectID emitterID, EmitterState& state )
 {
 	AkDiffractionPathInfo paths[8];
 	AkUInt32 numPaths = 8;
@@ -114,10 +113,9 @@ void AudObstruction::QueryEmitter( AkGameObjectID emitterID, EmitterState& state
 	}
 }
 
-void AudObstruction::CleanupStaleEmitters(
+void AudObstructionOcclusion::CleanupStaleEmitters(
 	const std::vector<IPrioritizedObject*>& gameObjects )
 {
-	// Build a set of currently active emitter IDs.
 	std::unordered_set<AkGameObjectID> activeIDs;
 	activeIDs.reserve( gameObjects.size() );
 	for( IPrioritizedObject* obj : gameObjects )
@@ -133,22 +131,22 @@ void AudObstruction::CleanupStaleEmitters(
 	}
 }
 
-void AudObstruction::SetRefreshInterval( float seconds )
+void AudObstructionOcclusion::SetRefreshInterval( float seconds )
 {
 	m_refreshInterval = std::max( 0.0f, seconds );
 }
 
-float AudObstruction::GetRefreshInterval() const
+float AudObstructionOcclusion::GetRefreshInterval() const
 {
 	return m_refreshInterval;
 }
 
-void AudObstruction::SetFadeRate( float unitsPerSecond )
+void AudObstructionOcclusion::SetFadeRate( float unitsPerSecond )
 {
 	m_fadeRate = std::max( 0.0f, unitsPerSecond );
 }
 
-float AudObstruction::GetFadeRate() const
+float AudObstructionOcclusion::GetFadeRate() const
 {
 	return m_fadeRate;
 }
