@@ -49,7 +49,7 @@ ccp_add_library(CarbonAudio SHARED
     src/AudActionLog.cpp
 	src/AudActionLog_Blue.cpp
 	src/AudManager.cpp
-	src/AudObstruction.cpp
+	src/AudObstructionOcclusion.cpp
 	src/AudConstants.cpp
 	src/AudManager_Blue.cpp
 	src/AudEmitter.cpp
@@ -108,7 +108,7 @@ target_sources(CarbonAudio PRIVATE
 	src/AudioInputMgr.h
 	src/AudListener.h
 	src/AudManager.h
-	src/AudObstruction.h
+	src/AudObstructionOcclusion.h
 	src/AudParameter.h
 	src/AudPosition.h
 	src/AudSettings.h
