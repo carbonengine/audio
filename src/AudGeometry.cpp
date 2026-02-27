@@ -3,8 +3,6 @@
 #include "Utilities.h"
 #include "Vector3.h"
 #include "AudManager.h"
-#include <cmath>
-#include <limits>
 
 static CcpLogChannel_t s_ch = CCP_LOG_DEFINE_CHANNEL( "AudGeometry" );
 
