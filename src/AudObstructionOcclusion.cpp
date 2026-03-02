@@ -23,7 +23,7 @@ void AudObstructionOcclusion::Update(
 	dt = std::min( dt, 0.1f );
 	m_time += dt;
 
-	for( IPrioritizedObject* obj : gameObjects )
+	for( const IPrioritizedObject* obj : gameObjects )
 	{
 		AkGameObjectID emitterID = obj->GetID();
 
