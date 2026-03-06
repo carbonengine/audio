@@ -67,7 +67,7 @@ void AudGeometry::SetGeometry(
 		AkAcousticSurface surface;
 		surface.strName = "default";
 		surface.textureID = AK_INVALID_UNIQUE_ID;
-		surface.transmissionLoss = 0.7f;
+		surface.transmissionLoss = 1.0f;
 
 		AkGeometryParams params;
 		params.Vertices = akVertices.data();

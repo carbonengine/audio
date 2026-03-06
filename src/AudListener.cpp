@@ -51,7 +51,14 @@ int AudListener::SetPositionHelper( const Vector3& front, const Vector3& top, co
 			Vector3 correctFront = Normalize( front );
 			Vector3 correctUp = Normalize( top );
 			correctUp = Normalize( Cross( Cross( correctFront, correctUp ), correctFront ) );
-			tmp.Set( MakeAkVector(position), MakeAkVector(correctFront), MakeAkVector(correctUp) );
+
+
+			Vector3 correctedPosition = position;
+			correctedPosition.y *= -1.f;
+			correctFront.y *= -1.f;
+			correctUp.y *= -1.f;
+
+			tmp.Set( MakeAkVector( correctedPosition ), MakeAkVector( correctFront ), MakeAkVector( correctUp ) );
 
 			// all vectors come in RH, but WWISE is LH, so convert
 			AkSoundPosition soundPosLH;

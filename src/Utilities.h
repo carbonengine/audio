@@ -33,10 +33,9 @@ public:
 		AkVector top = listenerLH->OrientationTop();
 		AkVector64 pos = listenerLH->Position();
 
-		front.X *= -1.f;
-		front.Y *= -1.f;
+		pos.Z *= -1.f;
+		front.Z *= -1.f;
 		top.Z *= -1.f;
-		pos.Z *= -1.f; 
 
 		listenerLH->Set(pos, front, top);
 	}
