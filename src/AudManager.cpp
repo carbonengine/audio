@@ -331,7 +331,6 @@ bool AudManager::InitSound()
 	AK::SoundEngine::GetDefaultInitSettings( initSettings );
 	AK::SoundEngine::GetDefaultPlatformInitSettings( platformInitSettings );
 	initSettings.uCommandQueueSize = 512000;
-	initSettings.eFloorPlane = AkFloorPlane_XZ;
 #ifndef AK_OPTIMIZED
 	initSettings.fnProfilerPopTimer = AkPlatformProfilerPopTimer;
 	initSettings.fnProfilerPushTimer = AkPlatformProfilerPushTimer;
