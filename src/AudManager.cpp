@@ -413,13 +413,16 @@ bool AudManager::InitSpatialAudioGeometry()
 	// These settings minimize CPU cost while keeping transmission queries working.
 	spatialSettings.bEnableGeometricDiffractionAndTransmission = true;
 	spatialSettings.bCalcEmitterVirtualPosition = false;
-	spatialSettings.uNumberOfPrimaryRays = 2;
+	spatialSettings.uNumberOfPrimaryRays = 0;
 	spatialSettings.uMaxReflectionOrder = 0;
 	// Keep diffraction enabled but cap to single-edge for lower CPU cost.
 	spatialSettings.uMaxDiffractionOrder = 4;
 	spatialSettings.uDiffractionOnReflectionsOrder = 0;
 	spatialSettings.uMaxEmitterRoomAuxSends = 0;
 	spatialSettings.uMaxSoundPropagationDepth = 1;
+	spatialSettings.fMovementThreshold = 100;
+	spatialSettings.fCPULimitPercentage = 20;
+
 
 	if( AK::SpatialAudio::Init( spatialSettings ) != AK_Success )
 	{
