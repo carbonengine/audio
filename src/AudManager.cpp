@@ -448,8 +448,8 @@ bool AudManager::InitSpatialAudioGeometry()
 		return false;
 	}
 
-	const char* modeName = ( m_occlusionMode == AudOcclusionMode::HQ ) ? "HQ (diffraction + transmission)" : "Basic (transmission only)";
-	CCP_LOG_CH( s_ch, "Wwise Spatial Audio initialized in %s mode", modeName );
+	const char* modeName = ( m_occlusionMode == AudOcclusionMode::HQ ) ? "HQ (diffraction + transmission)" : "Basic (occlusion only)";
+	CCP_LOG_CH( s_ch, "Wwise Spatial Audio Geometry initialized in %s mode", modeName );
 	return true;
 }
 
