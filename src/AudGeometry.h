@@ -15,15 +15,20 @@
 
 
 /**
- * @brief Manages Wwise Spatial Audio geometry sets and geometry instances for
- *        geometric reflection and diffraction processing.
+ * @brief Manages Wwise Spatial Audio geometry sets and geometry instances.
  *
- * AudGeometry implements the ITr2AudGeometry interface to submit geometry to
+ * Implements the ITr2AudGeometry interface to submit geometry to
  * AK::SpatialAudio. A geometry set is a logical set of vertices, triangles,
  * and acoustic surfaces (see AkGeometryParams). A geometry instance is a unique
  * placement of a geometry set in the world with a specified transform — position,
  * orientation, and scale (see AkGeometryInstanceParams).
  *
+ * Behaviour depends on the @c AudOcclusionMode:
+ * - **Off**: geometry registration is skipped entirely.
+ * - **Basic**: geometry registered with @c EnableDiffraction=false and a near-zero
+ *   @c transmissionLoss so Wwise can detect blocking for AudObstructionOcclusion.
+ * - **HQ**: geometry registered with @c EnableDiffraction=true and
+ *   @c transmissionLoss set to @c globalTransmissionLoss replacing basic occlusion.
  */
 BLUE_CLASS(AudGeometry) :
 	public ITr2AudGeometry

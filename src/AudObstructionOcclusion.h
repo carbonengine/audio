@@ -13,11 +13,18 @@
 #include "IPrioritizedObject.h"
 
 /**
- * @brief Tracks and applies per-emitter obstruction/occlusion values.
+ * @brief Lightweight per-emitter occlusion for Basic mode only.
  *
- * This class queries Wwise Spatial Audio diffraction paths, derives target
- * obstruction/occlusion values, smooths them over time, and writes the
- * smoothed values back to Wwise each tick.
+ * Used exclusively when @c AudOcclusionMode::Basic is active.
+ * Casts a single ray per emitter via Wwise Spatial Audio's
+ * @c QueryDiffractionPaths (with diffraction disabled) to detect
+ * line-of-sight blocking, then feeds a fixed occlusion value into
+ * @c AK::SoundEngine::SetObjectObstructionAndOcclusion().
+ * A linear interpolation fade smooths transitions between blocked
+ * and clear states.
+ *
+ * Not used in HQ mode (Wwise Spatial Audio handles diffraction and
+ * transmission directly) or Off mode (no occlusion processing).
  */
 class AudObstructionOcclusion
 {

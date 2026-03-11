@@ -57,7 +57,6 @@ void AudGeometry::SetGeometry(
 		return;
 	}
 
-	// Off mode: No occlusion, don't register any geometry with Wwise.
 	if( !g_audioManager || g_audioManager->GetOcclusionMode() == AudOcclusionMode::Off )
 	{
 		return;
@@ -74,9 +73,7 @@ void AudGeometry::SetGeometry(
 		AkAcousticSurface surface;
 		surface.strName = "default";
 		surface.textureID = AK_INVALID_UNIQUE_ID;
-		// HQ: global transmission loss handled by Wwise Spatial Audio.
-		// Basic: epsilon so Wwise detects blocking but doesn't audibly attenuate;
-		// AudObstructionOcclusion applies the actual occlusion via SetObjectObstructionAndOcclusion.
+
 		bool isHQ = ( g_audioManager->GetOcclusionMode() == AudOcclusionMode::HQ );
 		surface.transmissionLoss = isHQ ? g_audioManager->GetGlobalTransmissionLoss() : 0.001f;
 
