@@ -85,58 +85,22 @@ void AudObstructionOcclusion::Update(
 
 void AudObstructionOcclusion::QueryEmitter( AkGameObjectID emitterID, EmitterState& state )
 {
-	AkDiffractionPathInfo paths[4];
-	AkUInt32 numPaths = 4;
+	// Query a single direct path (1 ray) to check line-of-sight.
+	// With uMaxDiffractionOrder = 0 and EnableDiffraction = false,
+	// Wwise only returns the direct path with transmission loss if blocked.
+	AkDiffractionPathInfo path;
+	AkUInt32 numPaths = 1;
 	AkVector64 listenerPos, emitterPos;
 
 	AKRESULT result = AK::SpatialAudio::QueryDiffractionPaths(
-		emitterID, 0, listenerPos, emitterPos, paths, numPaths );
+		emitterID, 0, listenerPos, emitterPos, &path, numPaths );
 
 	state.targetObstruction = 0.0f;
 	state.targetOcclusion = 0.0f;
 
 	if( result == AK_Success && numPaths > 0 )
 	{
-		float bestDiffraction = 1.0f;
-		float bestReportedDiffraction = 1.0f;
-		float strongestTransmission = 0.0f;
-		bool hasDiffractionPath = false;
-		bool hasReportedDiffraction = false;
-		bool hasBlockedDirectPath = false;
-
-		for( AkUInt32 i = 0; i < numPaths; ++i )
-		{
-			float diffraction = std::max( 0.0f, std::min( 1.0f, paths[i].diffraction ) );
-			float transmission = std::max( 0.0f, std::min( 1.0f, paths[i].transmissionLoss ) );
-			strongestTransmission = std::max( strongestTransmission, transmission );
-			if( diffraction > 0.0f )
-			{
-				hasReportedDiffraction = true;
-				bestReportedDiffraction = std::min( bestReportedDiffraction, diffraction );
-			}
-
-			// A path with at least one node represents diffraction around geometry edges.
-			// This is the gradual value the demo exposes while moving behind/away from a wall.
-			if( paths[i].nodeCount > 0 )
-			{
-				hasDiffractionPath = true;
-				bestDiffraction = std::min( bestDiffraction, diffraction );
-			}
-			else if( transmission > 0.0f )
-			{
-				// No edge nodes and non-zero transmission indicates a blocked direct path.
-				hasBlockedDirectPath = true;
-			}
-		}
-
-		if( hasDiffractionPath )
-			state.targetObstruction = bestDiffraction;
-		else if( hasReportedDiffraction )
-			state.targetObstruction = bestReportedDiffraction;
-		else
-			state.targetObstruction = hasBlockedDirectPath ? 1.0f : 0.0f;
-
-		state.targetOcclusion = strongestTransmission;
+		state.targetOcclusion = std::max( 0.0f, std::min( 1.0f, path.transmissionLoss ) );
 	}
 }
 

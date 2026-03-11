@@ -115,6 +115,8 @@ public:
 	bool SetGlobalRTPC( const std::wstring& rtpcName, float value );
 	// Set a global state in Wwise.
 	bool SetState( const std::wstring& stateGroup, const std::wstring& stateName );
+	// Returns the active occlusion mode (HQ or Basic).
+	AudOcclusionMode GetOcclusionMode() const;
 	// Can be called to see if the current platform supports spatial audio.
 	const bool SpatialAudioIsSupported();
 	// Stop all currently playing sounds on all game objects.
@@ -213,6 +215,8 @@ private:
 	bool m_asyncOpen;
 	// Signals whether Carbon Audio's spatial audio features are enabled. If the user currently doesn't have an active spatial audio endpoint then output will still be in stereo.
 	bool m_spatialAudioEnabled;
+	// Controls whether to use HQ (full diffraction) or Basic (1-ray occlusion) mode.
+	AudOcclusionMode m_occlusionMode = AudOcclusionMode::HQ;
 	mutable bool m_audioCullingEnabled;
 
 	std::map<AkBankID, SoundBankInfo> m_soundBankInfoMap;

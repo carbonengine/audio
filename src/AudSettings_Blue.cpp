@@ -53,5 +53,12 @@ const Be::ClassInfo* AudSettings::ExposeToBlue()
 			Be::READWRITE 
 		)
 		MAP_ATTRIBUTE("essentialPath", m_essentialPath, "The path for essential media.", Be::READWRITE )
+		MAP_ATTRIBUTE(
+			"occlusionMode",
+			m_occlusionMode,
+			"Controls spatial audio occlusion quality. 0 = Basic (1-ray transmission only, lower CPU), "
+			"1 = HQ (full diffraction + transmission via Wwise Spatial Audio). Must be set before Enable().",
+			Be::READWRITE
+		)
 	EXPOSURE_END()
 }

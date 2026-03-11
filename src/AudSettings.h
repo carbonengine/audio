@@ -9,10 +9,18 @@
 
 #include "Audio2.h"
 
+enum class AudOcclusionMode : int
+{
+	Basic = 0,  // Manual 1-ray line-of-sight check, transmission only
+	HQ    = 1   // Wwise Spatial Audio handles diffraction + transmission
+};
+
 BLUE_CLASS( AudSettings ) : public IRoot
 {
 public:
 	EXPOSE_TO_BLUE();
+
+	int m_occlusionMode = static_cast<int>( AudOcclusionMode::Basic );
 
 #if _WIN32
 	bool m_spatialAudioEnabled = true;
