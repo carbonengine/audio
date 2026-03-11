@@ -64,6 +64,20 @@ public:
 	 */
 	float GetFadeRate() const;
 
+	/**
+	 * @brief Sets the fixed occlusion value applied when an emitter is blocked.
+	 *
+	 * @param value Occlusion level [0.0-1.0].
+	 */
+	void SetOcclusionValue( float value );
+
+	/**
+	 * @brief Gets the fixed occlusion value applied when an emitter is blocked.
+	 *
+	 * @return Current occlusion value.
+	 */
+	float GetOcclusionValue() const;
+
 private:
 	/**
 	 * @brief Cached runtime state for one emitter.
@@ -92,6 +106,9 @@ private:
 
 	/// Linear fade rate in second.
 	float m_fadeRate = 2.0f;
+
+	/// Fixed occlusion value applied when emitter is blocked.
+	float m_occlusionValue = 0.7f;
 
 	/**
 	 * @brief Queries Wwise Spatial Audio and updates emitter target values.

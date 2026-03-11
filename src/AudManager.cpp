@@ -161,10 +161,13 @@ bool AudManager::Init()
 		return false;
 	}
 
-	if( !InitSpatialAudioGeometry() )
+	if( m_occlusionMode != AudOcclusionMode::Off )
 	{
-		CCP_LOGERR( "Failed to initialize audio : Spatial Audio Geometry" );
-		return false;
+		if( !InitSpatialAudioGeometry() )
+		{
+			CCP_LOGERR( "Failed to initialize audio : Spatial Audio Geometry" );
+			return false;
+		}
 	}
 
 #ifndef AK_OPTIMIZED
@@ -485,6 +488,17 @@ bool AudManager::SetState( const std::wstring& stateGroup, const std::wstring& s
 AudOcclusionMode AudManager::GetOcclusionMode() const
 {
 	return m_occlusionMode;
+}
+
+float AudManager::GetGlobalTransmissionLoss() const
+{
+	return m_globalTransmissionLoss;
+}
+
+void AudManager::SetGlobalTransmissionLoss( float value )
+{
+	m_globalTransmissionLoss = std::max( 0.0f, std::min( 1.0f, value ) );
+	m_obstructionOcclusion->SetOcclusionValue( m_globalTransmissionLoss );
 }
 
 const bool AudManager::SpatialAudioIsSupported()

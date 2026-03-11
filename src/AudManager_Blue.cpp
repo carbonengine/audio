@@ -22,6 +22,11 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		MAP_PROPERTY( "waitingOneShotWeight", GetWaitingOneShotWeight, SetWaitingOneShotWeight, "The weight applied to a game object if there is a one shot sound waiting to play.")
 		MAP_PROPERTY( "visibleWeight", GetVisibleWeight, SetVisibleWeight, "The weight applied to a game object if it is visible to the listener.")
 		MAP_PROPERTY( "playing2DWeight", GetPlaying2DWeight, SetPlaying2DWeight, "The weight applied to a game object if it is currently playing a 2D sound.")
+
+		// Spatial audio occlusion settings
+		MAP_PROPERTY( "globalTransmissionLoss", GetGlobalTransmissionLoss, SetGlobalTransmissionLoss, "Global transmission loss [0.0-1.0]. In HQ mode sets geometry transmission loss. In Basic mode sets the fixed occlusion level when blocked.")
+		MAP_PROPERTY( "occlusionFadeRate", GetOcclusionFadeRate, SetOcclusionFadeRate, "Linear fade speed (units/sec) for occlusion transitions in Basic mode. Higher = faster fade.")
+		MAP_PROPERTY( "occlusionRefreshInterval", GetOcclusionRefreshInterval, SetOcclusionRefreshInterval, "How often each emitter is re-queried for occlusion state in Basic mode (seconds).")
 		
 		MAP_METHOD_AND_WRAP
 		( 

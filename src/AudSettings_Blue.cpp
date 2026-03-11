@@ -56,8 +56,9 @@ const Be::ClassInfo* AudSettings::ExposeToBlue()
 		MAP_ATTRIBUTE(
 			"occlusionMode",
 			m_occlusionMode,
-			"Controls spatial audio occlusion quality. 0 = Basic (1-ray transmission only, lower CPU), "
-			"1 = HQ (full diffraction + transmission via Wwise Spatial Audio). Must be set before Enable().",
+			"Controls spatial audio occlusion quality. -1 = Off (no geometry, no occlusion), "
+			"0 = Basic (No diffraction raycasting only occlusion and interpolated fade in/out. Lower CPU cost), "
+			"1 = HQ (full diffraction + transmission  ray casting. Higer CPU cost).",
 			Be::READWRITE
 		)
 	EXPOSURE_END()

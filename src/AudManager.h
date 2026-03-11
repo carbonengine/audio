@@ -117,6 +117,10 @@ public:
 	bool SetState( const std::wstring& stateGroup, const std::wstring& stateName );
 	// Returns the active occlusion mode (HQ or Basic).
 	AudOcclusionMode GetOcclusionMode() const;
+	// Returns the global transmission loss [0.0-1.0]. In HQ mode controls geometry transmission loss, in Basic controls the occlusion level.
+	float GetGlobalTransmissionLoss() const;
+	// Sets the global transmission loss [0.0-1.0].
+	void SetGlobalTransmissionLoss( float value );
 	// Can be called to see if the current platform supports spatial audio.
 	const bool SpatialAudioIsSupported();
 	// Stop all currently playing sounds on all game objects.
@@ -217,6 +221,8 @@ private:
 	bool m_spatialAudioEnabled;
 	// Controls whether to use HQ (full diffraction) or Basic (1-ray occlusion) mode.
 	AudOcclusionMode m_occlusionMode = AudOcclusionMode::HQ;
+	// Global transmission loss [0.0-1.0]: HQ = geometry transmissionLoss, Basic = fixed occlusion level.
+	float m_globalTransmissionLoss = 0.7f;
 	mutable bool m_audioCullingEnabled;
 
 	std::map<AkBankID, SoundBankInfo> m_soundBankInfoMap;
@@ -288,6 +294,12 @@ private:
 	DELEGATE_SETTER( float, SetWaitingOneShotWeight )
 	DELEGATE_SETTER( float, SetWeightMultiplier )
 	DELEGATE_SETTER( int, SetMaxAwakeGameObjects )
+
+	// Occlusion delegates (forwarded to m_obstructionOcclusion)
+	float GetOcclusionFadeRate() const { return m_obstructionOcclusion->GetFadeRate(); }
+	void SetOcclusionFadeRate( float value ) { m_obstructionOcclusion->SetFadeRate( value ); }
+	float GetOcclusionRefreshInterval() const { return m_obstructionOcclusion->GetRefreshInterval(); }
+	void SetOcclusionRefreshInterval( float value ) { m_obstructionOcclusion->SetRefreshInterval( value ); }
 
 // Undefine macros to prevent affecting code outside the AudManager class
 

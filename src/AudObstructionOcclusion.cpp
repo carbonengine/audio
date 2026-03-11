@@ -98,9 +98,9 @@ void AudObstructionOcclusion::QueryEmitter( AkGameObjectID emitterID, EmitterSta
 	state.targetObstruction = 0.0f;
 	state.targetOcclusion = 0.0f;
 
-	if( result == AK_Success && numPaths > 0 )
+	if( result == AK_Success && numPaths > 0 && path.transmissionLoss > 0.0f )
 	{
-		state.targetOcclusion = std::max( 0.0f, std::min( 1.0f, path.transmissionLoss ) );
+		state.targetOcclusion = m_occlusionValue;
 	}
 }
 
@@ -140,4 +140,14 @@ void AudObstructionOcclusion::SetFadeRate( float unitsPerSecond )
 float AudObstructionOcclusion::GetFadeRate() const
 {
 	return m_fadeRate;
+}
+
+void AudObstructionOcclusion::SetOcclusionValue( float value )
+{
+	m_occlusionValue = std::max( 0.0f, std::min( 1.0f, value ) );
+}
+
+float AudObstructionOcclusion::GetOcclusionValue() const
+{
+	return m_occlusionValue;
 }

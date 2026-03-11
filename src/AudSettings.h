@@ -11,6 +11,7 @@
 
 enum class AudOcclusionMode : int
 {
+	Off   = -1, // Occlusion disabled, no geometry registered, spatial audio geometry not initialized
 	Basic = 0,  // Manual 1-ray line-of-sight check, transmission only
 	HQ    = 1   // Wwise Spatial Audio handles diffraction + transmission
 };

@@ -56,6 +56,13 @@ void AudGeometry::SetGeometry(
 	{
 		return;
 	}
+
+	// Off mode: No occlusion, don't register any geometry with Wwise.
+	if( !g_audioManager || g_audioManager->GetOcclusionMode() == AudOcclusionMode::Off )
+	{
+		return;
+	}
+
 	CcpAutoMutex lock( s_mutex );
 
 	auto it = s_geometrySetRefCounts.find( geometrySetId );
@@ -67,7 +74,11 @@ void AudGeometry::SetGeometry(
 		AkAcousticSurface surface;
 		surface.strName = "default";
 		surface.textureID = AK_INVALID_UNIQUE_ID;
-		surface.transmissionLoss = 1.0f;
+		// HQ: global transmission loss handled by Wwise Spatial Audio.
+		// Basic: epsilon so Wwise detects blocking but doesn't audibly attenuate;
+		// AudObstructionOcclusion applies the actual occlusion via SetObjectObstructionAndOcclusion.
+		bool isHQ = ( g_audioManager->GetOcclusionMode() == AudOcclusionMode::HQ );
+		surface.transmissionLoss = isHQ ? g_audioManager->GetGlobalTransmissionLoss() : 0.001f;
 
 		AkGeometryParams params;
 		params.Vertices = akVertices.data();
@@ -76,7 +87,7 @@ void AudGeometry::SetGeometry(
 		params.NumTriangles = static_cast<AkTriIdx>( akTriangles.size() );
 		params.Surfaces = &surface;
 		params.NumSurfaces = 1;
-		params.EnableDiffraction = ( g_audioManager && g_audioManager->GetOcclusionMode() == AudOcclusionMode::HQ );
+		params.EnableDiffraction = ( g_audioManager->GetOcclusionMode() == AudOcclusionMode::HQ );
 		params.EnableDiffractionOnBoundaryEdges = false;
 
 		AKRESULT result = AK::SpatialAudio::SetGeometry( geometrySetId, params );
