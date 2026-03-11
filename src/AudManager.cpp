@@ -70,6 +70,7 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_asyncOpen( true ),
 	m_log(),
 	m_spatialAudioEnabled( true ),
+	m_occlusionMode( AudOcclusionMode::Off ),
 	m_moniteredParametersMapMutex( "AudManager", "m_monitoredParametersMapMutex" ),
 	m_soundBankMutex( "AudManager", "m_soundBankMutex" ),
 	m_isProfilerCapturing( false ),
