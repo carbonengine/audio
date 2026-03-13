@@ -24,7 +24,7 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		MAP_PROPERTY( "playing2DWeight", GetPlaying2DWeight, SetPlaying2DWeight, "The weight applied to a game object if it is currently playing a 2D sound.")
 
 		// Spatial audio settings (applied at init when occlusion mode is On)
-		MAP_PROPERTY( "occlusionMode", GetOcclusionMode, SetOcclusionMode, "Controls spatial audio occlusion. 0 = Off (no geometry, no occlusion), 1 = On (Wwise Spatial Audio diffraction + transmission).")
+		MAP_PROPERTY( "occlusionMode", GetOcclusionModeInt, SetOcclusionModeInt, "Controls spatial audio occlusion. 0 = Off (no geometry, no occlusion), 1 = On (Wwise Spatial Audio diffraction + transmission).")
 		MAP_PROPERTY( "globalTransmissionLoss", GetGlobalTransmissionLoss, SetGlobalTransmissionLoss, "Global transmission loss [0.0-1.0] applied to geometry surfaces when occlusion is enabled.")
 		MAP_PROPERTY( "maxSoundPropagationDepth", GetMaxSoundPropagationDepth, SetMaxSoundPropagationDepth, "Maximum number of portals that sound can propagate through.")
 		MAP_PROPERTY( "movementThreshold", GetMovementThreshold, SetMovementThreshold, "Distance an emitter or listener must move to trigger a re-validation of reflections/diffraction.")

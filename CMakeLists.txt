@@ -49,7 +49,6 @@ ccp_add_library(CarbonAudio SHARED
     src/AudActionLog.cpp
 	src/AudActionLog_Blue.cpp
 	src/AudManager.cpp
-	src/AudObstructionOcclusion.cpp
 	src/AudConstants.cpp
 	src/AudManager_Blue.cpp
 	src/AudEmitter.cpp
@@ -73,6 +72,7 @@ ccp_add_library(CarbonAudio SHARED
 	src/AudGameObjResource_Blue.cpp
 	src/AudGeometry.cpp
 	src/AudGeometry_Blue.cpp
+	src/SpatialAudioSettings.cpp
 	src/stdafx.cpp
 	src/AudListener.cpp
 	src/AudioCurveSetDriver.cpp
@@ -108,7 +108,6 @@ target_sources(CarbonAudio PRIVATE
 	src/AudioInputMgr.h
 	src/AudListener.h
 	src/AudManager.h
-	src/AudObstructionOcclusion.h
 	src/AudParameter.h
 	src/AudPosition.h
 	src/AudSettings.h
@@ -116,6 +115,7 @@ target_sources(CarbonAudio PRIVATE
 	src/AudUIPlayer.h
 	src/AudMusicPlayer.h
 	src/AudGeometry.h
+	src/SpatialAudioSettings.h
 	src/autoversion.h
 	src/DebugUtilities.h
 	src/LogBridge.h
@@ -352,7 +352,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 	
 	# Filter out command line arguments and only keep actual test names
 	# This is an unfortunate necessity because MacOS was not properly handling test discovery and taking all arguments as tests.
-	string(REPLACE "\n" ";" PYTHON_TESTS_RAW ${PYTHON_TESTS_STR})
+	string(REPLACE "\n" ";" PYTHON_TESTS_RAW "${PYTHON_TESTS_STR}")
 	set(PYTHON_TESTS "")
 	foreach(LINE ${PYTHON_TESTS_RAW})
 		string(STRIP "${LINE}" LINE_STRIPPED)

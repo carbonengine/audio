@@ -115,6 +115,12 @@ public:
 	bool SetGlobalRTPC( const std::wstring& rtpcName, float value );
 	// Set a global state in Wwise.
 	bool SetState( const std::wstring& stateGroup, const std::wstring& stateName );
+	// Returns the occlusion mode as an integer for Blue property exposure.
+	int GetOcclusionModeInt() const;
+	// Sets the occlusion mode from an integer value.
+	void SetOcclusionModeInt( int value );
+	// Returns the occlusion mode enum.
+	AudOcclusionMode GetOcclusionMode() const;
 	// Returns the global transmission loss [0.0-1.0] used for geometry surfaces.
 	float GetGlobalTransmissionLoss() const;
 	// Sets the global transmission loss [0.0-1.0].
@@ -315,7 +321,6 @@ private:
 	}
 
 	// Getters
-	DELEGATE_SA_GETTER( AudOcclusionMode, GetOcclusionMode )
 	DELEGATE_SA_GETTER( int, GetMaxSoundPropagationDepth )
 	DELEGATE_SA_GETTER( float, GetMovementThreshold )
 	DELEGATE_SA_GETTER( int, GetNumberOfPrimaryRays )
@@ -330,7 +335,6 @@ private:
 	DELEGATE_SA_GETTER( bool, GetCalcEmitterVirtualPosition )
 
 	// Setters
-	DELEGATE_SA_SETTER( AudOcclusionMode, SetOcclusionMode )
 	DELEGATE_SA_SETTER( int, SetMaxSoundPropagationDepth )
 	DELEGATE_SA_SETTER( float, SetMovementThreshold )
 	DELEGATE_SA_SETTER( int, SetNumberOfPrimaryRays )

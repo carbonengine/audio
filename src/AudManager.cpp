@@ -458,6 +458,21 @@ bool AudManager::SetState( const std::wstring& stateGroup, const std::wstring& s
 	return false;
 }
 
+int AudManager::GetOcclusionModeInt() const
+{
+	return static_cast<int>( m_spatialAudioSettings->GetOcclusionMode() );
+}
+
+void AudManager::SetOcclusionModeInt( int value )
+{
+	m_spatialAudioSettings->SetOcclusionMode( static_cast<AudOcclusionMode>( value ) );
+}
+
+AudOcclusionMode AudManager::GetOcclusionMode() const
+{
+	return m_spatialAudioSettings->GetOcclusionMode();
+}
+
 float AudManager::GetGlobalTransmissionLoss() const
 {
 	return m_globalTransmissionLoss;
