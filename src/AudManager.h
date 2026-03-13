@@ -14,6 +14,7 @@
 #include "AudSettings.h"
 #include "AudListener.h"
 #include "SoundPrioritization.h"
+#include "SpatialAudioSettings.h"
 #include "CCPFilePackageLowLevelIO.h"
 #include <memory>
 
@@ -114,8 +115,6 @@ public:
 	bool SetGlobalRTPC( const std::wstring& rtpcName, float value );
 	// Set a global state in Wwise.
 	bool SetState( const std::wstring& stateGroup, const std::wstring& stateName );
-	// Returns the active occlusion mode (On or Off).
-	AudOcclusionMode GetOcclusionMode() const;
 	// Returns the global transmission loss [0.0-1.0] used for geometry surfaces.
 	float GetGlobalTransmissionLoss() const;
 	// Sets the global transmission loss [0.0-1.0].
@@ -218,8 +217,6 @@ private:
 	bool m_asyncOpen;
 	// Signals whether Carbon Audio's spatial audio features are enabled. If the user currently doesn't have an active spatial audio endpoint then output will still be in stereo.
 	bool m_spatialAudioEnabled;
-	// Controls whether occlusion is On or Off.
-	AudOcclusionMode m_occlusionMode;
 	// Global transmission loss [0.0-1.0] applied to geometry surfaces.
 	float m_globalTransmissionLoss = 0.7f;
 	mutable bool m_audioCullingEnabled;
@@ -236,6 +233,7 @@ private:
 	CcpMutex m_moniteredParametersMapMutex;
 
 	SoundPrioritization* m_soundPrioritization;
+	SpatialAudioSettings* m_spatialAudioSettings;
 
 	// A boolean for the state of the profiler capture
 	bool m_isProfilerCapturing;
@@ -297,6 +295,57 @@ private:
 
 #undef DELEGATE_GETTER
 #undef DELEGATE_SETTER
+
+	//-----------------------------------------------------
+	// Description:
+	//   Delegate macros to forward getter/setter calls to
+	//   the SpatialAudioSettings instance.
+	//-----------------------------------------------------
+
+#define DELEGATE_SA_GETTER( ReturnType, MethodName )         \
+	ReturnType MethodName() const                            \
+	{                                                        \
+		return m_spatialAudioSettings->MethodName();          \
+	}
+
+#define DELEGATE_SA_SETTER( ParamType, MethodName )          \
+	void MethodName( ParamType value )                       \
+	{                                                        \
+		m_spatialAudioSettings->MethodName( value );          \
+	}
+
+	// Getters
+	DELEGATE_SA_GETTER( AudOcclusionMode, GetOcclusionMode )
+	DELEGATE_SA_GETTER( int, GetMaxSoundPropagationDepth )
+	DELEGATE_SA_GETTER( float, GetMovementThreshold )
+	DELEGATE_SA_GETTER( int, GetNumberOfPrimaryRays )
+	DELEGATE_SA_GETTER( int, GetMaxReflectionOrder )
+	DELEGATE_SA_GETTER( int, GetMaxDiffractionOrder )
+	DELEGATE_SA_GETTER( int, GetMaxEmitterRoomAuxSends )
+	DELEGATE_SA_GETTER( int, GetDiffractionOnReflectionsOrder )
+	DELEGATE_SA_GETTER( float, GetMaxPathLength )
+	DELEGATE_SA_GETTER( float, GetCPULimitPercentage )
+	DELEGATE_SA_GETTER( int, GetLoadBalancingSpread )
+	DELEGATE_SA_GETTER( bool, GetEnableDiffractionAndTransmission )
+	DELEGATE_SA_GETTER( bool, GetCalcEmitterVirtualPosition )
+
+	// Setters
+	DELEGATE_SA_SETTER( AudOcclusionMode, SetOcclusionMode )
+	DELEGATE_SA_SETTER( int, SetMaxSoundPropagationDepth )
+	DELEGATE_SA_SETTER( float, SetMovementThreshold )
+	DELEGATE_SA_SETTER( int, SetNumberOfPrimaryRays )
+	DELEGATE_SA_SETTER( int, SetMaxReflectionOrder )
+	DELEGATE_SA_SETTER( int, SetMaxDiffractionOrder )
+	DELEGATE_SA_SETTER( int, SetMaxEmitterRoomAuxSends )
+	DELEGATE_SA_SETTER( int, SetDiffractionOnReflectionsOrder )
+	DELEGATE_SA_SETTER( float, SetMaxPathLength )
+	DELEGATE_SA_SETTER( float, SetCPULimitPercentage )
+	DELEGATE_SA_SETTER( int, SetLoadBalancingSpread )
+	DELEGATE_SA_SETTER( bool, SetEnableDiffractionAndTransmission )
+	DELEGATE_SA_SETTER( bool, SetCalcEmitterVirtualPosition )
+
+#undef DELEGATE_SA_GETTER
+#undef DELEGATE_SA_SETTER
 };
 
 TYPEDEF_BLUECLASS( AudManager );

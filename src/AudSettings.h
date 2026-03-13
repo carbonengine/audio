@@ -9,18 +9,10 @@
 
 #include "Audio2.h"
 
-enum class AudOcclusionMode : int
-{
-	Off = 0, // Occlusion disabled, no geometry registered, spatial audio geometry not initialized
-	On  = 1  // Wwise Spatial Audio handles diffraction + transmission
-};
-
 BLUE_CLASS( AudSettings ) : public IRoot
 {
 public:
 	EXPOSE_TO_BLUE();
-
-	int m_occlusionMode = static_cast<int>( AudOcclusionMode::Off );
 
 #if _WIN32
 	bool m_spatialAudioEnabled = true;

@@ -70,7 +70,6 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_asyncOpen( true ),
 	m_log(),
 	m_spatialAudioEnabled( true ),
-	m_occlusionMode( AudOcclusionMode::Off ),
 	m_moniteredParametersMapMutex( "AudManager", "m_monitoredParametersMapMutex" ),
 	m_soundBankMutex( "AudManager", "m_soundBankMutex" ),
 	m_isProfilerCapturing( false ),
@@ -78,12 +77,14 @@ AudManager::AudManager( IRoot* lockobj ) :
 {
 	// Initialize sound prioritization system
 	m_soundPrioritization = new SoundPrioritization();
+	m_spatialAudioSettings = new SpatialAudioSettings();
 }
 
 AudManager::~AudManager()
 {
 	// Clean up sound prioritization system
 	delete m_soundPrioritization;
+	delete m_spatialAudioSettings;
 
 	if( g_audioInitialized )
 	{
@@ -152,7 +153,7 @@ bool AudManager::Init()
 		return false;
 	}
 
-	if( m_occlusionMode == AudOcclusionMode::On )
+	if( m_spatialAudioSettings->GetOcclusionMode() == AudOcclusionMode::On )
 	{
 		if( !InitSpatialAudioGeometry() )
 		{
@@ -406,17 +407,18 @@ bool AudManager::InitSpatialAudioGeometry()
 {
 	AkSpatialAudioInitSettings spatialSettings;
 
-	spatialSettings.bEnableGeometricDiffractionAndTransmission = true;
-
-	spatialSettings.uMaxReflectionOrder = 0;
-	spatialSettings.uDiffractionOnReflectionsOrder = 0;
-	spatialSettings.uMaxEmitterRoomAuxSends = 0;
-	spatialSettings.uMaxSoundPropagationDepth = 1;
-	spatialSettings.fMovementThreshold = 100;
-
-	spatialSettings.uMaxDiffractionOrder = 4;
-	spatialSettings.bCalcEmitterVirtualPosition = true;
-	spatialSettings.fCPULimitPercentage = 20;
+	spatialSettings.uMaxSoundPropagationDepth = m_spatialAudioSettings->GetMaxSoundPropagationDepth();
+	spatialSettings.fMovementThreshold = m_spatialAudioSettings->GetMovementThreshold();
+	spatialSettings.uNumberOfPrimaryRays = m_spatialAudioSettings->GetNumberOfPrimaryRays();
+	spatialSettings.uMaxReflectionOrder = m_spatialAudioSettings->GetMaxReflectionOrder();
+	spatialSettings.uMaxDiffractionOrder = m_spatialAudioSettings->GetMaxDiffractionOrder();
+	spatialSettings.uMaxEmitterRoomAuxSends = m_spatialAudioSettings->GetMaxEmitterRoomAuxSends();
+	spatialSettings.uDiffractionOnReflectionsOrder = m_spatialAudioSettings->GetDiffractionOnReflectionsOrder();
+	spatialSettings.fMaxPathLength = m_spatialAudioSettings->GetMaxPathLength();
+	spatialSettings.fCPULimitPercentage = m_spatialAudioSettings->GetCPULimitPercentage();
+	spatialSettings.uLoadBalancingSpread = m_spatialAudioSettings->GetLoadBalancingSpread();
+	spatialSettings.bEnableGeometricDiffractionAndTransmission = m_spatialAudioSettings->GetEnableDiffractionAndTransmission();
+	spatialSettings.bCalcEmitterVirtualPosition = m_spatialAudioSettings->GetCalcEmitterVirtualPosition();
 
 	if( AK::SpatialAudio::Init( spatialSettings ) != AK_Success )
 	{
@@ -456,15 +458,6 @@ bool AudManager::SetState( const std::wstring& stateGroup, const std::wstring& s
 	return false;
 }
 
-//-----------------------------------------------------
-// Description:
-//   Signals whether Carbon Audio supports spatial audio features on this operating system.
-//-----------------------------------------------------
-AudOcclusionMode AudManager::GetOcclusionMode() const
-{
-	return m_occlusionMode;
-}
-
 float AudManager::GetGlobalTransmissionLoss() const
 {
 	return m_globalTransmissionLoss;
@@ -483,7 +476,6 @@ const bool AudManager::SpatialAudioIsSupported()
 void AudManager::UpdateSettings( AudSettings* settings )
 {
 	m_settings = settings;
-	m_occlusionMode = static_cast<AudOcclusionMode>( m_settings->m_occlusionMode );
 }
 
 void AudManager::LoadBank( const std::wstring& name )

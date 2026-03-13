@@ -23,8 +23,21 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		MAP_PROPERTY( "visibleWeight", GetVisibleWeight, SetVisibleWeight, "The weight applied to a game object if it is visible to the listener.")
 		MAP_PROPERTY( "playing2DWeight", GetPlaying2DWeight, SetPlaying2DWeight, "The weight applied to a game object if it is currently playing a 2D sound.")
 
-		// Spatial audio occlusion settings
+		// Spatial audio settings (applied at init when occlusion mode is On)
+		MAP_PROPERTY( "occlusionMode", GetOcclusionMode, SetOcclusionMode, "Controls spatial audio occlusion. 0 = Off (no geometry, no occlusion), 1 = On (Wwise Spatial Audio diffraction + transmission).")
 		MAP_PROPERTY( "globalTransmissionLoss", GetGlobalTransmissionLoss, SetGlobalTransmissionLoss, "Global transmission loss [0.0-1.0] applied to geometry surfaces when occlusion is enabled.")
+		MAP_PROPERTY( "maxSoundPropagationDepth", GetMaxSoundPropagationDepth, SetMaxSoundPropagationDepth, "Maximum number of portals that sound can propagate through.")
+		MAP_PROPERTY( "movementThreshold", GetMovementThreshold, SetMovementThreshold, "Distance an emitter or listener must move to trigger a re-validation of reflections/diffraction.")
+		MAP_PROPERTY( "numberOfPrimaryRays", GetNumberOfPrimaryRays, SetNumberOfPrimaryRays, "Number of primary rays used in the ray tracing engine. More rays = better quality but higher CPU.")
+		MAP_PROPERTY( "maxReflectionOrder", GetMaxReflectionOrder, SetMaxReflectionOrder, "Maximum reflection order [1-4] - number of bounces in a reflection path.")
+		MAP_PROPERTY( "maxDiffractionOrder", GetMaxDiffractionOrder, SetMaxDiffractionOrder, "Maximum diffraction order [1-8] - number of bends in a diffraction path. Set to 0 to disable diffraction.")
+		MAP_PROPERTY( "maxEmitterRoomAuxSends", GetMaxEmitterRoomAuxSends, SetMaxEmitterRoomAuxSends, "Maximum number of game-defined auxiliary sends from a single emitter. Set to 0 to disable the limit.")
+		MAP_PROPERTY( "diffractionOnReflectionsOrder", GetDiffractionOnReflectionsOrder, SetDiffractionOnReflectionsOrder, "Maximum diffraction points at each end of a reflection path. Set to 0 to disable diffraction on reflections.")
+		MAP_PROPERTY( "maxPathLength", GetMaxPathLength, SetMaxPathLength, "Maximum total length of a path composed of segments. Higher values compute longer paths but increase CPU cost.")
+		MAP_PROPERTY( "cpuLimitPercentage", GetCPULimitPercentage, SetCPULimitPercentage, "Targeted computation time for ray tracing as a percentage [0-100] of the audio frame. 0 = no limit.")
+		MAP_PROPERTY( "loadBalancingSpread", GetLoadBalancingSpread, SetLoadBalancingSpread, "Spread path computation over N frames [1..]. 1 = no load balancing.")
+		MAP_PROPERTY( "enableDiffractionAndTransmission", GetEnableDiffractionAndTransmission, SetEnableDiffractionAndTransmission, "Enable geometric diffraction and transmission path computation.")
+		MAP_PROPERTY( "calcEmitterVirtualPosition", GetCalcEmitterVirtualPosition, SetCalcEmitterVirtualPosition, "Calculate virtual position for emitters diffracted through portals or around geometry.")
 		
 		MAP_METHOD_AND_WRAP
 		( 
