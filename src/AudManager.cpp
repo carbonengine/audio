@@ -440,7 +440,8 @@ bool AudManager::InitSpatialAudioGeometry()
 		spatialSettings.uNumberOfPrimaryRays = 1;
 		spatialSettings.uMaxDiffractionOrder = 0;
 		spatialSettings.bCalcEmitterVirtualPosition = false;
-		spatialSettings.fCPULimitPercentage = 10;
+		spatialSettings.fCPULimitPercentage = 5;
+		spatialSettings.uLoadBalancingSpread = 2;
 	}
 
 	if( AK::SpatialAudio::Init( spatialSettings ) != AK_Success )

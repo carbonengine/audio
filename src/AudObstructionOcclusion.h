@@ -111,8 +111,8 @@ private:
 	/// Per-emitter query cadence in seconds.
 	float m_refreshInterval = 0.2f;
 
-	/// Linear fade rate in second.
-	float m_fadeRate = 2.0f;
+	/// Linear fade rate in units per second.
+	float m_fadeRate = 1.0f;
 
 	/// Fixed occlusion value applied when emitter is blocked.
 	float m_occlusionValue = 0.7f;
