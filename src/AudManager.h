@@ -13,7 +13,6 @@
 #include "Audio2.h"
 #include "AudSettings.h"
 #include "AudListener.h"
-#include "AudObstructionOcclusion.h"
 #include "SoundPrioritization.h"
 #include "CCPFilePackageLowLevelIO.h"
 #include <memory>
@@ -115,9 +114,9 @@ public:
 	bool SetGlobalRTPC( const std::wstring& rtpcName, float value );
 	// Set a global state in Wwise.
 	bool SetState( const std::wstring& stateGroup, const std::wstring& stateName );
-	// Returns the active occlusion mode (HQ or Basic).
+	// Returns the active occlusion mode (On or Off).
 	AudOcclusionMode GetOcclusionMode() const;
-	// Returns the global transmission loss [0.0-1.0]. In HQ mode controls geometry transmission loss, in Basic controls the occlusion level.
+	// Returns the global transmission loss [0.0-1.0] used for geometry surfaces.
 	float GetGlobalTransmissionLoss() const;
 	// Sets the global transmission loss [0.0-1.0].
 	void SetGlobalTransmissionLoss( float value );
@@ -219,9 +218,9 @@ private:
 	bool m_asyncOpen;
 	// Signals whether Carbon Audio's spatial audio features are enabled. If the user currently doesn't have an active spatial audio endpoint then output will still be in stereo.
 	bool m_spatialAudioEnabled;
-	// Controls whether to use HQ (full diffraction) or Basic (1-ray occlusion) mode.
+	// Controls whether occlusion is On or Off.
 	AudOcclusionMode m_occlusionMode;
-	// Global transmission loss [0.0-1.0]: HQ = geometry transmissionLoss, Basic = fixed occlusion level.
+	// Global transmission loss [0.0-1.0] applied to geometry surfaces.
 	float m_globalTransmissionLoss = 0.7f;
 	mutable bool m_audioCullingEnabled;
 
@@ -237,7 +236,6 @@ private:
 	CcpMutex m_moniteredParametersMapMutex;
 
 	SoundPrioritization* m_soundPrioritization;
-	AudObstructionOcclusion* m_obstructionOcclusion;
 
 	// A boolean for the state of the profiler capture
 	bool m_isProfilerCapturing;
@@ -294,12 +292,6 @@ private:
 	DELEGATE_SETTER( float, SetWaitingOneShotWeight )
 	DELEGATE_SETTER( float, SetWeightMultiplier )
 	DELEGATE_SETTER( int, SetMaxAwakeGameObjects )
-
-	// Occlusion delegates (forwarded to m_obstructionOcclusion)
-	float GetOcclusionFadeRate() const { return m_obstructionOcclusion->GetFadeRate(); }
-	void SetOcclusionFadeRate( float value ) { m_obstructionOcclusion->SetFadeRate( value ); }
-	float GetOcclusionRefreshInterval() const { return m_obstructionOcclusion->GetRefreshInterval(); }
-	void SetOcclusionRefreshInterval( float value ) { m_obstructionOcclusion->SetRefreshInterval( value ); }
 
 // Undefine macros to prevent affecting code outside the AudManager class
 

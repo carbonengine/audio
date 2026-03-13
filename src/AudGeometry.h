@@ -23,12 +23,9 @@
  * placement of a geometry set in the world with a specified transform — position,
  * orientation, and scale (see AkGeometryInstanceParams).
  *
- * Behaviour depends on the @c AudOcclusionMode:
- * - **Off**: geometry registration is skipped entirely.
- * - **Basic**: geometry registered with @c EnableDiffraction=false and a near-zero
- *   @c transmissionLoss so Wwise can detect blocking for AudObstructionOcclusion.
- * - **HQ**: geometry registered with @c EnableDiffraction=true and
- *   @c transmissionLoss set to @c globalTransmissionLoss replacing basic occlusion.
+ * When @c AudOcclusionMode::On, geometry is registered with diffraction and
+ * transmission enabled. When @c AudOcclusionMode::Off, geometry registration
+ * is skipped entirely.
  */
 BLUE_CLASS(AudGeometry) :
 	public ITr2AudGeometry

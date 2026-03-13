@@ -83,7 +83,7 @@ void AudGeometry::SetGeometry(
 		params.NumTriangles = static_cast<AkTriIdx>( akTriangles.size() );
 		params.Surfaces = &surface;
 		params.NumSurfaces = 1;
-		params.EnableDiffraction = ( g_audioManager->GetOcclusionMode() == AudOcclusionMode::HQ );
+		params.EnableDiffraction = true;
 		params.EnableDiffractionOnBoundaryEdges = false;
 
 		AKRESULT result = AK::SpatialAudio::SetGeometry( geometrySetId, params );

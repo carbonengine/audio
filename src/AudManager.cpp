@@ -78,14 +78,12 @@ AudManager::AudManager( IRoot* lockobj ) :
 {
 	// Initialize sound prioritization system
 	m_soundPrioritization = new SoundPrioritization();
-	m_obstructionOcclusion = new AudObstructionOcclusion();
 }
 
 AudManager::~AudManager()
 {
 	// Clean up sound prioritization system
 	delete m_soundPrioritization;
-	delete m_obstructionOcclusion;
 
 	if( g_audioInitialized )
 	{
@@ -100,14 +98,6 @@ void AudManager::Process()
 		if( m_soundPrioritization->GetAudioCullingEnabled() && g_audioEnabled )
 		{
 			m_soundPrioritization->CullAudio();
-		}
-
-		// In Basic mode, manually query 1 ray per emitter and apply occlusion.
-		// In HQ mode, Wwise Spatial Audio handles diffraction + transmission automatically.
-		if( m_occlusionMode == AudOcclusionMode::Basic )
-		{
-			m_obstructionOcclusion->Update( LISTENER_GAME_OBJ_ID,
-				m_soundPrioritization->GetPrioritizedAudioObjects() );
 		}
 
 		// Process bank requests, events, positions, RTPC, etc.
@@ -162,7 +152,7 @@ bool AudManager::Init()
 		return false;
 	}
 
-	if( m_occlusionMode != AudOcclusionMode::Off )
+	if( m_occlusionMode == AudOcclusionMode::On )
 	{
 		if( !InitSpatialAudioGeometry() )
 		{
@@ -416,7 +406,6 @@ bool AudManager::InitSpatialAudioGeometry()
 {
 	AkSpatialAudioInitSettings spatialSettings;
 
-	// Both modes need geometric transmission enabled for line-of-sight checks.
 	spatialSettings.bEnableGeometricDiffractionAndTransmission = true;
 
 	spatialSettings.uMaxReflectionOrder = 0;
@@ -425,24 +414,9 @@ bool AudManager::InitSpatialAudioGeometry()
 	spatialSettings.uMaxSoundPropagationDepth = 1;
 	spatialSettings.fMovementThreshold = 100;
 
-	if( m_occlusionMode == AudOcclusionMode::HQ )
-	{
-		// HQ: Wwise Spatial Audio handles diffraction + transmission automatically.
-		spatialSettings.uMaxDiffractionOrder = 4;
-		spatialSettings.bCalcEmitterVirtualPosition = true;
-		spatialSettings.fCPULimitPercentage = 20;
-	}
-	else
-	{
-		// Basic: No diffraction, only transmission/line-of-sight raycasting.
-		// AudObstructionOcclusion queries 1 ray per emitter and feeds the result
-		// into AK::SoundEngine::SetObjectObstructionAndOcclusion().
-		spatialSettings.uNumberOfPrimaryRays = 1;
-		spatialSettings.uMaxDiffractionOrder = 0;
-		spatialSettings.bCalcEmitterVirtualPosition = false;
-		spatialSettings.fCPULimitPercentage = 5;
-		spatialSettings.uLoadBalancingSpread = 2;
-	}
+	spatialSettings.uMaxDiffractionOrder = 4;
+	spatialSettings.bCalcEmitterVirtualPosition = true;
+	spatialSettings.fCPULimitPercentage = 20;
 
 	if( AK::SpatialAudio::Init( spatialSettings ) != AK_Success )
 	{
@@ -450,8 +424,7 @@ bool AudManager::InitSpatialAudioGeometry()
 		return false;
 	}
 
-	const char* modeName = ( m_occlusionMode == AudOcclusionMode::HQ ) ? "HQ (diffraction + transmission)" : "Basic (occlusion only)";
-	CCP_LOG_CH( s_ch, "Wwise Spatial Audio Geometry initialized in %s mode", modeName );
+	CCP_LOG_CH( s_ch, "Wwise Spatial Audio Geometry initialized" );
 	return true;
 }
 
@@ -500,7 +473,6 @@ float AudManager::GetGlobalTransmissionLoss() const
 void AudManager::SetGlobalTransmissionLoss( float value )
 {
 	m_globalTransmissionLoss = std::max( 0.0f, std::min( 1.0f, value ) );
-	m_obstructionOcclusion->SetOcclusionValue( m_globalTransmissionLoss );
 }
 
 const bool AudManager::SpatialAudioIsSupported()

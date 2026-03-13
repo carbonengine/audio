@@ -11,9 +11,8 @@
 
 enum class AudOcclusionMode : int
 {
-	Off   = -1, // Occlusion disabled, no geometry registered, spatial audio geometry not initialized
-	Basic = 0,  // Manual 1-ray line-of-sight check, transmission only
-	HQ    = 1   // Wwise Spatial Audio handles diffraction + transmission
+	Off = 0, // Occlusion disabled, no geometry registered, spatial audio geometry not initialized
+	On  = 1  // Wwise Spatial Audio handles diffraction + transmission
 };
 
 BLUE_CLASS( AudSettings ) : public IRoot
@@ -21,7 +20,7 @@ BLUE_CLASS( AudSettings ) : public IRoot
 public:
 	EXPOSE_TO_BLUE();
 
-	int m_occlusionMode = static_cast<int>( AudOcclusionMode::Basic );
+	int m_occlusionMode = static_cast<int>( AudOcclusionMode::Off );
 
 #if _WIN32
 	bool m_spatialAudioEnabled = true;
