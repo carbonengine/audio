@@ -74,8 +74,7 @@ void AudGeometry::SetGeometry(
 		surface.strName = "default";
 		surface.textureID = AK_INVALID_UNIQUE_ID;
 
-		bool isHQ = ( g_audioManager->GetOcclusionMode() == AudOcclusionMode::HQ );
-		surface.transmissionLoss = isHQ ? g_audioManager->GetGlobalTransmissionLoss() : 0.001f;
+		surface.transmissionLoss = g_audioManager->GetGlobalTransmissionLoss();
 
 		AkGeometryParams params;
 		params.Vertices = akVertices.data();

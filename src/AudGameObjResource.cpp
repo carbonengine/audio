@@ -581,7 +581,7 @@ void AudGameObjResource::Wake()
 			return;
 		}
 
-		RegisterWwiseObject();	
+		RegisterWwiseObject();
 		SetPositionHelper( Vector3( 1,0,0 ), Vector3( 0,1,0 ), m_position );
 		m_culled = false;
 		if ( m_waitingOneShotInRange.second != L"" && m_listenerInRange )

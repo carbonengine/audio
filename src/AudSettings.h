@@ -21,7 +21,7 @@ BLUE_CLASS( AudSettings ) : public IRoot
 public:
 	EXPOSE_TO_BLUE();
 
-	int m_occlusionMode = static_cast<int>( AudOcclusionMode::Off );
+	int m_occlusionMode = static_cast<int>( AudOcclusionMode::Basic );
 
 #if _WIN32
 	bool m_spatialAudioEnabled = true;

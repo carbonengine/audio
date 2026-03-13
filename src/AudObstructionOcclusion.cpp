@@ -85,9 +85,6 @@ void AudObstructionOcclusion::Update(
 
 void AudObstructionOcclusion::QueryEmitter( AkGameObjectID emitterID, EmitterState& state )
 {
-	// Query a single direct path (1 ray) to check line-of-sight.
-	// With uMaxDiffractionOrder = 0 and EnableDiffraction = false,
-	// Wwise only returns the direct path with transmission loss if blocked.
 	AkDiffractionPathInfo path;
 	AkUInt32 numPaths = 1;
 	AkVector64 listenerPos, emitterPos;

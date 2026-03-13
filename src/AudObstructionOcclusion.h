@@ -92,7 +92,7 @@ private:
 	struct EmitterState
 	{
 		float obstruction = 0.0f;
-		float occlusion = 0.0f;    
+		float occlusion = 0.0f;
 		float targetObstruction = 0.0f;
 		float targetOcclusion = 0.0f;
 		float nextQueryTime = 0.0f;
