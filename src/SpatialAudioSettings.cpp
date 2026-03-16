@@ -2,7 +2,7 @@
 #include "SpatialAudioSettings.h"
 
 SpatialAudioSettings::SpatialAudioSettings()
-	: m_occlusionMode( AudOcclusion::On )
+	: m_occlusionMode( AudOcclusion::Off )
 	, m_movementThreshold( 100.0f )
 	, m_numberOfPrimaryRays( 35 )
 	, m_maxReflectionOrder( 0 )
