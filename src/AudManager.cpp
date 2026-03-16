@@ -73,7 +73,8 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_moniteredParametersMapMutex( "AudManager", "m_monitoredParametersMapMutex" ),
 	m_soundBankMutex( "AudManager", "m_soundBankMutex" ),
 	m_isProfilerCapturing( false ),
-	m_audioCullingEnabled( true )
+	m_audioCullingEnabled( true ),
+	m_globalTransmissionLoss( 0.7f )
 {
 	// Initialize sound prioritization system
 	m_soundPrioritization = new SoundPrioritization();
@@ -157,7 +158,7 @@ bool AudManager::Init()
 	{
 		if( !InitSpatialAudioGeometry() )
 		{
-			CCP_LOGERR( "Failed to initialize audio : Spatial Audio Geometry" );
+			CCP_LOGERR( "Failed to initialize Spatial Audio Geometry" );
 			return false;
 		}
 	}
@@ -406,18 +407,7 @@ bool AudManager::InitMusic()
 bool AudManager::InitSpatialAudioGeometry()
 {
 	AkSpatialAudioInitSettings spatialSettings;
-
-	spatialSettings.fMovementThreshold = m_spatialAudioSettings->GetMovementThreshold();
-	spatialSettings.uNumberOfPrimaryRays = m_spatialAudioSettings->GetNumberOfPrimaryRays();
-	spatialSettings.uMaxReflectionOrder = m_spatialAudioSettings->GetMaxReflectionOrder();
-	spatialSettings.uMaxDiffractionOrder = m_spatialAudioSettings->GetMaxDiffractionOrder();
-	spatialSettings.uMaxEmitterRoomAuxSends = m_spatialAudioSettings->GetMaxEmitterRoomAuxSends();
-	spatialSettings.uDiffractionOnReflectionsOrder = m_spatialAudioSettings->GetDiffractionOnReflectionsOrder();
-	spatialSettings.fMaxPathLength = m_spatialAudioSettings->GetMaxPathLength();
-	spatialSettings.fCPULimitPercentage = m_spatialAudioSettings->GetCPULimitPercentage();
-	spatialSettings.uLoadBalancingSpread = m_spatialAudioSettings->GetLoadBalancingSpread();
-	spatialSettings.bEnableGeometricDiffractionAndTransmission = m_spatialAudioSettings->GetEnableDiffractionAndTransmission();
-	spatialSettings.bCalcEmitterVirtualPosition = m_spatialAudioSettings->GetCalcEmitterVirtualPosition();
+	m_spatialAudioSettings->PopulateInitSettings( spatialSettings );
 
 	if( AK::SpatialAudio::Init( spatialSettings ) != AK_Success )
 	{

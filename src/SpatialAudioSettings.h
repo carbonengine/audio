@@ -7,6 +7,8 @@
 
 #pragma once
 
+struct AkSpatialAudioInitSettings;
+
 enum class AudOcclusion : int
 {
 	Off = 0, // Occlusion disabled, no geometry registered, spatial audio geometry not initialized
@@ -185,6 +187,11 @@ public:
 	 */
 	bool GetEnableDiffractionOnBoundaryEdges() const;
 	void SetEnableDiffractionOnBoundaryEdges( bool value );
+
+	/**
+	 * @brief Populates an AkSpatialAudioInitSettings struct from the current settings.
+	 */
+	void PopulateInitSettings( AkSpatialAudioInitSettings& out ) const;
 
 private:
 	AudOcclusion m_occlusionMode;

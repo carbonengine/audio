@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "SpatialAudioSettings.h"
+#include <AK/SpatialAudio/Common/AkSpatialAudio.h>
 
 SpatialAudioSettings::SpatialAudioSettings()
 	: m_occlusionMode( AudOcclusion::Off )
@@ -60,3 +61,18 @@ void SpatialAudioSettings::SetEnableDiffraction( bool value ) { m_enableDiffract
 
 bool SpatialAudioSettings::GetEnableDiffractionOnBoundaryEdges() const { return m_enableDiffractionOnBoundaryEdges; }
 void SpatialAudioSettings::SetEnableDiffractionOnBoundaryEdges( bool value ) { m_enableDiffractionOnBoundaryEdges = value; }
+
+void SpatialAudioSettings::PopulateInitSettings( AkSpatialAudioInitSettings& out ) const
+{
+	out.fMovementThreshold                        = m_movementThreshold;
+	out.uNumberOfPrimaryRays                      = m_numberOfPrimaryRays;
+	out.uMaxReflectionOrder                       = m_maxReflectionOrder;
+	out.uMaxDiffractionOrder                      = m_maxDiffractionOrder;
+	out.uMaxEmitterRoomAuxSends                   = m_maxEmitterRoomAuxSends;
+	out.uDiffractionOnReflectionsOrder            = m_diffractionOnReflectionsOrder;
+	out.fMaxPathLength                            = m_maxPathLength;
+	out.fCPULimitPercentage                       = m_cpuLimitPercentage;
+	out.uLoadBalancingSpread                      = m_loadBalancingSpread;
+	out.bEnableGeometricDiffractionAndTransmission = m_enableDiffractionAndTransmission;
+	out.bCalcEmitterVirtualPosition               = m_calcEmitterVirtualPosition;
+}

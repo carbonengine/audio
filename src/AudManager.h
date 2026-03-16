@@ -224,7 +224,7 @@ private:
 	// Signals whether Carbon Audio's spatial audio features are enabled. If the user currently doesn't have an active spatial audio endpoint then output will still be in stereo.
 	bool m_spatialAudioEnabled;
 	// Global transmission loss [0.0-1.0] applied to geometry surfaces.
-	float m_globalTransmissionLoss = 0.7f;
+	float m_globalTransmissionLoss;
 	mutable bool m_audioCullingEnabled;
 
 	std::map<AkBankID, SoundBankInfo> m_soundBankInfoMap;
