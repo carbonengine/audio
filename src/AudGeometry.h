@@ -82,11 +82,12 @@ public:
 		uint64_t instanceId) override;
 
 private:
-	/// Tracks how many active instances reference each geometry set.
-	static std::unordered_map<uint64_t, uint32_t> s_geometrySetRefCounts;
+	/// Builds AkGeometryInstanceParams from a geometry set ID and world transform.
+	static AkGeometryInstanceParams MakeInstanceParams(
+		uint64_t geometrySetId, const Matrix& worldTransform );
 
-	/// Mutex protecting s_geometrySetRefCounts and Wwise geometry operations.
-	static CcpMutex s_mutex;
+	/// Tracks how many active instances reference each geometry set.
+	inline static std::unordered_map<uint64_t, uint32_t> s_geometrySetRefCounts;
 };
 
 TYPEDEF_BLUECLASS( AudGeometry );

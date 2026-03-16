@@ -14,7 +14,7 @@ namespace
 		for( size_t i = 0; i < vertices.size(); ++i )
 		{
 			const Vector3& v = vertices[i];
-			akVertices[i] = AkVertex( v.x, v.y, -v.z );
+			akVertices[i] = AkVertex( static_cast<float>( v.x ), static_cast<float>( v.y ), static_cast<float>( -v.z ) );
 		}
 		return akVertices;
 	}
@@ -37,14 +37,23 @@ namespace
 
 }
 
-std::unordered_map<uint64_t, uint32_t> AudGeometry::s_geometrySetRefCounts;
-CcpMutex AudGeometry::s_mutex( "AudGeometry", "s_mutex" );
-
 AudGeometry::AudGeometry( IRoot* lockobj )
 {}
 
 AudGeometry::~AudGeometry()
 {}
+
+AkGeometryInstanceParams AudGeometry::MakeInstanceParams(
+	uint64_t geometrySetId, const Matrix& worldTransform )
+{
+	AkGeometryInstanceParams params;
+	params.GeometrySetID = geometrySetId;
+	AkTransform transform;
+	RH2LH::convertTransform( worldTransform, transform );
+	params.PositionAndOrientation = transform;
+	params.Scale = RH2LH::extractScale( worldTransform );
+	return params;
+}
 
 void AudGeometry::SetGeometry(
 	uint64_t geometrySetId,
@@ -62,8 +71,6 @@ void AudGeometry::SetGeometry(
 		return;
 	}
 
-	CcpAutoMutex lock( s_mutex );
-
 	auto it = s_geometrySetRefCounts.find( geometrySetId );
 	if( it == s_geometrySetRefCounts.end() )
 	{
@@ -73,7 +80,6 @@ void AudGeometry::SetGeometry(
 		AkAcousticSurface surface;
 		surface.strName = "default";
 		surface.textureID = AK_INVALID_UNIQUE_ID;
-
 		surface.transmissionLoss = g_audioManager->GetGlobalTransmissionLoss();
 
 		AkGeometryParams params;
@@ -100,18 +106,12 @@ void AudGeometry::SetGeometry(
 		it->second++;
 	}
 
-	AkGeometryInstanceParams instanceParams;
-	instanceParams.GeometrySetID = geometrySetId;
-	AkTransform transform;
-	RH2LH::convertTransform( worldTransform, transform );
-	instanceParams.PositionAndOrientation = transform;
-	instanceParams.Scale = RH2LH::extractScale( worldTransform );
-
-	AKRESULT instanceResult = AK::SpatialAudio::SetGeometryInstance( instanceId, instanceParams );
-	if( instanceResult != AK_Success )
+	AKRESULT result = AK::SpatialAudio::SetGeometryInstance(
+		instanceId, MakeInstanceParams( geometrySetId, worldTransform ) );
+	if( result != AK_Success )
 	{
 		CCP_LOGERR_CH( s_ch, "Failed to set geometry instance %llu (set %llu), AKRESULT: %d",
-			instanceId, geometrySetId, instanceResult );
+			instanceId, geometrySetId, result );
 	}
 }
 
@@ -120,22 +120,18 @@ void AudGeometry::SetGeometryTransform(
 	uint64_t instanceId,
 	const Matrix& worldTransform )
 {
+	if( !g_audioManager || g_audioManager->GetOcclusionMode() == AudOcclusionMode::Off )
 	{
-		CcpAutoMutex lock( s_mutex );
-		if( s_geometrySetRefCounts.find( geometrySetId ) == s_geometrySetRefCounts.end() )
-		{
-			return;
-		}
+		return;
 	}
 
-	AkGeometryInstanceParams instanceParams;
-	instanceParams.GeometrySetID = geometrySetId;
-	AkTransform transform;
-	RH2LH::convertTransform( worldTransform, transform );
-	instanceParams.PositionAndOrientation = transform;
-	instanceParams.Scale = RH2LH::extractScale( worldTransform );
+	if( s_geometrySetRefCounts.find( geometrySetId ) == s_geometrySetRefCounts.end() )
+	{
+		return;
+	}
 
-	AKRESULT result = AK::SpatialAudio::SetGeometryInstance( instanceId, instanceParams );
+	AKRESULT result = AK::SpatialAudio::SetGeometryInstance(
+		instanceId, MakeInstanceParams( geometrySetId, worldTransform ) );
 	if( result != AK_Success )
 	{
 		CCP_LOGERR_CH( s_ch, "Failed to update geometry instance transform for instance %llu (set %llu), AKRESULT: %d",
@@ -147,18 +143,18 @@ void AudGeometry::RemoveGeometry(
 	uint64_t geometrySetId,
 	uint64_t instanceId )
 {
+	auto it = s_geometrySetRefCounts.find( geometrySetId );
+	if( it == s_geometrySetRefCounts.end() )
+	{
+		return;
+	}
+
 	AK::SpatialAudio::RemoveGeometryInstance( instanceId );
 
-	CcpAutoMutex lock( s_mutex );
-
-	auto it = s_geometrySetRefCounts.find( geometrySetId );
-	if( it != s_geometrySetRefCounts.end() )
+	it->second--;
+	if( it->second == 0 )
 	{
-		it->second--;
-		if( it->second == 0 )
-		{
-			AK::SpatialAudio::RemoveGeometry( geometrySetId );
-			s_geometrySetRefCounts.erase( it );
-		}
+		AK::SpatialAudio::RemoveGeometry( geometrySetId );
+		s_geometrySetRefCounts.erase( it );
 	}
 }
