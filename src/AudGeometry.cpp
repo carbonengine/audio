@@ -66,7 +66,7 @@ void AudGeometry::SetGeometry(
 		return;
 	}
 
-	if( !g_audioManager || g_audioManager->GetOcclusionMode() == AudOcclusionMode::Off )
+	if( !g_audioManager || g_audioManager->GetOcclusionMode() == AudOcclusion::Off )
 	{
 		return;
 	}
@@ -89,8 +89,8 @@ void AudGeometry::SetGeometry(
 		params.NumTriangles = static_cast<AkTriIdx>( akTriangles.size() );
 		params.Surfaces = &surface;
 		params.NumSurfaces = 1;
-		params.EnableDiffraction = true;
-		params.EnableDiffractionOnBoundaryEdges = false;
+		params.EnableDiffraction = g_audioManager->GetEnableDiffraction();
+		params.EnableDiffractionOnBoundaryEdges = g_audioManager->GetEnableDiffractionOnBoundaryEdges();
 
 		AKRESULT result = AK::SpatialAudio::SetGeometry( geometrySetId, params );
 		if( result != AK_Success )
@@ -120,7 +120,7 @@ void AudGeometry::SetGeometryTransform(
 	uint64_t instanceId,
 	const Matrix& worldTransform )
 {
-	if( !g_audioManager || g_audioManager->GetOcclusionMode() == AudOcclusionMode::Off )
+	if( !g_audioManager || g_audioManager->GetOcclusionMode() == AudOcclusion::Off )
 	{
 		return;
 	}

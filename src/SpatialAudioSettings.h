@@ -7,7 +7,7 @@
 
 #pragma once
 
-enum class AudOcclusionMode : int
+enum class AudOcclusion : int
 {
 	Off = 0, // Occlusion disabled, no geometry registered, spatial audio geometry not initialized
 	On  = 1  // Wwise Spatial Audio handles diffraction + transmission
@@ -32,8 +32,8 @@ public:
 	 * When Off, no geometry is registered and spatial audio geometry is
 	 * not initialized.
 	 */
-	AudOcclusionMode GetOcclusionMode() const;
-	void SetOcclusionMode( AudOcclusionMode value );
+	AudOcclusion GetOcclusionMode() const;
+	void SetOcclusionMode( AudOcclusion value );
 
 	/**
 	 * @brief Maximum number of portals that sound can propagate through.
@@ -185,8 +185,29 @@ public:
 	bool GetCalcEmitterVirtualPosition() const;
 	void SetCalcEmitterVirtualPosition( bool value );
 
+	/**
+	 * @brief Enable diffraction on geometry edges.
+	 *
+	 * When enabled, sound can bend around edges of geometry. This adds
+	 * realism but increases CPU usage. Diffraction must also be enabled
+	 * globally via @c EnableDiffractionAndTransmission.
+	 */
+	bool GetEnableDiffraction() const;
+	void SetEnableDiffraction( bool value );
+
+	/**
+	 * @brief Enable diffraction on boundary edges.
+	 *
+	 * Boundary edges are at the edges of the geometry mesh (not shared
+	 * by two triangles). Enabling this generates diffraction edges for
+	 * all boundary edges, which is more expensive but useful for
+	 * incomplete meshes.
+	 */
+	bool GetEnableDiffractionOnBoundaryEdges() const;
+	void SetEnableDiffractionOnBoundaryEdges( bool value );
+
 private:
-	AudOcclusionMode m_occlusionMode;
+	AudOcclusion m_occlusionMode;
 	int m_maxSoundPropagationDepth;
 	float m_movementThreshold;
 	int m_numberOfPrimaryRays;
@@ -199,4 +220,6 @@ private:
 	int m_loadBalancingSpread;
 	bool m_enableDiffractionAndTransmission;
 	bool m_calcEmitterVirtualPosition;
+	bool m_enableDiffraction;
+	bool m_enableDiffractionOnBoundaryEdges;
 };

@@ -153,7 +153,7 @@ bool AudManager::Init()
 		return false;
 	}
 
-	if( m_spatialAudioSettings->GetOcclusionMode() == AudOcclusionMode::On )
+	if( m_spatialAudioSettings->GetOcclusionMode() == AudOcclusion::On )
 	{
 		if( !InitSpatialAudioGeometry() )
 		{
@@ -465,10 +465,10 @@ int AudManager::GetOcclusionModeInt() const
 
 void AudManager::SetOcclusionModeInt( int value )
 {
-	m_spatialAudioSettings->SetOcclusionMode( static_cast<AudOcclusionMode>( value ) );
+	m_spatialAudioSettings->SetOcclusionMode( static_cast<AudOcclusion>( value ) );
 }
 
-AudOcclusionMode AudManager::GetOcclusionMode() const
+AudOcclusion AudManager::GetOcclusionMode() const
 {
 	return m_spatialAudioSettings->GetOcclusionMode();
 }

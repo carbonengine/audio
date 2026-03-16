@@ -2,7 +2,7 @@
 #include "SpatialAudioSettings.h"
 
 SpatialAudioSettings::SpatialAudioSettings()
-	: m_occlusionMode( AudOcclusionMode::On )
+	: m_occlusionMode( AudOcclusion::On )
 	, m_maxSoundPropagationDepth( 1 )
 	, m_movementThreshold( 100.0f )
 	, m_numberOfPrimaryRays( 35 )
@@ -15,11 +15,13 @@ SpatialAudioSettings::SpatialAudioSettings()
 	, m_loadBalancingSpread( 1 )
 	, m_enableDiffractionAndTransmission( true )
 	, m_calcEmitterVirtualPosition( true )
+	, m_enableDiffraction( true )
+	, m_enableDiffractionOnBoundaryEdges( true )
 {
 }
 
-AudOcclusionMode SpatialAudioSettings::GetOcclusionMode() const { return m_occlusionMode; }
-void SpatialAudioSettings::SetOcclusionMode( AudOcclusionMode value ) { m_occlusionMode = value; }
+AudOcclusion SpatialAudioSettings::GetOcclusionMode() const { return m_occlusionMode; }
+void SpatialAudioSettings::SetOcclusionMode( AudOcclusion value ) { m_occlusionMode = value; }
 
 int SpatialAudioSettings::GetMaxSoundPropagationDepth() const { return m_maxSoundPropagationDepth; }
 void SpatialAudioSettings::SetMaxSoundPropagationDepth( int value ) { m_maxSoundPropagationDepth = value; }
@@ -56,3 +58,9 @@ void SpatialAudioSettings::SetEnableDiffractionAndTransmission( bool value ) { m
 
 bool SpatialAudioSettings::GetCalcEmitterVirtualPosition() const { return m_calcEmitterVirtualPosition; }
 void SpatialAudioSettings::SetCalcEmitterVirtualPosition( bool value ) { m_calcEmitterVirtualPosition = value; }
+
+bool SpatialAudioSettings::GetEnableDiffraction() const { return m_enableDiffraction; }
+void SpatialAudioSettings::SetEnableDiffraction( bool value ) { m_enableDiffraction = value; }
+
+bool SpatialAudioSettings::GetEnableDiffractionOnBoundaryEdges() const { return m_enableDiffractionOnBoundaryEdges; }
+void SpatialAudioSettings::SetEnableDiffractionOnBoundaryEdges( bool value ) { m_enableDiffractionOnBoundaryEdges = value; }

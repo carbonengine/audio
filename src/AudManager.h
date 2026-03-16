@@ -120,7 +120,7 @@ public:
 	// Sets the occlusion mode from an integer value.
 	void SetOcclusionModeInt( int value );
 	// Returns the occlusion mode enum.
-	AudOcclusionMode GetOcclusionMode() const;
+	AudOcclusion GetOcclusionMode() const;
 	// Returns the global transmission loss [0.0-1.0] used for geometry surfaces.
 	float GetGlobalTransmissionLoss() const;
 	// Sets the global transmission loss [0.0-1.0].
@@ -302,6 +302,7 @@ private:
 #undef DELEGATE_GETTER
 #undef DELEGATE_SETTER
 
+public:
 	//-----------------------------------------------------
 	// Description:
 	//   Delegate macros to forward getter/setter calls to
@@ -333,6 +334,8 @@ private:
 	DELEGATE_SA_GETTER( int, GetLoadBalancingSpread )
 	DELEGATE_SA_GETTER( bool, GetEnableDiffractionAndTransmission )
 	DELEGATE_SA_GETTER( bool, GetCalcEmitterVirtualPosition )
+	DELEGATE_SA_GETTER( bool, GetEnableDiffraction )
+	DELEGATE_SA_GETTER( bool, GetEnableDiffractionOnBoundaryEdges )
 
 	// Setters
 	DELEGATE_SA_SETTER( int, SetMaxSoundPropagationDepth )
@@ -347,6 +350,8 @@ private:
 	DELEGATE_SA_SETTER( int, SetLoadBalancingSpread )
 	DELEGATE_SA_SETTER( bool, SetEnableDiffractionAndTransmission )
 	DELEGATE_SA_SETTER( bool, SetCalcEmitterVirtualPosition )
+	DELEGATE_SA_SETTER( bool, SetEnableDiffraction )
+	DELEGATE_SA_SETTER( bool, SetEnableDiffractionOnBoundaryEdges )
 
 #undef DELEGATE_SA_GETTER
 #undef DELEGATE_SA_SETTER

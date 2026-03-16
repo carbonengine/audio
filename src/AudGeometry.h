@@ -23,8 +23,8 @@
  * placement of a geometry set in the world with a specified transform — position,
  * orientation, and scale (see AkGeometryInstanceParams).
  *
- * When @c AudOcclusionMode::On, geometry is registered with diffraction and
- * transmission enabled. When @c AudOcclusionMode::Off, geometry registration
+ * When @c AudOcclusion::On, geometry is registered with diffraction and
+ * transmission enabled. When @c AudOcclusion::Off, geometry registration
  * is skipped entirely.
  */
 BLUE_CLASS(AudGeometry) :
