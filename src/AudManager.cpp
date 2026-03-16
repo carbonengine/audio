@@ -407,7 +407,6 @@ bool AudManager::InitSpatialAudioGeometry()
 {
 	AkSpatialAudioInitSettings spatialSettings;
 
-	spatialSettings.uMaxSoundPropagationDepth = m_spatialAudioSettings->GetMaxSoundPropagationDepth();
 	spatialSettings.fMovementThreshold = m_spatialAudioSettings->GetMovementThreshold();
 	spatialSettings.uNumberOfPrimaryRays = m_spatialAudioSettings->GetNumberOfPrimaryRays();
 	spatialSettings.uMaxReflectionOrder = m_spatialAudioSettings->GetMaxReflectionOrder();

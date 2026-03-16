@@ -322,7 +322,6 @@ public:
 	}
 
 	// Getters
-	DELEGATE_SA_GETTER( int, GetMaxSoundPropagationDepth )
 	DELEGATE_SA_GETTER( float, GetMovementThreshold )
 	DELEGATE_SA_GETTER( int, GetNumberOfPrimaryRays )
 	DELEGATE_SA_GETTER( int, GetMaxReflectionOrder )
@@ -338,7 +337,6 @@ public:
 	DELEGATE_SA_GETTER( bool, GetEnableDiffractionOnBoundaryEdges )
 
 	// Setters
-	DELEGATE_SA_SETTER( int, SetMaxSoundPropagationDepth )
 	DELEGATE_SA_SETTER( float, SetMovementThreshold )
 	DELEGATE_SA_SETTER( int, SetNumberOfPrimaryRays )
 	DELEGATE_SA_SETTER( int, SetMaxReflectionOrder )

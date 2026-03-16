@@ -15,17 +15,13 @@
 
 
 /**
- * @brief Manages Wwise Spatial Audio geometry sets and geometry instances.
+ * @brief Registers meshes from Trinity as Spatial Audio geometry sets and manages their lifecycle.
  *
- * Implements the ITr2AudGeometry interface to submit geometry to
- * AK::SpatialAudio. A geometry set is a logical set of vertices, triangles,
- * and acoustic surfaces (see AkGeometryParams). A geometry instance is a unique
- * placement of a geometry set in the world with a specified transform — position,
- * orientation, and scale (see AkGeometryInstanceParams).
- *
- * When @c AudOcclusion::On, geometry is registered with diffraction and
- * transmission enabled. When @c AudOcclusion::Off, geometry registration
- * is skipped entirely.
+ * Implements the ITr2AudGeometry interface to register meshes to
+ * AK::SpatialAudio as geeometry sets. A geometry set is a set of vertices, triangles,
+ * and acoustic surfaces (see AkGeometryParams). Each geometry instance represents a unique
+ * placement of a geometry set in the world with a transform — position,
+ * orientation, and scale.
  */
 BLUE_CLASS(AudGeometry) :
 	public ITr2AudGeometry
@@ -41,12 +37,11 @@ public:
 	// ITr2AudGeometry interface
 
 	/**
-	 * @brief Registers a ref-counted geometry set and places a geometry
-	 *        instance in the world via AK::SpatialAudio::SetGeometryInstance.
+	 * @brief Registers a geometry set instance and places it in the world.
 	 *
 	 * @param geometrySetId  Shared geometry set identifier.
 	 * @param instanceId     Unique geometry instance identifier.
-	 * @param geometryData   Triangle mesh.
+	 * @param geometryData   Triangle mesh data.
 	 * @param worldTransform World position, orientation and scale.
 	 *
 	 */

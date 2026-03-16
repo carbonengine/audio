@@ -14,11 +14,8 @@ enum class AudOcclusion : int
 };
 
 /**
- * @brief Configuration for Wwise Spatial Audio initialization.
+ * @brief A wrapper with configuration settings for Wwise Spatial Audio initialization.
  *
- * Holds all parameters that map to AkSpatialAudioInitSettings.
- * Values are set before AudManager::Enable() and consumed by
- * InitSpatialAudioGeometry().
  */
 class SpatialAudioSettings
 {
@@ -27,188 +24,170 @@ public:
 
 	/**
 	 * @brief Controls whether spatial audio occlusion is On or Off.
-	 *
-	 * When On, Wwise Spatial Audio handles diffraction and transmission.
-	 * When Off, no geometry is registered and spatial audio geometry is
-	 * not initialized.
 	 */
 	AudOcclusion GetOcclusionMode() const;
 	void SetOcclusionMode( AudOcclusion value );
 
 	/**
-	 * @brief Maximum number of portals that sound can propagate through.
+	 * @brief Amount that an emitter or listener has to move to trigger a validation of reflections/diffraction.
 	 *
-	 * Must be less than or equal to AK_MAX_SOUND_PROPAGATION_DEPTH.
-	 */
-	int GetMaxSoundPropagationDepth() const;
-	void SetMaxSoundPropagationDepth( int value );
-
-	/**
-	 * @brief Amount that an emitter or listener has to move to trigger a
-	 *        re-validation of reflections/diffraction.
-	 *
-	 * Larger values reduce CPU load at the cost of reduced accuracy.
-	 * The ray tracing itself is not affected by this value — rays are
-	 * cast each time a Spatial Audio update is executed.
+	 * Larger values can reduce the CPU load at the cost of reduced accuracy.
+	 * Note that the ray tracing itself is not affected by this value.
+	 * Rays are cast each time a Spatial Audio update is executed.
 	 */
 	float GetMovementThreshold() const;
 	void SetMovementThreshold( float value );
 
 	/**
-	 * @brief Number of primary rays used in the ray tracing engine.
+	 * @brief The number of primary rays used in the ray tracing engine.
 	 *
-	 * A larger number of rays increases the chances of finding reflection
-	 * and diffraction paths, but results in higher CPU usage. When CPU
-	 * limit is active (see @c cpuLimitPercentage), this setting represents
-	 * the maximum allowed number of primary rays.
+	 * A larger number of rays will increase the chances of finding reflection and diffraction paths,
+	 * but will result in higher CPU usage. When CPU limit is active
+	 * (see @c fCPULimitPercentage), this setting represents the maximum
+	 * allowed number of primary rays.
 	 */
 	int GetNumberOfPrimaryRays() const;
 	void SetNumberOfPrimaryRays( int value );
 
 	/**
-	 * @brief Maximum reflection order [1, 4] — the number of 'bounces'
-	 *        in a reflection path.
+	 * @brief Maximum reflection order [1, 4] - the number of 'bounces' in a reflection path.
 	 *
-	 * A high reflection order renders more details at the expense of
-	 * higher CPU usage.
+	 * A high reflection order renders more details at the expense of higher CPU usage.
 	 */
 	int GetMaxReflectionOrder() const;
 	void SetMaxReflectionOrder( int value );
 
 	/**
-	 * @brief Maximum diffraction order [1, 8] — the number of 'bends'
-	 *        in a diffraction path.
+	 * @brief Maximum diffraction order [1, 8] - the number of 'bends' in a diffraction path.
 	 *
-	 * A high diffraction order accommodates more complex geometry at the
-	 * expense of higher CPU usage. Set to 0 to disable diffraction on
-	 * all geometry. Diffraction must be enabled on the geometry itself
-	 * (see AkGeometryParams).
-	 *
-	 * This limits the recursion depth of diffraction rays cast from the
-	 * listener and the depth of the diffraction search between emitter
-	 * and listener. To optimize CPU, set it to the maximum number of
-	 * edges you expect geometry to traverse (e.g. 2 for a single box).
-	 *
-	 * A search starts from the listener; when the maximum order is
-	 * exceeded, remaining geometry between the path's end and the emitter
-	 * is ignored, causing the diffraction coefficient to be underestimated.
+	 * A high diffraction order accommodates more complex geometry at the expense of higher CPU usage.
+	 * Diffraction must be enabled on the geometry to find diffraction paths
+	 * (refer to @c AkGeometryParams). Set to 0 to disable diffraction on all geometry.
+	 * This parameter limits the recursion depth of diffraction rays cast from the listener
+	 * to scan the environment, and also the depth of the diffraction search to find paths
+	 * between emitter and listener.
+	 * To optimize CPU usage, set it to the maximum number of edges you expect the obstructing
+	 * geometry to traverse. For example, if box-shaped geometry is used exclusively, and only
+	 * a single box is expected between an emitter and the listener, limiting @c uMaxDiffractionOrder
+	 * to 2 may be sufficient.
+	 * A diffraction path search starts from the listener, so when the maximum diffraction order
+	 * is exceeded, the remaining geometry between the end of the path and the emitter is ignored.
+	 * In such case, where the search is terminated before reaching the emitter, the diffraction
+	 * coefficient will be underestimated. It is calculated from a partial path, ignoring any
+	 * remaining geometry.
 	 */
 	int GetMaxDiffractionOrder() const;
 	void SetMaxDiffractionOrder( int value );
 
 	/**
-	 * @brief Maximum number of game-defined auxiliary sends that can
-	 *        originate from a single emitter.
+	 * @brief The maximum number of game-defined auxiliary sends that can originate from a single emitter.
 	 *
-	 * An emitter can send to its own room and to all adjacent rooms if
-	 * the emitter and listener are in the same room. If a limit is set,
-	 * the most prominent sends are kept based on spread to the adjacent
-	 * portal from the emitter's perspective. Set to 1 to only allow
-	 * emitters to send directly to their current room. Set to 0 to
-	 * disable the limit.
+	 * An emitter can send to its own room, and to all adjacent rooms if the emitter and listener
+	 * are in the same room. If a limit is set, the most prominent sends are kept, based on spread
+	 * to the adjacent portal from the emitter's perspective.
+	 * Set to 1 to only allow emitters to send directly to their current room, and to the room
+	 * a listener is transitioning to if inside a portal. Set to 0 to disable the limit.
 	 */
 	int GetMaxEmitterRoomAuxSends() const;
 	void SetMaxEmitterRoomAuxSends( int value );
 
 	/**
-	 * @brief Maximum number of diffraction points at each end of a
-	 *        reflection path.
+	 * @brief The maximum possible number of diffraction points at each end of a reflection path.
 	 *
-	 * Diffraction on reflections allows reflections to fade in and out
-	 * smoothly as the listener or emitter moves in and out of a
-	 * reflection's shadow zone. When greater than zero, diffraction rays
-	 * are sent from the listener to search for reflections around corners.
-	 * Set to 0 to disable diffraction on reflections. Set to 2 or greater
-	 * to allow reflections to propagate through portals without being
-	 * cut off.
+	 * Diffraction on reflection allows reflections to fade in and out smoothly as the listener
+	 * or emitter moves in and out of the reflection's shadow zone.
+	 * When greater than zero, diffraction rays are sent from the listener to search for reflections
+	 * around one or more corners from the listener.
+	 * Diffraction must be enabled on the geometry to find diffracted reflections
+	 * (refer to @c AkGeometryParams). Set to 0 to disable diffraction on reflections.
+	 * To allow reflections to propagate through portals without being cut off,
+	 * set @c uDiffractionOnReflectionsOrder to 2 or greater.
 	 */
 	int GetDiffractionOnReflectionsOrder() const;
 	void SetDiffractionOnReflectionsOrder( int value );
 
 	/**
-	 * @brief Maximum total length of a path composed of a sequence of
-	 *        segments (rays).
+	 * @brief The total length of a path composed of a sequence of segments (or rays) cannot exceed
+	 *        the defined maximum path length.
 	 *
-	 * High values compute longer paths but increase CPU cost. Each
-	 * individual sound is also affected by its maximum attenuation
-	 * distance specified in the Wwise Authoring tool. Reflection or
-	 * diffraction paths will never exceed a sound's maximum attenuation
-	 * distance (unless the furthest point is above the audibility
-	 * threshold, in which case attenuation is considered infinite).
+	 * High values compute longer paths but increase the CPU cost.
+	 * Each individual sound is also affected by its maximum attenuation distance, specified
+	 * in the Authoring tool. Reflection or diffraction paths, calculated inside Spatial Audio,
+	 * will never exceed a sound's maximum attenuation distance.
+	 * Note, however, that attenuation is considered infinite if the furthest point is above
+	 * the audibility threshold.
 	 */
 	float GetMaxPathLength() const;
 	void SetMaxPathLength( float value );
 
 	/**
-	 * @brief Targeted computation time allocated for the ray tracing
-	 *        engine, as a percentage [0, 100] of the current audio frame.
+	 * @brief Defines the targeted computation time allocated for the ray tracing engine.
 	 *
-	 * The ray tracing engine dynamically adapts the number of primary
-	 * rays to target the specified computation time. The computed number
-	 * of primary rays will never exceed @c numberOfPrimaryRays.
-	 * A value of 0 indicates no target has been set — the number of
-	 * primary rays is then fixed at @c numberOfPrimaryRays.
+	 * Defined as a percentage [0, 100] of the current audio frame.
+	 * The ray tracing engine dynamically adapts the number of primary rays to target
+	 * the specified computation time value. In all circumstances, the computed number
+	 * of primary rays cannot exceed the number of primary rays specified by
+	 * @c uNumberOfPrimaryRays.
+	 * A value of 0 indicates no target has been set. In this case, the number of primary
+	 * rays is fixed and is set by @c uNumberOfPrimaryRays.
 	 */
 	float GetCPULimitPercentage() const;
 	void SetCPULimitPercentage( float value );
 
 	/**
-	 * @brief Spread path computation over N frames [1, ..].
+	 * @brief Spread the computation of paths on uLoadBalancingSpread frames [1, ..].
 	 *
-	 * When set to 1, no load balancing is done. Values greater than 1
-	 * spread the computation of paths across that many frames.
+	 * When uLoadBalancingSpread is set to 1, no load balancing is done.
+	 * Values greater than 1 indicate the computation of paths will be spread
+	 * on this number of frames.
 	 */
 	int GetLoadBalancingSpread() const;
 	void SetLoadBalancingSpread( int value );
 
 	/**
-	 * @brief Enable computation of geometric diffraction and transmission
-	 *        paths for all sources that have "Enable Diffraction and
-	 *        Transmission" checked in the Wwise Positioning tab.
+	 * @brief Enable computation of geometric diffraction and transmission paths for all sources
+	 *        that have the "Enable Diffraction and Transmission" box checked in the Positioning
+	 *        tab of the Wwise Property Editor.
 	 *
-	 * This flag enables sound paths around (diffraction) and through
-	 * (transmission) geometry. Setting to false implies geometry is only
-	 * used for reflection calculation. If false but a sound has diffraction
-	 * enabled in Wwise, the sound will diffract through portals but pass
-	 * through geometry as if it were not there.
+	 * This flag enables sound paths around (diffraction) and through (transmission) geometry
+	 * (see @c AK::SpatialAudio::SetGeometry).
+	 * Setting @c bEnableGeometricDiffractionAndTransmission to false implies that geometry
+	 * is only to be used for reflection calculation.
+	 * Diffraction edges must be enabled on geometry for diffraction calculation
+	 * (see @c AkGeometryParams).
+	 * If @c bEnableGeometricDiffractionAndTransmission is false but a sound has
+	 * "Enable Diffraction and Transmission" selected in the Positioning tab of the authoring tool,
+	 * the sound will diffract through portals but will pass through geometry as if it is not there.
+	 * One would typically disable this setting in the case that the game intends to perform its own
+	 * obstruction calculation, but geometry is still passed to spatial audio for reflection calculation.
 	 */
 	bool GetEnableDiffractionAndTransmission() const;
 	void SetEnableDiffractionAndTransmission( bool value );
 
 	/**
-	 * @brief Calculate virtual positions for emitters diffracted through
-	 *        a portal or around geometry.
-	 *
-	 * The apparent or virtual position is calculated by Wwise Spatial
-	 * Audio and passed on to the sound engine.
+	 * @brief An emitter that is diffracted through a portal or around geometry will have its
+	 *        apparent or virtual position calculated by Wwise Spatial Audio and passed on to
+	 *        the sound engine.
 	 */
 	bool GetCalcEmitterVirtualPosition() const;
 	void SetCalcEmitterVirtualPosition( bool value );
 
 	/**
-	 * @brief Enable diffraction on geometry edges.
-	 *
-	 * When enabled, sound can bend around edges of geometry. This adds
-	 * realism but increases CPU usage. Diffraction must also be enabled
-	 * globally via @c EnableDiffractionAndTransmission.
+	 * @brief Switch to enable or disable geometric diffraction for this Geometry.
 	 */
 	bool GetEnableDiffraction() const;
 	void SetEnableDiffraction( bool value );
 
 	/**
-	 * @brief Enable diffraction on boundary edges.
+	 * @brief Switch to enable or disable geometric diffraction on boundary edges for this Geometry.
 	 *
-	 * Boundary edges are at the edges of the geometry mesh (not shared
-	 * by two triangles). Enabling this generates diffraction edges for
-	 * all boundary edges, which is more expensive but useful for
-	 * incomplete meshes.
+	 * Boundary edges are edges that are connected to only one triangle.
 	 */
 	bool GetEnableDiffractionOnBoundaryEdges() const;
 	void SetEnableDiffractionOnBoundaryEdges( bool value );
 
 private:
 	AudOcclusion m_occlusionMode;
-	int m_maxSoundPropagationDepth;
 	float m_movementThreshold;
 	int m_numberOfPrimaryRays;
 	int m_maxReflectionOrder;

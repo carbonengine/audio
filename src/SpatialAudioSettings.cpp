@@ -3,7 +3,6 @@
 
 SpatialAudioSettings::SpatialAudioSettings()
 	: m_occlusionMode( AudOcclusion::On )
-	, m_maxSoundPropagationDepth( 1 )
 	, m_movementThreshold( 100.0f )
 	, m_numberOfPrimaryRays( 35 )
 	, m_maxReflectionOrder( 0 )
@@ -22,9 +21,6 @@ SpatialAudioSettings::SpatialAudioSettings()
 
 AudOcclusion SpatialAudioSettings::GetOcclusionMode() const { return m_occlusionMode; }
 void SpatialAudioSettings::SetOcclusionMode( AudOcclusion value ) { m_occlusionMode = value; }
-
-int SpatialAudioSettings::GetMaxSoundPropagationDepth() const { return m_maxSoundPropagationDepth; }
-void SpatialAudioSettings::SetMaxSoundPropagationDepth( int value ) { m_maxSoundPropagationDepth = value; }
 
 float SpatialAudioSettings::GetMovementThreshold() const { return m_movementThreshold; }
 void SpatialAudioSettings::SetMovementThreshold( float value ) { m_movementThreshold = value; }
