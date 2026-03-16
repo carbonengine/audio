@@ -76,6 +76,9 @@ public:
 		uint64_t geometrySetId,
 		uint64_t instanceId) override;
 
+	/// Removes all registered geometry sets from the Wwise engine.
+	static void ClearAllGeometry();
+
 private:
 	/// Builds AkGeometryInstanceParams from a geometry set ID and world transform.
 	static AkGeometryInstanceParams MakeInstanceParams(

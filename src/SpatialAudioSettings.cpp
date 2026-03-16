@@ -3,7 +3,7 @@
 #include <AK/SpatialAudio/Common/AkSpatialAudio.h>
 
 SpatialAudioSettings::SpatialAudioSettings()
-	: m_occlusionMode( AudOcclusion::Off )
+	: m_spatialAudioGeometryEnabled( false )
 	, m_movementThreshold( 100.0f )
 	, m_numberOfPrimaryRays( 35 )
 	, m_maxReflectionOrder( 0 )
@@ -15,13 +15,14 @@ SpatialAudioSettings::SpatialAudioSettings()
 	, m_loadBalancingSpread( 1 )
 	, m_enableDiffractionAndTransmission( true )
 	, m_calcEmitterVirtualPosition( true )
+	, m_transmissionLoss( 0.7f )
 	, m_enableDiffraction( true )
 	, m_enableDiffractionOnBoundaryEdges( true )
 {
 }
 
-AudOcclusion SpatialAudioSettings::GetOcclusionMode() const { return m_occlusionMode; }
-void SpatialAudioSettings::SetOcclusionMode( AudOcclusion value ) { m_occlusionMode = value; }
+bool SpatialAudioSettings::GetSpatialAudioGeometryEnabled() const { return m_spatialAudioGeometryEnabled; }
+void SpatialAudioSettings::SetSpatialAudioGeometryEnabled( bool value ) { m_spatialAudioGeometryEnabled = value; }
 
 float SpatialAudioSettings::GetMovementThreshold() const { return m_movementThreshold; }
 void SpatialAudioSettings::SetMovementThreshold( float value ) { m_movementThreshold = value; }
@@ -55,6 +56,9 @@ void SpatialAudioSettings::SetEnableDiffractionAndTransmission( bool value ) { m
 
 bool SpatialAudioSettings::GetCalcEmitterVirtualPosition() const { return m_calcEmitterVirtualPosition; }
 void SpatialAudioSettings::SetCalcEmitterVirtualPosition( bool value ) { m_calcEmitterVirtualPosition = value; }
+
+float SpatialAudioSettings::GetTransmissionLoss() const { return m_transmissionLoss; }
+void SpatialAudioSettings::SetTransmissionLoss( float value ) { m_transmissionLoss = std::max( 0.0f, std::min( 1.0f, value ) ); }
 
 bool SpatialAudioSettings::GetEnableDiffraction() const { return m_enableDiffraction; }
 void SpatialAudioSettings::SetEnableDiffraction( bool value ) { m_enableDiffraction = value; }

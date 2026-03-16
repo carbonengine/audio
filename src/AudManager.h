@@ -115,16 +115,10 @@ public:
 	bool SetGlobalRTPC( const std::wstring& rtpcName, float value );
 	// Set a global state in Wwise.
 	bool SetState( const std::wstring& stateGroup, const std::wstring& stateName );
-	// Returns the occlusion mode as an integer for Blue property exposure.
-	int GetOcclusionModeInt() const;
-	// Sets the occlusion mode from an integer value.
-	void SetOcclusionModeInt( int value );
-	// Returns the occlusion mode enum.
-	AudOcclusion GetOcclusionMode() const;
-	// Returns the global transmission loss [0.0-1.0] used for geometry surfaces.
-	float GetGlobalTransmissionLoss() const;
-	// Sets the global transmission loss [0.0-1.0].
-	void SetGlobalTransmissionLoss( float value );
+	// Returns whether spatial audio geometry is enabled.
+	bool GetSpatialAudioGeometryEnabled() const;
+	// Enables or disables spatial audio geometry.
+	void SetSpatialAudioGeometryEnabled( bool enabled );
 	// Can be called to see if the current platform supports spatial audio.
 	const bool SpatialAudioIsSupported();
 	// Stop all currently playing sounds on all game objects.
@@ -223,8 +217,8 @@ private:
 	bool m_asyncOpen;
 	// Signals whether Carbon Audio's spatial audio features are enabled. If the user currently doesn't have an active spatial audio endpoint then output will still be in stereo.
 	bool m_spatialAudioEnabled;
-	// Global transmission loss [0.0-1.0] applied to geometry surfaces.
-	float m_globalTransmissionLoss;
+	// Tracks whether Wwise Spatial Audio geometry has been initialized in the current audio-engine lifetime.
+	bool m_spatialAudioGeometryInitialized;
 	mutable bool m_audioCullingEnabled;
 
 	std::map<AkBankID, SoundBankInfo> m_soundBankInfoMap;
@@ -333,6 +327,7 @@ public:
 	DELEGATE_SA_GETTER( int, GetLoadBalancingSpread )
 	DELEGATE_SA_GETTER( bool, GetEnableDiffractionAndTransmission )
 	DELEGATE_SA_GETTER( bool, GetCalcEmitterVirtualPosition )
+	DELEGATE_SA_GETTER( float, GetTransmissionLoss )
 	DELEGATE_SA_GETTER( bool, GetEnableDiffraction )
 	DELEGATE_SA_GETTER( bool, GetEnableDiffractionOnBoundaryEdges )
 
@@ -348,6 +343,7 @@ public:
 	DELEGATE_SA_SETTER( int, SetLoadBalancingSpread )
 	DELEGATE_SA_SETTER( bool, SetEnableDiffractionAndTransmission )
 	DELEGATE_SA_SETTER( bool, SetCalcEmitterVirtualPosition )
+	DELEGATE_SA_SETTER( float, SetTransmissionLoss )
 	DELEGATE_SA_SETTER( bool, SetEnableDiffraction )
 	DELEGATE_SA_SETTER( bool, SetEnableDiffractionOnBoundaryEdges )
 

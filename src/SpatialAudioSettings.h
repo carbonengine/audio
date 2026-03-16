@@ -9,12 +9,6 @@
 
 struct AkSpatialAudioInitSettings;
 
-enum class AudOcclusion : int
-{
-	Off = 0, // Occlusion disabled, no geometry registered, spatial audio geometry not initialized
-	On  = 1  // Wwise Spatial Audio handles diffraction + transmission
-};
-
 /**
  * @brief A wrapper with configuration settings for Wwise Spatial Audio initialization.
  *
@@ -25,10 +19,10 @@ public:
 	SpatialAudioSettings();
 
 	/**
-	 * @brief Controls whether spatial audio occlusion is On or Off.
+	 * @brief Controls whether geometry based spatial audio processing is enabled.
 	 */
-	AudOcclusion GetOcclusionMode() const;
-	void SetOcclusionMode( AudOcclusion value );
+	bool GetSpatialAudioGeometryEnabled() const;
+	void SetSpatialAudioGeometryEnabled( bool value );
 
 	/**
 	 * @brief Amount that an emitter or listener has to move to trigger a validation of reflections/diffraction.
@@ -175,15 +169,20 @@ public:
 	void SetCalcEmitterVirtualPosition( bool value );
 
 	/**
+	 * @brief Transmission loss [0.0-1.0] applied to geometry surfaces when meshes are registered.
+	 */
+	float GetTransmissionLoss() const;
+	void SetTransmissionLoss( float value );
+
+	/**
 	 * @brief Switch to enable or disable geometric diffraction for this Geometry.
 	 */
 	bool GetEnableDiffraction() const;
 	void SetEnableDiffraction( bool value );
 
 	/**
-	 * @brief Switch to enable or disable geometric diffraction on boundary edges for this Geometry.
-	 *
-	 * Boundary edges are edges that are connected to only one triangle.
+	 * @brief Switch to enable or disable geometric diffraction on boundary edges for this mesh.
+	 *        Boundary edges are edges that are connected to only one triangle.
 	 */
 	bool GetEnableDiffractionOnBoundaryEdges() const;
 	void SetEnableDiffractionOnBoundaryEdges( bool value );
@@ -194,7 +193,7 @@ public:
 	void PopulateInitSettings( AkSpatialAudioInitSettings& out ) const;
 
 private:
-	AudOcclusion m_occlusionMode;
+	bool m_spatialAudioGeometryEnabled;
 	float m_movementThreshold;
 	int m_numberOfPrimaryRays;
 	int m_maxReflectionOrder;
@@ -206,6 +205,7 @@ private:
 	int m_loadBalancingSpread;
 	bool m_enableDiffractionAndTransmission;
 	bool m_calcEmitterVirtualPosition;
+	float m_transmissionLoss;
 	bool m_enableDiffraction;
 	bool m_enableDiffractionOnBoundaryEdges;
 };

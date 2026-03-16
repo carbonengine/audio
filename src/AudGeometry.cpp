@@ -43,6 +43,24 @@ AudGeometry::AudGeometry( IRoot* lockobj )
 AudGeometry::~AudGeometry()
 {}
 
+void AudGeometry::ClearAllGeometry()
+{
+	if( s_geometrySetRefCounts.empty() )
+	{
+		return;
+	}
+
+	if( AK::SoundEngine::IsInitialized() )
+	{
+		for( const auto& geometrySetEntry : s_geometrySetRefCounts )
+		{
+			AK::SpatialAudio::RemoveGeometry( geometrySetEntry.first );
+		}
+	}
+
+	s_geometrySetRefCounts.clear();
+}
+
 AkGeometryInstanceParams AudGeometry::MakeInstanceParams(
 	uint64_t geometrySetId, const Matrix& worldTransform )
 {
@@ -66,7 +84,7 @@ void AudGeometry::SetGeometry(
 		return;
 	}
 
-	if( !g_audioManager || g_audioManager->GetOcclusionMode() == AudOcclusion::Off )
+	if( !g_audioManager || !g_audioManager->GetSpatialAudioGeometryEnabled() )
 	{
 		return;
 	}
@@ -80,7 +98,7 @@ void AudGeometry::SetGeometry(
 		AkAcousticSurface surface;
 		surface.strName = "default";
 		surface.textureID = AK_INVALID_UNIQUE_ID;
-		surface.transmissionLoss = g_audioManager->GetGlobalTransmissionLoss();
+		surface.transmissionLoss = g_audioManager->GetTransmissionLoss();
 
 		AkGeometryParams params;
 		params.Vertices = akVertices.data();
@@ -120,7 +138,7 @@ void AudGeometry::SetGeometryTransform(
 	uint64_t instanceId,
 	const Matrix& worldTransform )
 {
-	if( !g_audioManager || g_audioManager->GetOcclusionMode() == AudOcclusion::Off )
+	if( !g_audioManager || !g_audioManager->GetSpatialAudioGeometryEnabled() )
 	{
 		return;
 	}

@@ -23,9 +23,8 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		MAP_PROPERTY( "visibleWeight", GetVisibleWeight, SetVisibleWeight, "The weight applied to a game object if it is visible to the listener.")
 		MAP_PROPERTY( "playing2DWeight", GetPlaying2DWeight, SetPlaying2DWeight, "The weight applied to a game object if it is currently playing a 2D sound.")
 
-		// Spatial audio settings (applied at init when occlusion mode is On)
-		MAP_PROPERTY( "occlusionMode", GetOcclusionModeInt, SetOcclusionModeInt, "Controls spatial audio occlusion. 0 = Off (no geometry, no occlusion), 1 = On (Wwise Spatial Audio diffraction + transmission).")
-		MAP_PROPERTY( "globalTransmissionLoss", GetGlobalTransmissionLoss, SetGlobalTransmissionLoss, "Global transmission loss [0.0-1.0] applied to geometry surfaces when occlusion is enabled.")
+		// Spatial audio geometry settings
+		MAP_PROPERTY( "spatialAudioGeometryEnabled", GetSpatialAudioGeometryEnabled, SetSpatialAudioGeometryEnabled, "Enable or disable spatial audio geometry.")
 		MAP_PROPERTY( "movementThreshold", GetMovementThreshold, SetMovementThreshold, "Distance an emitter or listener must move to trigger a re-validation of reflections/diffraction.")
 		MAP_PROPERTY( "numberOfPrimaryRays", GetNumberOfPrimaryRays, SetNumberOfPrimaryRays, "Number of primary rays used in the ray tracing engine. More rays = better quality but higher CPU.")
 		MAP_PROPERTY( "maxReflectionOrder", GetMaxReflectionOrder, SetMaxReflectionOrder, "Maximum reflection order [1-4] - number of bounces in a reflection path.")
@@ -37,6 +36,9 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		MAP_PROPERTY( "loadBalancingSpread", GetLoadBalancingSpread, SetLoadBalancingSpread, "Spread path computation over N frames [1..]. 1 = no load balancing.")
 		MAP_PROPERTY( "enableDiffractionAndTransmission", GetEnableDiffractionAndTransmission, SetEnableDiffractionAndTransmission, "Enable geometric diffraction and transmission path computation.")
 		MAP_PROPERTY( "calcEmitterVirtualPosition", GetCalcEmitterVirtualPosition, SetCalcEmitterVirtualPosition, "Calculate virtual position for emitters diffracted through portals or around geometry.")
+		MAP_PROPERTY( "transmissionLoss", GetTransmissionLoss, SetTransmissionLoss, "Per-mesh setting: transmission loss [0.0-1.0] applied to geometry surfaces when meshes are registered.")
+		MAP_PROPERTY( "enableDiffraction", GetEnableDiffraction, SetEnableDiffraction, "Per-mesh setting: enable or disable geometric diffraction on mesh geometry.")
+		MAP_PROPERTY( "enableDiffractionOnBoundaryEdges", GetEnableDiffractionOnBoundaryEdges, SetEnableDiffractionOnBoundaryEdges, "Per-mesh setting: switch to enable or disable geometric diffraction on boundary edges for this mesh.")
 		
 		MAP_METHOD_AND_WRAP
 		( 
