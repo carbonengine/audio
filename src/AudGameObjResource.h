@@ -108,8 +108,8 @@ public:
 protected:
 	enum ActionTypes
 	{
-		Stop = AK::SoundEngine::AkActionOnEventType::AkActionOnEventType_Stop,
-		Break = AK::SoundEngine::AkActionOnEventType::AkActionOnEventType_Break,
+		Stop = AkActionOnEventType_Stop,
+		Break = AkActionOnEventType_Break,
 	};
 	AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj = NULL );
 	// Convert a Trinity RH vector to a Wwise LH vector and set the position for this game object in Wwise.
@@ -117,7 +117,7 @@ protected:
 	// Prepend an event prefix if one exists on the given event.
 	std::wstring PrepareEvent( const std::wstring& event, bool bypassPrefix );
 	// Propagate any wwise callbacks received for this game object.
-	static void PropagateWwiseCallback( AkCallbackType in_eType, AkCallbackInfo* in_pCallbackInfo );
+	static void PropagateWwiseCallback( AkCallbackType in_eType, AkEventCallbackInfo* in_pEventInfo, void* in_pCallbackInfo, void* in_pCookie );
 	// Execute the given action on a playing ID if it is playing on this game object.
 	void ExecuteActionOnPlayingID( const AkPlayingID playingID, const ActionTypes action, uint32_t fadeOutDuration = 1000 );
 	// Calculates and updates sound prioritization attributes that are determined by currently playing events or events that will play on wake.

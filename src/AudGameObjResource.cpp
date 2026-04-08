@@ -273,13 +273,12 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 //              for all possible callback types, keep in mind we don't ask for all of these to happen.
 //   in_pCallbackInfo - A pointer to the callback information. 
 //-----------------------------------------------------
-void AudGameObjResource::PropagateWwiseCallback( AkCallbackType in_eType, AkCallbackInfo* in_pCallbackInfo )
+void AudGameObjResource::PropagateWwiseCallback( AkCallbackType in_eType, AkEventCallbackInfo* in_pEventInfo, void* in_pCallbackInfo, void* in_pCookie )
 {
 	if ( in_eType == AK_EndOfEvent )
 	{
-		AkEventCallbackInfo* cbInfo = reinterpret_cast<AkEventCallbackInfo*>(in_pCallbackInfo);
-		AudGameObjResource* audGameObjResourcePtr = reinterpret_cast<AudGameObjResource*>(cbInfo->pCookie);
-		audGameObjResourcePtr->EventFinishedCallback( cbInfo );
+		AudGameObjResource* audGameObjResourcePtr = reinterpret_cast<AudGameObjResource*>(in_pCookie);
+		audGameObjResourcePtr->EventFinishedCallback( in_pEventInfo );
 	}
 	return;
 }
@@ -749,11 +748,11 @@ void AudGameObjResource::ExecuteActionOnPlayingID( const AkPlayingID playingID, 
 			switch ( action )
 			{
 			case ActionTypes::Stop:
-				AK::SoundEngine::ExecuteActionOnPlayingID( AK::SoundEngine::AkActionOnEventType_Stop, playingID, fadeOutDuration );
+				AK::SoundEngine::ExecuteActionOnPlayingID( AkActionOnEventType_Stop, playingID, fadeOutDuration );
 				g_audioManager->LogExecuteActionOnPlayingID( m_ID, playingID, L"Stop" );
 				break;
 			case ActionTypes::Break:
-				AK::SoundEngine::ExecuteActionOnPlayingID( AK::SoundEngine::AkActionOnEventType_Break, playingID, fadeOutDuration );
+				AK::SoundEngine::ExecuteActionOnPlayingID( AkActionOnEventType_Break, playingID, fadeOutDuration );
 				g_audioManager->LogExecuteActionOnPlayingID( m_ID, playingID, L"Break" );
 				break;
 			}

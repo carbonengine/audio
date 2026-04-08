@@ -2,7 +2,6 @@
 #include "AudManager.h"
 
 #include <AK/Plugin/AkCompressorFXFactory.h>
-#include <AK/Plugin/AkConvolutionReverbFXFactory.h>
 #include <AK/Plugin/AkDelayFXFactory.h>
 #include <AK/Plugin/AkFlangerFXFactory.h>
 #include <AK/Plugin/AkGuitarDistortionFXFactory.h>
@@ -145,12 +144,6 @@ bool AudManager::Init()
 		return false;
 	}
 
-	if( !InitMusic() )
-	{
-		CCP_LOGERR( "Failed to initialize audio : Music" );
-		return false;
-	}
-
 #ifndef AK_OPTIMIZED
 	if( !InitCommunication() )
 	{
@@ -169,11 +162,6 @@ void AudManager::Terminate()
 #ifndef AK_OPTIMIZED
 	AK::Comm::Term();
 #endif
-
-	//
-	// Terminate the music engine
-	//
-	AK::MusicEngine::Term();
 
 	//Terminate sound engine.
 	if( AK::SoundEngine::IsInitialized() )
@@ -375,19 +363,6 @@ bool AudManager::InitSound()
 	CCP_STATS_SET( maxSpatialAudioObjects, platformInitSettings.uMaxSystemAudioObjects );
 #endif
 #endif
-
-	return true;
-}
-
-bool AudManager::InitMusic()
-{
-	AkMusicSettings musicSettings;
-	AK::MusicEngine::GetDefaultInitSettings( musicSettings );
-	if( AK::MusicEngine::Init( &musicSettings ) != AK_Success )
-	{
-		CCP_LOGERR( "Failed to initialize Wwise Music Engine" );
-		return false;
-	}
 
 	return true;
 }
@@ -1139,16 +1114,16 @@ void AudManager::GlobalCallbackEndRender( AK::IAkGlobalPluginContext* in_pContex
 //     * Swapping audio device sharesets during runtime (e.g. DisableSpatialAudio and EnableSpatialAudio).
 //     * When the user changes their audio device at an operating system level (e.g. changing from headphones to speakers).
 //-----------------------------------------------------
-void AudManager::AudioDeviceStatusChangeCallback( AK::IAkGlobalPluginContext* in_pContext, AkUniqueID in_idAudioDeviceShareset, AkUInt32 in_idDeviceID, AK::AkAudioDeviceEvent in_idEvent, AKRESULT in_AkResult )
+void AudManager::AudioDeviceStatusChangeCallback( AK::IAkGlobalPluginContext* in_pContext, AkUniqueID in_idAudioDeviceShareset, AkUInt32 in_idDeviceID, AkAudioDeviceEvent in_idEvent, AKRESULT in_AkResult )
 {
-	size_t currentErrorHash = std::hash<AkUniqueID>()( in_idDeviceID ) ^ std::hash<AkUniqueID>()( in_idAudioDeviceShareset ) ^ std::hash<AKRESULT>()( in_AkResult ) ^ std::hash<AK::AkAudioDeviceEvent>()( in_idEvent );
+	size_t currentErrorHash = std::hash<AkUniqueID>()( in_idDeviceID ) ^ std::hash<AkUniqueID>()( in_idAudioDeviceShareset ) ^ std::hash<AKRESULT>()( in_AkResult ) ^ std::hash<AkAudioDeviceEvent>()( in_idEvent );
 
 	if( currentErrorHash == s_lastLoggedDeviceHash.load() )
 	{
 		return;
 	}
 
-	if( in_idEvent == AK::AkAudioDeviceEvent::AkAudioDeviceEvent_Initialization )
+	if( in_idEvent == AkAudioDeviceEvent_Initialization )
 	{
 		if( in_AkResult == AK_Success )
 		{
@@ -1179,11 +1154,11 @@ void AudManager::AudioDeviceStatusChangeCallback( AK::IAkGlobalPluginContext* in
 	}
 	else
 	{
-		if( in_idEvent == AK::AkAudioDeviceEvent::AkAudioDeviceEvent_Removal )
+		if( in_idEvent == AkAudioDeviceEvent_Removal )
 		{
 			CCP_LOG( "Audio device %u with shareset %u was manually requested to be removed.", in_idDeviceID, in_idAudioDeviceShareset );
 		}
-		else if( in_idEvent == AK::AkAudioDeviceEvent::AkAudioDeviceEvent_SystemRemoval )
+		else if( in_idEvent == AkAudioDeviceEvent_SystemRemoval )
 		{
 			CCP_LOG( "Audio device %u with shareset %u was removed because of a change in the user's system output.", in_idDeviceID, in_idAudioDeviceShareset );
 		}
