@@ -91,12 +91,12 @@ AudGameObjResource::~AudGameObjResource()
 {
 	if ( g_audioManager != nullptr )
 	{
+		g_audioManager->RemoveCallbackGameObject( m_ID );
 		g_audioManager->UnregisterGameObject( m_ID );
 	}
 
 	if( g_audioInitialized )
-    {
-		// Make sure end of event callbacks do not happen after this object is destroyed.
+	{
 		AK::SoundEngine::CancelEventCallbackGameObject( m_ID );
 		StopAll();
 		UnregisterWwiseObject();
@@ -275,12 +275,13 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 //-----------------------------------------------------
 void AudGameObjResource::PropagateWwiseCallback( AkCallbackType in_eType, AkEventCallbackInfo* in_pEventInfo, void* in_pCallbackInfo, void* in_pCookie )
 {
-	if ( in_eType == AK_EndOfEvent )
+	if ( in_eType == AK_EndOfEvent && g_audioManager != nullptr )
 	{
-		AudGameObjResource* audGameObjResourcePtr = reinterpret_cast<AudGameObjResource*>(in_pCookie);
-		audGameObjResourcePtr->EventFinishedCallback( in_pEventInfo );
+		g_audioManager->WithCallbackGameObject( in_pEventInfo->gameObjID, [&]( AudGameObjResource* obj )
+		{
+			obj->EventFinishedCallback( in_pEventInfo );
+		});
 	}
-	return;
 }
 
 

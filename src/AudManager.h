@@ -16,6 +16,7 @@
 #include "SoundPrioritization.h"
 #include "CCPFilePackageLowLevelIO.h"
 #include <memory>
+#include <unordered_map>
 
 
 #if _WIN32
@@ -108,6 +109,10 @@ public:
 	void RegisterAudioDeviceChangeCallback( const BlueScriptCallback callback );
 	// Object registration
 	void RegisterGameObject( AkGameObjectID gameObjID, AudGameObjResource * gameObj );
+	// Remove a game object from the tracking map. Must be called before the object is destroyed.
+	void RemoveCallbackGameObject( AkGameObjectID gameObjID );
+	// Look up a game object by ID under lock.
+	bool WithCallbackGameObject( AkGameObjectID gameObjID, std::function<void(AudGameObjResource*)> fn );
 	// Register an event to be sent to Wwise after it is done loading. Only works with soundbanks in the SoundBankStatus::Loading state.
 	void RegisterEventAfterSoundBankLoad( std::wstring & soundBankName, std::wstring & eventName, AudGameObjResource * emitter );
 	// Set an RTPC not associated with a specific game object.
@@ -224,6 +229,10 @@ private:
 	CcpMutex m_moniteredParametersMapMutex;
 
 	SoundPrioritization* m_soundPrioritization;
+
+	//  Map of game objects, used to guard Wwise callbacks
+	std::unordered_map<AkGameObjectID, AudGameObjResource*> m_callbackGameObjects;
+	CcpMutex m_callbackGameObjectsMutex;
 
 	// A boolean for the state of the profiler capture
 	bool m_isProfilerCapturing;

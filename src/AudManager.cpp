@@ -71,6 +71,7 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_spatialAudioEnabled( true ),
 	m_moniteredParametersMapMutex( "AudManager", "m_monitoredParametersMapMutex" ),
 	m_soundBankMutex( "AudManager", "m_soundBankMutex" ),
+	m_callbackGameObjectsMutex( "AudManager", "m_callbackGameObjectsMutex" ),
 	m_isProfilerCapturing( false ),
 	m_audioCullingEnabled( true )
 {
@@ -266,10 +267,33 @@ void AudManager::RegisterGameObject( AkGameObjectID gameObjID, AudGameObjResourc
 		return;
 	}
 
+	{
+		CcpAutoMutex lock( m_callbackGameObjectsMutex );
+		m_callbackGameObjects[gameObjID] = gameObj;
+	}
+
 	if( m_soundPrioritization )
 	{
 		m_soundPrioritization->RegisterGameObject( static_cast<IPrioritizedObject*>( gameObj ) );
 	}
+}
+
+void AudManager::RemoveCallbackGameObject( AkGameObjectID gameObjID )
+{
+	CcpAutoMutex lock( m_callbackGameObjectsMutex );
+	m_callbackGameObjects.erase( gameObjID );
+}
+
+bool AudManager::WithCallbackGameObject( AkGameObjectID gameObjID, std::function<void(AudGameObjResource*)> fn )
+{
+	CcpAutoMutex lock( m_callbackGameObjectsMutex );
+	auto it = m_callbackGameObjects.find( gameObjID );
+	if( it != m_callbackGameObjects.end() )
+	{
+		fn( it->second );
+		return true;
+	}
+	return false;
 }
 
 void AudManager::UnregisterGameObject( AkGameObjectID gameObjID )
