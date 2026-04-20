@@ -56,5 +56,16 @@ const Be::ClassInfo* StretchAudio::ExposeToBlue()
 			"The event to play on the stretch effect between the source and destination. Comes from the stretch emitter.",
 			Be::READWRITE | Be::PERSIST
 		)
+		MAP_ATTRIBUTE(
+			"shotMissedEvent",
+			m_shotMissedEvent,
+			"The event to play when the shot is missed. Comes from the stretch emitter.",
+			Be::READWRITE | Be::PERSIST
+		)
+		MAP_METHOD_AND_WRAP( 
+			"SetShotMissed", 
+			SetShotMissed, 
+			"Sets whether the next shot is a miss. If true, the shotMissedEvent will be played on the stretch emitter when the stretch effect starts."
+		)
 	EXPOSURE_END()
 }

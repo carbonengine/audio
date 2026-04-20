@@ -12,7 +12,9 @@
 StretchAudio::StretchAudio( IRoot* lockobj ) : 
 	m_impactEvent( L"" ),
 	m_outburstEvent( L"" ),
-	m_stretchEvent( L"" )
+	m_stretchEvent( L"" ),
+	m_shotMissedEvent( L"" ),
+	m_shotMissed( false )
 {
 	Initialize();
 }
@@ -152,6 +154,11 @@ void StretchAudio::Start()
 	}
 	if ( nullptr != m_stretchEmitter)
 	{
+		if ( m_shotMissed )
+		{
+			m_stretchEmitter->SendEvent( m_shotMissedEvent );
+		}
+
 		m_stretchEmitter->SendEvent( m_stretchEvent );
 	}
 }
@@ -170,4 +177,9 @@ void StretchAudio::Stop()
 	{
 		m_stretchEmitter->StopAll();
 	}
+}
+
+void StretchAudio::SetShotMissed( bool missed )
+{
+	m_shotMissed = missed;
 }
