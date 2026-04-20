@@ -452,6 +452,7 @@ bool AudManager::SetState( const std::wstring& stateGroup, const std::wstring& s
 	{
 		// SetState always returns True so no need to check the result.
 		AK::SoundEngine::SetState( stateGroup.c_str(), stateName.c_str() );
+		LogSetState( stateGroup, stateName );
 		return true;
 	}
 	return false;
