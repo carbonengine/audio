@@ -79,6 +79,9 @@ ccp_add_library(CarbonAudio SHARED
 	src/AudEventKey.cpp
 	src/AudEventKey_Blue.cpp
 	src/AudGameObjResource.cpp
+	src/AudGeometry.cpp
+	src/AudGeometry_Blue.cpp
+	src/SpatialAudioSettings.cpp
 	src/audio2.cpp
 	src/AudGameObjResource_Blue.cpp
 	src/stdafx.cpp
@@ -122,6 +125,8 @@ target_sources(CarbonAudio PRIVATE
 	src/AudStaticDataRepository.h
 	src/AudUIPlayer.h
 	src/AudMusicPlayer.h
+	src/AudGeometry.h
+	src/SpatialAudioSettings.h
 	src/autoversion.h
 	src/DebugUtilities.h
 	src/LogBridge.h
