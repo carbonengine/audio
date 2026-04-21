@@ -26,6 +26,17 @@ if(WIN32)
     set(_OLD_CCP_VENDOR_BIN_PATH ${CCP_VENDOR_BIN_PATH})
     set(CCP_VENDOR_LIB_PATH "lib/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/v141/")
     set(CCP_VENDOR_BIN_PATH "bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/v141/")
+
+    if(DEFINED carbon_components_share_root)
+        string(REPLACE "/${CCP_TOOLSET}/" "/v141/" _v141_share_root "${carbon_components_share_root}")
+        get_filename_component(_v141_carbon_port_root "${_v141_share_root}" DIRECTORY)
+        set(Blue_DIR            "${_v141_share_root}/carbon-blue")
+        set(CcpMath_DIR         "${_v141_share_root}/carbon-math")
+        set(BlueExposure_DIR    "${_v141_share_root}/carbon-blueexposure")
+        set(CcpCore_DIR         "${_v141_share_root}/carbon-core")
+        set(Tracy_DIR           "${_v141_share_root}/Tracy")
+        set(Python_ROOT         "${_v141_share_root}/python")
+    endif()
 endif()
 
 find_package(Blue CONFIG REQUIRED)
@@ -70,9 +81,6 @@ ccp_add_library(CarbonAudio SHARED
 	src/AudGameObjResource.cpp
 	src/audio2.cpp
 	src/AudGameObjResource_Blue.cpp
-	src/AudGeometry.cpp
-	src/AudGeometry_Blue.cpp
-	src/SpatialAudioSettings.cpp
 	src/stdafx.cpp
 	src/AudListener.cpp
 	src/AudioCurveSetDriver.cpp
@@ -114,8 +122,6 @@ target_sources(CarbonAudio PRIVATE
 	src/AudStaticDataRepository.h
 	src/AudUIPlayer.h
 	src/AudMusicPlayer.h
-	src/AudGeometry.h
-	src/SpatialAudioSettings.h
 	src/autoversion.h
 	src/DebugUtilities.h
 	src/LogBridge.h
@@ -277,19 +283,21 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     	set(_COPY_TOOLSET v141)  # This is a hack to copy the v141 binaries over until the v143 toolset update is done properly.
 
 		# Detect Python version
-		if(EXISTS "${Python_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/python312.dll")
+		# Python 3 : carbon-port places DLLs flat under v141/bin/
+		# Python 2 : old layout with ${Python_ROOT}/bin/${platform}/${arch}/${toolset}/
+		if(EXISTS "${_v141_carbon_port_root}/bin/python312.dll")
 			set(PYTHON_VERSION 3)
 		elseif(EXISTS "${Python_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/python27.dll")
 			set(PYTHON_VERSION 2)
 		else()
-			message(FATAL_ERROR "No compatible Python DLL found at ${Python_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/ - Checked for python27.dll and python312.dll")
+			message(FATAL_ERROR "No compatible Python DLL found - Checked for python312.dll in ${_v141_carbon_port_root}/bin/ and python27.dll in ${Python_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/")
 		endif()
 
 		if(PYTHON_VERSION EQUAL 3)
 			message(STATUS "Python 3.12 detected, copying python312.dll")
 			add_custom_command(TARGET CarbonAudio POST_BUILD
 					COMMAND ${CMAKE_COMMAND} -E copy_if_different
-					"${Python_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/python312.dll"
+					"${_v141_carbon_port_root}/bin/python312.dll"
 					$<TARGET_FILE_DIR:CarbonAudio>
 			)
 			message(STATUS "Python 3.12 build - skipping Blue and TBB DLL copying")
@@ -352,7 +360,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 	
 	# Filter out command line arguments and only keep actual test names
 	# This is an unfortunate necessity because MacOS was not properly handling test discovery and taking all arguments as tests.
-	string(REPLACE "\n" ";" PYTHON_TESTS_RAW "${PYTHON_TESTS_STR}")
+	string(REPLACE "\n" ";" PYTHON_TESTS_RAW ${PYTHON_TESTS_STR})
 	set(PYTHON_TESTS "")
 	foreach(LINE ${PYTHON_TESTS_RAW})
 		string(STRIP "${LINE}" LINE_STRIPPED)
