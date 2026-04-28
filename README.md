@@ -59,14 +59,6 @@ The repository includes pre-configured launch configurations in `.vscode/launch.
 - **Attach to Process**: Attach to any running process using Visual Studio debugger
 - **Attach to Process (GDB)**: Alternative using GDB debugger
 
-### Troubleshooting
-
-#### "Module use of python312.dll conflicts with this version of Python" Error
-This error occurs when you have built CarbonAudio with Frontier (which uses Python 3) and then tried to build it against EVE (which uses Python 2).
-
-1. **Run "Clean Build Directory" task**: `Ctrl+Shift+P` → `Tasks: Run Task` → "Clean Build Directory"
-2. **Re-run your test**: The test should now work
-
 ### Wwise Test Project
 This repository includes a test Wwise project in the `Wwise/` directory:
 
@@ -120,7 +112,7 @@ You can find an example of registering a blue path in the `setUpClass` method in
 Here is an example of using the AudioManager Python class from within an EVE or Frontier branch to both initialize and enable CarbonAudio:
 ```
 import json
-import uthread2
+import scheduler
 
 import blue
 from audio2.audiomanager import AudioManager
@@ -141,8 +133,8 @@ def EnableCarbonAudio():
 
 
 if "__init__" == "__main__":
-    t = uthread2.StartTasklet(EnableCarbonAudio)
-    while t.is_alive():
+    t = scheduler.tasklet(EnableCarbonAudio)()
+    while t.alive:
         blue.os.Pump()
 ```
 

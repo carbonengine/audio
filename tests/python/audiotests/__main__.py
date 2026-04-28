@@ -1,10 +1,9 @@
-from __future__ import print_function
 import os
 import sys
 import unittest
 
 import blue
-PY3 = sys.version_info[0] >= 3
+import scheduler
 
 
 def main():
@@ -14,20 +13,12 @@ def main():
         sys.argv[0] = executable + " -m unittest"
         del os
 
-if PY3:
-    import scheduler
-    tasklet_start = lambda func, *args: scheduler.tasklet(func)(*args)
-else:
-    import uthread2
-    tasklet_start = uthread2.start_tasklet
+tasklet_start = lambda func, *args: scheduler.tasklet(func)(*args)
 
 class TaskletTestRunner(unittest.TextTestRunner):
     def __init__(self, *args, **kwargs):
         self.result = None
-        if PY3:
-            super().__init__(*args, **kwargs)
-        else:
-            super(TaskletTestRunner, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def run(self, test):
         tasklet_start(self._run_impl, test)
@@ -38,10 +29,7 @@ class TaskletTestRunner(unittest.TextTestRunner):
         return self.result
 
     def _run_impl(self, test):
-        if PY3:
-            self.result = super().run(test)
-        else:
-            self.result = super(TaskletTestRunner, self).run(test)
+        self.result = super().run(test)
 
 def check_audio2_import():
     """Check if audio2 can be imported"""

@@ -1,6 +1,5 @@
 import os
 import logging
-import sys
 import unittest
 
 import blue
@@ -13,7 +12,7 @@ class TestAudManagerExposure(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         import audio2
-        super(TestAudManagerExposure, cls).setUpClass()
+        super().setUpClass()
 
         blue.paths.SetSearchPath("soundbanks", os.path.abspath(os.path.join(os.path.dirname(__file__), "soundbanks")))
         settings = audio2.AudSettings()
@@ -117,10 +116,7 @@ class TestAudManagerExposure(unittest.TestCase):
         self.audioManager.LoadBank(ONE_SHOT_BNK)
 
         PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
-        if sys.version_info[0] >= 3:
-            self.assertCountEqual(self.audioManager.GetLoadedSoundBanks(), [INIT_BANK, ONE_SHOT_BNK])
-        else:
-            self.assertEqual(set(self.audioManager.GetLoadedSoundBanks()), set([INIT_BANK, ONE_SHOT_BNK]))
+        self.assertCountEqual(self.audioManager.GetLoadedSoundBanks(), [INIT_BANK, ONE_SHOT_BNK])
 
         self.audioManager.UnloadBank(ONE_SHOT_BNK)
         PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=1)

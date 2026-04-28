@@ -280,66 +280,29 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
 	include(CTest)
 
 	if(WIN32)
-    	set(_COPY_TOOLSET v141)  # This is a hack to copy the v141 binaries over until the v143 toolset update is done properly.
-
-		# Detect Python version
-		# Python 3 : carbon-port places DLLs flat under v141/bin/
-		# Python 2 : old layout with ${Python_ROOT}/bin/${platform}/${arch}/${toolset}/
-		if(EXISTS "${_v141_carbon_port_root}/bin/python312.dll")
-			set(PYTHON_VERSION 3)
-		elseif(EXISTS "${Python_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/python27.dll")
-			set(PYTHON_VERSION 2)
-		else()
-			message(FATAL_ERROR "No compatible Python DLL found - Checked for python312.dll in ${_v141_carbon_port_root}/bin/ and python27.dll in ${Python_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/")
+		if(NOT EXISTS "${_v141_carbon_port_root}/bin/python312.dll")
+			message(FATAL_ERROR "python312.dll not found in ${_v141_carbon_port_root}/bin/")
 		endif()
 
-		if(PYTHON_VERSION EQUAL 3)
-			message(STATUS "Python 3.12 detected, copying python312.dll")
-			add_custom_command(TARGET CarbonAudio POST_BUILD
-					COMMAND ${CMAKE_COMMAND} -E copy_if_different
-					"${_v141_carbon_port_root}/bin/python312.dll"
-					$<TARGET_FILE_DIR:CarbonAudio>
-			)
-			message(STATUS "Python 3.12 build - skipping Blue and TBB DLL copying")
-			
-			set(PYTHON_EXECUTABLE "${BRANCH_ROOT_DIR}/eve/client/pythonInterpreter.bat")
+		add_custom_command(TARGET CarbonAudio POST_BUILD
+				COMMAND ${CMAKE_COMMAND} -E copy_if_different
+				"${_v141_carbon_port_root}/bin/python312.dll"
+				$<TARGET_FILE_DIR:CarbonAudio>
+		)
 
-			# Hardcode scheduler paths to use v141 instead of find_package
-			set(SCHEDULER_ROOT "${BRANCH_ROOT_DIR}/vendor/github.com/ccpgames/carbon-scheduler/v1.2.1-0-g4bb93aa")
-			set(SCHEDULER_BIN_DIR "${SCHEDULER_ROOT}/bin/Windows/x64/v141")
-			set(SCHEDULER_INCLUDE_DIR "${SCHEDULER_ROOT}/include")
-			
-			# Create imported target manually
-			add_library(Scheduler SHARED IMPORTED)
-			set_target_properties(Scheduler PROPERTIES
-				IMPORTED_LOCATION "${SCHEDULER_BIN_DIR}/_scheduler_$<LOWER_CASE:$<CONFIG>>.pyd"
-				INTERFACE_INCLUDE_DIRECTORIES "${SCHEDULER_INCLUDE_DIR}"
-			)
-			
-		elseif(PYTHON_VERSION EQUAL 2)
-			message(STATUS "Python 2.7 detected - enforcing strict DLL dependencies")
-			
-			target_link_libraries(CarbonAudio PRIVATE BlueExposure)
+		set(PYTHON_EXECUTABLE "${BRANCH_ROOT_DIR}/eve/client/pythonInterpreter.bat")
 
-			add_custom_command(TARGET CarbonAudio POST_BUILD
-					COMMAND ${CMAKE_COMMAND} -E copy_if_different
-					"${Python_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/python27.dll"
-					"${Blue_DIR}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/$<IF:$<CONFIG:Release>,blue.dll,blue_$<LOWER_CASE:$<CONFIG>>.dll>"
-					"${IntelTBB_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/tbb12.dll"
-					"${Exefile_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/Exefile.exe"
-					"${ExefileConsole_ROOT}/bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${_COPY_TOOLSET}/ExefileConsole.exe"
-					$<TARGET_FILE_DIR:CarbonAudio>
-			)
+		# Hardcode scheduler paths to use v141 instead of find_package
+		set(SCHEDULER_ROOT "${BRANCH_ROOT_DIR}/vendor/github.com/ccpgames/carbon-scheduler/v1.2.1-0-g4bb93aa")
+		set(SCHEDULER_BIN_DIR "${SCHEDULER_ROOT}/bin/Windows/x64/v141")
+		set(SCHEDULER_INCLUDE_DIR "${SCHEDULER_ROOT}/include")
 
-			set(EXEFILE_CONSOLE_EXECUTABLE "$<TARGET_FILE_DIR:CarbonAudio>/ExefileConsole.exe")
-			add_test(NAME PythonTests
-				COMMAND ${EXEFILE_CONSOLE_EXECUTABLE} /buildflavor=$<LOWER_CASE:$<CONFIG>> /lib=${BRANCH_ROOT_DIR}/carbon/common/stdlib\\\;${CMAKE_CURRENT_SOURCE_DIR}/tests/python\\\;${BRANCH_ROOT_DIR}/packages /bin=$<TARGET_FILE_DIR:CarbonAudio> /py -m audiotests
-				WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests/python
-				COMMAND_EXPAND_LISTS
-			)
-			
-			set(PYTHON_EXECUTABLE "${BRANCH_ROOT_DIR}/eve/client/pythonInterpreter.bat")
-		endif()
+		# Create imported target manually
+		add_library(Scheduler SHARED IMPORTED)
+		set_target_properties(Scheduler PROPERTIES
+			IMPORTED_LOCATION "${SCHEDULER_BIN_DIR}/_scheduler_$<LOWER_CASE:$<CONFIG>>.pyd"
+			INTERFACE_INCLUDE_DIRECTORIES "${SCHEDULER_INCLUDE_DIR}"
+		)
 	else()
 		set(PYTHON_EXECUTABLE "${BRANCH_ROOT_DIR}/eve/client/pythonInterpreter.sh")
 	endif()

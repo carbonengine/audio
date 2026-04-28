@@ -1,6 +1,5 @@
 import blue
 import time
-import sys
 
 from audiotests.base_test_class import (
     COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK, ONE_SHOT_EVENT, ESSENTIAL_EVENT, ESSENTIAL_BNK,
@@ -14,7 +13,7 @@ from audiotests.utils import PumpOSWithTimeout
 class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
     @classmethod
     def setUpClass(cls):
-        super(TestEnabledAudGameObjExposure, cls).setUpClass()
+        super().setUpClass()
         cls.Initialize(cls, defaultSoundBanks=[
             COMMON_BNK, LOOP_BNK, ONE_SHOT_BNK, ESSENTIAL_BNK, NONESSENTIAL_BNK, NONESSENTIAL_STREAM_BNK
         ])
@@ -61,8 +60,7 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
                 return True
                 
             blue.pyos.synchro.SleepWallclock(interval_ms)
-            if sys.version_info[0] >= 3:
-                blue.os.Pump()
+            blue.os.Pump()
             elapsed += interval_ms
         
         return False
@@ -71,11 +69,7 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
         return len(self.emitter.GetPlayingEvents()) == 1
         
     def get_events_values(self, events_dict):
-        """Helper method to handle dict.values() differently in Python 2/3"""
-        values = events_dict.values()
-        if sys.version_info[0] >= 3:
-            return list(values)
-        return values
+        return list(events_dict.values())
 
     def test_enabled_audgameobjresource_sendevent_essential(self):
         # test event streamed from essential
