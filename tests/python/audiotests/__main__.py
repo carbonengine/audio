@@ -38,10 +38,9 @@ def check_audio2_import():
         blue.LoadExtension("_audio2")
     except ImportError as e:
         error_msg = str(e)
-        branch_path = os.environ.get('CCP_EVE_PERFORCE_BRANCH_PATH', '[BRANCH_PATH]')
         buildflavor = os.environ.get('BUILDFLAVOR', 'NOT_SET')
         pythonpath = os.environ.get('PYTHONPATH', 'NOT_SET')
-        
+
         print("ERROR: Loading audio2 failed!\n"
               "This usually means stale build artifacts are causing DLL conflicts.\n"
               "To fix this:\n"

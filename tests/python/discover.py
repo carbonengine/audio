@@ -2,6 +2,35 @@ import sys
 import unittest
 import traceback
 
+
+# Mock C-extension modules so configure-time discovery works under the stock
+# python interpreter (no BUILDFLAVOR-aware exefile loader required).
+sys.modules['blue'] = sys
+
+
+class MockTasklet:
+    def __init__(*args, **kwargs):
+        pass
+
+
+class MockTaskletExt:
+    def __init__(*args, **kwargs):
+        pass
+
+
+class MockTaskletExit:
+    def __init__(*args, **kwargs):
+        pass
+
+
+sys.modules['_scheduler'] = sys
+import _scheduler as mod
+mod.TaskletExt = MockTaskletExt
+mod.TaskletExit = MockTaskletExit
+mod.tasklet = MockTasklet
+sys.modules['scheduler'] = mod
+
+
 def print_suite(suite):
     if hasattr(suite, '_exception'):
         print(suite._exception)

@@ -23,3 +23,5 @@ SoundbanksInfo.xml
 *.wproj_migration.log
 # Python
 *.pyc
+.cmake-build-*/
+CMakeUserPresets.json

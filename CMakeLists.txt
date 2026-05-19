@@ -1,56 +1,16 @@
 cmake_minimum_required(VERSION 3.16)
 project(CarbonAudio VERSION 1.0.0)
 
-if(NOT DEFINED ENV{CCP_EVE_PERFORCE_BRANCH_PATH})
-    message(FATAL_ERROR "Missing required environment variable CCP_EVE_PERFORCE_BRANCH_PATH")
-elseif(NOT IS_ABSOLUTE $ENV{CCP_EVE_PERFORCE_BRANCH_PATH})
-    message(FATAL_ERROR "CCP_EVE_PERFORCE_BRANCH_PATH needs to be an absolute path")
-elseif(NOT EXISTS $ENV{CCP_EVE_PERFORCE_BRANCH_PATH})
-    message(FATAL_ERROR "CCP_EVE_PERFORCE_BRANCH_PATH is pointing at a non-existing location $ENV{CCP_EVE_PERFORCE_BRANCH_PATH}")
-elseif(NOT IS_DIRECTORY $ENV{CCP_EVE_PERFORCE_BRANCH_PATH})
-    message(FATAL_ERROR "CCP_EVE_PERFORCE_BRANCH_PATH needs to be a directory")
-else()
-    message(STATUS "Using CCP_EVE_PERFORCE_BRANCH_PATH located at $ENV{CCP_EVE_PERFORCE_BRANCH_PATH}")
-endif()
+include(cmake/CcpTargetConfigurations.cmake)
+include(cmake/CcpBuildConfigurations.cmake)
+include(cmake/CcpPackageConfigHelpers.cmake)
 
-file(TO_CMAKE_PATH "$ENV{CCP_EVE_PERFORCE_BRANCH_PATH}" BRANCH_ROOT_DIR)
-list(INSERT CMAKE_MODULE_PATH 0 ${BRANCH_ROOT_DIR}/cmake)
-include(CcpGlobalSettings)
-include(CcpPackageConfigHelpers)
-
-set(Wwise_ROOT "${BRANCH_ROOT_DIR}/vendor/wwise/2025.1.5.9095")
-
-if(WIN32)
-    # Hack to allow building Audio with v143 toolset. This will ensure that when we link against dependencies, we will link against the v141 version. This is necessary because our build configuration assumes that all components are built using the same version. However, things built against a newer 14X toolset should be able to link against things that were built using an older 14X toolset.
-    set(_OLD_CCP_VENDOR_LIB_PATH ${CCP_VENDOR_LIB_PATH})
-    set(_OLD_CCP_VENDOR_BIN_PATH ${CCP_VENDOR_BIN_PATH})
-    set(CCP_VENDOR_LIB_PATH "lib/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/v141/")
-    set(CCP_VENDOR_BIN_PATH "bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/v141/")
-
-    if(DEFINED carbon_components_share_root)
-        string(REPLACE "/${CCP_TOOLSET}/" "/v141/" _v141_share_root "${carbon_components_share_root}")
-        get_filename_component(_v141_carbon_port_root "${_v141_share_root}" DIRECTORY)
-        set(Blue_DIR            "${_v141_share_root}/carbon-blue")
-        set(CcpMath_DIR         "${_v141_share_root}/carbon-math")
-        set(BlueExposure_DIR    "${_v141_share_root}/carbon-blueexposure")
-        set(CcpCore_DIR         "${_v141_share_root}/carbon-core")
-        set(Tracy_DIR           "${_v141_share_root}/Tracy")
-        set(Python_ROOT         "${_v141_share_root}/python")
-    endif()
-endif()
-
-find_package(Blue CONFIG REQUIRED)
-find_package(CcpMath CONFIG REQUIRED)
-find_package(IntelTBB REQUIRED)
-find_package(Wwise REQUIRED)
-find_package(CarbonTrinityAudioAPI REQUIRED)
-
-if(WIN32)
-    # Restore sanity after toolset hacking. After this we can use find_package
-    # to find any v143 dependencies.
-    set(CCP_VENDOR_LIB_PATH ${_OLD_CCP_VENDOR_LIB_PATH})
-    set(CCP_VENDOR_BIN_PATH ${_OLD_CCP_VENDOR_BIN_PATH})
-endif()
+find_package(carbon-blue            CONFIG REQUIRED)
+find_package(carbon-math            CONFIG REQUIRED)
+find_package(carbon-trinityaudioapi CONFIG REQUIRED)
+find_package(Wwise                  CONFIG REQUIRED)
+find_package(TBB                    CONFIG REQUIRED)
+find_package(Python3 COMPONENTS Development Interpreter REQUIRED)
 
 set(PUBLIC_HEADER_FILES_INCLUDE
 )
@@ -160,20 +120,35 @@ else()
 	message(FATAL_ERROR "CarbonAudio does not support platform specified.")
 endif()
 
+set(WWISE_LIBRARIES
+	Ak3DAudioBedMixerFX AkAudioInputSource AkAutobahn AkCompressorFX AkConvolutionReverbFX
+	AkDelayFX AkFlangerFX AkGainFX AkGuitarDistortionFX AkHarmonizerFX
+	AkMatrixReverbFX AkMemoryMgr AkMeterFX AkOpusDecoder AkParametricEQFX
+	AkPeakLimiterFX AkPitchShifterFX AkRecorderFX AkRoomVerbFX AkSilenceSource AkSineSource
+	AkSoundEngine AkSpatialAudio AkStereoDelayFX AkStreamMgr AkSynthOneSource AkTimeStretchFX
+	AkToneSource AkTremoloFX AkVorbisDecoder MasteringSuiteFX
+)
+
+if(WIN32)
+	list(APPEND WWISE_LIBRARIES $<IF:$<CONFIG:Release>,,wsock32>)
+endif()
+list(APPEND WWISE_LIBRARIES $<IF:$<CONFIG:Release>,,CommunicationCentral>)
+
 target_link_libraries(CarbonAudio
 		PUBLIC
 			Blue
-			CarbonTrinityAudioAPI
+			CcpTrinityAudioAPI
 		PRIVATE
-			Intel::TBB
+			TBB::tbb
 			CcpMath
 			Wwise::Wwise
+			${WWISE_LIBRARIES}
 		)
 
 if(APPLE)
-	target_link_libraries(CarbonAudio PRIVATE 
+	target_link_libraries(CarbonAudio PRIVATE
 		"-framework AudioToolbox"
-		"-framework CoreAudio" 
+		"-framework CoreAudio"
 		"-framework CoreFoundation"
 		"-framework AVFoundation"
 	)
@@ -182,43 +157,27 @@ endif()
 target_precompile_headers(CarbonAudio PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/stdafx.h)
 target_include_directories(CarbonAudio
 		PUBLIC
-			${CMAKE_CURRENT_SOURCE_DIR}/include
+			$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+			$<INSTALL_INTERFACE:include>
 		PRIVATE
 			${CMAKE_CURRENT_SOURCE_DIR}/src
 		)
 
 # Platform-specific LowLevelIO include directories
 if(WIN32)
-	target_include_directories(CarbonAudio PRIVATE 
+	target_include_directories(CarbonAudio PRIVATE
 		${CMAKE_CURRENT_SOURCE_DIR}/src/LowLevelIO/Win32
 	)
 elseif(APPLE)
-	target_include_directories(CarbonAudio PRIVATE 
+	target_include_directories(CarbonAudio PRIVATE
 		${CMAKE_CURRENT_SOURCE_DIR}/src/LowLevelIO/POSIX
 	)
 endif()
 
-if(APPLE)
-	set_target_properties(
-			CarbonAudio
-			PROPERTIES
-			PREFIX ""
-			SUFFIX ".so"
-	)
-endif()
-
-if(WIN32)
-    set(WWISE_PLATFORM Win64)
-elseif(APPLE)
-    set(WWISE_PLATFORM Mac)
-else()
-    set(WWISE_PLATFORM Linux64)
-endif()
-
 set_target_properties(CarbonAudio PROPERTIES OUTPUT_NAME "_audio2")
 
-target_compile_definitions(CarbonAudio 
-	PRIVATE 
+target_compile_definitions(CarbonAudio
+	PRIVATE
 		BLUE_OVERRIDE_VECTOR_TYPES=1
 		TBB_ENABLED=1
 )
@@ -246,109 +205,122 @@ endif()
 
 # Provide an install target iff this is the top level project only
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
-    # Install rule to ensure that our runtime and linker files are in the expected, platform-specific folders
-    install(
-        TARGETS CarbonAudio
-        EXPORT carbonAudioTargets 
-        CONFIGURATIONS ${CMAKE_CONFIGURATION_TYPES}
-        ARCHIVE DESTINATION lib/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/
-        LIBRARY DESTINATION lib/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/
-        RUNTIME DESTINATION bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}/
-    )
-    # Install rule for available public headers
-    install(FILES ${PUBLIC_HEADER_FILES_INCLUDE} DESTINATION include)
+    option(INSTALL_TO_MONOLITH "Install this package to a perforce branch vendor folder - provided for backwards compatability" OFF)
+    if(INSTALL_TO_MONOLITH)
+        install(
+            TARGETS CarbonAudio
+            EXPORT CarbonAudioTargets
+            CONFIGURATIONS ${CMAKE_CONFIGURATION_TYPES}
+            ARCHIVE DESTINATION lib/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}
+            LIBRARY DESTINATION lib/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}
+            RUNTIME DESTINATION bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}
+        )
 
-    # Install a custom CarbonAudioConfig.cmake file, since as a dependency we are
-    # basically a header-only library, not something that gets linked against.
-    configure_ccp_vendor_config_file(
-        TARGET CarbonAudio 
-        DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/CarbonAudioConfig.cmake"
-        DEPENDENCIES ""
-    )
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/CarbonAudioConfig.cmake DESTINATION .)
+        # Generate target configuration for the monolith
+        configure_ccp_vendor_config_file(
+            TARGET CarbonAudio
+            DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/CarbonAudioConfig.cmake"
+            DEPENDENCIES "Blue;CcpTrinityAudioAPI"
+        )
+        install(FILES ${CMAKE_CURRENT_BINARY_DIR}/CarbonAudioConfig.cmake DESTINATION .)
+    else()
+        install(
+            TARGETS CarbonAudio
+            EXPORT CarbonAudioTargets
+            CONFIGURATIONS ${CMAKE_CONFIGURATION_TYPES}
+            ARCHIVE DESTINATION lib
+            LIBRARY DESTINATION lib
+            RUNTIME DESTINATION bin
+        )
+
+        install(
+            EXPORT CarbonAudioTargets
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/share/carbon-audio
+            FILE carbon-audio.cmake
+        )
+
+        install(
+            FILES carbon-audioConfig.cmake
+            DESTINATION ${CMAKE_INSTALL_PREFIX}/share/carbon-audio
+        )
+    endif()
+
+    # Install rule for available public headers
+    install(DIRECTORY include DESTINATION . FILES_MATCHING PATTERN "*.h")
 
     # Install python package
     install(DIRECTORY python/ DESTINATION python
             FILES_MATCHING
             PATTERN "*.py"
             PATTERN "package.yaml"
-			PATTERN "*.bnk"
-			PATTERN "*.json"
+            PATTERN "*.bnk"
+            PATTERN "*.json"
     )
 
-	# Unit test related functionality
-	include(CTest)
+    option(BUILD_TESTING "Build tests. Enabled by default." ON)
+    if(BUILD_TESTING)
+        include(CTest)
 
-	if(WIN32)
-		if(NOT EXISTS "${_v141_carbon_port_root}/bin/python312.dll")
-			message(FATAL_ERROR "python312.dll not found in ${_v141_carbon_port_root}/bin/")
-		endif()
+        set(ENV{PYTHONPATH} ${CMAKE_CURRENT_SOURCE_DIR}/python)
+        execute_process(COMMAND ${Python3_EXECUTABLE} discover.py
+                OUTPUT_VARIABLE PYTHON_TESTS_STR
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+                ERROR_STRIP_TRAILING_WHITESPACE
+                RESULT_VARIABLE PYTHON_TEST_DISCOVERY_RETVAL
+                ERROR_VARIABLE PYTHON_TEST_DISCOVERY_ERRORS
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests/python
+        )
+        if(${PYTHON_TEST_DISCOVERY_RETVAL})
+            message(FATAL_ERROR "Error encountered during test discovery:\n=== stderr: ===\n${PYTHON_TEST_DISCOVERY_ERRORS}\n=== stdout: ===\n${PYTHON_TESTS_STR}")
+        endif()
 
-		add_custom_command(TARGET CarbonAudio POST_BUILD
-				COMMAND ${CMAKE_COMMAND} -E copy_if_different
-				"${_v141_carbon_port_root}/bin/python312.dll"
-				$<TARGET_FILE_DIR:CarbonAudio>
-		)
+        if(DEFINED CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE MATCHES "Release")
+            set(EXEFILE_TOOL_NAME exefile_${CMAKE_BUILD_TYPE})
+        else()
+            set(EXEFILE_TOOL_NAME exefile)
+        endif()
+        find_program(exefile_tool ${EXEFILE_TOOL_NAME} NO_CACHE)
 
-		set(PYTHON_EXECUTABLE "${BRANCH_ROOT_DIR}/eve/client/pythonInterpreter.bat")
+        if(WIN32)
+            add_custom_command(TARGET CarbonAudio POST_BUILD
+                    COMMAND ${CMAKE_COMMAND} -E copy ${exefile_tool} $<TARGET_FILE_DIR:CarbonAudio>
+            )
+            set(exefile_tool $<TARGET_FILE_DIR:CarbonAudio>/${EXEFILE_TOOL_NAME})
+            set(TESTS_WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests/python)
+        else()
+            set(TESTS_WORKING_DIRECTORY $<TARGET_FILE_DIR:CarbonAudio>)
+        endif()
 
-		# Hardcode scheduler paths to use v141 instead of find_package
-		set(SCHEDULER_ROOT "${BRANCH_ROOT_DIR}/vendor/github.com/ccpgames/carbon-scheduler/v1.2.1-0-g4bb93aa")
-		set(SCHEDULER_BIN_DIR "${SCHEDULER_ROOT}/bin/Windows/x64/v141")
-		set(SCHEDULER_INCLUDE_DIR "${SCHEDULER_ROOT}/include")
+        # Filter out command line arguments and only keep actual test names.
+        # MacOS was not properly handling test discovery and taking all arguments as tests.
+        string(REPLACE "\n" ";" PYTHON_TESTS_RAW "${PYTHON_TESTS_STR}")
+        set(PYTHON_TESTS "")
+        foreach(LINE ${PYTHON_TESTS_RAW})
+            string(STRIP "${LINE}" LINE_STRIPPED)
+            if(NOT "${LINE_STRIPPED}" STREQUAL "" AND
+               NOT "${LINE_STRIPPED}" MATCHES "^@.*" AND
+               NOT "${LINE_STRIPPED}" MATCHES "^/.*" AND
+               NOT "${LINE_STRIPPED}" MATCHES ".*\\.py$" AND
+               "${LINE_STRIPPED}" MATCHES ".*\\..*")
+                list(APPEND PYTHON_TESTS "${LINE_STRIPPED}")
+                message(STATUS "Found valid test ${LINE_STRIPPED}")
+            else()
+                message(STATUS "Filtering out non-test line: ${LINE_STRIPPED}")
+            endif()
+        endforeach()
 
-		# Create imported target manually
-		add_library(Scheduler SHARED IMPORTED)
-		set_target_properties(Scheduler PROPERTIES
-			IMPORTED_LOCATION "${SCHEDULER_BIN_DIR}/_scheduler_$<LOWER_CASE:$<CONFIG>>.pyd"
-			INTERFACE_INCLUDE_DIRECTORIES "${SCHEDULER_INCLUDE_DIR}"
-		)
-	else()
-		set(PYTHON_EXECUTABLE "${BRANCH_ROOT_DIR}/eve/client/pythonInterpreter.sh")
-	endif()
-
-	set(ENV{PYTHONPATH} ${CMAKE_CURRENT_SOURCE_DIR}/python)
-	set(ENV{"CTEST_OUTPUT_ON_FAILURE"} 1)
-	execute_process(COMMAND ${PYTHON_EXECUTABLE} discover.py
-			OUTPUT_VARIABLE PYTHON_TESTS_STR
-			OUTPUT_STRIP_TRAILING_WHITESPACE
-			ERROR_STRIP_TRAILING_WHITESPACE
-			RESULT_VARIABLE PYTHON_TEST_DISCOVERY_RETVAL
-			ERROR_VARIABLE PYTHON_TEST_DISCOVERY_ERRORS
-			WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests/python
-	)
-	if(${PYTHON_TEST_DISCOVERY_RETVAL})
-		message(FATAL_ERROR "Error encountered during test discovery:\n=== stderr: ===\n${PYTHON_TEST_DISCOVERY_ERRORS}\n=== stdout: ===\n${PYTHON_TESTS_STR}")
-	endif()
-	
-	# Filter out command line arguments and only keep actual test names
-	# This is an unfortunate necessity because MacOS was not properly handling test discovery and taking all arguments as tests.
-	string(REPLACE "\n" ";" PYTHON_TESTS_RAW ${PYTHON_TESTS_STR})
-	set(PYTHON_TESTS "")
-	foreach(LINE ${PYTHON_TESTS_RAW})
-		string(STRIP "${LINE}" LINE_STRIPPED)
-		# Skip empty lines, argument files (@...), command flags (/...), script names (*.py)
-		# Only include lines that look like test names (contain dots for module.class.method)
-		if(NOT "${LINE_STRIPPED}" STREQUAL "" AND 
-		   NOT "${LINE_STRIPPED}" MATCHES "^@.*" AND 
-		   NOT "${LINE_STRIPPED}" MATCHES "^/.*" AND 
-		   NOT "${LINE_STRIPPED}" MATCHES ".*\\.py$" AND
-		   "${LINE_STRIPPED}" MATCHES ".*\\..*")
-			list(APPEND PYTHON_TESTS "${LINE_STRIPPED}")
-			message(STATUS "Found valid test ${LINE_STRIPPED}")
-		else()
-			message(STATUS "Filtering out non-test line: ${LINE_STRIPPED}")
-		endif()
-	endforeach()
-	foreach(PYTHON_TEST ${PYTHON_TESTS})
-		add_test(NAME ${PYTHON_TEST}
-				COMMAND ${PYTHON_EXECUTABLE} -m audiotests -v ${PYTHON_TEST}
-				WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tests/python
-		)
-		if(WIN32)
-			set_tests_properties(${PYTHON_TEST} PROPERTIES ENVIRONMENT "PYTHONPATH=$<TARGET_FILE_DIR:CarbonAudio>\;${CMAKE_CURRENT_SOURCE_DIR}/python;BUILDFLAVOR=$<LOWER_CASE:$<CONFIG>>")
-		elseif (APPLE)
-			set_tests_properties(${PYTHON_TEST} PROPERTIES ENVIRONMENT "PYTHONPATH=$<TARGET_FILE_DIR:CarbonAudio>:${CMAKE_CURRENT_SOURCE_DIR}/python;BUILDFLAVOR=$<LOWER_CASE:$<CONFIG>>")
-		endif()
-	endforeach()
+        foreach(PYTHON_TEST ${PYTHON_TESTS})
+            add_test(NAME ${PYTHON_TEST}
+                    COMMAND ${exefile_tool} /inherit /buildflavor=$<LOWER_CASE:$<CONFIG>> /py -m audiotests -v ${PYTHON_TEST}
+                    WORKING_DIRECTORY ${TESTS_WORKING_DIRECTORY}
+            )
+            if(WIN32)
+                set_tests_properties(${PYTHON_TEST} PROPERTIES ENVIRONMENT
+                    "PYTHONPATH=$<TARGET_FILE_DIR:CarbonAudio>\;${CMAKE_CURRENT_SOURCE_DIR}/python\;${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin\;${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib\;${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/python\;${Python3_STDLIB};BUILDFLAVOR=$<LOWER_CASE:$<CONFIG>>")
+            elseif(APPLE)
+                set_tests_properties(${PYTHON_TEST} PROPERTIES ENVIRONMENT
+                    "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/tests/python:$<TARGET_FILE_DIR:CarbonAudio>:${CMAKE_CURRENT_SOURCE_DIR}/python:${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin:${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib:${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib/python3.12/lib-dynload:${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/python:${Python3_STDLIB};BUILDFLAVOR=$<LOWER_CASE:$<CONFIG>>")
+            endif()
+        endforeach()
+    endif()
 endif()

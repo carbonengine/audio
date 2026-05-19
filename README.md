@@ -3,35 +3,38 @@ CarbonAudio (previously audio2) is a wrapper through which EVE Online communicat
 
 CarbonAudio depends on [Blue](https://github.com/ccpgames/carbon-blue) which is the layer that exposes it to Python. In addition to this there are header only includes that can be used to interact with CarbonAudio through C++.
 
-## Development Setup with VS Code
+## Development Setup
 
 ### Prerequisites
-1. **Environment Variable**: Set `CCP_EVE_PERFORCE_BRANCH_PATH` to point to the root of your EVE or Frontier branch
-2. **VS Code Extensions**: Install the recommended extensions when prompted, or manually install:
-   - C/C++ Extension Pack
-   - CMake Tools
-   - CMake Language Support
+- **Wwise C++ SDK**: Internally provided through the private registry. External contributors should provide their own personal license (free for personal use). 
+- **Windows**: Visual Studio 2026 with the v145 toolset.
+- **macOS**: Xcode command line tools.
+- **CMake** 3.16 or newer.
+- **Git** with submodule support.
 
 ### Quick Setup
-1. **Clone the repository**
-2. **Run `launch-vscode-with-branch.bat`** and pass in the root of the EVE or Frontier branch you want to work against as an argument. This will open a VS Code instance that has the `CCP_EVE_PERFORCE_BRANCH_PATH` environment variable set to the branch you passed in as an argument.
+1. Clone the repository.
+2. Initialize submodules:
+   ```
+   git submodule update --init --recursive
+   ```
+3. Configure with the preset for your target.
+   ```
+   cmake --preset x64-windows-internal
+   ```
 
-_Note: Setting this command up in launchgrid is highly suggested_
+4. Build and test:
+   ```
+   cmake --build --preset x64-windows-internal --config Internal
+   ctest --preset x64-windows-internal -C Internal
+   ```
 
-### Building and Installing CarbonAudio
-1. **Configure CMake**: Open Command Palette (`Ctrl+Shift+P`) and run `CMake: Configure`
-2. **Select Build Preset**: Choose your desired build configuration (typically "Internal" for development)
-3. **Install**: Use `CMake: Install`. This will install the selected CMake configuration into the EVE or Frontier branch that the environment variable `CCP_EVE_PERFORCE_BRANCH_PATH` is set to. It will be installed into `<branch-root>/vendor/github.com/ccpgames/carbon-audio/develop`.
-4. **Modify carbon.json in the branch**: Change the carbon-audio version in the file `carbon.json` located in your EVE or Frontier branch to `develop`. 
+### Installing into an EVE / Frontier branch
 
-### VS Code Tasks
-The repository includes several helpful tasks accessible via `Ctrl+Shift+P` → `Tasks: Run Task`:
-
-- **Set CCP_EVE_PERFORCE_BRANCH_PATH**: This allows you to set the `CCP_EVE_PERFORCE_BRANCH_PATH` as a user environment variable without needing to do it through Windows settings. *Once set, you must restart VS Code completely to have it take effect*. 
-- **Clean Build Directory**: Removes the local `out` build directory to fix DLL conflicts. Use this if tests fail with "Module use of python312.dll conflicts" errors.
-- **Update Binaries**: Runs `launchUpdateBinaries.bat` to update EVE or Frontier client binaries.
-- **Enable Debug Delay for Tests**: Enable a 7 second delay for test debugging. This makes it so that tests will wait 7 seconds before running, giving you time to attach to the `exefile.exe` process so you can set breakpoints.
-- **Disable Debug Delay for Tests**: Disable the debug delay for tests.
+```
+cmake --preset x64-windows-internal -DINSTALL_TO_MONOLITH=ON -DCMAKE_INSTALL_PREFIX=<branch-root>/vendor/github.com/ccpgames/carbon-audio/develop
+cmake --build --preset x64-windows-internal --config Internal --target install
+```
 
 ## Testing
 
@@ -62,7 +65,7 @@ The repository includes pre-configured launch configurations in `.vscode/launch.
 ### Wwise Test Project
 This repository includes a test Wwise project in the `Wwise/` directory:
 
-1. **Install Wwise**: Download [Audiokinetic Launcher](https://www.audiokinetic.com/en/library/wwise_launcher/) and install Wwise version 2021.1.6.7774
+1. **Install Wwise**: Download [Audiokinetic Launcher](https://www.audiokinetic.com/en/library/wwise_launcher/) and install Wwise version 2025.1.5.9095
 2. **Open Project**: Launch Wwise and open `Wwise/CarbonAudioTest/CarbonAudioTest.wproj`
 3. **Generate SoundBanks**: The project outputs to `tests/python/audiotests/test/soundbanks/`
 
@@ -132,7 +135,7 @@ def EnableCarbonAudio():
     audio_manager.Enable() # The only SoundBank that will be loaded is Init.bnk. Use the kwarg soundBanksToLoad if you want others to load at start up.
 
 
-if "__init__" == "__main__":
+if __name__ == "__main__":
     t = scheduler.tasklet(EnableCarbonAudio)()
     while t.alive:
         blue.os.Pump()
