@@ -119,7 +119,11 @@ protected:
 	// Propagate any wwise callbacks received for this game object.
 	static void PropagateWwiseCallback( AkCallbackType in_eType, AkEventCallbackInfo* in_pEventInfo, void* in_pCallbackInfo, void* in_pCookie );
 	// Execute the given action on a playing ID if it is playing on this game object.
-	void ExecuteActionOnPlayingID( const AkPlayingID playingID, const ActionTypes action, uint32_t fadeOutDuration = 1000 );
+	bool ExecuteActionOnPlayingID( const AkPlayingID playingID, const ActionTypes action, uint32_t fadeOutDuration = 1000 );
+	// Mark an explicit stop/break request so culling does not treat it as a loop that should resume on wake.
+	void MarkPlayingIDStoppedByRequest( AkPlayingID playingID );
+	// Apply static data relationships for events stopped by the given event.
+	void ApplyEventStopRelationships( const std::wstring& stoppingEventName );
 	// Calculates and updates sound prioritization attributes that are determined by currently playing events or events that will play on wake.
 	void UpdateEventSoundPrioritizationAttributes();
 	// Update the max attenuation radius of this game object if the given event's radius is larger than the current value.
@@ -166,6 +170,8 @@ protected:
 	bool m_hasReceivedPosition;
 	// Events waiting to play on this game object when it wakes up from being culled.
 	std::set<std::wstring> m_eventsOnWake;
+	// Playing IDs that have been explicitly stopped but have not received their Wwise end callback yet.
+	std::set<AkPlayingID> m_pendingStoppedPlayingIDs;
 	// Currently playing events on this game object.
 	std::map<unsigned int, std::wstring> m_playingEvents;
 	// Keeps track of RTPCs sent to this game object.
@@ -175,7 +181,7 @@ protected:
 	// A one shot event sent to this game object while it was culled. 
 	std::pair<std::chrono::steady_clock::time_point, std::wstring> m_waitingOneShotInRange;
 
-	// A mutex to be used when working with m_playingEvents and m_eventsOnWake as they are accessed in different threads.
+	// A mutex to be used when working with m_playingEvents, m_pendingStoppedPlayingIDs and m_eventsOnWake as they are accessed in different threads.
 	CcpMutex m_mutex;
 };
 

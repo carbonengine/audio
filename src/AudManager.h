@@ -15,6 +15,7 @@
 #include "AudListener.h"
 #include "SoundPrioritization.h"
 #include "CCPFilePackageLowLevelIO.h"
+#include <atomic>
 #include <memory>
 #include <unordered_map>
 
@@ -40,6 +41,13 @@ enum class SoundBankStatus
 	UNLOADING,
 	UNLOADED,
 	NOT_LOADED
+};
+
+enum class AudioState
+{
+	Uninitialized,
+	Disabled,
+	Enabled
 };
 
 struct SoundBankInfo
@@ -79,7 +87,7 @@ public:
 
 	// Unloads all soundbanks currently loaded.
 	void ClearBanks();
-	// Disable CarbonAudio and terminate all relevant subprocesses.
+	// Disable CarbonAudio without terminating Wwise.
 	void Disable();
 	// Disable spatial audio. Works whether or not the user has a spatial audio endpoint active on their system.
 	bool DisableSpatialAudio();
@@ -93,6 +101,10 @@ public:
 	AudListenerPtr GetListener();
 	// Retreive a vector of all currently loaded soundbanks.
 	const std::vector<std::wstring> GetLoadedSoundBanks();
+	// Return Carbon Audio's current engine lifecycle state.
+	AudioState GetState() const { return m_state.load( std::memory_order_acquire ); }
+	// Return the lifecycle state as an integer for scripting layers.
+	int GetStateValue() const { return static_cast<int>( GetState() ); }
 	// Get the name of a SoundBank given its bank ID
 	std::wstring GetSoundBankName( const AkBankID bankID );
 	// Get info about currently loaded, loading or unloading SoundBanks.
@@ -192,6 +204,8 @@ private:
 	void Process();
 	// Registers audio2 for the tick handler.
 	void RegisterForTicks();
+	// Update Carbon Audio's lifecycle state.
+	void SetAudioState( AudioState state ) { m_state.store( state, std::memory_order_release ); }
 	// Terminates all Wwise modules.
 	void Terminate();
 	// Update all watched audio parameters with their current values in Wwise (if they exist).
@@ -237,10 +251,14 @@ private:
 	// A boolean for the state of the profiler capture
 	bool m_isProfilerCapturing;
 
+	std::atomic<AudioState> m_state{ AudioState::Uninitialized };
+
 #ifndef AK_OPTIMIZED
 	// Wwise communication interface settings.
 	AkCommSettings m_commSettings;
-    // Defines the Wwise resource monitor callback function
+	// Tracks resource monitor callback registration across disable/enable.
+	bool m_resourceMonitorCallbackRegistered;
+	// Defines the Wwise resource monitor callback function
 	static void ResourceMonitorCallback( const AkResourceMonitorDataSummary* in_pdataSummary );
 #endif
 	//Debug

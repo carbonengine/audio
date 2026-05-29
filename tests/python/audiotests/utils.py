@@ -5,10 +5,13 @@ import os
 AUDIO_METADATA_FILEPATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "test", "soundbanks", "SoundPrioritizationMetadata.json"))
 def PumpOSWithTimeout(booleanFunc, maxTries=10):
     numTries = 0
-    while( numTries < maxTries and booleanFunc() ):
+    while( numTries < maxTries ):
+        if not booleanFunc():
+            return True
         blue.pyos.synchro.SleepWallclock(100)
         blue.os.Pump()
         numTries += 1
+    return not booleanFunc()
 
 def GetAudioMetadataFromFile():
     """Gets audio metadata from file and returns it as a dict. Also converts eventIDs to int in the process."""

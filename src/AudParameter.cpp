@@ -16,7 +16,7 @@ bool AudParameter::OnModified( Be::Var* value )
 {
 	if ( ( Be::Var* )&m_value == value )
 	{
-		if( g_audioInitialized && m_ID )
+		if( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled && m_ID )
 		{
 			AK::SoundEngine::SetRTPCValue( m_name.c_str(), m_value, m_ID );
 			g_audioManager->LogSetRTPC( m_ID, m_name, m_value );

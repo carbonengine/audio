@@ -95,7 +95,7 @@ AudGameObjResource::~AudGameObjResource()
 		g_audioManager->UnregisterGameObject( m_ID );
 	}
 
-	if( g_audioInitialized )
+	if( g_audioManager != nullptr && g_audioManager->GetState() != AudioState::Uninitialized )
 	{
 		AK::SoundEngine::CancelEventCallbackGameObject( m_ID );
 		StopAll();
@@ -105,7 +105,7 @@ AudGameObjResource::~AudGameObjResource()
 
 void AudGameObjResource::RegisterWwiseObject()
 {
-	if( g_audioInitialized && m_gameObjRegistered == false )
+	if( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled && m_gameObjRegistered == false )
 	{
 		AKRESULT result = AK::SoundEngine::RegisterGameObj( m_ID, m_name.c_str() );
 		if( result != AK_Success )
@@ -118,7 +118,7 @@ void AudGameObjResource::RegisterWwiseObject()
 
 void AudGameObjResource::UnregisterWwiseObject()
 {
-	if( g_audioInitialized && m_gameObjRegistered == true )
+	if( g_audioManager != nullptr && g_audioManager->GetState() != AudioState::Uninitialized && m_gameObjRegistered == true )
 	{
 		AKRESULT result = AK::SoundEngine::UnregisterGameObj( m_ID );
 		if( result != AK_Success )
@@ -170,20 +170,9 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 
 	bool eventIsVital = g_staticDataRepository->EventIsVital( fullEventName );
 	AkPlayingID playingID = AK_INVALID_PLAYING_ID;
-	if ( m_culled || !g_audioEnabled )
+	if ( m_culled || g_audioManager == nullptr || g_audioManager->GetState() != AudioState::Enabled )
 	{
-		for ( auto it = m_eventsOnWake.cbegin(); it != m_eventsOnWake.cend();)
-		{
-			if( g_staticDataRepository->EventIsStopped( *it, fullEventName ) )
-			{
-				it = m_eventsOnWake.erase( it );
-				UpdateEventSoundPrioritizationAttributes();
-			}
-			else
-			{
-				++it;	
-			}
-		}
+		ApplyEventStopRelationships( fullEventName );
 
 		if ( g_staticDataRepository->EventIsLoop( fullEventName ) || eventIsVital )
 		{
@@ -238,6 +227,7 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 
 			if ( playingID != AK_INVALID_PLAYING_ID )
 			{
+				ApplyEventStopRelationships( fullEventName );
 				m_playingEvents.insert({playingID, fullEventName});
 				eventUsed = true;
 			}
@@ -295,6 +285,7 @@ void AudGameObjResource::PropagateWwiseCallback( AkCallbackType in_eType, AkEven
 void AudGameObjResource::EventFinishedCallback( AkEventCallbackInfo* cbInfo )
 {
 	CcpAutoMutex mutex( m_mutex );
+	m_pendingStoppedPlayingIDs.erase( cbInfo->playingID );
 	m_playingEvents.erase( cbInfo->playingID );
 	UpdateEventSoundPrioritizationAttributes();
 }
@@ -317,23 +308,25 @@ bool AudGameObjResource::StopEvent( const std::wstring& eventName, uint32_t fade
 
 void AudGameObjResource::StopSound( AkPlayingID playingID, uint32_t fadeOutDuration )
 {
-	if ( g_audioInitialized )
+	if ( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled )
 	{
+		MarkPlayingIDStoppedByRequest( playingID );
 		ExecuteActionOnPlayingID( playingID, ActionTypes::Stop, fadeOutDuration );
 	}
 }
 
 void AudGameObjResource::BreakSound( AkPlayingID playingID, uint32_t fadeOutDuration )
 {
-	if ( g_audioInitialized )
+	if ( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled )
 	{
+		MarkPlayingIDStoppedByRequest( playingID );
 		ExecuteActionOnPlayingID( playingID, ActionTypes::Break, fadeOutDuration );
 	}
 }
 
 void AudGameObjResource::StopAll()
 {
-	if( g_audioInitialized )
+	if( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled )
 	{
 		CcpAutoMutex mutex( m_mutex );
 		for ( auto it = begin( m_playingEvents ); it != end( m_playingEvents ); ++it)
@@ -350,7 +343,7 @@ void AudGameObjResource::StopAll()
 //-----------------------------------------------------
 bool AudGameObjResource::SetAttenuationScalingFactor( float value )
 {
-	if( g_audioInitialized )
+	if( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled )
 	{
 		if( m_gameObjRegistered )
 		{
@@ -373,7 +366,7 @@ int AudGameObjResource::SetPositionHelper( const Vector3& front, const Vector3& 
 {
 	m_position = position;
 
-	if( g_audioInitialized )
+	if( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled )
 	{
 		if( m_gameObjRegistered )
 		{
@@ -444,51 +437,56 @@ void AudGameObjResource::Initialize( const std::string& name, const std::wstring
 
 bool AudGameObjResource::SetSwitch( const std::wstring& switchGroup, const std::wstring& switchState )
 {
-	if ( g_audioInitialized )
-	{
-		// Store switches sent to it can be used when waking up this game object.
-		m_switchValues[switchGroup] = switchState;
+	// Store switches sent to it can be used when waking up this game object.
+	m_switchValues[switchGroup] = switchState;
 
-		if( m_gameObjRegistered )
+	if( g_audioManager == nullptr || g_audioManager->GetState() != AudioState::Enabled )
+	{
+		return false;
+	}
+
+	if( m_gameObjRegistered )
+	{
+		AKRESULT result = AK::SoundEngine::SetSwitch( switchGroup.c_str(), switchState.c_str(), m_ID );
+		if(result != AK_Success)
 		{
-			AKRESULT result = AK::SoundEngine::SetSwitch( switchGroup.c_str(), switchState.c_str(), m_ID );
-			if(result != AK_Success)
-			{
-				CCP_LOGERR( "Failed to set switch %S %S for game object %d. " 
-							"Received Wwise error code %d", switchGroup.c_str(), switchState.c_str(), m_ID, result );
-				return false;
-			}
-			g_audioManager->LogSetSwitch( m_ID, switchGroup, switchState );
-			return true;
+			CCP_LOGERR( "Failed to set switch %S %S for game object %d. "
+						"Received Wwise error code %d", switchGroup.c_str(), switchState.c_str(), m_ID, result );
+			return false;
 		}
-		else if( !m_culled )
-		{
-			CCP_LOGERR( "SetSwitch was requested on game object %d which was never registered with Wwise.", m_ID );
-		}
+		g_audioManager->LogSetSwitch( m_ID, switchGroup, switchState );
+		return true;
+	}
+	else if( !m_culled )
+	{
+		CCP_LOGERR( "SetSwitch was requested on game object %d which was never registered with Wwise.", m_ID );
 	}
 	return false;
 }
 
 bool AudGameObjResource::SetRTPC( const std::wstring& rtpcName, float rtpcValue )
 {
-	if ( g_audioInitialized )
-	{
-		// Store RTPCs that have been sent so it can be used when waking up this game object.
-		m_rtpcValues[rtpcName] = rtpcValue;
+	// Store RTPCs that have been sent so it can be used when waking up this game object.
+	m_rtpcValues[rtpcName] = rtpcValue;
 
-		if( m_gameObjRegistered )
-		{
-			AKRESULT result = AK::SoundEngine::SetRTPCValue( rtpcName.c_str(), AkRtpcValue(rtpcValue), m_ID );
-			if( result != AK_Success )
-			{
-				CCP_LOGERR( "Failed to set RTPC %S to %f for game object %d. " 
-							"Received Wwise result code %d", rtpcName.c_str(), rtpcValue, m_ID, result );
-				return false;
-			}
-			g_audioManager->LogSetRTPC( m_ID, rtpcName, rtpcValue );
-			return true;
-		}
+	if ( g_audioManager == nullptr || g_audioManager->GetState() != AudioState::Enabled )
+	{
+		return false;
 	}
+
+	if( m_gameObjRegistered )
+	{
+		AKRESULT result = AK::SoundEngine::SetRTPCValue( rtpcName.c_str(), AkRtpcValue(rtpcValue), m_ID );
+		if( result != AK_Success )
+		{
+			CCP_LOGERR( "Failed to set RTPC %S to %f for game object %d. "
+						"Received Wwise result code %d", rtpcName.c_str(), rtpcValue, m_ID, result );
+			return false;
+		}
+		g_audioManager->LogSetRTPC( m_ID, rtpcName, rtpcValue );
+		return true;
+	}
+
 	return false;
 }
 
@@ -502,7 +500,7 @@ bool AudGameObjResource::SetRTPC( const std::wstring& rtpcName, float rtpcValue 
 //-----------------------------------------------------
 bool AudGameObjResource::SeekOnEventPercent( const unsigned int playingID, float percentToSeek )
 {
-	if ( g_audioInitialized )
+	if ( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled )
 	{
 		CcpAutoMutex mutex( m_mutex );
 		auto it = m_playingEvents.find( playingID );
@@ -529,7 +527,7 @@ bool AudGameObjResource::SeekOnEventPercent( const unsigned int playingID, float
 //-----------------------------------------------------
 bool AudGameObjResource::SeekOnEventMs( const unsigned int playingID, const unsigned int msToSeek)
 {
-	if ( g_audioInitialized )
+	if ( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled )
 	{
 		CcpAutoMutex mutex( m_mutex );
 		auto it = m_playingEvents.find( playingID );
@@ -569,7 +567,7 @@ std::wstring AudGameObjResource::PrepareEvent( const std::wstring& event, bool b
 //-----------------------------------------------------
 void AudGameObjResource::Wake()
 {
-	if( g_audioEnabled )
+	if( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled )
 	{
 		if ( m_forceCullingState || m_muted )
 		{
@@ -624,7 +622,7 @@ void AudGameObjResource::Wake()
 //-----------------------------------------------------
 void AudGameObjResource::Cull()
 {
-	if ( g_audioInitialized )
+	if ( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled )
 	{
 		if ( m_forceCullingState )
 		{
@@ -636,18 +634,23 @@ void AudGameObjResource::Cull()
 		{
 			if ( g_staticDataRepository->EventIsLoop( it->second ) )
 			{
-				StopSound( it->first, 3000 );
-				m_eventsOnWake.insert( it->second );
+				if ( m_pendingStoppedPlayingIDs.find( it->first ) == m_pendingStoppedPlayingIDs.end() )
+				{
+					if ( ExecuteActionOnPlayingID( it->first, ActionTypes::Stop, 3000 ) )
+					{
+						m_eventsOnWake.insert( it->second );
+					}
+				}
 			} 
 			else
 			{
 				if ( m_listenerInRange )
 				{
-					BreakSound( it->first );
+					ExecuteActionOnPlayingID( it->first, ActionTypes::Break );
 				}
 				else
 				{
-					StopSound( it->first );
+					ExecuteActionOnPlayingID( it->first, ActionTypes::Stop );
 				}
 			}
 		}
@@ -736,30 +739,91 @@ void AudGameObjResource::SetDistanceSqFromListener( const float distanceSq )
 //   Helper function to execute actions defined in the ActionTypes enum on a playingID.
 // Arguments:
 //   playingID - The playingID of the sound to execute the action on.
-//   actionType - The action to execute on the sound (e.g. Stop, Break).
+//   action - The action to execute on the sound (e.g. Stop, Break).
 //   fadeOutDuration - If an action supports a fade then this sets the duration of that fade in milliseconds. Defaults to 1000
 //-----------------------------------------------------
-void AudGameObjResource::ExecuteActionOnPlayingID( const AkPlayingID playingID, const ActionTypes action, uint32_t fadeOutDuration )
+bool AudGameObjResource::ExecuteActionOnPlayingID( const AkPlayingID playingID, const ActionTypes action, uint32_t fadeOutDuration )
 {
-	if ( g_audioInitialized )
+	if ( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled )
 	{
 		CcpAutoMutex mutex( m_mutex );
 		if ( m_playingEvents.find( playingID ) != m_playingEvents.end() )
 		{
+			std::wstring actionName;
 			switch ( action )
 			{
 			case ActionTypes::Stop:
 				AK::SoundEngine::ExecuteActionOnPlayingID( AkActionOnEventType_Stop, playingID, fadeOutDuration );
-				g_audioManager->LogExecuteActionOnPlayingID( m_ID, playingID, L"Stop" );
+				actionName = L"Stop";
 				break;
 			case ActionTypes::Break:
 				AK::SoundEngine::ExecuteActionOnPlayingID( AkActionOnEventType_Break, playingID, fadeOutDuration );
-				g_audioManager->LogExecuteActionOnPlayingID( m_ID, playingID, L"Break" );
+				actionName = L"Break";
 				break;
 			}
+
+			g_audioManager->LogExecuteActionOnPlayingID( m_ID, playingID, actionName );
+			return true;
 		}
 	}
+	return false;
 }
+
+//-----------------------------------------------------
+// Description:
+//   Records that game code explicitly requested a playing sound to stop or break.
+//   Wwise reports completion asynchronously, so the playing ID can remain in
+//   m_playingEvents until the end callback arrives. If audio is disabled before
+//   that callback, Cull() must not mistake the stale loop entry for a paused
+//   loop that should be replayed on Wake().
+// Arguments:
+//   playingID - The playingID that should not be resumed if this object is culled
+//               before Wwise sends its end callback.
+//-----------------------------------------------------
+void AudGameObjResource::MarkPlayingIDStoppedByRequest( AkPlayingID playingID )
+{
+	CcpAutoMutex mutex( m_mutex );
+	auto playingEventIt = m_playingEvents.find( playingID );
+	if ( playingEventIt != m_playingEvents.end() )
+	{
+		m_pendingStoppedPlayingIDs.insert( playingID );
+		m_eventsOnWake.erase( playingEventIt->second );
+		UpdateEventSoundPrioritizationAttributes();
+	}
+}
+
+void AudGameObjResource::ApplyEventStopRelationships( const std::wstring& stoppingEventName )
+{
+	bool updated = false;
+
+	for ( auto it = m_eventsOnWake.cbegin(); it != m_eventsOnWake.cend(); )
+	{
+		if ( g_staticDataRepository->EventIsStopped( *it, stoppingEventName ) )
+		{
+			it = m_eventsOnWake.erase( it );
+			updated = true;
+		}
+		else
+		{
+			++it;
+		}
+	}
+
+	for ( auto it = m_playingEvents.begin(); it != m_playingEvents.end(); ++it )
+	{
+		if ( g_staticDataRepository->EventIsStopped( it->second, stoppingEventName ) )
+		{
+			m_pendingStoppedPlayingIDs.insert( it->first );
+			updated = true;
+		}
+	}
+
+	if ( updated )
+	{
+		UpdateEventSoundPrioritizationAttributes();
+	}
+}
+
 //-----------------------------------------------------
 // Description:
 //	Calculates and updates sound prioritization attributes that are determined by currently playing events or events that will play on wake.

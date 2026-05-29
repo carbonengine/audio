@@ -4,6 +4,7 @@
 
 #include "AudioInputMgr.h"
 #include "Audio2.h"
+#include "AudManager.h"
 
 std::map<int, AudioInputMgr*> g_audioInputMgrMap;
 CcpMutex g_inputMgrMapMutex( "AudioInputMgr", "g_inputMgrMapMutex" );
@@ -31,7 +32,7 @@ AudioInputMgr::~AudioInputMgr()
 // Start the Wwise Audio Input plugin and set callbacks Wwise will call.
 void AudioInputMgr::StartInput( uint32_t channels, uint32_t bps, uint32_t rate )
 {
-	if( !g_audioInitialized )
+	if( g_audioManager == nullptr || g_audioManager->GetState() != AudioState::Enabled )
 	{
 		return;
 	}
@@ -57,25 +58,29 @@ void AudioInputMgr::StartInput( uint32_t channels, uint32_t bps, uint32_t rate )
 // Stop the audio input plugin which will stop Wwise callbacks.
 void AudioInputMgr::StopInput()
 {
-	if( !g_audioInitialized )
+	if( m_playingID == 0 )
 	{
 		return;
 	}
-	if ( m_playingID > 0 )
+
+	AkPlayingID playingID = m_playingID;
+	m_playingID = 0;
+
+	{
+		CcpAutoMutex lock( g_inputMgrMapMutex );
+		g_audioInputMgrMap.erase( playingID );
+	}
+
+	if( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled )
 	{
 		// Stopping the event called in StartInput will kill the Audio Input plugin in Wwise.
-		AK::SoundEngine::StopPlayingID( m_playingID );
-
-		CcpAutoMutex lock( g_inputMgrMapMutex );
-		g_audioInputMgrMap.erase( m_playingID );
-
-		m_playingID = 0;
+		AK::SoundEngine::StopPlayingID( playingID );
 	}
 }
 
 void AudioInputMgr::SetVolume( float volume )
 {
-	if( !g_audioInitialized || m_playingID == 0 )
+	if( g_audioManager == nullptr || g_audioManager->GetState() != AudioState::Enabled || m_playingID == 0 )
 	{
 		return;
 	}

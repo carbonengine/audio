@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "AudListener.h"
 
+#include "AudManager.h"
 #include "Vector3.h"
 #include "Utilities.h"
 
@@ -19,7 +20,7 @@ AudListener::~AudListener()
 
 void AudListener::RegisterWwiseObject()
 {
-	if( g_audioInitialized )
+	if( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled )
 	{
 		if( m_gameObjRegistered == false )
 		{
@@ -30,14 +31,14 @@ void AudListener::RegisterWwiseObject()
 	}
 	else
 	{
-		CCP_LOGERR( "Audio listener was requested to be created before audio was initialized! Audio will be silent because of this. "
-					"Try to change where audio is initialized or create the listener again." );
+		CCP_LOGERR( "Audio listener was requested to be created before audio was enabled! Audio will be silent because of this. "
+					"Try to change where audio is enabled or create the listener again." );
 	}
 }
 
 int AudListener::SetPositionHelper( const Vector3& front, const Vector3& top, const Vector3& position )
 {
-	if( g_audioInitialized )
+	if( g_audioManager != nullptr && g_audioManager->GetState() != AudioState::Uninitialized )
 	{
 		m_position = position;
 		if( m_gameObjRegistered )

@@ -4,6 +4,7 @@ from audiotests.base_test_class import SOUNDBANK_FILEPATH
 from audiotests.base_test_class import BaseAudio2TestClass
 from audiotests.base_test_class import GetAudioMetadataFromFile
 from audiotests.utils import PumpOSWithTimeout
+from audio2.audiomanager import AUDIO_STATE_DISABLED
 
 class TestSpatialAudio(BaseAudio2TestClass):
     """Test spatial audio related features."""
@@ -111,13 +112,12 @@ class TestSpatialAudio(BaseAudio2TestClass):
         PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
 
     def test_spatial_audio_endpoints_dont_crash_when_audio_not_enabled(self):
-        if not self.audioManager.SpatialAudioIsSupported(): 
-            print("Skipping this test because Carbon Audio does not support spatial audio on this platform...")
-            return
-
+        self.Initialize()
+        self.audioManager.Enable()
         self.audioManager.Disable()
         PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
 
+        self.assertEqual(self.audioManager.GetState(), AUDIO_STATE_DISABLED)
         self.assertFalse(self.audioManager.DisableSpatialAudio())
         self.assertFalse(self.audioManager.EnableSpatialAudio())
 

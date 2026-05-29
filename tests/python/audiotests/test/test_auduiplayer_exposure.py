@@ -64,3 +64,15 @@ class TestAudUIPlayerExposure(BaseAudio2TestClass):
         # Test invalid playingID with GetEventPlayPosition
         invalidPlayPosition = uiPlayer.GetEventPlayPosition(999999)
         self.assertEqual(invalidPlayPosition, -1)
+
+    def test_auduiplayer_geteventplayposition_returns_invalid_when_disabled(self):
+        import audio2
+        uiPlayer = audio2.GetUIPlayer()
+        uiPlayer.SetPosition((0,0,0), (0,0,0), (0,0,0))
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
+        playingID = uiPlayer.PostDialogueEvent(ONE_SHOT_EVENT)
+        self.assertTrue(playingID > 0)
+
+        self.audioManager.Disable()
+
+        self.assertEqual(uiPlayer.GetEventPlayPosition(playingID), -1)

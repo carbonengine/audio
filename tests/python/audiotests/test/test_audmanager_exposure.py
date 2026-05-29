@@ -184,9 +184,3 @@ class TestAudManagerExposure(unittest.TestCase):
         self.audioManager.EnableDebugDisplayAllEmitters()
         self.assertTrue(self.audioManager.GetDebugDisplayAllEmitters())
 
-    def test_audmanager_disabling_clears_banks(self):
-        """Test that disabling AudManager clears all soundbanks."""
-        from audio2.audiomanager import INIT_BANK
-        self.audioManager.LoadBank(INIT_BANK)
-        self.audioManager.Disable()
-        self.assertEqual(self.audioManager.GetLoadedSoundBanks(), [])

@@ -3,7 +3,15 @@
 
 #include "AudGameObjResource.h"
 
+const Be::VarChooser AudioStateChooser[] = {
+	{ "Uninitialized", static_cast<int>(AudioState::Uninitialized) },
+	{ "Disabled", static_cast<int>(AudioState::Disabled) },
+	{ "Enabled", static_cast<int>(AudioState::Enabled) },
+	{ nullptr, 0 }
+};
+
 BLUE_DEFINE( AudManager );
+BLUE_REGISTER_ENUM( "AUDIO_STATE", AudioState, AudioStateChooser );
 
 const Be::ClassInfo* AudManager::ExposeToBlue()
 {
@@ -34,7 +42,7 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		( 
 			"Disable",
 			Disable,
-			"Disable CarbonAudio which unloads all SoundBanks and terminates the sound engine."
+			"Disable CarbonAudio which unloads all SoundBanks without terminating Wwise."
 		)
 		MAP_METHOD_AND_WRAP
 		( 
@@ -85,6 +93,12 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 			"GetLoadedSoundBanks",
 			GetLoadedSoundBanks,
 			"Return a list of loaded soundbanks."
+		)
+		MAP_METHOD_AND_WRAP
+		(
+			"GetState",
+			GetStateValue,
+			"Return Carbon Audio's current engine lifecycle state."
 		)
 		MAP_METHOD_AND_WRAP
 		( 

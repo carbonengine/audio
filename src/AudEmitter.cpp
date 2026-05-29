@@ -121,7 +121,7 @@ void AudEmitter::GetDebugOptions( Tr2DebugRendererOptions& options )
 
 void AudEmitter::RenderDebugInfo( ITr2DebugRenderer2& renderer )
 {
-	if ( g_audioInitialized )
+	if ( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled )
 	{
 		if ( !g_debugDisplayAllEmitters )
 		{

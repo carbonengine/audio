@@ -21,9 +21,7 @@ const int START_GAME_OBJ_COUNT = 5;
 // Game objects are culled by default so this value will never hit Wwise.
 const Vector3 WWISE_INIT_POSITION = Vector3(FLT_MAX, FLT_MAX, FLT_MAX);
 
-extern bool g_audioEnabled;
 extern bool g_shuttingDown;
-extern bool g_audioInitialized;
 extern bool g_debugDisplayAllEmitters;
 extern bool g_wwiseCommunicationEnabled;
 extern const std::string g_wwiseVersion;
