@@ -69,6 +69,9 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_soundBankMutex( "AudManager", "m_soundBankMutex" ),
 	m_callbackGameObjectsMutex( "AudManager", "m_callbackGameObjectsMutex" ),
 	m_isProfilerCapturing( false ),
+#ifndef AK_OPTIMIZED
+	m_resourceMonitorCallbackRegistered( false ),
+#endif
 	m_audioCullingEnabled( true )
 {
 	// Initialize sound prioritization system
@@ -77,20 +80,31 @@ AudManager::AudManager( IRoot* lockobj ) :
 
 AudManager::~AudManager()
 {
-	// Clean up sound prioritization system
-	delete m_soundPrioritization;
-
-	if( g_audioInitialized )
+	if( GetState() == AudioState::Enabled )
 	{
 		Disable();
 	}
+
+	if( GetState() == AudioState::Disabled )
+	{
+		Terminate();
+	}
+
+	// Clean up sound prioritization system
+	delete m_soundPrioritization;
 }
 
 void AudManager::Process()
 {
-	if( g_audioInitialized )
+	AudioState state = GetState();
+	if( state == AudioState::Uninitialized )
 	{
-		if( m_soundPrioritization->GetAudioCullingEnabled() && g_audioEnabled )
+		return;
+	}
+
+	if( state == AudioState::Enabled )
+	{
+		if( m_soundPrioritization->GetAudioCullingEnabled() )
 		{
 			m_soundPrioritization->CullAudio();
 		}
@@ -98,13 +112,14 @@ void AudManager::Process()
 		// Process bank requests, events, positions, RTPC, etc.
 		AK::SoundEngine::RenderAudio();
 
-		// Update main thread queue
-		g_mainThreadQueue->Update();
+	}
 
-		if( m_log )
-		{
-			m_log->Flush();
-		}
+	// Update main thread queue
+	g_mainThreadQueue->Update();
+
+	if( m_log )
+	{
+		m_log->Flush();
 	}
 }
 
@@ -150,13 +165,19 @@ bool AudManager::Init()
 	WwiseLogServerBridgeInit( AK::Monitor::ErrorLevel_All );
 #endif
 
-	g_audioInitialized = true;
+	SetAudioState( AudioState::Disabled );
 	return true;
 }
 
 void AudManager::Terminate()
 {
 #ifndef AK_OPTIMIZED
+	if( m_resourceMonitorCallbackRegistered && AK::SoundEngine::IsInitialized() )
+	{
+		AK::SoundEngine::UnregisterResourceMonitorCallback( ResourceMonitorCallback );
+		m_resourceMonitorCallbackRegistered = false;
+	}
+
 	AK::Comm::Term();
 #endif
 
@@ -177,7 +198,7 @@ void AudManager::Terminate()
 	// Terminate the Memory Manager
 	AK::MemoryMgr::Term();
 
-	g_audioInitialized = false;
+	SetAudioState( AudioState::Uninitialized );
 }
 
 void AudManager::OnTick( Be::Time realTime, Be::Time simTime, void* cookie )
@@ -372,11 +393,19 @@ bool AudManager::InitSound()
 	}
 
 #ifndef AK_OPTIMIZED
-	AKRESULT result = AK::SoundEngine::RegisterResourceMonitorCallback( ResourceMonitorCallback );
-	if( result != AK_Success )
+	if( !m_resourceMonitorCallbackRegistered )
 	{
-		CCP_LOGERR( "Failed to register resource monitor callback" );
+		AKRESULT result = AK::SoundEngine::RegisterResourceMonitorCallback( ResourceMonitorCallback );
+		if( result != AK_Success )
+		{
+			CCP_LOGERR( "Failed to register resource monitor callback" );
+		}
+		else
+		{
+			m_resourceMonitorCallbackRegistered = true;
+		}
 	}
+
 	CCP_STATS_SET( sampleRate, AK::SoundEngine::GetSampleRate() );
 	CCP_STATS_SET( numSamplesPerFrame, initSettings.uNumSamplesPerFrame );
 #ifndef AK_MAC_OS_X
@@ -389,7 +418,7 @@ bool AudManager::InitSound()
 
 bool AudManager::SetGlobalRTPC( const std::wstring& rtpcName, float value )
 {
-	if( g_audioInitialized && !g_shuttingDown)
+	if( GetState() == AudioState::Enabled && !g_shuttingDown)
 	{
 		AKRESULT result = AK::SoundEngine::SetRTPCValue( rtpcName.c_str(), value );
 		if( result != AK_Success )
@@ -406,7 +435,7 @@ bool AudManager::SetGlobalRTPC( const std::wstring& rtpcName, float value )
 
 bool AudManager::SetState( const std::wstring& stateGroup, const std::wstring& stateName )
 {
-	if( g_audioInitialized && !g_shuttingDown )
+	if( GetState() == AudioState::Enabled && !g_shuttingDown )
 	{
 		// SetState always returns True so no need to check the result.
 		AK::SoundEngine::SetState( stateGroup.c_str(), stateName.c_str() );
@@ -432,7 +461,7 @@ void AudManager::UpdateSettings( AudSettings* settings )
 
 void AudManager::LoadBank( const std::wstring& name )
 {
-	if( g_audioEnabled )
+	if( GetState() == AudioState::Enabled )
 	{
 		AkBankID bankID = ComputeWwiseHashForSoundBank( name );
 		SoundBankStatus soundBankStatus = GetSoundBankStatus( bankID );
@@ -502,7 +531,7 @@ void AudManager::LoadBankCallback( AkUInt32 in_bankID, const void* in_pInMemoryB
 
 void AudManager::UnloadBank( const std::wstring& name )
 {
-	if( g_audioEnabled )
+	if( GetState() == AudioState::Enabled )
 	{
 		AkBankID bankID = ComputeWwiseHashForSoundBank( name );
 		SoundBankStatus soundBankStatus = GetSoundBankStatus( bankID );
@@ -635,7 +664,7 @@ void AudManager::UpdateSoundBankStatus( const AkBankID bankID, const SoundBankSt
 void AudManager::ClearBanks()
 {
 	// Unloads all banks currently loaded in Wwise.
-	if( g_audioInitialized )
+	if( GetState() != AudioState::Uninitialized )
 	{
 		AKRESULT result = AK::SoundEngine::ClearBanks();
 		if( result == AK_Fail )
@@ -652,12 +681,12 @@ void AudManager::ClearBanks()
 
 //-----------------------------------------------------
 // Description:
-//   Disable CarbonAudio which culls all game objects, unloads all SoundBanks, terminates
-//   the sound engine and stops the audio thread.
+//   Disable CarbonAudio which culls all game objects, unloads all SoundBanks,
+//   and stops the audio thread without terminating Wwise.
 //-----------------------------------------------------
 void AudManager::Disable()
 {
-	if( g_audioEnabled == false )
+	if( GetState() != AudioState::Enabled )
 	{
 		return;
 	}
@@ -671,12 +700,8 @@ void AudManager::Disable()
 	}
 
 	ClearBanks();
-#ifndef AK_OPTIMIZED
-	AK::SoundEngine::UnregisterResourceMonitorCallback(ResourceMonitorCallback);
-#endif
 
-	Terminate();
-	g_audioEnabled = false;
+	SetAudioState( AudioState::Disabled );
 	g_shuttingDown = false;
 	BeOS->UnregisterForTicks( this, (void*)"Audio::Tick" );
 }
@@ -697,7 +722,7 @@ bool AudManager::DisableSpatialAudio()
 {
 	const AkOutputDeviceID defaultOutputDeviceId = 0;
 
-	if( !g_audioInitialized )
+	if( GetState() != AudioState::Enabled )
 	{
 		return false;
 	}
@@ -742,17 +767,21 @@ bool AudManager::DisableSpatialAudio()
 //-----------------------------------------------------
 void AudManager::Enable( BankVector soundBanksToLoad )
 {
-	if( g_audioEnabled )
+	if( GetState() == AudioState::Enabled )
 	{
-		return;
-	}
-	if( !Init() )
-	{
-		CCP_LOGERR( "Failed to initialize audio" );
 		return;
 	}
 
-	g_audioEnabled = true;
+	if( GetState() == AudioState::Uninitialized )
+	{
+		if( !Init() )
+		{
+			CCP_LOGERR( "Failed to initialize audio" );
+			return;
+		}
+	}
+
+	SetAudioState( AudioState::Enabled );
 	LoadBank( L"Init.bnk" );
 
 	BankVector::iterator bankEnd = soundBanksToLoad.end();
@@ -785,7 +814,7 @@ void AudManager::Enable( BankVector soundBanksToLoad )
 //-----------------------------------------------------
 bool AudManager::EnableSpatialAudio()
 {
-	if( !g_audioInitialized )
+	if( GetState() != AudioState::Enabled )
 	{
 		return false;
 	}
@@ -890,7 +919,7 @@ const std::wstring AudManager::GetEventName( AkGameObjectID emitterID, AkPlaying
 
 void AudManager::StopAll()
 {
-	if( g_audioInitialized )
+	if( GetState() != AudioState::Uninitialized )
 	{
 		auto objects = m_soundPrioritization->GetPrioritizedAudioObjects();
 		for( auto obj : objects )
@@ -902,7 +931,7 @@ void AudManager::StopAll()
 
 void AudManager::RegisterParameter( const std::wstring& audioParameterName )
 {
-	if( g_audioInitialized )
+	if( GetState() != AudioState::Uninitialized )
 	{
 		CcpAutoMutex lock( m_moniteredParametersMapMutex );
 		m_monitoredParametersMap[audioParameterName].watchers++;
@@ -911,7 +940,7 @@ void AudManager::RegisterParameter( const std::wstring& audioParameterName )
 
 void AudManager::UnregisterParameter( const std::wstring& audioParameterName )
 {
-	if( g_audioInitialized )
+	if( GetState() != AudioState::Uninitialized )
 	{
 		CcpAutoMutex lock( m_moniteredParametersMapMutex );
 		auto it = m_monitoredParametersMap.find( audioParameterName );
@@ -1207,7 +1236,7 @@ void AudManager::AudioDeviceStatusChangeCallback( AK::IAkGlobalPluginContext* in
 
 AKRESULT AudManager::StartProfilerCapture()
 {
-	if( !g_audioEnabled )
+	if( GetState() != AudioState::Enabled )
 	{
 		CCP_LOGERR( "Cannot start profiler capture: Audio is not initialized." );
 		return AK_Fail;
@@ -1248,7 +1277,7 @@ AKRESULT AudManager::StartProfilerCapture()
 
 AKRESULT AudManager::StopProfilerCapture()
 {
-	if( !g_audioEnabled )
+	if( GetState() != AudioState::Enabled )
 	{
 		CCP_LOGERR( "Cannot stop profiler capture: Audio is not initialized." );
 		return AK_Fail;

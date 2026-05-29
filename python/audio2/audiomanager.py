@@ -3,6 +3,9 @@
 import audio2
 
 INIT_BANK = "Init.bnk"
+AUDIO_STATE_UNINITIALIZED = 0
+AUDIO_STATE_DISABLED = 1
+AUDIO_STATE_ENABLED = 2
 
 
 class AudioManager(object):
@@ -34,7 +37,6 @@ class AudioManager(object):
         self.manager = audio2.GetOrCreateManager()
         self.staticDataRepository = audio2.GetStaticDataRepository()
         self.banksWaitingToLoad = set()
-        self.enabled = False
 
         self.settings = self._CreateAudioSettings(
             baseSoundbankPath, 
@@ -56,7 +58,6 @@ class AudioManager(object):
         """Disable the audio manager and unload all SoundBanks from memory."""
         self.banksWaitingToLoad = set(self.GetLoadedSoundBanks())
         self.manager.Disable()
-        self.enabled = False
 
     def DisableSoundPrioritization(self):
         self.manager.DisableAudioCulling()
@@ -74,7 +75,6 @@ class AudioManager(object):
         """
         self.manager.Enable(self.defaultSoundBanks + soundBanksToLoad + list(self.banksWaitingToLoad))
         audio2.GetListener()
-        self.enabled = True
         self.banksWaitingToLoad = set()
 
     def EnableSoundPrioritization(self):
@@ -91,6 +91,10 @@ class AudioManager(object):
     def GetLoadedSoundBanks(self):
         """Returns the names of all banks loaded into memory."""
         return self.manager.GetLoadedSoundBanks()
+
+    def GetState(self):
+        """Return Carbon Audio's current engine lifecycle state."""
+        return self.manager.GetState()
 
     def GetSoundPrioritizationEnabled(self):
         return self.manager.audioCullingEnabled
@@ -120,7 +124,7 @@ class AudioManager(object):
         self.staticDataRepository.Initialize(audioMetadata)
 
     def LoadSoundBank(self, bankName):
-        if not self.enabled:
+        if self.GetState() != AUDIO_STATE_ENABLED:
             self.banksWaitingToLoad.add(bankName)
         else:    
             self.manager.LoadBank(bankName)
@@ -198,7 +202,7 @@ class AudioManager(object):
         :type banks: list
         :param banks: A list of banks you want to have loaded in addition to the default banks.
         """ 
-        if self.enabled:
+        if self.GetState() == AUDIO_STATE_ENABLED:
             loadedBanks = set(self.GetLoadedSoundBanks())
         else:
             loadedBanks = self.banksWaitingToLoad
@@ -216,7 +220,7 @@ class AudioManager(object):
 
     def UnloadSoundBank(self, bankName):
         if bankName not in self.defaultSoundBanks and bankName != INIT_BANK:
-            if not self.enabled:
+            if self.GetState() != AUDIO_STATE_ENABLED:
                 if bankName in self.banksWaitingToLoad:
                     self.banksWaitingToLoad.remove(bankName)
 

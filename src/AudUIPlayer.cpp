@@ -3,6 +3,8 @@
 #include <stdafx.h>
 #include "AudUIPlayer.h"
 
+#include "AudManager.h"
+
 
 AudUIPlayer::AudUIPlayer( IRoot* lockobj ) : AudEmitter( UI_GAME_OBJ_ID, lockobj )
 {
@@ -25,7 +27,7 @@ AudUIPlayer::~AudUIPlayer()
 // ----------------------------------------------------------------------------------------
 unsigned int AudUIPlayer::SendEventWithCallback( const std::wstring& name )
 {
-	if( g_audioEnabled )
+	if( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled )
 	{
 		m_callbackEventName = PrepareEvent(name, false);
 		if(m_callback)
@@ -51,7 +53,7 @@ unsigned int AudUIPlayer::SendEventWithCallback( const std::wstring& name )
 // ----------------------------------------------------------------------------------------
 unsigned int AudUIPlayer::PostDialogueEvent( const std::wstring& eventName )
 {
-	if( g_audioEnabled )
+	if( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled )
 	{
 		return PostEvent( eventName.c_str(), false, 0);
 	}
@@ -68,7 +70,7 @@ unsigned int AudUIPlayer::PostDialogueEvent( const std::wstring& eventName )
 //-----------------------------------------------------
 int32_t AudUIPlayer::GetEventPlayPosition( const unsigned int playingID )
 {
-	if ( g_audioInitialized )
+	if ( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled )
 	{
 		AkTimeMs time = 0;
 		AKRESULT result = AK::SoundEngine::GetSourcePlayPosition( playingID, &time ); 
@@ -78,7 +80,7 @@ int32_t AudUIPlayer::GetEventPlayPosition( const unsigned int playingID )
 		}
 		return time;
 	}
-	return 0;
+	return -1;
 }
 
 //-----------------------------------------------------
