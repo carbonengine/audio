@@ -172,6 +172,58 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		)
 		MAP_METHOD_AND_WRAP
 		(
+			"SetDebugEmitterVisualizationEnabled",
+			SetDebugEmitterVisualizationEnabled,
+			"Enable or disable debug visualization for a specific audio emitter while Show Emitters is active."
+		)
+		MAP_METHOD_AND_WRAP
+		(
+			"GetDebugEmitterVisualizationEnabled",
+			GetDebugEmitterVisualizationEnabled,
+			"Return whether debug visualization is enabled for a specific audio emitter."
+		)
+		MAP_METHOD_AND_WRAP
+		(
+			"SoloDebugEmitterVisualization",
+			SoloDebugEmitterVisualization,
+			"Show only the specified emitter's debug visualization while Show Emitters is active."
+		)
+		MAP_METHOD_AND_WRAP
+		(
+			"ClearDebugEmitterVisualizationSolo",
+			ClearDebugEmitterVisualizationSolo,
+			"Clear the solo emitter debug visualization filter."
+		)
+		MAP_METHOD_AND_WRAP
+		(
+			"GetDebugEmitterVisualizationSolo",
+			GetDebugEmitterVisualizationSolo,
+			"Return the currently soloed debug emitter ID, or AK_INVALID_GAME_OBJECT when none is soloed."
+		)
+		MAP_METHOD_AND_WRAP
+		(
+			"ClearDebugEmitterVisualizationFilters",
+			ClearDebugEmitterVisualizationFilters,
+			"Clear all emitter debug visualization filters."
+		)
+		MAP_METHOD_AND_WRAP_OPTIONAL_ARGS
+		(
+			"ConnectWaapiForDebugConeVisualization",
+			ConnectWaapiForDebugConeVisualization,
+			2,
+			"Connect to Wwise Authoring via WAAPI for audio emitter cone debug visualization.\n"
+			":param host: Host address (default: '127.0.0.1').\n"
+			":param port: Port number (default: 8080).\n"
+			":return: True if connection succeeded or was already connected, False otherwise."
+		)
+		MAP_METHOD_AND_WRAP
+		(
+			"IsWaapiConnectedForDebugConeVisualization",
+			IsWaapiConnectedForDebugConeVisualization,
+			"Return whether the audio emitter cone debug WAAPI connection is active."
+		)
+		MAP_METHOD_AND_WRAP
+		(
 			"DisableAudioCulling",
 			DisableAudioCulling,
 			"Disable audio culling and wake up all game objects so they can be managed only by Wwise."

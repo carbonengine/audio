@@ -37,6 +37,52 @@ enum class CurveShape
     InvSCurve
 };
 
+struct WaapiObjectPositioningData
+{
+    std::string id;
+    std::string name;
+    std::string type;
+    std::string path;
+    std::string parentId;
+    bool overridePositioning = false;
+    bool enableAttenuation = false;
+    std::string attenuationId;
+    std::string attenuationName;
+};
+
+#ifndef AK_OPTIMIZED
+struct WaapiAttenuationConeData
+{
+    bool coneEnabled = false;
+    double innerAngle = 0.0;
+    double outerAngle = 0.0;
+    double coneAttenuation = 0.0;
+    double maxRadius = 0.0;
+    std::string attenuationId;
+    std::string attenuationName;
+    std::string sourceObjectId;
+    std::string sourceObjectName;
+    std::string sourceObjectPath;
+};
+
+struct WaapiProfilerVoiceData
+{
+    uint32_t pipelineId = 0;
+    uint32_t playingId = 0;
+    uint32_t soundId = 0;
+    uint64_t gameObjectId = 0;
+    std::string gameObjectName;
+    std::string objectGuid;
+    std::string objectName;
+    std::string playTargetGuid;
+    std::string playTargetName;
+    double baseVolume = -1000.0;
+    bool isStarted = false;
+    bool isVirtual = false;
+    bool isForcedVirtual = false;
+};
+#endif
+
 BLUE_DECLARE( WaapiManager );
 
 /**
@@ -66,6 +112,7 @@ BLUE_CLASS( WaapiManager ) :
      * @return True if connection succeeded, false otherwise
      */
     bool Connect(const std::string& host = "127.0.0.1", int port = 8080);
+    bool TryConnect(const std::string& host = "127.0.0.1", int port = 8080);
 
     /**
      * @brief Disconnect from Wwise Authoring Tool
@@ -122,6 +169,36 @@ BLUE_CLASS( WaapiManager ) :
      */
     std::string GetSoundReferencedAttenuationName(const std::string& soundId);
 
+    /**
+     * @brief Get the effective attenuation ID for a Wwise object by following positioning inheritance.
+     * @param objectId ID of the object to query
+     * @return Attenuation ID if an override positioning source defines one, empty string otherwise
+     */
+    std::string GetObjectEffectiveAttenuationId(const std::string& objectId);
+
+    /**
+     * @brief Get the attenuation ID selected by the hierarchy cone resolver for a Wwise object.
+     * @param objectId ID of the object to query
+     * @return Attenuation ID if cone data could be resolved, empty string otherwise
+     */
+#ifndef AK_OPTIMIZED
+    std::string GetObjectEffectiveAttenuationConeAttenuationId(const std::string& objectId);
+
+    /**
+     * @brief Get the cone inner angle for a given attenuation.
+     * @param attenuationId ID of the attenuation to query
+     * @return Cone inner angle if successful, 0.0 otherwise
+     */
+    double GetAttenuationConeInnerAngle(const std::string& attenuationId);
+
+    /**
+     * @brief Get the cone outer angle for a given attenuation.
+     * @param attenuationId ID of the attenuation to query
+     * @return Cone outer angle if successful, 0.0 otherwise
+     */
+    double GetAttenuationConeOuterAngle(const std::string& attenuationId);
+#endif
+
     // Volume Attenuation Management
 
     /**
@@ -168,6 +245,44 @@ BLUE_CLASS( WaapiManager ) :
      * @return Radius value if successful, 0.0 if unsuccessful
      */
     double GetAttenuationMaxRadius(const std::string& attenuationId);
+
+    /**
+     * @brief Get cone attenuation settings for a given attenuation.
+     * @param attenuationId ID of the attenuation to query
+     * @param outData Populated cone settings if successful
+     * @return True if the attenuation was found and cone data could be read
+     */
+#ifndef AK_OPTIMIZED
+    bool GetAttenuationConeData(const std::string& attenuationId, WaapiAttenuationConeData& outData);
+
+    /**
+     * @brief Resolve effective cone attenuation data for a Wwise object by walking positioning inheritance upward.
+     * @param objectId ID of a Wwise object
+     * @param outData Populated cone settings if successful
+     * @return True if an effective attenuation reference was found and read
+     */
+    bool GetObjectEffectiveAttenuationConeData(const std::string& objectId, WaapiAttenuationConeData& outData);
+
+    /**
+     * @brief Get the best currently voiced object GUID for a game object and playing ID from Wwise profiler data.
+     * @param gameObjectId Wwise game object ID
+     * @param playingId Wwise playing ID
+     * @return Voice object GUID if a matching voice is available, empty string otherwise
+     */
+    std::string GetBestProfilerVoiceObjectIdForPlayingEvent(uint64_t gameObjectId, uint32_t playingId);
+
+    /**
+     * @brief Test seam for the debug cone profiler voice selection policy.
+     */
+    std::string SelectDebugProfilerVoiceObjectIdForTest(long long gameObjectId,
+                                                        int playingId,
+                                                        const std::vector<std::string>& objectGuids,
+                                                        const std::vector<int>& playingIds,
+                                                        const std::vector<long long>& gameObjectIds,
+                                                        const std::vector<int>& isStarted,
+                                                        const std::vector<int>& isVirtual,
+                                                        const std::vector<double>& baseVolumes);
+#endif
 
     // Radius Management
 
@@ -273,6 +388,17 @@ BLUE_CLASS( WaapiManager ) :
                                         std::string& outAttenuationId,
                                         std::string& outAttenuationName);
 
+    bool GetObjectPositioningData(const std::string& objectId, WaapiObjectPositioningData& outData);
+    bool ResolveEffectiveAttenuationReference(const std::string& objectId, WaapiObjectPositioningData& outSource);
+#ifndef AK_OPTIMIZED
+    bool EnableProfilerVoiceData();
+    bool StartProfilerCaptureForVoiceData();
+    bool GetProfilerVoices(std::vector<WaapiProfilerVoiceData>& outVoices);
+    static std::string SelectBestProfilerVoiceObjectId(const std::vector<WaapiProfilerVoiceData>& voices,
+                                                       uint64_t gameObjectId,
+                                                       uint32_t playingId);
+#endif
+
     // Helper methods for enum conversion
     static std::string CurveShapeToString(CurveShape shape);
     static CurveShape StringToCurveShape(const std::string& shapeStr);
@@ -280,6 +406,8 @@ BLUE_CLASS( WaapiManager ) :
     static CurveShape IntToCurveShape(int shapeInt);
 
     // Internal WAAPI implementation methods
+    bool ConnectInternal(const std::string& host, int port, bool logFailures);
+    void MarkConnectionLost(const char* reason);
     bool GetAttenuationVolumeCurveInternal(const std::string& attenuationId,
                                           std::vector<double>& outDistances,
                                           std::vector<double>& outValues,
@@ -296,6 +424,10 @@ BLUE_CLASS( WaapiManager ) :
     bool m_connected;
     std::string m_host;
     int m_port;
+#ifndef AK_OPTIMIZED
+    bool m_profilerVoiceDataEnabled = false;
+    bool m_profilerCaptureStartAttempted = false;
+#endif
 
     // Subscription and monitoring infrastructure
 

@@ -170,13 +170,61 @@ class TestAudManagerExposure(unittest.TestCase):
 
     def test_audmanager_debug_apis(self):
         """Test all debugging APIs exposed by AudManager."""
+        import audio2
+
         self.assertFalse(self.audioManager.GetDebugDisplayAllEmitters())
+        self.assertFalse(self.audioManager.IsWaapiConnectedForDebugConeVisualization())
+        self.assertTrue(self.audioManager.ConnectWaapiForDebugConeVisualization("127.0.0.1", 1))
+        self.assertFalse(self.audioManager.IsWaapiConnectedForDebugConeVisualization())
+
+        emitterID = 12345
+        self.audioManager.ClearDebugEmitterVisualizationFilters()
+        self.assertTrue(self.audioManager.GetDebugEmitterVisualizationEnabled(emitterID))
+        self.audioManager.SetDebugEmitterVisualizationEnabled(emitterID, False)
+        self.assertFalse(self.audioManager.GetDebugEmitterVisualizationEnabled(emitterID))
+        self.audioManager.SetDebugEmitterVisualizationEnabled(emitterID, True)
+        self.assertTrue(self.audioManager.GetDebugEmitterVisualizationEnabled(emitterID))
+        self.audioManager.SoloDebugEmitterVisualization(emitterID)
+        self.assertEqual(self.audioManager.GetDebugEmitterVisualizationSolo(), emitterID)
+        self.audioManager.ClearDebugEmitterVisualizationSolo()
+        self.assertNotEqual(self.audioManager.GetDebugEmitterVisualizationSolo(), emitterID)
+        self.audioManager.SetDebugEmitterVisualizationEnabled(emitterID, False)
+        self.audioManager.ClearDebugEmitterVisualizationFilters()
+        self.assertTrue(self.audioManager.GetDebugEmitterVisualizationEnabled(emitterID))
+
+        waapiManager = audio2.WaapiManager()
+        self.assertFalse(waapiManager.IsConnected())
+        self.assertEqual(waapiManager.GetObjectEffectiveAttenuationId("{00000000-0000-0000-0000-000000000000}"), "")
+        self.assertEqual(waapiManager.GetObjectEffectiveAttenuationConeAttenuationId("{00000000-0000-0000-0000-000000000000}"), "")
+        self.assertEqual(waapiManager.GetAttenuationConeInnerAngle("{00000000-0000-0000-0000-000000000000}"), 0.0)
+        self.assertEqual(waapiManager.GetAttenuationConeOuterAngle("{00000000-0000-0000-0000-000000000000}"), 0.0)
+        self.assertEqual(waapiManager.GetBestProfilerVoiceObjectIdForPlayingEvent(5, 35), "")
+        self.assertEqual(
+            waapiManager.SelectDebugProfilerVoiceObjectIdForTest(
+                5,
+                35,
+                [
+                    "{11111111-1111-1111-1111-111111111111}",
+                    "{113F82DF-B7DD-49FF-83E6-9F7AFB056C64}",
+                    "{76E08359-DF19-4A68-BD61-B60C4B7BE1F3}",
+                    "{91666AC0-F746-46BC-8A1A-E80692EE4A6B}",
+                ],
+                [35, 35, 35, 35],
+                [6, 5, 5, 5],
+                [1, 0, 1, 1],
+                [0, 0, 0, 1],
+                [-1.0, -3.0, -12.0, 0.0],
+            ),
+            "{76E08359-DF19-4A68-BD61-B60C4B7BE1F3}",
+        )
 
         self.audioManager.EnableDebugDisplayAllEmitters()
         self.assertTrue(self.audioManager.GetDebugDisplayAllEmitters())
+        self.assertFalse(self.audioManager.IsWaapiConnectedForDebugConeVisualization())
 
         self.audioManager.DisableDebugDisplayAllEmitters()
         self.assertFalse(self.audioManager.GetDebugDisplayAllEmitters())
+        self.assertFalse(self.audioManager.IsWaapiConnectedForDebugConeVisualization())
 
         # Test with audio disabled.
         self.audioManager.Disable()

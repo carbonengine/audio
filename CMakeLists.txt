@@ -60,6 +60,7 @@ ccp_add_library(CarbonAudio SHARED
     src/AudActionLog.cpp
 	src/AudActionLog_Blue.cpp
 	src/AudManager.cpp
+	src/AudManager_DebugCones.cpp
 	src/AudConstants.cpp
 	src/AudManager_Blue.cpp
 	src/AudEmitter.cpp

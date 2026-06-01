@@ -73,6 +73,10 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_moniteredParametersMapMutex( "AudManager", "m_monitoredParametersMapMutex" ),
 	m_soundBankMutex( "AudManager", "m_soundBankMutex" ),
 	m_callbackGameObjectsMutex( "AudManager", "m_callbackGameObjectsMutex" ),
+#ifndef AK_OPTIMIZED
+	m_debugConeDataMutex( "AudManager", "m_debugConeDataMutex" ),
+#endif
+	m_debugEmitterVisualizationMutex( "AudManager", "m_debugEmitterVisualizationMutex" ),
 	m_isProfilerCapturing( false ),
 #ifndef AK_OPTIMIZED
 	m_resourceMonitorCallbackRegistered( false ),
@@ -116,6 +120,13 @@ void AudManager::Process()
 
 		// Process bank requests, events, positions, RTPC, etc.
 		AK::SoundEngine::RenderAudio();
+#ifndef AK_OPTIMIZED
+		if( g_debugDisplayAllEmitters )
+		{
+			PollWaapiConnectionForDebugConeVisualization();
+		}
+		ProcessDebugAttenuationConeRequests();
+#endif
 
 	}
 
@@ -1078,21 +1089,6 @@ void AudManager::LogSetRTPC( AkGameObjectID emitterID, const std::wstring& name,
 	{
 		m_log->LogSetRTPC( emitterID, name, value, playID );
 	}
-}
-
-void AudManager::EnableDebugDisplayAllEmitters()
-{
-	g_debugDisplayAllEmitters = true;
-}
-
-void AudManager::DisableDebugDisplayAllEmitters()
-{
-	g_debugDisplayAllEmitters = false;
-}
-
-bool AudManager::GetDebugDisplayAllEmitters()
-{
-	return g_debugDisplayAllEmitters;
 }
 
 bool AudManager::GetAudioCullingEnabled() const

@@ -15,9 +15,14 @@
 #include "AudListener.h"
 #include "SoundPrioritization.h"
 #include "CCPFilePackageLowLevelIO.h"
+#ifndef AK_OPTIMIZED
+#include "WAAPI/WaapiManager.h"
+#endif
 #include <atomic>
+#include <chrono>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 
 
 #if _WIN32
@@ -64,6 +69,36 @@ struct MonitoredParameterInfo
 	bool parameterExists = false;
 	int watchers = 0;
 };
+
+#ifndef AK_OPTIMIZED
+struct DebugAttenuationConeData
+{
+	bool resolved = false;
+	bool coneEnabled = false;
+	float innerAngle = 0.0f;
+	float outerAngle = 0.0f;
+	float coneAttenuation = 0.0f;
+	float maxRadius = 0.0f;
+	std::string eventName;
+	std::string attenuationId;
+	std::string attenuationName;
+	std::string sourceObjectId;
+	std::string sourceObjectName;
+	std::string sourceObjectPath;
+};
+
+struct DebugAttenuationConeEvent
+{
+	AkPlayingID playingID = AK_INVALID_PLAYING_ID;
+	std::string eventName;
+};
+
+struct DebugAttenuationConeRequest
+{
+	std::vector<DebugAttenuationConeEvent> events;
+	std::string cacheKey;
+};
+#endif
 
 // ------------------------------------------------------------------------
 // Description:
@@ -167,6 +202,20 @@ public:
 	void DisableDebugDisplayAllEmitters();
 	void EnableDebugDisplayAllEmitters();
 	bool GetDebugDisplayAllEmitters();
+	void SetDebugEmitterVisualizationEnabled( AkGameObjectID emitterID, bool enabled );
+	bool GetDebugEmitterVisualizationEnabled( AkGameObjectID emitterID ) const;
+	void SoloDebugEmitterVisualization( AkGameObjectID emitterID );
+	void ClearDebugEmitterVisualizationSolo();
+	AkGameObjectID GetDebugEmitterVisualizationSolo() const;
+	void ClearDebugEmitterVisualizationFilters();
+	bool ShouldDebugDisplayEmitter( AkGameObjectID emitterID ) const;
+	bool ConnectWaapiForDebugConeVisualization( const std::string& host = "127.0.0.1", int port = 8080 );
+	bool IsWaapiConnectedForDebugConeVisualization() const;
+#ifndef AK_OPTIMIZED
+	bool GetDebugAttenuationConeData( AkGameObjectID emitterID, DebugAttenuationConeData& outData );
+	bool GetDebugAttenuationConeDataList( AkGameObjectID emitterID, std::vector<DebugAttenuationConeData>& outData );
+	void RequestDebugAttenuationConeData( AkGameObjectID emitterID, const std::map<unsigned int, std::wstring>& playingEvents );
+#endif
 	void LogPostEvent( AkGameObjectID emitterID, AkPlayingID playID, AkUniqueID eventID, const std::wstring& name );
 	void LogExecuteActionOnPlayingID( AkGameObjectID emitterID, AkPlayingID playID, const std::wstring& action );
 	void LogSetSwitch( AkGameObjectID emitterID, const std::wstring& group, const std::wstring& state );
@@ -202,6 +251,13 @@ private:
 	bool InitSound();
 	// Tick handler
 	void Process();
+#ifndef AK_OPTIMIZED
+	void ClearDebugAttenuationConeData();
+	void ClearDebugAttenuationConeDataForEmitter( AkGameObjectID emitterID );
+	void PollWaapiConnectionForDebugConeVisualization();
+	void ProcessDebugAttenuationConeRequests();
+	DebugAttenuationConeData ResolveDebugAttenuationConeData( AkGameObjectID emitterID, AkPlayingID playingID, const std::string& eventName );
+#endif
 	// Registers audio2 for the tick handler.
 	void RegisterForTicks();
 	// Update Carbon Audio's lifecycle state.
@@ -247,6 +303,27 @@ private:
 	//  Map of game objects, used to guard Wwise callbacks
 	std::unordered_map<AkGameObjectID, AudGameObjResource*> m_callbackGameObjects;
 	CcpMutex m_callbackGameObjectsMutex;
+
+#ifndef AK_OPTIMIZED
+	WaapiManagerPtr m_debugWaapiManager;
+	std::unordered_map<AkGameObjectID, std::vector<DebugAttenuationConeData>> m_debugConeCache;
+	std::unordered_map<AkGameObjectID, DebugAttenuationConeRequest> m_pendingDebugConeRequests;
+	std::unordered_map<AkGameObjectID, std::string> m_debugConeCacheKeys;
+	std::unordered_map<AkGameObjectID, std::chrono::steady_clock::time_point> m_debugConeCacheRefreshTimes;
+	mutable CcpMutex m_debugConeDataMutex;
+	std::string m_debugWaapiHost = "127.0.0.1";
+	int m_debugWaapiPort = 8080;
+	std::chrono::steady_clock::time_point m_nextDebugWaapiReconnectTime;
+#endif
+	std::unordered_set<AkGameObjectID> m_hiddenDebugEmitterVisualizations;
+	AkGameObjectID m_soloDebugEmitterVisualization = AK_INVALID_GAME_OBJECT;
+	mutable CcpMutex m_debugEmitterVisualizationMutex;
+#ifndef AK_OPTIMIZED
+	std::atomic<bool> m_debugConeRequestWorkerRunning{ false };
+	std::atomic<long long> m_debugConeRequestWorkerStartMs{ 0 };
+	std::atomic<bool> m_debugWaapiReconnectWorkerRunning{ false };
+	std::atomic<long long> m_debugWaapiReconnectWorkerStartMs{ 0 };
+#endif
 
 	// A boolean for the state of the profiler capture
 	bool m_isProfilerCapturing;

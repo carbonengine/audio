@@ -8,13 +8,89 @@
 #include "../Audio2.h"
 
 #include <iostream>
-#include <set>
 #include <unordered_set>
 #include <sstream>
 
 using namespace AK::WwiseAuthoringAPI;
 
 static CcpLogChannel_t s_ch = CCP_LOG_DEFINE_CHANNEL( "WaapiManager" );
+
+static std::string GetWaapiStringField(const AkJson& objectData, const char* fieldName)
+{
+    if (!objectData.HasKey(fieldName))
+        return "";
+
+    return objectData[fieldName].GetVariant().GetString();
+}
+
+static void ReadObjectPositioningData(const AkJson& objectData, WaapiObjectPositioningData& outData)
+{
+    outData = WaapiObjectPositioningData{};
+    outData.id = GetWaapiStringField(objectData, "id");
+    outData.name = GetWaapiStringField(objectData, "name");
+    outData.type = GetWaapiStringField(objectData, "type");
+    outData.path = GetWaapiStringField(objectData, "path");
+    outData.parentId = GetWaapiStringField(objectData, "parent.id");
+    outData.attenuationId = GetWaapiStringField(objectData, "Attenuation.id");
+    outData.attenuationName = GetWaapiStringField(objectData, "Attenuation.name");
+
+    if (objectData.HasKey("OverridePositioning"))
+        outData.overridePositioning = static_cast<bool>(objectData["OverridePositioning"].GetVariant());
+    if (objectData.HasKey("EnableAttenuation"))
+        outData.enableAttenuation = static_cast<bool>(objectData["EnableAttenuation"].GetVariant());
+}
+
+#ifndef AK_OPTIMIZED
+static uint32_t GetWaapiUInt32Field(const AkJson& objectData, const char* fieldName)
+{
+    if (!objectData.HasKey(fieldName))
+        return 0;
+
+    return static_cast<uint32_t>(objectData[fieldName].GetVariant());
+}
+
+static uint64_t GetWaapiUInt64Field(const AkJson& objectData, const char* fieldName)
+{
+    if (!objectData.HasKey(fieldName))
+        return 0;
+
+    return static_cast<uint64_t>(objectData[fieldName].GetVariant());
+}
+
+static double GetWaapiDoubleField(const AkJson& objectData, const char* fieldName, double defaultValue = 0.0)
+{
+    if (!objectData.HasKey(fieldName))
+        return defaultValue;
+
+    return static_cast<double>(objectData[fieldName].GetVariant());
+}
+
+static bool GetWaapiBoolField(const AkJson& objectData, const char* fieldName)
+{
+    if (!objectData.HasKey(fieldName))
+        return false;
+
+    return static_cast<bool>(objectData[fieldName].GetVariant());
+}
+
+static void ReadProfilerVoiceData(const AkJson& objectData, WaapiProfilerVoiceData& outData)
+{
+    outData = WaapiProfilerVoiceData{};
+    outData.pipelineId = GetWaapiUInt32Field(objectData, "pipelineID");
+    outData.playingId = GetWaapiUInt32Field(objectData, "playingID");
+    outData.soundId = GetWaapiUInt32Field(objectData, "soundID");
+    outData.gameObjectId = GetWaapiUInt64Field(objectData, "gameObjectID");
+    outData.gameObjectName = GetWaapiStringField(objectData, "gameObjectName");
+    outData.objectGuid = GetWaapiStringField(objectData, "objectGUID");
+    outData.objectName = GetWaapiStringField(objectData, "objectName");
+    outData.playTargetGuid = GetWaapiStringField(objectData, "playTargetGUID");
+    outData.playTargetName = GetWaapiStringField(objectData, "playTargetName");
+    outData.baseVolume = GetWaapiDoubleField(objectData, "baseVolume", -1000.0);
+    outData.isStarted = GetWaapiBoolField(objectData, "isStarted");
+    outData.isVirtual = GetWaapiBoolField(objectData, "isVirtual");
+    outData.isForcedVirtual = GetWaapiBoolField(objectData, "isForcedVirtual");
+}
+#endif
 
 std::string WaapiManager::CurveShapeToString(CurveShape shape)
 {
@@ -63,6 +139,9 @@ WaapiManager::WaapiManager(IRoot* lockobj)
     , m_connected(false)
     , m_host("127.0.0.1")
     , m_port(8080)
+#ifndef AK_OPTIMIZED
+    , m_profilerVoiceDataEnabled(false)
+#endif
 {}
 
 WaapiManager::~WaapiManager()
@@ -71,6 +150,16 @@ WaapiManager::~WaapiManager()
 }
 
 bool WaapiManager::Connect(const std::string& host, int port)
+{
+    return ConnectInternal(host, port, true);
+}
+
+bool WaapiManager::TryConnect(const std::string& host, int port)
+{
+    return ConnectInternal(host, port, false);
+}
+
+bool WaapiManager::ConnectInternal(const std::string& host, int port, bool logFailures)
 {
     if (m_connected)
     {
@@ -86,8 +175,14 @@ bool WaapiManager::Connect(const std::string& host, int port)
 
         if (!m_client->Connect(m_host.c_str(), m_port))
         {
-            CCP_LOGERR_CH(s_ch, "Could not connect to Wwise Authoring on %s:%d", m_host.c_str(), m_port);
+            if (logFailures)
+                CCP_LOGERR_CH(s_ch, "Could not connect to Wwise Authoring on %s:%d", m_host.c_str(), m_port);
             m_client.reset();
+            m_connected = false;
+#ifndef AK_OPTIMIZED
+            m_profilerVoiceDataEnabled = false;
+            m_profilerCaptureStartAttempted = false;
+#endif
             return false;
         }
 
@@ -97,11 +192,31 @@ bool WaapiManager::Connect(const std::string& host, int port)
     }
     catch (const std::exception& e)
     {
-        CCP_LOGERR_CH(s_ch, "Exception during connection: %s", e.what());
+        if (logFailures)
+            CCP_LOGERR_CH(s_ch, "Exception during connection: %s", e.what());
         m_client.reset();
         m_connected = false;
+#ifndef AK_OPTIMIZED
+        m_profilerVoiceDataEnabled = false;
+        m_profilerCaptureStartAttempted = false;
+#endif
         return false;
     }
+}
+
+void WaapiManager::MarkConnectionLost(const char* reason)
+{
+    if (m_connected)
+    {
+        CCP_LOGWARN_CH(s_ch, "Lost Wwise Authoring WAAPI connection: %s", reason ? reason : "unknown reason");
+    }
+
+    m_client.reset();
+    m_connected = false;
+#ifndef AK_OPTIMIZED
+    m_profilerVoiceDataEnabled = false;
+    m_profilerCaptureStartAttempted = false;
+#endif
 }
 
 void WaapiManager::Disconnect()
@@ -137,6 +252,10 @@ void WaapiManager::Disconnect()
 
     m_client.reset();
     m_connected = false;
+#ifndef AK_OPTIMIZED
+    m_profilerVoiceDataEnabled = false;
+    m_profilerCaptureStartAttempted = false;
+#endif
 }
 
 bool WaapiManager::IsConnected() const
@@ -192,17 +311,21 @@ bool WaapiManager::GetEventReferencedTargets(const std::string& eventName, std::
                      targRes))
         return false;
 
-    // Collect unique target IDs
-    std::set<std::string> targetIdSet;
+    std::vector<std::string> targetIds;
+    std::unordered_set<std::string> seenTargetIds;
     for (const auto& row : targRes["return"].GetArray())
     {
         if (row.HasKey("target.id"))
-            targetIdSet.insert(row["target.id"].GetVariant().GetString());
+        {
+            const std::string targetId = row["target.id"].GetVariant().GetString();
+            if (!targetId.empty() && seenTargetIds.insert(targetId).second)
+                targetIds.push_back(targetId);
+        }
     }
-    if (targetIdSet.empty()) return true;
+    if (targetIds.empty()) return true;
 
     AkJson::Array targetIdArray;
-    for (const auto& targetId : targetIdSet)
+    for (const auto& targetId : targetIds)
         targetIdArray.emplace_back(AkVariant(targetId.c_str()));
 
     AkJson targetRes;
@@ -270,6 +393,40 @@ std::string WaapiManager::GetSoundReferencedAttenuationName(const std::string& s
         return name;
     return {};
 }
+
+std::string WaapiManager::GetObjectEffectiveAttenuationId(const std::string& objectId)
+{
+    WaapiObjectPositioningData source;
+    if (ResolveEffectiveAttenuationReference(objectId, source))
+        return source.attenuationId;
+    return {};
+}
+
+#ifndef AK_OPTIMIZED
+std::string WaapiManager::GetObjectEffectiveAttenuationConeAttenuationId(const std::string& objectId)
+{
+    WaapiAttenuationConeData data;
+    if (GetObjectEffectiveAttenuationConeData(objectId, data))
+        return data.attenuationId;
+    return {};
+}
+
+double WaapiManager::GetAttenuationConeInnerAngle(const std::string& attenuationId)
+{
+    WaapiAttenuationConeData data;
+    if (GetAttenuationConeData(attenuationId, data))
+        return data.innerAngle;
+    return 0.0;
+}
+
+double WaapiManager::GetAttenuationConeOuterAngle(const std::string& attenuationId)
+{
+    WaapiAttenuationConeData data;
+    if (GetAttenuationConeData(attenuationId, data))
+        return data.outerAngle;
+    return 0.0;
+}
+#endif
 
 
 std::vector<double> WaapiManager::GetAttenuationVolumeCurveDistances(const std::string& attenuationId)
@@ -355,6 +512,68 @@ bool WaapiManager::GetSoundReferencedAttenuations(const std::string& soundId, st
         outAttenuationName = obj["Attenuation.name"].GetVariant().GetString();
 
     return !outAttenuationId.empty();
+}
+
+bool WaapiManager::GetObjectPositioningData(const std::string& objectId, WaapiObjectPositioningData& outData)
+{
+    outData = WaapiObjectPositioningData{};
+
+    if (!IsConnected() || objectId.empty()) return false;
+    auto* client = m_client.get();
+
+    AkJson args = AkJson::Map{ { "from", AkJson::Map{ { "id", AkJson::Array{ AkVariant(objectId.c_str()) } } } } };
+    AkJson opts = AkJson::Map{ { "return", AkJson::Array{
+        AkVariant("id"),
+        AkVariant("name"),
+        AkVariant("type"),
+        AkVariant("path"),
+        AkVariant("parent.id"),
+        AkVariant("OverridePositioning"),
+        AkVariant("EnableAttenuation"),
+        AkVariant("Attenuation.id"),
+        AkVariant("Attenuation.name")
+    } } };
+    AkJson result;
+
+    if (!client->Call(ak::wwise::core::object::get, args, opts, result))
+        return false;
+
+    if (!result.HasKey("return") || result["return"].GetArray().empty())
+        return false;
+
+    ReadObjectPositioningData(result["return"].GetArray()[0], outData);
+    return !outData.id.empty();
+}
+
+bool WaapiManager::ResolveEffectiveAttenuationReference(const std::string& objectId, WaapiObjectPositioningData& outSource)
+{
+    outSource = WaapiObjectPositioningData{};
+
+    std::string currentObjectId = objectId;
+    std::unordered_set<std::string> visitedObjectIds;
+    while (!currentObjectId.empty() && visitedObjectIds.find(currentObjectId) == visitedObjectIds.end())
+    {
+        visitedObjectIds.insert(currentObjectId);
+
+        WaapiObjectPositioningData objectData;
+        if (!GetObjectPositioningData(currentObjectId, objectData))
+            return false;
+
+        if (objectData.overridePositioning)
+        {
+            if (objectData.enableAttenuation && !objectData.attenuationId.empty())
+            {
+                outSource = objectData;
+                return true;
+            }
+
+            return false;
+        }
+
+        currentObjectId = objectData.parentId;
+    }
+
+    return false;
 }
 
 bool WaapiManager::GetAttenuationVolumeCurveInternal(const std::string& attenuationId, std::vector<double>& outDistances, std::vector<double>& outValues, std::vector<std::string>& outShapes)
@@ -472,6 +691,243 @@ double WaapiManager::GetAttenuationMaxRadius(const std::string& attenuationId)
         return radius;
     return 0.0;
 }
+
+#ifndef AK_OPTIMIZED
+bool WaapiManager::GetAttenuationConeData(const std::string& attenuationId, WaapiAttenuationConeData& outData)
+{
+    outData = WaapiAttenuationConeData{};
+
+    if (!IsConnected()) return false;
+    auto* client = m_client.get();
+
+    AkJson args = AkJson::Map{ { "from", AkJson::Map{ { "id", AkJson::Array{ AkVariant(attenuationId.c_str()) } } } } };
+    AkJson opts = AkJson::Map{ { "return", AkJson::Array{
+        AkVariant("id"),
+        AkVariant("name"),
+        AkVariant("ConeUse"),
+        AkVariant("ConeInnerAngle"),
+        AkVariant("ConeOuterAngle"),
+        AkVariant("ConeAttenuation")
+    } } };
+    AkJson result;
+
+    if (!client->Call(ak::wwise::core::object::get, args, opts, result))
+        return false;
+
+    if (!result.HasKey("return") || result["return"].GetArray().empty())
+        return false;
+
+    const auto& obj = result["return"].GetArray()[0];
+    outData.attenuationId = attenuationId;
+    if (obj.HasKey("name"))
+        outData.attenuationName = obj["name"].GetVariant().GetString();
+    if (obj.HasKey("ConeUse"))
+        outData.coneEnabled = static_cast<bool>(obj["ConeUse"].GetVariant());
+    if (obj.HasKey("ConeInnerAngle"))
+        outData.innerAngle = static_cast<double>(obj["ConeInnerAngle"].GetVariant());
+    if (obj.HasKey("ConeOuterAngle"))
+        outData.outerAngle = static_cast<double>(obj["ConeOuterAngle"].GetVariant());
+    if (obj.HasKey("ConeAttenuation"))
+        outData.coneAttenuation = static_cast<double>(obj["ConeAttenuation"].GetVariant());
+
+    GetAttenuationMaxRadiusInternal(attenuationId, outData.maxRadius);
+
+    return true;
+}
+
+bool WaapiManager::GetObjectEffectiveAttenuationConeData(const std::string& objectId, WaapiAttenuationConeData& outData)
+{
+    outData = WaapiAttenuationConeData{};
+
+    if (!IsConnected()) return false;
+
+    WaapiObjectPositioningData sourceData;
+    if (!ResolveEffectiveAttenuationReference(objectId, sourceData))
+        return false;
+
+    WaapiAttenuationConeData coneData;
+    if (!GetAttenuationConeData(sourceData.attenuationId, coneData))
+        return false;
+
+    coneData.sourceObjectId = sourceData.id;
+    coneData.sourceObjectName = sourceData.name;
+    coneData.sourceObjectPath = sourceData.path;
+    outData = coneData;
+    return true;
+}
+
+bool WaapiManager::EnableProfilerVoiceData()
+{
+    if (!IsConnected()) return false;
+    if (m_profilerVoiceDataEnabled) return true;
+
+    auto* client = m_client.get();
+    AkJson result;
+    const bool success = client->Call(ak::wwise::core::profiler::enableProfilerData,
+        AkJson::Map{
+            { "dataTypes", AkJson::Array{
+                AkJson::Map{
+                    { "dataType", AkVariant("voices") },
+                    { "enable", AkVariant(true) }
+                }
+            } }
+        },
+        AkJson::Map{},
+        result);
+
+    m_profilerVoiceDataEnabled = success;
+    if (!success)
+    {
+        CCP_LOGWARN_CH(s_ch, "Failed to enable Wwise profiler voice data for audio debug cone resolution.");
+        MarkConnectionLost("enableProfilerData failed");
+    }
+
+    return success;
+}
+
+bool WaapiManager::StartProfilerCaptureForVoiceData()
+{
+    if (!IsConnected() || m_profilerCaptureStartAttempted) return false;
+
+    m_profilerCaptureStartAttempted = true;
+
+    auto* client = m_client.get();
+    AkJson result;
+    const bool success = client->Call(ak::wwise::core::profiler::startCapture, AkJson::Map{}, AkJson::Map{}, result);
+    if (success)
+        CCP_LOG_CH(s_ch, "Started Wwise profiler capture for audio debug cone voice resolution.");
+    else
+        CCP_LOGWARN_CH(s_ch, "Failed to start Wwise profiler capture for audio debug cone voice resolution.");
+
+    return success;
+}
+
+bool WaapiManager::GetProfilerVoices(std::vector<WaapiProfilerVoiceData>& outVoices)
+{
+    outVoices.clear();
+
+    if (!EnableProfilerVoiceData()) return false;
+
+    auto* client = m_client.get();
+    AkJson result;
+    auto getVoices = [&]() {
+        result = AkJson();
+        return client->Call(ak::wwise::core::profiler::getVoices,
+        AkJson::Map{ { "time", AkVariant("capture") } },
+        AkJson::Map{ { "return", AkJson::Array{
+            AkVariant("pipelineID"),
+            AkVariant("playingID"),
+            AkVariant("soundID"),
+            AkVariant("gameObjectID"),
+            AkVariant("gameObjectName"),
+            AkVariant("objectGUID"),
+            AkVariant("objectName"),
+            AkVariant("playTargetGUID"),
+            AkVariant("playTargetName"),
+            AkVariant("baseVolume"),
+            AkVariant("isStarted"),
+            AkVariant("isVirtual"),
+            AkVariant("isForcedVirtual")
+        } } },
+        result);
+    };
+
+    if (!getVoices())
+    {
+        if (!StartProfilerCaptureForVoiceData() || !getVoices())
+        {
+            MarkConnectionLost("profiler getVoices failed");
+            return false;
+        }
+    }
+
+    if (!result.HasKey("return"))
+        return true;
+
+    for (const auto& row : result["return"].GetArray())
+    {
+        WaapiProfilerVoiceData voiceData;
+        ReadProfilerVoiceData(row, voiceData);
+        outVoices.push_back(voiceData);
+    }
+
+    return true;
+}
+
+std::string WaapiManager::SelectBestProfilerVoiceObjectId(const std::vector<WaapiProfilerVoiceData>& voices, uint64_t gameObjectId, uint32_t playingId)
+{
+    const WaapiProfilerVoiceData* bestVoice = nullptr;
+    double bestScore = -1000000.0;
+
+    for (const WaapiProfilerVoiceData& voice : voices)
+    {
+        if (voice.gameObjectId != gameObjectId || voice.playingId != playingId || voice.objectGuid.empty())
+            continue;
+
+        double score = voice.baseVolume;
+        if (voice.isStarted)
+            score += 1000.0;
+        if (!voice.isVirtual)
+            score += 100.0;
+        if (!voice.isForcedVirtual)
+            score += 50.0;
+
+        if (bestVoice == nullptr || score > bestScore)
+        {
+            bestVoice = &voice;
+            bestScore = score;
+        }
+    }
+
+    return bestVoice ? bestVoice->objectGuid : "";
+}
+
+std::string WaapiManager::GetBestProfilerVoiceObjectIdForPlayingEvent(uint64_t gameObjectId, uint32_t playingId)
+{
+    std::vector<WaapiProfilerVoiceData> voices;
+    if (!GetProfilerVoices(voices))
+        return "";
+
+    return SelectBestProfilerVoiceObjectId(voices, gameObjectId, playingId);
+}
+
+std::string WaapiManager::SelectDebugProfilerVoiceObjectIdForTest(long long gameObjectId,
+                                                                  int playingId,
+                                                                  const std::vector<std::string>& objectGuids,
+                                                                  const std::vector<int>& playingIds,
+                                                                  const std::vector<long long>& gameObjectIds,
+                                                                  const std::vector<int>& isStarted,
+                                                                  const std::vector<int>& isVirtual,
+                                                                  const std::vector<double>& baseVolumes)
+{
+    const size_t voiceCount = objectGuids.size();
+    if (playingIds.size() != voiceCount ||
+        gameObjectIds.size() != voiceCount ||
+        isStarted.size() != voiceCount ||
+        isVirtual.size() != voiceCount ||
+        baseVolumes.size() != voiceCount ||
+        voiceCount == 0)
+    {
+        return "";
+    }
+
+    std::vector<WaapiProfilerVoiceData> voices;
+    voices.reserve(voiceCount);
+    for (size_t index = 0; index < voiceCount; ++index)
+    {
+        WaapiProfilerVoiceData voice;
+        voice.objectGuid = objectGuids[index];
+        voice.playingId = static_cast<uint32_t>(playingIds[index]);
+        voice.gameObjectId = static_cast<uint64_t>(gameObjectIds[index]);
+        voice.isStarted = isStarted[index] != 0;
+        voice.isVirtual = isVirtual[index] != 0;
+        voice.baseVolume = baseVolumes[index];
+        voices.push_back(voice);
+    }
+
+    return SelectBestProfilerVoiceObjectId(voices, static_cast<uint64_t>(gameObjectId), static_cast<uint32_t>(playingId));
+}
+#endif
 
 bool WaapiManager::GetAttenuationMaxRadiusInternal(const std::string& attenuationId, double& outRadius)
 {

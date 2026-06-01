@@ -72,6 +72,9 @@ protected:
 	 * @brief Draw a transparent sphere that makes this clickable in our editor. Scales based on distance to camera.
 	 */
 	void DrawClickableRadius(ITr2DebugRenderer2& renderer);
+#ifndef AK_OPTIMIZED
+	void DrawDebugAttenuationCone(ITr2DebugRenderer2& renderer);
+#endif
 	// Properties used for normalizing attenuation scaling for this audio emitter.
 	bool m_normalizeAttenuationScaling;
 	float m_minNormalizedValue;
@@ -83,6 +86,9 @@ protected:
 	Color m_debugColor;
 	Color m_simulationColor;
 	float m_visualizationRadius;
+#ifndef AK_OPTIMIZED
+	Vector3 m_debugFront;
+#endif
 private:
 	// Factor that determines how quickly the debug sphere grows as listener distance increases.
 	float m_listenerDistanceScaleFactor;

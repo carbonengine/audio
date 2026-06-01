@@ -87,6 +87,57 @@ const Be::ClassInfo* WaapiManager::ExposeToBlue()
 		)
 		MAP_METHOD_AND_WRAP
 		(
+			"GetObjectEffectiveAttenuationId",
+			GetObjectEffectiveAttenuationId,
+			"Get the effective attenuation ID for a Wwise object by following positioning inheritance.\n"
+			":param objectId: ID of the object to query.\n"
+			":return: Attenuation ID if an override positioning source defines one, empty string otherwise."
+		)
+#ifndef AK_OPTIMIZED
+		MAP_METHOD_AND_WRAP
+		(
+			"GetObjectEffectiveAttenuationConeAttenuationId",
+			GetObjectEffectiveAttenuationConeAttenuationId,
+			"Get the attenuation ID selected by the hierarchy cone resolver for a Wwise object.\n"
+			":param objectId: ID of the object to query.\n"
+			":return: Attenuation ID if cone data could be resolved, empty string otherwise."
+		)
+		MAP_METHOD_AND_WRAP
+		(
+			"GetAttenuationConeInnerAngle",
+			GetAttenuationConeInnerAngle,
+			"Get the cone inner angle for a given attenuation.\n"
+			":param attenuationId: ID of the attenuation to query.\n"
+			":return: Cone inner angle if successful, 0.0 otherwise."
+		)
+		MAP_METHOD_AND_WRAP
+		(
+			"GetAttenuationConeOuterAngle",
+			GetAttenuationConeOuterAngle,
+			"Get the cone outer angle for a given attenuation.\n"
+			":param attenuationId: ID of the attenuation to query.\n"
+			":return: Cone outer angle if successful, 0.0 otherwise."
+		)
+		MAP_METHOD_AND_WRAP
+		(
+			"GetBestProfilerVoiceObjectIdForPlayingEvent",
+			GetBestProfilerVoiceObjectIdForPlayingEvent,
+			"Get the best currently voiced Wwise object GUID for a game object and playing ID from profiler voice data.\n"
+			":param gameObjectId: Wwise game object ID.\n"
+			":param playingId: Wwise playing ID.\n"
+			":return: Voice object GUID if available, empty string otherwise."
+		)
+		MAP_METHOD_AND_WRAP
+		(
+			"SelectDebugProfilerVoiceObjectIdForTest",
+			SelectDebugProfilerVoiceObjectIdForTest,
+			"Test seam for debug cone profiler voice selection.\n"
+			":param gameObjectId: Target Wwise game object ID.\n"
+			":param playingId: Target Wwise playing ID."
+		)
+#endif
+		MAP_METHOD_AND_WRAP
+		(
 			"GetAttenuationVolumeCurveDistances",
 			GetAttenuationVolumeCurveDistances,
 			"Get distance values from volume attenuation curve.\n"
