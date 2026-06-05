@@ -18,7 +18,10 @@ AudioCurveSetDriver::AudioCurveSetDriver( IRoot* lockobj ) :
 
 AudioCurveSetDriver::~AudioCurveSetDriver()
 {
-	g_audioManager->UnregisterParameter(m_audioParameterName);
+	if( g_audioManager != nullptr && m_audioParameterName != L"" )
+	{
+		g_audioManager->UnregisterParameter( m_audioParameterName );
+	}
 }
 
 bool AudioCurveSetDriver::Initialize()
