@@ -156,7 +156,7 @@ protected:
 	Vector3 m_position;
 	Orientation m_parentOrientation;
 	Orientation m_effectiveOrientation;
-	Quaternion m_rotation;
+	Quaternion m_authoredRotation;
 	// Whether this game object is currently registered with Wwise.
 	bool m_gameObjRegistered;
 	// Whether this game object is culled or not.

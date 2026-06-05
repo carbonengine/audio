@@ -62,7 +62,7 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 														 m_position( WWISE_INIT_POSITION ), 
 														 m_parentOrientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) ),
 														 m_effectiveOrientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) ),
-														 m_rotation( 0.0f, 0.0f, 0.0f, 1.0f ),
+														 m_authoredRotation( 0.0f, 0.0f, 0.0f, 1.0f ),
 														 m_mutex( "AudGameObjResource", "m_mutex" ),
 														 m_gameObjRegistered( false ),
 														 m_culled( true ),
@@ -101,7 +101,7 @@ AudGameObjResource::AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj
 																				   m_position( WWISE_INIT_POSITION ), 
 																				   m_parentOrientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) ),
 																				   m_effectiveOrientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) ),
-																				   m_rotation( 0.0f, 0.0f, 0.0f, 1.0f ),
+																				   m_authoredRotation( 0.0f, 0.0f, 0.0f, 1.0f ),
 														 						   m_mutex( "AudGameObjResource", "m_mutex" ),
 																				   m_gameObjRegistered( false ),
 														 						   m_culled( true ),
@@ -444,7 +444,7 @@ int AudGameObjResource::SetEffectivePositionHelper( const Vector3& front, const 
 
 bool AudGameObjResource::HasAuthoredRotation() const
 {
-	return !IsIdentityRotation( m_rotation );
+	return !IsIdentityRotation( m_authoredRotation );
 }
 
 AudGameObjResource::Orientation AudGameObjResource::GetEffectiveOrientation() const
@@ -455,8 +455,8 @@ AudGameObjResource::Orientation AudGameObjResource::GetEffectiveOrientation() co
 	}
 
 	return Orientation(
-		RotateAudioVector( m_parentOrientation.front, m_rotation ),
-		RotateAudioVector( m_parentOrientation.top, m_rotation )
+		RotateAudioVector( m_parentOrientation.front, m_authoredRotation ),
+		RotateAudioVector( m_parentOrientation.top, m_authoredRotation )
 	);
 }
 
@@ -501,7 +501,7 @@ void AudGameObjResource::OnListModified( long event, ssize_t key, ssize_t key2, 
 
 bool AudGameObjResource::OnModified( Be::Var* value )
 {
-	if ( ( Be::Var* )&m_rotation == value )
+	if ( ( Be::Var* )&m_authoredRotation == value )
 	{
 		RefreshPlacementFromRotation();
 		return true;

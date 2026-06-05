@@ -20,7 +20,7 @@ const Be::ClassInfo* AudEmitter::ExposeToBlue()
 		MAP_INTERFACE( ITr2AudEmitter )
 		MAP_INTERFACE( ITr2DebugRenderable )
 
-		MAP_ATTRIBUTE( "rotation", m_rotation, "Authored local audio rotation used by placement providers.\n:jessica-group: Audio Placement", Be::READWRITE | Be::PERSIST | Be::NOTIFY )
+		MAP_ATTRIBUTE( "rotation", m_authoredRotation, "Authored local audio rotation used by placement providers.\n:jessica-group: Audio Placement", Be::READWRITE | Be::PERSIST | Be::NOTIFY )
 		MAP_PROPERTY_READONLY( "front", GetFront, "Effective front vector sent to Wwise.\n:jessica-hidden: True" )
 		MAP_PROPERTY_READONLY( "top", GetTop, "Effective top vector sent to Wwise.\n:jessica-hidden: True" )
 		MAP_ATTRIBUTE( "normalizeAttenuationScaling", m_normalizeAttenuationScaling, "Determines whether attenuation scaling for this audio emitter should be normalized\n:jessica-group: Attenuation Normalization", Be::READWRITE | Be::PERSIST )
