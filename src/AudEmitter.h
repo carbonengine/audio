@@ -68,10 +68,9 @@ public:
 	virtual	void RenderDebugInfo( ITr2DebugRenderer2& renderer ) override;
 protected:
 	AudEmitter( AkGameObjectID gameObjID, IRoot* lockobj = NULL );
-	/**
-	 * @brief Draw a transparent sphere that makes this clickable in our editor. Scales based on distance to camera.
-	 */
-	void DrawClickableRadius(ITr2DebugRenderer2& renderer);
+	void RenderDebugBoundingSphere( ITr2DebugRenderer2& renderer );
+	void RenderDebugDirection( ITr2DebugRenderer2& renderer );
+	void RenderDebugName( ITr2DebugRenderer2& renderer );
 	// Properties used for normalizing attenuation scaling for this audio emitter.
 	bool m_normalizeAttenuationScaling;
 	float m_minNormalizedValue;

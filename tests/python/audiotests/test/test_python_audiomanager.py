@@ -63,7 +63,7 @@ class TestPythonAudioManager(BaseAudio2TestClass):
 
         self.assertEqual(set(self.audioManager.GetLoadedSoundBanks()), set([INIT_BANK, COMMON_BNK, LOOP_BNK]))
         emitter = audio2.AudEmitter("lifecycleEmitter")
-        emitter.SetPosition((0,0,0), (0,0,0), (0,0,0))
+        emitter.SetPlacement((0,0,0), (0,0,0), (0,0,0))
         listener = audio2.GetListener()
         listener.SetPosition((0,0,0), (0,0,0), (0,0,0))
         PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
@@ -78,7 +78,7 @@ class TestPythonAudioManager(BaseAudio2TestClass):
         self.pumpUntil(lambda: self.expectedSoundBanksAreLoaded([COMMON_BNK, LOOP_BNK]))
 
         emitter = audio2.AudEmitter("stoppedLoopLifecycleEmitter")
-        emitter.SetPosition((0,0,0), (0,0,0), (0,0,0))
+        emitter.SetPlacement((0,0,0), (0,0,0), (0,0,0))
         listener = audio2.GetListener()
         listener.SetPosition((0,0,0), (0,0,0), (0,0,0))
         PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
@@ -105,7 +105,7 @@ class TestPythonAudioManager(BaseAudio2TestClass):
         self.pumpUntil(lambda: self.expectedSoundBanksAreLoaded([COMMON_BNK, LOOP_BNK, ONE_SHOT_BNK]))
 
         emitter = audio2.AudEmitter("postedStopLifecycleEmitter")
-        emitter.SetPosition((0,0,0), (0,0,0), (0,0,0))
+        emitter.SetPlacement((0,0,0), (0,0,0), (0,0,0))
         listener = audio2.GetListener()
         listener.SetPosition((0,0,0), (0,0,0), (0,0,0))
         PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)

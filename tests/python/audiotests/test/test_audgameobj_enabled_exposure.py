@@ -24,7 +24,7 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
         # through other audio emitter classes. That is why these tests use AudEmitter.
         import audio2
         self.emitter = audio2.AudEmitter("emitter1")
-        self.emitter.SetPosition((0,0,0), (0,0,0), (0,0,0))
+        self.emitter.SetPlacement((0,0,0), (0,0,0), (0,0,0))
         self.audioManager.Enable()
 
         self.listener = audio2.GetListener()

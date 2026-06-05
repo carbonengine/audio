@@ -20,6 +20,9 @@ const Be::ClassInfo* AudEmitter::ExposeToBlue()
 		MAP_INTERFACE( ITr2AudEmitter )
 		MAP_INTERFACE( ITr2DebugRenderable )
 
+		MAP_ATTRIBUTE( "rotation", m_rotation, "Authored local audio rotation used by placement providers.\n:jessica-group: Audio Placement", Be::READWRITE | Be::PERSIST | Be::NOTIFY )
+		MAP_PROPERTY_READONLY( "front", GetFront, "Effective front vector sent to Wwise.\n:jessica-hidden: True" )
+		MAP_PROPERTY_READONLY( "top", GetTop, "Effective top vector sent to Wwise.\n:jessica-hidden: True" )
 		MAP_ATTRIBUTE( "normalizeAttenuationScaling", m_normalizeAttenuationScaling, "Determines whether attenuation scaling for this audio emitter should be normalized\n:jessica-group: Attenuation Normalization", Be::READWRITE | Be::PERSIST )
 		MAP_ATTRIBUTE( "minNormalizedValue", m_minNormalizedValue, "The minimum number to use for attenuation normalization.\n:jessica-group: Attenuation Normalization", Be::READWRITE | Be::PERSIST )
 		MAP_ATTRIBUTE( "maxNormalizedValue", m_maxNormalizedValue, "The maximum number to use for attenuation normalization.\n:jessica-group: Attenuation Normalization", Be::READWRITE | Be::PERSIST )
@@ -47,7 +50,7 @@ const Be::ClassInfo* AudEmitter::ExposeToBlue()
 		)
 		MAP_METHOD_AND_WRAP
 		(
-			"SetPosition",
+			"SetPlacement",
 			SetPosition,
 			"Update orientation and position of an audio emitter.\n"
 			":param front: Vector3 representing the orientation of the object.\n"

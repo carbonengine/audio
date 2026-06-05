@@ -81,6 +81,10 @@ public:
 	std::wstring GetEventName();
 	// Get the current position of this game object.
 	Vector3 GetPosition() const override;
+	// Get the effective front vector sent to Wwise.
+	Vector3 GetFront() const;
+	// Get the effective top vector sent to Wwise.
+	Vector3 GetTop() const;
 	// Set the squared length of the distance that this game object sits from the listener.
 	void SetDistanceSqFromListener(float distanceSq) override;
 	// Set the Wwise event to be sent to this game object when it is initialized.
@@ -106,6 +110,14 @@ public:
 	void ReleaseForcedCullingState();
 
 protected:
+	struct Orientation
+	{
+		Orientation( const Vector3& front_, const Vector3& top_ );
+
+		Vector3 front;
+		Vector3 top;
+	};
+
 	enum ActionTypes
 	{
 		Stop = AkActionOnEventType_Stop,
@@ -114,6 +126,10 @@ protected:
 	AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj = NULL );
 	// Convert a Trinity RH vector to a Wwise LH vector and set the position for this game object in Wwise.
 	virtual int SetPositionHelper( const Vector3& front, const Vector3& top, const Vector3& position );
+	int SetEffectivePositionHelper( const Vector3& front, const Vector3& top, const Vector3& position );
+	bool HasAuthoredRotation() const;
+	Orientation GetEffectiveOrientation() const;
+	void RefreshPlacementFromRotation();
 	// Prepend an event prefix if one exists on the given event.
 	std::wstring PrepareEvent( const std::wstring& event, bool bypassPrefix );
 	// Propagate any wwise callbacks received for this game object.
@@ -138,6 +154,9 @@ protected:
 	std::wstring m_eventName;
 	PAudParameterVector m_parameters;
 	Vector3 m_position;
+	Orientation m_parentOrientation;
+	Orientation m_effectiveOrientation;
+	Quaternion m_rotation;
 	// Whether this game object is currently registered with Wwise.
 	bool m_gameObjRegistered;
 	// Whether this game object is culled or not.
