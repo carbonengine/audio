@@ -9,6 +9,31 @@
 #include "StretchAudio.h"
 #include "AudManager.h"
 
+namespace
+{
+	void GetStretchOrientation( const Vector3& sourcePosition, const Vector3& destPosition, Vector3& front, Vector3& top )
+	{
+		const Vector3 segment = destPosition - sourcePosition;
+		const float segmentLengthSquared = Dot( segment, segment );
+		if ( segmentLengthSquared < 1e-6f )
+		{
+			front = Vector3( 0, 1, 0 );
+			top = Vector3( 0, 0, 1 );
+			return;
+		}
+
+		front = Normalize( segment );
+		Vector3 preferredTop( 0, 0, 1 );
+		Vector3 topCandidate = preferredTop - front * Dot( preferredTop, front );
+		if ( Dot( topCandidate, topCandidate ) < 1e-6f )
+		{
+			preferredTop = Vector3( 0, 1, 0 );
+			topCandidate = preferredTop - front * Dot( preferredTop, front );
+		}
+		top = Normalize( topCandidate );
+	}
+}
+
 StretchAudio::StretchAudio( IRoot* lockobj ) : 
 	m_impactEvent( L"" ),
 	m_outburstEvent( L"" ),
@@ -53,7 +78,10 @@ void StretchAudio::Update( Vector3& sourcePosition, Vector3& destPosition )
 		return;
 	}
 
-	Vector3 front(0,1,0), top(0,0,1);
+	Vector3 front;
+	Vector3 top;
+	GetStretchOrientation( sourcePosition, destPosition, front, top );
+
 	if ( nullptr != m_sourceEmitter )
 	{
 		m_sourceEmitter->SetPosition( front, top, sourcePosition );

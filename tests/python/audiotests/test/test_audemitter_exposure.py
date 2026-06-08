@@ -63,6 +63,20 @@ class TestAudEmitterExposure(BaseAudio2TestClass):
         self.assertVectorAlmostEqual(self.emitter.front, (-1, 0, 0))
         self.assertVectorAlmostEqual(self.emitter.top, (0, 1, 0))
 
+    def test_rotation_attribute_updates_default_orientation_before_placement(self):
+        self.emitter.rotation = (0.7071068, 0, 0, 0.7071067)
+
+        self.assertVectorAlmostEqual(self.emitter.front, (0, -1, 0))
+        self.assertVectorAlmostEqual(self.emitter.top, (0, 0, 1))
+
+    def test_rotation_attribute_adds_to_stretchaudio_placement_convention(self):
+        self.emitter.rotation = (0.7071068, 0, 0, 0.7071067)
+
+        self.emitter.SetPlacement((0, 1, 0), (0, 0, 1), (0, 50, 0))
+
+        self.assertVectorAlmostEqual(self.emitter.front, (0, 0, 1))
+        self.assertVectorAlmostEqual(self.emitter.top, (0, -1, 0))
+
     def test_repeated_parent_placement_updates_do_not_compound_rotation(self):
         self.emitter.rotation = (0, 1, 0, 0)
 

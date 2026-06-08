@@ -462,11 +462,6 @@ AudGameObjResource::Orientation AudGameObjResource::GetEffectiveOrientation() co
 
 void AudGameObjResource::RefreshPlacementFromRotation()
 {
-	if ( !m_hasReceivedPosition )
-	{
-		return;
-	}
-
 	const Orientation effectiveOrientation = GetEffectiveOrientation();
 	SetEffectivePositionHelper( effectiveOrientation.front, effectiveOrientation.top, m_position );
 }
