@@ -7,6 +7,8 @@
 !.vscode/extensions.json
 # CMake
 out*
+build/
+.claude/
 # Wwise
 .backup*
 .cache*
@@ -22,3 +24,5 @@ SoundbanksInfo.xml
 *.wproj_migration.log
 # Python
 *.pyc
+.cmake-build-*/
+CMakeUserPresets.json

@@ -1,308 +1,189 @@
 {
   "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 31,
+    "patch": 0
+  },
   "configurePresets": [
     {
-      "name": "x64-Internal",
+      "name": "common",
+      "toolchainFile": "${sourceDir}/vendor/github.com/microsoft/vcpkg/scripts/buildsystems/vcpkg.cmake",
+      "binaryDir": "${sourceDir}/.cmake-build-${presetName}",
+      "cacheVariables": {
+        "VCPKG_USE_HOST_TOOLS": "ON",
+        "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/vendor/github.com/carbonengine/vcpkg-registry/triplets"
+      },
+      "environment": {
+        "VCPKG_ROOT": "${sourceDir}/vendor/github.com/microsoft/vcpkg",
+        "PATH_TO_VCPKG_ROOT": "${sourceDir}/vendor/github.com/microsoft/vcpkg"
+      },
+      "hidden": true
+    },
+    {
+      "name": "windows",
+      "inherits": "common",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "hidden": true
+    },
+    {
+      "name": "osx",
+      "inherits": "common",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      },
+      "hidden": true
+    },
+    {
+      "name": "x64-windows",
+      "inherits": "windows",
+      "cacheVariables": {
+        "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/vendor/github.com/carbonengine/vcpkg-registry/toolchains/x64-windows-145-carbon.cmake"
+      },
+      "hidden": true
+    },
+    {
+      "name": "arm64-osx",
+      "inherits": "osx",
+      "cacheVariables": {
+        "CMAKE_OSX_ARCHITECTURES": "arm64",
+        "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/vendor/github.com/carbonengine/vcpkg-registry/toolchains/arm64-osx-carbon.cmake"
+      },
+      "hidden": true
+    },
+    {
+      "name": "x64-osx",
+      "inherits": "osx",
+      "cacheVariables": {
+        "CMAKE_OSX_ARCHITECTURES": "x86_64",
+        "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/vendor/github.com/carbonengine/vcpkg-registry/toolchains/x64-osx-carbon.cmake"
+      },
+      "hidden": true
+    },
+    {
+      "name": "x64-windows-internal",
       "displayName": "x64 Internal (Windows)",
-      "generator": "Visual Studio 17 2022",
-      "binaryDir": "${sourceDir}/out/build/x64-Internal",
-      "installDir": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Internal"
-      },
-      "condition": {
-        "type": "allOf",
-        "conditions": [
-          {
-            "type": "notEquals",
-            "lhs": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}",
-            "rhs": ""
-          },
-          {
-            "type": "equals",
-            "lhs": "${hostSystemName}",
-            "rhs": "Windows"
-          }
-        ]
-      }
-    },
-    {
-      "name": "x64-TrinityDev",
-      "displayName": "x64 Trinity Dev (Windows)",
-      "generator": "Visual Studio 17 2022",
-      "binaryDir": "${sourceDir}/out/build/x64-TrinityDev",
-      "installDir": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "TrinityDev"
-      },
-      "condition": {
-        "type": "allOf",
-        "conditions": [
-          {
-            "type": "notEquals",
-            "lhs": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}",
-            "rhs": ""
-          },
-          {
-            "type": "equals",
-            "lhs": "${hostSystemName}",
-            "rhs": "Windows"
-          }
-        ]
-      }
-    },
-    {
-      "name": "x64-Release",
-      "displayName": "x64 Release (Windows)",
-      "generator": "Visual Studio 17 2022",
-      "binaryDir": "${sourceDir}/out/build/x64-Release",
-      "installDir": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
-      },
-      "condition": {
-        "type": "allOf",
-        "conditions": [
-          {
-            "type": "notEquals",
-            "lhs": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}",
-            "rhs": ""
-          },
-          {
-            "type": "equals",
-            "lhs": "${hostSystemName}",
-            "rhs": "Windows"
-          }
-        ]
-      }
-    },
-    {
-      "name": "x64-Debug",
-      "displayName": "x64 Debug (Windows)",
-      "generator": "Visual Studio 17 2022",
-      "binaryDir": "${sourceDir}/out/build/x64-Debug",
-      "installDir": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
-      },
-      "condition": {
-        "type": "allOf",
-        "conditions": [
-          {
-            "type": "notEquals",
-            "lhs": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}",
-            "rhs": ""
-          },
-          {
-            "type": "equals",
-            "lhs": "${hostSystemName}",
-            "rhs": "Windows"
-          }
-        ]
-      }
-    },
-    {
-      "name": "arm64-Internal",
-      "displayName": "ARM64 Internal (macOS)",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/out/build/arm64-Internal",
-      "installDir": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
+      "inherits": "x64-windows",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Internal",
-        "CMAKE_OSX_ARCHITECTURES": "arm64"
-      },
-      "condition": {
-        "type": "allOf",
-        "conditions": [
-          {
-            "type": "notEquals",
-            "lhs": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}",
-            "rhs": ""
-          },
-          {
-            "type": "equals",
-            "lhs": "${hostSystemName}",
-            "rhs": "Darwin"
-          }
-        ]
+        "VCPKG_TARGET_TRIPLET": "x64-windows-internal",
+        "VCPKG_HOST_TRIPLET": "x64-windows-internal"
       }
     },
     {
-      "name": "arm64-TrinityDev",
-      "displayName": "ARM64 Trinity Dev (macOS)",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/out/build/arm64-TrinityDev",
-      "installDir": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "TrinityDev",
-        "CMAKE_OSX_ARCHITECTURES": "arm64"
-      },
-      "condition": {
-        "type": "allOf",
-        "conditions": [
-          {
-            "type": "notEquals",
-            "lhs": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}",
-            "rhs": ""
-          },
-          {
-            "type": "equals",
-            "lhs": "${hostSystemName}",
-            "rhs": "Darwin"
-          }
-        ]
-      }
-    },
-    {
-      "name": "arm64-Release",
-      "displayName": "ARM64 Release (macOS)",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/out/build/arm64-Release",
-      "installDir": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
+      "name": "x64-windows-release",
+      "displayName": "x64 Release (Windows)",
+      "inherits": "x64-windows",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_OSX_ARCHITECTURES": "arm64"
-      },
-      "condition": {
-        "type": "allOf",
-        "conditions": [
-          {
-            "type": "notEquals",
-            "lhs": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}",
-            "rhs": ""
-          },
-          {
-            "type": "equals",
-            "lhs": "${hostSystemName}",
-            "rhs": "Darwin"
-          }
-        ]
+        "VCPKG_TARGET_TRIPLET": "x64-windows-release",
+        "VCPKG_HOST_TRIPLET": "x64-windows-release"
       }
     },
     {
-      "name": "arm64-Debug",
-      "displayName": "ARM64 Debug (macOS)",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/out/build/arm64-Debug",
-      "installDir": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}/vendor/github.com/ccpgames/carbon-audio/develop",
+      "name": "x64-windows-debug",
+      "displayName": "x64 Debug (Windows)",
+      "inherits": "x64-windows",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_OSX_ARCHITECTURES": "arm64"
-      },
-      "condition": {
-        "type": "allOf",
-        "conditions": [
-          {
-            "type": "notEquals",
-            "lhs": "$penv{CCP_EVE_PERFORCE_BRANCH_PATH}",
-            "rhs": ""
-          },
-          {
-            "type": "equals",
-            "lhs": "${hostSystemName}",
-            "rhs": "Darwin"
-          }
-        ]
-      }
-    }
-  ],
-  "buildPresets": [
-    {
-      "name": "x64-Internal",
-      "configurePreset": "x64-Internal",
-      "configuration": "Internal"
-    },
-    {
-      "name": "x64-TrinityDev",
-      "configurePreset": "x64-TrinityDev",
-      "configuration": "TrinityDev"
-    },
-    {
-      "name": "x64-Release",
-      "configurePreset": "x64-Release",
-      "configuration": "Release"
-    },
-    {
-      "name": "x64-Debug",
-      "configurePreset": "x64-Debug",
-      "configuration": "Debug"
-    },
-    {
-      "name": "arm64-Internal",
-      "configurePreset": "arm64-Internal"
-    },
-    {
-      "name": "arm64-TrinityDev",
-      "configurePreset": "arm64-TrinityDev"
-    },
-    {
-      "name": "arm64-Release",
-      "configurePreset": "arm64-Release"
-    },
-    {
-      "name": "arm64-Debug",
-      "configurePreset": "arm64-Debug"
-    }
-  ],
-  "testPresets": [
-    {
-      "name": "x64-Internal",
-      "configurePreset": "x64-Internal",
-      "configuration": "Internal",
-      "output": {
-        "outputOnFailure": true
+        "VCPKG_TARGET_TRIPLET": "x64-windows-debug",
+        "VCPKG_HOST_TRIPLET": "x64-windows-debug"
       }
     },
     {
-      "name": "x64-TrinityDev",
-      "configurePreset": "x64-TrinityDev",
-      "configuration": "TrinityDev",
-      "output": {
-        "outputOnFailure": true
+      "name": "x64-windows-trinitydev",
+      "displayName": "x64 Trinity Dev (Windows)",
+      "inherits": "x64-windows",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "TrinityDev",
+        "VCPKG_TARGET_TRIPLET": "x64-windows-trinitydev",
+        "VCPKG_HOST_TRIPLET": "x64-windows-trinitydev"
       }
     },
     {
-      "name": "x64-Release",
-      "configurePreset": "x64-Release",
-      "configuration": "Release",
-      "output": {
-        "outputOnFailure": true
+      "name": "arm64-osx-internal",
+      "displayName": "ARM64 Internal (macOS)",
+      "inherits": "arm64-osx",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Internal",
+        "VCPKG_TARGET_TRIPLET": "arm64-osx-internal",
+        "VCPKG_HOST_TRIPLET": "arm64-osx-internal"
       }
     },
     {
-      "name": "x64-Debug",
-      "configurePreset": "x64-Debug",
-      "configuration": "Debug",
-      "output": {
-        "outputOnFailure": true
+      "name": "arm64-osx-release",
+      "displayName": "ARM64 Release (macOS)",
+      "inherits": "arm64-osx",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "VCPKG_TARGET_TRIPLET": "arm64-osx-release",
+        "VCPKG_HOST_TRIPLET": "arm64-osx-release"
       }
     },
     {
-      "name": "arm64-Internal",
-      "configurePreset": "arm64-Internal",
-      "output": {
-        "outputOnFailure": true
+      "name": "arm64-osx-debug",
+      "displayName": "ARM64 Debug (macOS)",
+      "inherits": "arm64-osx",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "VCPKG_TARGET_TRIPLET": "arm64-osx-debug",
+        "VCPKG_HOST_TRIPLET": "arm64-osx-debug"
       }
     },
     {
-      "name": "arm64-TrinityDev",
-      "configurePreset": "arm64-TrinityDev",
-      "output": {
-        "outputOnFailure": true
+      "name": "arm64-osx-trinitydev",
+      "displayName": "ARM64 Trinity Dev (macOS)",
+      "inherits": "arm64-osx",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "TrinityDev",
+        "VCPKG_TARGET_TRIPLET": "arm64-osx-trinitydev",
+        "VCPKG_HOST_TRIPLET": "arm64-osx-trinitydev"
       }
     },
     {
-      "name": "arm64-Release",
-      "configurePreset": "arm64-Release",
-      "output": {
-        "outputOnFailure": true
+      "name": "x64-osx-internal",
+      "displayName": "x64 Internal (macOS)",
+      "inherits": "x64-osx",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Internal",
+        "VCPKG_TARGET_TRIPLET": "x64-osx-internal",
+        "VCPKG_HOST_TRIPLET": "x64-osx-internal"
       }
     },
     {
-      "name": "arm64-Debug",
-      "configurePreset": "arm64-Debug",
-      "output": {
-        "outputOnFailure": true
+      "name": "x64-osx-release",
+      "displayName": "x64 Release (macOS)",
+      "inherits": "x64-osx",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "VCPKG_TARGET_TRIPLET": "x64-osx-release",
+        "VCPKG_HOST_TRIPLET": "x64-osx-release"
+      }
+    },
+    {
+      "name": "x64-osx-debug",
+      "displayName": "x64 Debug (macOS)",
+      "inherits": "x64-osx",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "VCPKG_TARGET_TRIPLET": "x64-osx-debug",
+        "VCPKG_HOST_TRIPLET": "x64-osx-debug"
+      }
+    },
+    {
+      "name": "x64-osx-trinitydev",
+      "displayName": "x64 Trinity Dev (macOS)",
+      "inherits": "x64-osx",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "TrinityDev",
+        "VCPKG_TARGET_TRIPLET": "x64-osx-trinitydev",
+        "VCPKG_HOST_TRIPLET": "x64-osx-trinitydev"
       }
     }
   ]

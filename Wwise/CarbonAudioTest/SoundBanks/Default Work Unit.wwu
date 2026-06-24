@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<WwiseDocument Type="WorkUnit" ID="{4B764402-C2B1-488E-A768-588CB657A0CD}" SchemaVersion="119">
+<WwiseDocument Type="WorkUnit" ID="{4B764402-C2B1-488E-A768-588CB657A0CD}" SchemaVersion="133">
 	<SoundBanks>
 		<WorkUnit Name="Default Work Unit" ID="{4B764402-C2B1-488E-A768-588CB657A0CD}" PersistMode="Standalone">
 			<ChildrenList>
@@ -62,7 +62,7 @@
 					<ObjectInclusionList>
 						<ObjectRef Name="testNonEssentialStream" ID="{5CF97C4E-0A4F-45E1-843D-B3154883F549}" WorkUnitID="{C3703968-666D-47C8-9715-ABD3DA334A25}" Origin="Manual" Filter="6"/>
 					</ObjectInclusionList>
-				<ObjectExclusionList/>
+					<ObjectExclusionList/>
 					<GameSyncExclusionList/>
 				</SoundBank>
 			</ChildrenList>

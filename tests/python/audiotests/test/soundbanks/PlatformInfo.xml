@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PlatformInfo>
-	<Platform Name="Windows" BasePlatform="Windows" Generator="2023.1.13.8732"/>
+	<Platform Name="Windows" BasePlatform="Windows" Generator="2025.1.5.9095"/>
 	<RootPaths>
 		<ProjectRoot>../../../../../Wwise/CarbonAudioTest</ProjectRoot>
-		<SourceFilesRoot>../../../../../Wwise/CarbonAudioTest/.cache/Windows</SourceFilesRoot>
+		<SourceFilesRoot>../../../../../Wwise/CarbonAudioTest/.cache</SourceFilesRoot>
 		<SoundBanksRoot>.</SoundBanksRoot>
 		<ExternalSourcesInputFile></ExternalSourcesInputFile>
 		<ExternalSourcesOutputRoot>../../../../../Wwise/CarbonAudioTest/GeneratedSoundBanks/Windows</ExternalSourcesOutputRoot>
@@ -27,6 +27,7 @@
 		<EstimatedDurationInfo>false</EstimatedDurationInfo>
 		<PrintObjectGuid>false</PrintObjectGuid>
 		<PrintObjectPath>false</PrintObjectPath>
+		<PrintObjectColor>true</PrintObjectColor>
 	</Settings>
-	<FileHash>{3E179EC2-ECC6-A7B2-C06F-8A75C71394AD}</FileHash>
+	<FileHash>{967B4966-BBC8-D9E0-D631-9D9CD74BB583}</FileHash>
 </PlatformInfo>

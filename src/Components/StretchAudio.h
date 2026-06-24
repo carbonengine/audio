@@ -44,6 +44,8 @@ public:
 	void Start() override;
 	void Stop() override;
 
+	void SetShotMissed( bool missed ); 
+
 	// debug
 	void GetDebugOptions( Tr2DebugRendererOptions& options );
 	void RenderDebugInfo( ITr2DebugRenderer2& renderer );
@@ -51,10 +53,12 @@ protected:
 	std::wstring m_outburstEvent;
 	std::wstring m_impactEvent;
 	std::wstring m_stretchEvent;
+	std::wstring m_shotMissedEvent;
 	AudEmitterPtr m_sourceEmitter;
 	AudEmitterPtr m_destEmitter;
 	AudEmitterPtr m_stretchEmitter;
 private:
+	bool m_shotMissed;
     AudListenerPtr m_listener;
 
 	// Projects the listener's position onto the line segment defined by the source and destination positions.

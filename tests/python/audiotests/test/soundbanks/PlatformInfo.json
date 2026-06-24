@@ -3,11 +3,11 @@
   "Platform": {
    "Name": "Windows",
    "BasePlatform": "Windows",
-   "Generator": "2023.1.13.8732"
+   "Generator": "2025.1.5.9095"
   },
   "RootPaths": {
    "ProjectRoot": "../../../../../Wwise/CarbonAudioTest",
-   "SourceFilesRoot": "../../../../../Wwise/CarbonAudioTest/.cache/Windows",
+   "SourceFilesRoot": "../../../../../Wwise/CarbonAudioTest/.cache",
    "SoundBanksRoot": ".",
    "ExternalSourcesInputFile": "",
    "ExternalSourcesOutputRoot": "../../../../../Wwise/CarbonAudioTest/GeneratedSoundBanks/Windows"
@@ -30,8 +30,9 @@
    "MaxAttenuationInfo": "true",
    "EstimatedDurationInfo": "false",
    "PrintObjectGuid": "false",
-   "PrintObjectPath": "false"
+   "PrintObjectPath": "false",
+   "PrintObjectColor": "true"
   },
-  "FileHash": "{C02090C8-F84A-61B1-40DB-D5252AEC3C0F}"
+  "FileHash": "{A36CFC21-66AE-0A6F-7C3F-BBD7F065FF10}"
  }
 }

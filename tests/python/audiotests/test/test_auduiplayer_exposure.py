@@ -1,16 +1,14 @@
+from unittest.mock import MagicMock
+
 from audiotests.base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK, ONE_SHOT_EVENT
 from audiotests.base_test_class import BaseAudio2TestClass
 from audiotests.utils import PumpOSWithTimeout
-try:
-    from unittest.mock import MagicMock  # Python 3
-except ImportError:
-    from mock import MagicMock  # Python 2 (requires 'mock' package)
 
 
 class TestAudUIPlayerExposure(BaseAudio2TestClass):
     @classmethod
     def setUpClass(cls):
-        super(TestAudUIPlayerExposure, cls).setUpClass()
+        super().setUpClass()
         cls.Initialize(cls, defaultSoundBanks=[COMMON_BNK, LOOP_BNK, ONE_SHOT_BNK])
 
     def setUp(self):
