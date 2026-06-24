@@ -28,7 +28,7 @@ unsigned int AudUIPlayer::SendEventWithCallback( const std::wstring& name )
 		m_callbackEventName = PrepareEvent(name, false);
 		if(m_callback)
 		{
-			return PostEvent( m_callbackEventName.c_str(), false, AK_EnableGetSourcePlayPosition );
+			return PostEvent( m_callbackEventName.c_str(), false, 0 );
 		}
 		else 
 		{
@@ -51,7 +51,7 @@ unsigned int AudUIPlayer::PostDialogueEvent( const std::wstring& eventName )
 {
 	if( g_audioEnabled )
 	{
-		return PostEvent( eventName.c_str(), false, AK_EnableGetSourcePlayPosition);
+		return PostEvent( eventName.c_str(), false, 0);
 	}
 	return 0;
 }

@@ -22,10 +22,9 @@
 // We have to include Wwise headers here so we can apply the _CRT_SECURE_NO_WARNINGS flag to them.
 // Wwise still uses some deprecated windows API's that trigger CRT warnings.
 #include <AK/AkWwiseSDKVersion.h>
-#include <AK/MusicEngine/Common/AkMusicEngine.h>
 #include <AK/SoundEngine/Common/AkCallback.h>
 #include <AK/SoundEngine/Common/AkMemoryMgr.h>
-#include <AK/SoundEngine/Common/AkModule.h>
+#include <AK/SoundEngine/Common/AkMemoryMgrModule.h>
 #include <AK/SoundEngine/Common/AkQueryParameters.h>
 #include <AK/SoundEngine/Common/AkSoundEngine.h>
 #include <AK/SoundEngine/Common/AkStreamMgrModule.h>

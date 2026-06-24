@@ -1,0 +1,38 @@
+{
+  "dependencies": [
+    {
+      "name": "carbon-blue",
+      "version>=": "4.2.1"
+    },
+    {
+      "name": "carbon-math",
+      "version>=": "1.2.0"
+    },
+    {
+      "name": "carbon-trinityaudioapi",
+      "version>=": "2.0.1"
+    },
+    {
+      "name": "wwise",
+      "version>=": "2025.1.5.9095"
+    },
+    {
+      "name": "python3",
+      "version>=": "3.12.9#1"
+    },
+    {
+      "name": "tbb"
+    },
+    {
+      "name": "carbon-exefile",
+      "version>=": "4.1.0",
+      "host": true
+    }
+  ],
+  "overrides": [
+    {
+      "name": "protobuf",
+      "version": "3.6.0.1"
+    }
+  ]
+}

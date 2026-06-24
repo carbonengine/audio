@@ -7,7 +7,7 @@ from audiotests.utils import PumpOSWithTimeout
 class TestPythonAudioManager(BaseAudio2TestClass):
     @classmethod
     def setUpClass(cls):
-        super(TestPythonAudioManager, cls).setUpClass()
+        super().setUpClass()
         cls.Initialize(cls)
 
     def loadedSoundBanksAreEmpty(self):

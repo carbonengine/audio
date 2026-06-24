@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ProjectInfo>
-	<Project Name="CarbonAudioTest" GUID="{1C592793-3886-4D25-A212-3BF5963F03C8}" Generator="2023.1.13.8732"/>
+	<Project Name="CarbonAudioTest" GUID="{1C592793-3886-4D25-A212-3BF5963F03C8}" Generator="2025.1.5.9095"/>
 	<CacheRoot>../.cache</CacheRoot>
 	<Platforms>
 		<Platform Name="Windows" GUID="{7FF5A69E-1DF7-47D2-956D-6ADD56F863EE}" BasePlatform="Windows" BasePlatformGUID="{6E0CB257-C6C8-4C5C-8366-2740DFC441EB}" Path="../../../tests/python/audiotests/test/soundbanks"/>
@@ -8,5 +8,5 @@
 	<Languages>
 		<Language Name="English(US)" Id="684519430" GUID="{957E4A86-06F0-4FAB-8961-D81BCA13E7D1}" Default="true" UseAsStandIn="true"/>
 	</Languages>
-	<FileHash>{10552347-AAEB-B971-A201-DA6170670D0F}</FileHash>
+	<FileHash>{5418D1F3-D746-6B6D-766F-0A1B50234EF3}</FileHash>
 </ProjectInfo>

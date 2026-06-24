@@ -10,7 +10,7 @@ if not exist "%VirtualEnvFolderPath%" (
 )
 
 call %VirtualEnvFolderPath%\Scripts\activate.bat
-call pip install -i https://pypi.evetech.net/pypi/ audioscripts-standalone
+call pip install -i https://pypi.evetech.net/pypi/ audioscripts-standalone==9.1.0
 
 call audioscripts generate-sp-metadata %WwiseBinPath% %ProjectFilePath% %SoundBankPath% -o %SoundBankPath%
 call audioscripts assemble-essential-media %SPMetadataPath% %SoundBankPath%  

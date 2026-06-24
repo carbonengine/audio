@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WwiseDocument Type="WorkUnit" ID="{FEA30F32-4B88-4E84-9233-03A77CDC8353}" SchemaVersion="133">
+	<Devices>
+		<WorkUnit Name="Default Work Unit" ID="{FEA30F32-4B88-4E84-9233-03A77CDC8353}" PersistMode="Standalone">
+			<ChildrenList>
+				<AudioDevice Name="System" ID="{FBB96ABC-525F-44FD-8CFC-A3C3B1D75B34}" PluginName="System" CompanyID="0" PluginID="174" PluginType="7">
+					<PropertyList>
+						<Property Name="Allow3DAudio" Type="bool">
+							<ValueList>
+								<Value>True</Value>
+							</ValueList>
+						</Property>
+						<Property Name="MinSystemAudioObjectsRequired" Type="Uint16">
+							<ValueList>
+								<Value>16</Value>
+							</ValueList>
+						</Property>
+					</PropertyList>
+				</AudioDevice>
+				<AudioDevice Name="No_Output" ID="{B79B566B-949D-4DD2-9117-CA505BD02054}" PluginName="No Output" CompanyID="0" PluginID="181" PluginType="7"/>
+				<AudioDevice Name="System_Stereo" ID="{5AB311B5-1C2D-4A41-9A14-9AB21B724B2E}" PluginName="System" CompanyID="0" PluginID="174" PluginType="7"/>
+			</ChildrenList>
+		</WorkUnit>
+	</Devices>
+</WwiseDocument>

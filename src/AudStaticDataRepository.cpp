@@ -29,11 +29,7 @@ namespace
 				const unsigned int listLength = (unsigned int)PyList_GET_SIZE(pyList);
 				for (unsigned int i = 0; i < listLength; i++)
 				{
-#if PY_MAJOR_VERSION == 2
-					std::string valueC = PyString_AsString(PyList_GetItem(pyList, i));
-#else
 					std::string valueC = PyUnicode_AsUTF8(PyList_GetItem(pyList, i));
-#endif
 					std::wstring value = static_cast<const wchar_t*>(CA2W(valueC.c_str()));
 					newVector.push_back(value);
 				}
@@ -200,11 +196,7 @@ void AudStaticDataRepository::Initialize(PyObject* audioMetadata)
 	{
 		while (PyDict_Next(eventsDict, &pos, &key, &value))
 		{
-#if PY_MAJOR_VERSION == 2
-			std::string eventNameC = PyString_AsString(key);
-#else
 			std::string eventNameC = PyUnicode_AsUTF8(key);
-#endif
 			std::wstring eventName = static_cast<const wchar_t*>(CA2W(eventNameC.c_str()));
 
 			bool isLoop = GetBoolFromDict(value, "isLoop", eventName);
@@ -247,11 +239,7 @@ void AudStaticDataRepository::Initialize(PyObject* audioMetadata)
 		CcpAutoMutex src_mutex(m_staticDataMutex);
 		while (PyDict_Next(soundbanksDict, &pos, &key, &value))
 		{
-#if PY_MAJOR_VERSION == 2
-			std::string soundBankNameC = PyString_AsString(key);
-#else
 			std::string soundBankNameC = PyUnicode_AsUTF8(key);
-#endif
 			std::wstring soundBankName = static_cast<const wchar_t*>(CA2W(soundBankNameC.c_str()));
 
 			bool IsEssentialSoundbank = GetBoolFromDict(value, "EssentialSoundBank", soundBankName);
@@ -279,11 +267,7 @@ void AudStaticDataRepository::Initialize(PyObject* audioMetadata)
 		CcpAutoMutex soundBankMutex(m_staticDataMutex);
 		while (PyDict_Next(sourceDict, &pos, &key, &value))
 		{
-#if PY_MAJOR_VERSION == 2
-			std::string sourceNameC = PyString_AsString(key);
-#else
 			std::string sourceNameC = PyUnicode_AsUTF8(key);
-#endif
 			std::wstring sourceName = static_cast<const wchar_t*>(CA2W(sourceNameC.c_str()));
 
 			bool IsEssential = GetBoolFromDict(value, "IsEssential", sourceName);

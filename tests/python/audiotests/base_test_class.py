@@ -27,7 +27,7 @@ class BaseAudio2TestClass(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         from audio2.audiomanager import AudioManager
-        super(BaseAudio2TestClass, cls).setUpClass()
+        super().setUpClass()
 
         # Add a delay to the test if configured.
         debug_delay_if_enabled()

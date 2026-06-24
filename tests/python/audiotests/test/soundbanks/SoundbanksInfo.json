@@ -3,10 +3,10 @@
   "Platform": "Windows",
   "BasePlatform": "Windows",
   "SchemaVersion": "16",
-  "SoundBankVersion": "150",
+  "SoundBankVersion": "172",
   "RootPaths": {
    "ProjectRoot": "../../../../../Wwise/CarbonAudioTest",
-   "SourceFilesRoot": "../../../../../Wwise/CarbonAudioTest/.cache/Windows",
+   "SourceFilesRoot": "../../../../../Wwise/CarbonAudioTest/.cache",
    "SoundBanksRoot": ".",
    "ExternalSourcesInputFile": "",
    "ExternalSourcesOutputRoot": "../../../../../Wwise/CarbonAudioTest/GeneratedSoundBanks/Windows"
@@ -17,7 +17,7 @@
     "Id": "117489857",
     "Type": "User",
     "Language": "SFX",
-    "Hash": "{4D449487-082E-B8F5-724B-4AAFA9E8EF09}",
+    "Hash": "{BB4E8093-D058-3260-02F4-01F98E4CB86E}",
     "ShortName": "NonEssentialSoundBank",
     "Path": "NonEssentialSoundBank.bnk",
     "Media": [
@@ -27,7 +27,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "testSFX_NonEssentialBank.wav",
-      "CachePath": "SFX/testSFX_NonEssentialBank_FBC78EF0.wem"
+      "CachePath": "65/{65FBB9B9-AB35-FE2B-8662-79C0E413631A}.wem"
      }
     ]
    },
@@ -35,7 +35,7 @@
     "Id": "476335406",
     "Type": "User",
     "Language": "SFX",
-    "Hash": "{2BFAD78B-7B5B-8DA8-8FAE-A63F8A54842B}",
+    "Hash": "{C96EF92B-5935-656B-7317-C6030ABFC6FE}",
     "ShortName": "TestMusicEssential",
     "Path": "TestMusicEssential.bnk",
     "Media": [
@@ -46,7 +46,7 @@
       "Location": "Loose",
       "ShortName": "testSFX.wav",
       "Path": "Media/460136326.wem",
-      "CachePath": "SFX/testSFX_FBC78EF0.wem"
+      "CachePath": "65/{65FBB9B9-AB35-FE2B-8662-79C0E413631A}.wem"
      }
     ]
    },
@@ -54,7 +54,7 @@
     "Id": "592435907",
     "Type": "User",
     "Language": "SFX",
-    "Hash": "{0144DABB-B3B7-47AC-8F14-C3155DB8F6B9}",
+    "Hash": "{5A1219F6-5FC3-6DD8-F4A6-00FEF9635AD3}",
     "ShortName": "TestOneShot",
     "Path": "TestOneShot.bnk",
     "Media": [
@@ -64,7 +64,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "commerce_bleeps_02.wav",
-      "CachePath": "SFX/commerce_bleeps_02_818F3B66.wem"
+      "CachePath": "77/{777A572A-237B-5EA9-F0B0-D11F5CA99E3B}.wem"
      }
     ]
    },
@@ -72,7 +72,7 @@
     "Id": "831522427",
     "Type": "User",
     "Language": "SFX",
-    "Hash": "{B83F0E22-5F59-8A05-C0E3-02A0A924A08E}",
+    "Hash": "{1869B591-5270-C17E-0426-5A7B84048893}",
     "ShortName": "TestLoadBank",
     "Path": "TestLoadBank.bnk",
     "Media": [
@@ -82,7 +82,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "static1.wav",
-      "CachePath": "SFX/static1_818F3B66.wem"
+      "CachePath": "F5/{F59E035A-5457-4845-6554-281BA1532269}.wem"
      }
     ],
     "Events": [
@@ -102,7 +102,7 @@
     "Id": "1355168291",
     "Type": "User",
     "Language": "SFX",
-    "Hash": "{6C0FB6C7-C127-1550-EEA5-D153518EB4D6}",
+    "Hash": "{39AD2CC1-7C56-03E3-BB04-2611CC698B7A}",
     "ShortName": "Init",
     "Path": "Init.bnk",
     "Plugins": {
@@ -138,7 +138,7 @@
     "Id": "2395677314",
     "Type": "User",
     "Language": "SFX",
-    "Hash": "{6FFC37B0-F374-025F-5E4D-7D11268F1918}",
+    "Hash": "{7302CEB0-F85E-C7B3-D487-6724C7E771A7}",
     "ShortName": "Common",
     "Path": "Common.bnk",
     "Events": [
@@ -182,7 +182,7 @@
     "Id": "2536242713",
     "Type": "User",
     "Language": "SFX",
-    "Hash": "{3977B228-9446-9FC4-7F46-F9FB7EBF066A}",
+    "Hash": "{06EFD826-B41B-80E0-7D4C-D77D2200CC92}",
     "ShortName": "Videoplayer",
     "Path": "Videoplayer.bnk",
     "Plugins": {
@@ -200,7 +200,7 @@
     "Id": "2569610222",
     "Type": "User",
     "Language": "SFX",
-    "Hash": "{2FCDB544-1799-B01F-53D5-1BCF85FE5B12}",
+    "Hash": "{70205A80-5267-4593-0ADB-D0764D95AB94}",
     "ShortName": "NonEssentialStream",
     "Path": "NonEssentialStream.bnk",
     "Media": [
@@ -211,7 +211,7 @@
       "Location": "Loose",
       "ShortName": "testSFX_NonEssentialStream.wav",
       "Path": "Media/192745030.wem",
-      "CachePath": "SFX/testSFX_NonEssentialStream_FBC78EF0.wem"
+      "CachePath": "65/{65FBB9B9-AB35-FE2B-8662-79C0E413631A}.wem"
      }
     ]
    },
@@ -219,7 +219,7 @@
     "Id": "3918824947",
     "Type": "User",
     "Language": "SFX",
-    "Hash": "{F372BAEB-1D17-E274-9C05-1E0E3613AFAE}",
+    "Hash": "{D7C54C6B-0661-0DF1-58AD-4F061CDF0888}",
     "ShortName": "TestLoop",
     "Path": "TestLoop.bnk",
     "Media": [
@@ -229,11 +229,11 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "children_of_light_loop.wav",
-      "CachePath": "SFX/children_of_light_loop_FBC78EF0.wem"
+      "CachePath": "94/{94FAECB7-CDFF-195D-6AF1-F5E0C8CEB8D7}.wem"
      }
     ]
    }
   ],
-  "FileHash": "{F25C3751-4E69-78C0-9E45-48410355DEB9}"
+  "FileHash": "{F26CED5E-B778-5398-ADAE-C995F51BA336}"
  }
 }
