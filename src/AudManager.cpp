@@ -22,12 +22,6 @@
 
 #include "tbb/parallel_for.h"
 
-#if _WIN32
-#include "LowLevelIO/Win32/AkDefaultIOHookDeferred.h"
-#elif __APPLE__
-#include "LowLevelIO/POSIX/AkDefaultIOHookDeferred.h"
-#endif
-
 #include "AudActionLog.h"
 #include "AudEmitter.h"
 #include "AudSettings.h"

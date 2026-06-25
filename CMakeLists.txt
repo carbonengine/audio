@@ -49,17 +49,12 @@ ccp_add_library(CarbonAudio SHARED
 	src/AudioInputMgr_Blue.cpp
 	src/AudStaticDataRepository.cpp
 	src/AudStaticDataRepository_Blue.cpp
-	src/CCPFilePackageLowLevelIO.h
 	src/DebugUtilities.cpp
-	src/LowLevelIO/Common/AkFileLocationBase.cpp
-	src/LowLevelIO/Common/AkFilePackage.cpp
-	src/LowLevelIO/Common/AkFilePackageLowLevelIO.inl
-	src/LowLevelIO/Common/AkFilePackageLUT.cpp
 	src/SoundPrioritization.cpp
 	src/Components/StretchAudio.cpp
 	src/Components/StretchAudio_Blue.cpp
-	src/LowLevelIO/Common/AkMultipleFileLocation.cpp
-    src/LowLevelIO/Common/AkGeneratedSoundBanksResolver.cpp
+    src/LowLevelIO/AudPathResolver.cpp
+    src/LowLevelIO/LowLevelIOHook.cpp
     src/WAAPI/WaapiManager.cpp
     src/WAAPI/WaapiManager_Blue.cpp
 )
@@ -91,34 +86,14 @@ target_sources(CarbonAudio PRIVATE
 	src/Vector3.h
 	src/version.h
 	src/Components/StretchAudio.h
-	src/LowLevelIO/Common/AkFileLocationBase.h
-	src/LowLevelIO/Common/AkFilePackage.h
-	src/LowLevelIO/Common/AkFilePackageLUT.h
-	src/LowLevelIO/Common/AkMultipleFileLocation.h
-    src/LowLevelIO/Common/AkGeneratedSoundBanksResolver.h
+    src/LowLevelIO/FileHelpers.h
+    src/LowLevelIO/AudPathResolver.h
+    src/LowLevelIO/LowLevelIOHook.h
 	src/IPrioritizedObject.h
 	src/SoundPrioritization.h
     src/WAAPI/WaapiManager.h
 	${PUBLIC_HEADER_FILES_INCLUDE}
 )
-
-
-# Add Platform specific code
-if(WIN32)
-	target_sources(CarbonAudio PRIVATE
-		src/LowLevelIO/Win32/AkDefaultIOHookDeferred.cpp
-		src/LowLevelIO/Win32/AkDefaultIOHookDeferred.h
-		src/LowLevelIO/Win32/AkFileHelpers.h
-	)
-elseif(APPLE)
-	target_sources(CarbonAudio PRIVATE
-		src/LowLevelIO/POSIX/AkDefaultIOHookDeferred.cpp
-		src/LowLevelIO/POSIX/AkDefaultIOHookDeferred.h
-		src/LowLevelIO/POSIX/AkFileHelpers.h
-	)
-else()
-	message(FATAL_ERROR "CarbonAudio does not support platform specified.")
-endif()
 
 set(WWISE_LIBRARIES
 	Ak3DAudioBedMixerFX AkAudioInputSource AkAutobahn AkCompressorFX AkConvolutionReverbFX
@@ -126,7 +101,7 @@ set(WWISE_LIBRARIES
 	AkMatrixReverbFX AkMemoryMgr AkMeterFX AkOpusDecoder AkParametricEQFX
 	AkPeakLimiterFX AkPitchShifterFX AkRecorderFX AkRoomVerbFX AkSilenceSource AkSineSource
 	AkSoundEngine AkSpatialAudio AkStereoDelayFX AkStreamMgr AkSynthOneSource AkTimeStretchFX
-	AkToneSource AkTremoloFX AkVorbisDecoder MasteringSuiteFX
+	AkToneSource AkTremoloFX AkVorbisDecoder AkSidechainFX MasteringSuiteFX
 )
 
 if(WIN32)
@@ -162,17 +137,6 @@ target_include_directories(CarbonAudio
 		PRIVATE
 			${CMAKE_CURRENT_SOURCE_DIR}/src
 		)
-
-# Platform-specific LowLevelIO include directories
-if(WIN32)
-	target_include_directories(CarbonAudio PRIVATE
-		${CMAKE_CURRENT_SOURCE_DIR}/src/LowLevelIO/Win32
-	)
-elseif(APPLE)
-	target_include_directories(CarbonAudio PRIVATE
-		${CMAKE_CURRENT_SOURCE_DIR}/src/LowLevelIO/POSIX
-	)
-endif()
 
 set_target_properties(CarbonAudio PROPERTIES OUTPUT_NAME "_audio2")
 

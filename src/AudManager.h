@@ -14,19 +14,12 @@
 #include "AudSettings.h"
 #include "AudListener.h"
 #include "SoundPrioritization.h"
-#include "CCPFilePackageLowLevelIO.h"
+#include "LowLevelIO/LowLevelIOHook.h"
+#include <atomic>
 #include <memory>
 #include <unordered_map>
 
-
-#if _WIN32
-#include "LowLevelIO/Win32/AkDefaultIOHookDeferred.h"
-#elif __APPLE__
-#include "LowLevelIO/POSIX/AkDefaultIOHookDeferred.h"
-#endif
-
 BLUE_DECLARE( AudConfig );
-BLUE_DECLARE( AudLowLevelIO );
 BLUE_DECLARE( AudGameObjResource );
 BLUE_DECLARE_INTERFACE( IAudActionLog );
 
@@ -220,7 +213,7 @@ private:
 	std::map<AkBankID, SoundBankInfo> m_soundBankInfoMap;
 	CcpMutex m_soundBankMutex;
 	// low level IO hook for Wwise
-	CCPFilePackageLowLevelIO m_lowLevelIO;
+	LowLevelIOHook m_lowLevelIO;
 	// Initialization settings for Wwise
 	AudSettingsPtr m_settings;
 
