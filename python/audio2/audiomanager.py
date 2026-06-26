@@ -1,3 +1,5 @@
+# Copyright © 2023 CCP ehf.
+
 import audio2
 
 INIT_BANK = "Init.bnk"

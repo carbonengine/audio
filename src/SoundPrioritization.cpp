@@ -1,3 +1,5 @@
+// Copyright © 2025 CCP ehf.
+
 #include "stdafx.h"
 #include "SoundPrioritization.h"
 #include "IPrioritizedObject.h"

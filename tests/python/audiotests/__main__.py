@@ -1,3 +1,5 @@
+# Copyright © 2024 CCP ehf.
+
 import os
 import sys
 import unittest

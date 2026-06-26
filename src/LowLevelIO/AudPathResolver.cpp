@@ -1,4 +1,4 @@
-// Copyright (c) 2026 CCP Games
+// Copyright © 2026 CCP ehf.
 
 #include "AudPathResolver.h"
 

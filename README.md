@@ -327,3 +327,18 @@ These custom properties are defined in the EVE Wwise project and are also reflec
 In `AudStaticDataRepository`, all the above audio metadata is stored. Then, in the low-level file handling logic of Carbon Audio, it decides whether to pull audio assets from this "Essentials" folder.
 
 To use CarbonAudio with your Wwise project, copy the [`ccp.wcustomproperties`](Wwise/CarbonAudioTest/Add-ons/Properties/ccp.wcustomproperties) file to your project's `Add-ons/Properties` folder. This defines custom properties required by CarbonAudio. For more information on custom properties in Wwise, refer to the [Wwise documentation](https://www.audiokinetic.com/en/library/edge/?source=SDK&id=defining_custom_properties.html).
+
+## 🤝 Contributing
+Contribution follows the standard GIT PR model.
+
+By submitting a pull request or otherwise contributing to this project, you agree to license your contribution under the MIT License, and you confirm that you have the right to do so.
+
+## 📄 License and Legal Notices
+
+© 2026 CCP Games 
+
+This software is provided by CCP Games and does not include or distribute any third-party libraries or frameworks. 
+
+Trademark Notice: CCP Games is a trademark of CCP ehf. 
+
+This project is licensed under the [MIT License](LICENSE.md). Nothing in the [MIT License](LICENSE.md) grants any rights to CCP Games' trademarks or game content.

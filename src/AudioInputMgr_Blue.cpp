@@ -1,3 +1,5 @@
+// Copyright © 2020 CCP ehf.
+
 #include "stdafx.h"
 #include "AudioInputMgr.h"
 

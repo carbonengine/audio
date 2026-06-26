@@ -1,3 +1,5 @@
+# Copyright © 2024 CCP ehf.
+
 from unittest.mock import MagicMock
 
 from audiotests.base_test_class import SOUNDBANK_FILEPATH

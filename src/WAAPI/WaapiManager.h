@@ -1,9 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////
-//
-// Creator: Phevos Rinis
-// Created: September 2025
-// Copyright (c) 2025, CCP Games
-//
+// Copyright © 2025 CCP ehf.
 
 #pragma once
 

@@ -1,9 +1,4 @@
-////////////////////////////////////////////////////////////
-//
-//    Creator:   Eric Nielsen
-//    Created:   May 2020
-//    Copyright: CCP 2020
-//
+// Copyright © 2020 CCP ehf.
 
 #include "stdafx.h"
 

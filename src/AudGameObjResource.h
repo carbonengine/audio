@@ -1,10 +1,5 @@
-////////////////////////////////////////////////////////////
-//
-// Creator: Andri Mar
-// Contributors: Eric Nielsen
-// Creation Date: February 2009
-// Copyright (c) 2009-2022, CCP Games
-//
+// Copyright © 2009 CCP ehf.
+
 #pragma once
 
 #include "Audio2.h"

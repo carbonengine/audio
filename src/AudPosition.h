@@ -1,9 +1,4 @@
-////////////////////////////////////////////////////////////
-//
-// Creator: Andri Mar
-// Creation Date: June 2010
-// Copyright (c) 2010-2022, CCP Games
-//
+// Copyright © 2010 CCP ehf.
 
 #pragma once
 #ifndef _AUDPOSITION_H_

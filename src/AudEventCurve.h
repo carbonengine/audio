@@ -1,3 +1,5 @@
+// Copyright © 2014 CCP ehf.
+
 #pragma once
 #ifndef AudEventCurve_h
 #define AudEventCurve_h

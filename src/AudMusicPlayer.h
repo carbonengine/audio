@@ -1,9 +1,4 @@
-////////////////////////////////////////////////////////////
-//
-// Creator: Eric Nielsen
-// Creation Date: May 2022
-// Copyright 2022 CCP Games
-//
+// Copyright © 2022 CCP ehf.
 
 #pragma once
 
