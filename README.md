@@ -1,12 +1,20 @@
-# CarbonAudio
-CarbonAudio (previously audio2) is a wrapper through which EVE Online communicates with Wwise. In addition to interacting with Wwise, CarbonAudio houses its own sound prioritization system that helps protect Wwise from being hammered too hard in larger scenes.
+# Carbon Audio
+This repository holds the audio component of the Carbon engine, it supports both EVE Online and EVE Frontier.
+It provides a wrapper around the Wwise SDK together with some of our own solutions such as the sound prioritization system and more. As with most of the Carbon components, CarbonAudio is also exposed to Python through the Blue exposure layer. In addition to this there are header only includes that can be used to interact with CarbonAudio through C++.
 
-CarbonAudio depends on [Blue](https://github.com/ccpgames/carbon-blue) which is the layer that exposes it to Python. In addition to this there are header only includes that can be used to interact with CarbonAudio through C++.
+## Contents
+- [Development Setup](#development-setup)
+- [Initializing and Enabling CarbonAudio](#initializing-and-enabling-carbonaudio)
+- [Sound Prioritization](#sound-prioritization)
+- [Spatial Audio (3D Audio)](#spatial-audio-3d-audio)
+- [Testing](#testing)
+- [Contributing](#-contributing)
+- [License and Legal Notices](#-license-and-legal-notices)
 
 ## Development Setup
 
 ### Prerequisites
-- **Wwise C++ SDK**: Internally provided through the private registry. External contributors should provide their own personal license (free for personal use). 
+- **Wwise C++ SDK**: Internally provided through the private registry. External contributors should provide their own personal license (free for personal use), available from [Audiokinetic](https://www.audiokinetic.com/en/wwise/overview/). 
 - **Windows**: Visual Studio 2026 with the v145 toolset.
 - **macOS**: Xcode command line tools.
 - **CMake** 3.16 or newer.
@@ -15,96 +23,38 @@ CarbonAudio depends on [Blue](https://github.com/ccpgames/carbon-blue) which is 
 ### Quick Setup
 1. Clone the repository.
 2. Initialize submodules:
-   ```
+   ```bash
    git submodule update --init --recursive
    ```
-3. Configure with the preset for your target.
+3. Configure with the preset for your target:
+   ```bash
+   cmake --preset x64-windows-release
    ```
-   cmake --preset x64-windows-internal
-   ```
-
 4. Build and test:
-   ```
-   cmake --build --preset x64-windows-internal --config Internal
-   ctest --preset x64-windows-internal -C Internal
+   ```bash
+   cmake --build --preset x64-windows-release --config Release
+   ctest --preset x64-windows-release -C Release
    ```
 
 ### Installing into an EVE / Frontier branch
+This step is for CCP-internal development, where CarbonAudio is consumed as a vendored dependency of the EVE / Frontier monolith:
 
-```
+```bash
 cmake --preset x64-windows-internal -DINSTALL_TO_MONOLITH=ON -DCMAKE_INSTALL_PREFIX=<branch-root>/vendor/github.com/ccpgames/carbon-audio/develop
 cmake --build --preset x64-windows-internal --config Internal --target install
 ```
-
-## Testing
-
-### Running Tests
-CarbonAudio tests are located in `tests/python/audiotests` and can be run through:
-
-1. **VS Code Test Explorer**: When CMake configuration succesfully runs you should be able to see all tests in the "Testing" section of VS Code and run them individually or all at once. 
-2. **Command Line**: Use `ctest` from your build directory
-
-### Debug Testing
-For debugging C++ code during test execution, you can enable a debug delay:
-
-#### Enable Debug Delay
-1. **Run the task**: `Ctrl+Shift+P` → `Tasks: Run Task` → "Enable Debug Delay for Tests"
-2. **Run your test**: The test will pause for 7 seconds before execution
-3. **Attach debugger**: Use `Ctrl+Shift+P` → `Debug: Select and Start Debugging` → "Attach to Process"
-4. **Select process**: Choose `exefile.exe` from the process list
-
-#### Disable Debug Delay
-Run the task: `Ctrl+Shift+P` → `Tasks: Run Task` → "Disable Debug Delay for Tests"
-
-### Debugging Configuration
-The repository includes pre-configured launch configurations in `.vscode/launch.json`:
-
-- **Attach to Process**: Attach to any running process using Visual Studio debugger
-- **Attach to Process (GDB)**: Alternative using GDB debugger
-
-### Wwise Test Project
-This repository includes a test Wwise project in the `Wwise/` directory:
-
-1. **Install Wwise**: Download [Audiokinetic Launcher](https://www.audiokinetic.com/en/library/wwise_launcher/) and install Wwise version 2025.1.5.9095
-2. **Open Project**: Launch Wwise and open `Wwise/CarbonAudioTest/CarbonAudioTest.wproj`
-3. **Generate SoundBanks**: The project outputs to `tests/python/audiotests/test/soundbanks/`
-
-#### Generating SoundBanks from the Wwise CarbonAudio Test Project
-If you are updating tests to use new events or soundbanks defined in the test Wwise project, you have to manually generate those soundbanks as well
-as generating `SoundPrioritizationMetadata.json` (an example can be found at [tests/python/soundbanks/SoundPrioritizationMetadata.json]())
-
-To generate the soundbanks, go to the soundbanks view in the Wwise authoring program and simply generate soundbanks. The project is set up to automatically 
-deposit it into `tests/python/audiotests/test/soundbanks`.
-
-To generate the `SoundPrioritizationMetadata.json` file, you must use the [audio-scripts](https://github.com/ccpgames/audio-scripts/tree/main/standalone) command line tool. Refer to the auido-scripts standalone documentation to learn how to install and use the `generate-sp-metadata` command.
-
-## Spatial Audio (3D Audio)
-CarbonAudio provides access to Wwise's 3D audio capabilities, which CarbonAudio refers to as "spatial audio." 
-
-### Enabling Spatial Audio
-Spatial audio is enabled by default when:
-- Your Wwise project has a system audio device named "System" 
-- The device has "Allow 3D audio" enabled
-- The user has a spatial audio endpoint active (Dolby Atmos, Windows Sonic, etc.)
-
-You can customize device names using the `spatialAudioDeviceName` parameter in the AudioManager.
-
-### Disabling Spatial Audio
-To force stereo output use the `DisableSpatialAudio()` method or pass in `spatialAudioEnabled=False` during initialization. Requires a "System_Stereo" audio device with "Allow 3D audio" disabled. Use `stereoAudioDeviceName` parameter to customize the device name. 
-
-*Refer to the test Wwise project found in `Wwise/CarbonAudioTest` to see how audio devices should be named and configured* 
 
 ## Initializing and Enabling CarbonAudio
 CarbonAudio must be initialized and enabled using APIs exposed to Python. There are two ways to do this: 
 1. By using the `AudioManager` class found in `python/audio2/audiomanager.py` which simplifies the initialization process for you and also exposes
    functionality to help manage SoundBanks better.
-2. By directly calling the exposed CarbonAudio APIs directly.
+2. By calling the exposed CarbonAudio APIs directly.
 
 ### Prerequisites
 In order to run CarbonAudio you must:
 1. Have generated soundbanks from a Wwise project.
-2. Have generated a JSON file containing metatadata about the events in your Wwise project. This is necessary for sound prioritization. 
-   This JSON file must follow the spec found in the "Audio Metatada JSON Spec" section.
+2. Have generated a JSON file containing metadata about the events in your Wwise project. This is necessary for sound prioritization. 
+   This JSON file must follow the spec found in the "Audio Metadata JSON Spec" section.
 3. Placed those soundbanks and JSON file in a location that has been registered as a Blue path and can be found by Blue.
 
 An example of a Blue path is `res:/` or `soundbanks:/` or really whatever word you want to put before the `:/`. 
@@ -113,7 +63,7 @@ You can find an example of registering a blue path in the `setUpClass` method in
 
 ### Using the AudioManager Python class
 Here is an example of using the AudioManager Python class from within an EVE or Frontier branch to both initialize and enable CarbonAudio:
-```
+```python
 import json
 import scheduler
 
@@ -122,14 +72,14 @@ from audio2.audiomanager import AudioManager
 
 def EnableCarbonAudio():
     audio_metadata_filepath = ... # put the filepath where your audio metadata JSON file is located. 
-	application_name = "CarbonAudio Test"
-	base_sound_bank_path = "soundbanks:/" # This is assuming you followed the prerequisites and made your soundbanks discoverable using a Blue path.
-	language_directory = "English(US)"
+    application_name = "CarbonAudio Test"
+    base_sound_bank_path = "soundbanks:/" # This is assuming you followed the prerequisites and made your soundbanks discoverable using a Blue path.
+    language_directory = "English(US)"
 
-	audio_manager = AudioManager(baseSoundbankPath, languageDirectory, applicationName)
+    audio_manager = AudioManager(base_sound_bank_path, language_directory, application_name)
 
     with open(audio_metadata_filepath, "r") as f:
-	    audio_metadata = json.loads(f.read())
+        audio_metadata = json.loads(f.read())
 
     audio_manager.Initialize(audio_metadata) # Use the kwarg defaultSoundBanks if you want to add specific soundbanks as defaults.
     audio_manager.Enable() # The only SoundBank that will be loaded is Init.bnk. Use the kwarg soundBanksToLoad if you want others to load at start up.
@@ -152,9 +102,9 @@ for those SoundBanks that should always be loaded, such as a SoundBank that cont
 #### Adding Default SoundBanks
 There are two ways to add a default SoundBank.
 
-The first is when initializing the the `AudioManager`. To do this, use the keyword argument `defaultSoundBanks` with a list of SoundBank names:
-```
-audio_manager.Initialize(defaultSoundsBanks=["Common.bnk", "Music.bnk", ...] 
+The first is when initializing the `AudioManager`. To do this, use the keyword argument `defaultSoundBanks` with a list of SoundBank names:
+```python
+audio_manager.Initialize(audio_metadata, defaultSoundBanks=["Common.bnk", "Music.bnk"])
 ```
 
 The second way is to use the `AddAndLoadDefaultSoundBank` method.
@@ -164,7 +114,7 @@ To remove a default soundbank from the `AudioManager` use the method `RemoveAndU
 
 #### A Note about SoundBank State and Enabling/Disabling
 When you disable the `AudioManager` it will still keep the state of SoundBanks when calling `LoadSoundBank` and `UnloadSoundBank` so that, when enabled again, 
-it will can load SoundBanks for the current state of the game. 
+it can load SoundBanks for the current state of the game. 
 
 ### Initializing CarbonAudio Without the AudioManager
 If you want to work with CarbonAudio without leveraging the `AudioManager` python class found in `python/audio2/audiomanager.py`, you can look at said `AudioManager` 
@@ -188,8 +138,6 @@ Wwise expects to always be loaded first and CarbonAudio's audio manager will do 
 ## Sound Prioritization
 For an introduction to what sound prioritization is you can look at the blog found [here](https://www.eveonline.com/news/view/sound-prioritization)
 
-For more in depth info you can check out [this wiki page](https://ccpgames.atlassian.net/wiki/spaces/CAudio/pages/180684261/Sound+Prioritization+System)
-
 ### Audio Metadata JSON Spec
 The backbone of the sound prioritization system comes from feeding it metadata about Wwise events that are used by the game.
 This info can be gathered using the [Wwise Authoring API](https://www.audiokinetic.com/en/library/edge/?source=SDK&id=waapi.html).
@@ -199,11 +147,11 @@ as a JSON file from a script that uses the Wwise Authoring API and then loading 
 
 The following is a JSON specification detailing what CarbonAudio expects:
 
-```
+```json
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "description": "Audio metadata necessary for the sound prioritization system to function. Most of these properties come from the Wwise Authoring API: https://www.audiokinetic.com/en/library/edge/?source=SDK&id=waapi_index.html"
+  "description": "Audio metadata necessary for the sound prioritization system to function. Most of these properties come from the Wwise Authoring API: https://www.audiokinetic.com/en/library/edge/?source=SDK&id=waapi_index.html",
   "patternProperties": {
     "^[a-zA-Z0-9_]+$": {
       "description": "The Wwise event you are describing. Example: ship_boosters_play",
@@ -223,7 +171,7 @@ The following is a JSON specification detailing what CarbonAudio expects:
         },
         "eventsStoppedBy": { 
           "type": "array", 
-          "items": {} 
+          "items": {},
           "description": "An array of Wwise events that stop sounds played by this event."
         },
         "isVital": { 
@@ -232,13 +180,13 @@ The following is a JSON specification detailing what CarbonAudio expects:
         },
         "playbackDuration": {
           "type": "object",
-          "description": "The playback duration of this event. See this Waapi documentation: https://www.audiokinetic.com/en/library/edge/?source=SDK&id=ak_wwise_core_object_get.html".
+          "description": "The playback duration of this event. See this Waapi documentation: https://www.audiokinetic.com/en/library/edge/?source=SDK&id=ak_wwise_core_object_get.html",
           "properties": {
             "playbackDurationMin": { "type": "number" },
             "playbackDurationMax": { "type": "number" },
             "playbackDurationType": { 
               "type": "string",
-              "enum": ["oneShot", "infinite", "unknown"],
+              "enum": ["oneShot", "infinite", "unknown"]
             }
           },
           "required": ["playbackDurationMin", "playbackDurationMax", "playbackDurationType"]
@@ -254,14 +202,14 @@ The following is a JSON specification detailing what CarbonAudio expects:
       },
       "required": ["eventID", "maxRadiusAttenuation", "isLoop", "eventsStoppedBy", "isVital", "playbackDuration", "is2D", "wwiseID"],
       "additionalProperties": false
-    },
+    }
   },
   "additionalProperties": false
 }
 ```
 
 Here is an example AudioMetadata.json with two events, a one shot and a loop:
-```
+```json
 {
   "Play_TestOneShot": {
     "eventID": 1669951674,
@@ -294,15 +242,16 @@ Here is an example AudioMetadata.json with two events, a one shot and a loop:
 }
 ```
 
-This JSON was generated using the `generate_audio_metadata.py` file from the [audio-scripts monolith repo](https://github.com/ccpgames/audio-scripts/tree/main/monolith). Follow the documentation there to run it.
+This JSON was generated using the `generate_audio_metadata.py` file from the audio-scripts monolith repo. Follow the documentation there to run it.
 
 ### Audio Metadata Custom Properties
 
-Wwise's Custom properties allow you to store additional information in Wwise objects. In Carbon-Audio, custom properties such as `EssentialSoundBank` and `EssentialMedia` are used to indicate if a soundbank or a source file (`.wem` files) should be included in the essential music directory. The essential directory is a precache folder containing vital audio files necessary for a game version with limited content.
+Wwise's Custom properties allow you to store additional information in Wwise objects. In CarbonAudio, custom properties such as `EssentialSoundBank` and `EssentialMedia` are used to indicate if a soundbank or a source file (`.wem` files) should be included in the essential music directory. The essential directory is a precache folder containing vital audio files necessary for a game version with limited content.
 
 These custom properties are defined in the EVE Wwise project and are also reflected in the `AudioMetadata.json` file. Here is an example of how it looks:
 
-```
+```json
+{
     "WemFileIDs": {
         "460136326": {
             "IsEssential": false
@@ -320,13 +269,72 @@ These custom properties are defined in the EVE Wwise project and are also reflec
             },
             "EssentialMedia": false,
             "EssentialSoundBank": true
-        },
-      }
+        }
+    }
+}
 ```
-        
-In `AudStaticDataRepository`, all the above audio metadata is stored. Then, in the low-level file handling logic of Carbon Audio, it decides whether to pull audio assets from this "Essentials" folder.
+
+In `AudStaticDataRepository`, all the above audio metadata is stored. Then, in the low-level file handling logic of CarbonAudio, it decides whether to pull audio assets from this "Essentials" folder.
 
 To use CarbonAudio with your Wwise project, copy the [`ccp.wcustomproperties`](Wwise/CarbonAudioTest/Add-ons/Properties/ccp.wcustomproperties) file to your project's `Add-ons/Properties` folder. This defines custom properties required by CarbonAudio. For more information on custom properties in Wwise, refer to the [Wwise documentation](https://www.audiokinetic.com/en/library/edge/?source=SDK&id=defining_custom_properties.html).
+
+## Spatial Audio (3D Audio)
+CarbonAudio provides access to Wwise's 3D audio capabilities, which CarbonAudio refers to as "spatial audio." 
+
+### Enabling Spatial Audio
+Spatial audio is enabled by default when:
+- Your Wwise project has a system audio device named "System" 
+- The device has "Allow 3D audio" enabled
+- The user has a spatial audio endpoint active (Dolby Atmos, Windows Sonic, etc.)
+
+You can customize device names using the `spatialAudioDeviceName` parameter in the AudioManager.
+
+### Disabling Spatial Audio
+To force stereo output use the `DisableSpatialAudio()` method or pass in `spatialAudioEnabled=False` during initialization. Requires a "System_Stereo" audio device with "Allow 3D audio" disabled. Use `stereoAudioDeviceName` parameter to customize the device name. 
+
+*Refer to the test Wwise project found in `Wwise/CarbonAudioTest` to see how audio devices should be named and configured* 
+
+## Testing
+
+### Running Tests
+CarbonAudio tests are located in `tests/python/audiotests` and can be run through:
+
+1. **VS Code Test Explorer**: When CMake configuration successfully runs you should be able to see all tests in the "Testing" section of VS Code and run them individually or all at once. 
+2. **Command Line**: Use `ctest` from your build directory
+
+### Debug Testing
+For debugging C++ code during test execution, you can enable a debug delay:
+
+#### Enable Debug Delay
+1. **Run the task**: `Ctrl+Shift+P` → `Tasks: Run Task` → "Enable Debug Delay for Tests"
+2. **Run your test**: The test will pause for 7 seconds before execution
+3. **Attach debugger**: Use `Ctrl+Shift+P` → `Debug: Select and Start Debugging` → "Attach to Process"
+4. **Select process**: Choose `exefile.exe` from the process list
+
+#### Disable Debug Delay
+Run the task: `Ctrl+Shift+P` → `Tasks: Run Task` → "Disable Debug Delay for Tests"
+
+### Debugging Configuration
+The repository includes pre-configured launch configurations in `.vscode/launch.json`:
+
+- **Attach to Process**: Attach to any running process using Visual Studio debugger
+- **Attach to Process (GDB)**: Alternative using GDB debugger
+
+### Wwise Test Project
+This repository includes a test Wwise project in the `Wwise/` directory:
+
+1. **Install Wwise**: Download [Audiokinetic Launcher](https://www.audiokinetic.com/en/library/wwise_launcher/) and install Wwise version 2025.1.5.9095
+2. **Open Project**: Launch Wwise and open `Wwise/CarbonAudioTest/CarbonAudioTest.wproj`
+3. **Generate SoundBanks**: The project outputs to `tests/python/audiotests/test/soundbanks/`
+
+#### Generating SoundBanks from the Wwise CarbonAudio Test Project
+If you are updating tests to use new events or soundbanks defined in the test Wwise project, you have to manually generate those soundbanks as well
+as generating `SoundPrioritizationMetadata.json` (an example can be found at [`tests/python/audiotests/test/soundbanks/SoundPrioritizationMetadata.json`](tests/python/audiotests/test/soundbanks/SoundPrioritizationMetadata.json))
+
+To generate the soundbanks, go to the soundbanks view in the Wwise authoring program and simply generate soundbanks. The project is set up to automatically 
+deposit it into `tests/python/audiotests/test/soundbanks`.
+
+To generate the `SoundPrioritizationMetadata.json` file, you must use the audio-scripts command line tool. Refer to the audio-scripts standalone documentation to learn how to install and use the `generate-sp-metadata` command.
 
 ## 🤝 Contributing
 Contribution follows the standard GIT PR model.
