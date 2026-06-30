@@ -3,6 +3,7 @@
 #include "stdafx.h"
 #include "AudListener.h"
 
+#include "AudManager.h"
 #include "Vector3.h"
 #include "Utilities.h"
 
@@ -15,7 +16,10 @@ AudListener::AudListener( IRoot* lockobj ) : AudGameObjResource( LISTENER_GAME_O
 
 AudListener::~AudListener()
 {
-	AK::SpatialAudio::UnregisterListener( m_ID );
+	if( g_audioManager != nullptr && g_audioManager->GetSpatialAudioGeometryEnabled() )
+	{
+		AK::SpatialAudio::UnregisterListener( m_ID );
+	}
 	AK::SoundEngine::RemoveDefaultListener( m_ID );
 	AK::SoundEngine::UnregisterGameObj( m_ID );
 }
@@ -30,7 +34,10 @@ void AudListener::RegisterWwiseObject()
 			AK::SoundEngine::AddDefaultListener(m_ID);
 
 			// Register listener for occlusion/diffraction processing
-			AK::SpatialAudio::RegisterListener( m_ID );
+			if( g_audioManager != nullptr && g_audioManager->GetSpatialAudioGeometryEnabled() )
+			{
+				AK::SpatialAudio::RegisterListener( m_ID );
+			}
 
 			m_gameObjRegistered = true;
 		}
