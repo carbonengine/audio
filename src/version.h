@@ -1,3 +1,5 @@
+// Copyright © 2014 CCP ehf.
+
 #include "windows.h"
 
 #define EVEFILEDESC "CCP Audio Engine\0"

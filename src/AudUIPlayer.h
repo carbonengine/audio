@@ -1,10 +1,4 @@
-////////////////////////////////////////////////////////////
-//
-// Creator: Andri Mar
-// Contributors: Eric Nielsen
-// Creation Date: January 2009
-// Copyright (c) 2009-2022, CCP Games
-//
+// Copyright © 2009 CCP ehf.
 
 #pragma once
 #ifndef _AUDUIPLAYER_H_

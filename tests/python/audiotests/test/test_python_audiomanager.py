@@ -1,3 +1,5 @@
+# Copyright © 2023 CCP ehf.
+
 import unittest
 
 from audiotests.base_test_class import COMMON_BNK, LOOP_BNK, ONE_SHOT_BNK, SOUNDBANK_FILEPATH

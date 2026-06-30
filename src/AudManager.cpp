@@ -1,3 +1,5 @@
+// Copyright © 2014 CCP ehf.
+
 #include "stdafx.h"
 #include "AudManager.h"
 
@@ -21,12 +23,6 @@
 #include <AK/Plugin/Ak3DAudioBedMixerFXFactory.h>
 
 #include "tbb/parallel_for.h"
-
-#if _WIN32
-#include "LowLevelIO/Win32/AkDefaultIOHookDeferred.h"
-#elif __APPLE__
-#include "LowLevelIO/POSIX/AkDefaultIOHookDeferred.h"
-#endif
 
 #include "AudActionLog.h"
 #include "AudEmitter.h"

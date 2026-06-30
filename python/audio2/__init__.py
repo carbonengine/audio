@@ -1,19 +1,4 @@
-#   *************************************************************************
-#
-#   __init__.py
-#
-#   Created by: Andri Mar
-#   Created on: 10-Oct-2008 as audio2.py
-#   Moved on 13-Jan-2009 to audio2/__init__.py
-#
-#   Description:
-#
-#       An indirection point so that we can switch in different flavors
-#       of our audio DLLs when people execute 'import audio'.
-#
-#   (c) CCP 2008
-#
-#   *************************************************************************
+# Copyright © 2008 CCP ehf.
 
 import blue
 import sys

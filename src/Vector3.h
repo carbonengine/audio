@@ -1,12 +1,4 @@
-////////////////////////////////////////////////////////////
-//
-// Creator: Andri Mar
-// Contributors: Eric Nielsen
-// Creation Date: November 2008
-// Copyright (c) 2008-2022, CCP Games
-//
-// Bare bones Vector3 support for audio2
-//
+// Copyright © 2008 CCP ehf.
 
 #pragma once
 #ifndef VECTOR3_H

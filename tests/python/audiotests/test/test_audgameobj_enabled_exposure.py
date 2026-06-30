@@ -1,3 +1,5 @@
+# Copyright © 2022 CCP ehf.
+
 import blue
 import time
 

@@ -1,3 +1,5 @@
+# Copyright © 2022 CCP ehf.
+
 from unittest.mock import MagicMock
 
 from audiotests.base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK, ONE_SHOT_EVENT

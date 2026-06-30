@@ -1,3 +1,5 @@
+// Copyright © 2014 CCP ehf.
+
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
 // Used by audio2.rc

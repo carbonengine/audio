@@ -1,5 +1,3 @@
-ownermails:
-  - eric@ccpgames.com
 version: '0.1'
 testing:
   skipci: True

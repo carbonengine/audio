@@ -1,3 +1,5 @@
+// Copyright © 2023 CCP ehf.
+
 #include <ITriFunction.h>
 
 #include "Audio2.h"

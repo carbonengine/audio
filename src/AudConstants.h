@@ -1,3 +1,5 @@
+// Copyright © 2014 CCP ehf.
+
 #pragma once
 #ifndef _AUDCONSTANTS_H_
 #define _AUDCONSTANTS_H_

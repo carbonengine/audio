@@ -1,3 +1,5 @@
+// Copyright © 2014 CCP ehf.
+
 #pragma once
 
 #ifndef _AUDIO2_H_
