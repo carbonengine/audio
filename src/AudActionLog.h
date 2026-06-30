@@ -1,3 +1,5 @@
+// Copyright © 2021 CCP ehf.
+
 #pragma once
 #ifndef _AUDACTIONLOG_H_
 #define _AUDACTIONLOG_H_

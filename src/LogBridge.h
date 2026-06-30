@@ -1,12 +1,4 @@
-////////////////////////////////////////////////////////////
-//
-// Creator: Andri Mar
-// Contributors: Eric Nielsen
-// Creation Date: February 2009
-// Copyright (c) 2009-2022, CCP Games
-//
-// Send Wwise errors directly to our error logging system if running the Debug or Profile versions of the Wwise SDK.
-// 
+// Copyright © 2009 CCP ehf.
 
 #pragma once
 #ifndef _LOGBRIDGE_H_

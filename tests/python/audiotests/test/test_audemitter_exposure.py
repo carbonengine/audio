@@ -1,3 +1,5 @@
+# Copyright © 2022 CCP ehf.
+
 from audiotests.base_test_class import BaseAudio2TestClass
 
 

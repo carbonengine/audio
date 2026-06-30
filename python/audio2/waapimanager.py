@@ -1,3 +1,5 @@
+# Copyright © 2025 CCP ehf.
+
 """Handles all communication with Wwise Authoring Tool via WAAPI."""
 
 try:

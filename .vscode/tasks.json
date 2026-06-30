@@ -73,26 +73,6 @@
             "problemMatcher": []
         },
         {
-            "label": "Update Binaries",
-            "type": "shell",
-            "command": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}\\launchUpdateBinaries.bat",
-            "args": [
-                "client",
-                "-d"
-            ],
-            "options": {
-                "cwd": "${env:CCP_EVE_PERFORCE_BRANCH_PATH}"
-            },
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared"
-            },
-            "problemMatcher": []
-        },
-        {
             "label": "Disable Debug Delay for Tests",
             "type": "shell",
             "command": "powershell", 
@@ -111,23 +91,6 @@
             "windows": {
                 "command": "powershell"
             }
-        },
-        {
-            "label": "Set CCP_EVE_PERFORCE_BRANCH_PATH",
-            "type": "shell",
-            "command": "powershell",
-            "args": [
-                "-ExecutionPolicy", "Bypass",
-                "-File", "${workspaceFolder}\\.vscode\\set-env-var.ps1"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "shared"
-            },
-            "problemMatcher": []
         },
         {
             "label": "Attach Debugger to Process",

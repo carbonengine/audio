@@ -1,3 +1,5 @@
+// Copyright © 2021 CCP ehf.
+
 #include "stdafx.h"
 #include "AudActionLog.h"
 
