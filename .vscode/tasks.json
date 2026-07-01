@@ -56,6 +56,90 @@
             "problemMatcher": []
         },
         {
+            "label": "Configure Monolith",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--preset",
+                "x64-windows-${input:monolithFlavor}",
+                "-B",
+                "${workspaceFolder}/.cmake-build-monolith-${input:monolithFlavor}",
+                "-DINSTALL_TO_MONOLITH=ON"
+            ],
+            "hide": true,
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Build Monolith",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "${workspaceFolder}/.cmake-build-monolith-${input:monolithFlavor}",
+                "--config",
+                "${input:monolithFlavor}"
+            ],
+            "hide": true,
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Install to Monolith",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--install",
+                "${workspaceFolder}/.cmake-build-monolith-${input:monolithFlavor}",
+                "--config",
+                "${input:monolithFlavor}",
+                "--prefix",
+                "${config:carbonAudio.monolithBranchRoot}/vendor/github.com/ccpgames/carbon-audio/develop"
+            ],
+            "dependsOn": [
+                "Configure Monolith",
+                "Build Monolith"
+            ],
+            "dependsOrder": "sequence",
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Set Perforce Branch",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-Command",
+                "$p = '${workspaceFolder}\\.vscode\\settings.json'; $root = '${input:perforceBranchRoot}'; if (Test-Path $p) { $c = Get-Content $p -Raw } else { $c = '' }; if ([string]::IsNullOrWhiteSpace($c)) { $j = [PSCustomObject]@{} } else { $j = $c | ConvertFrom-Json }; $j | Add-Member -NotePropertyName 'carbonAudio.monolithBranchRoot' -NotePropertyValue $root -Force; $j | ConvertTo-Json -Depth 10 | Set-Content -Path $p -Encoding UTF8; Write-Host \"Perforce branch root set to: $root\" -ForegroundColor Green"
+            ],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [],
+            "windows": {
+                "command": "powershell"
+            }
+        },
+        {
             "label": "Clean Build Directory",
             "type": "shell",
             "command": "powershell",
@@ -108,6 +192,26 @@
                 "panel": "shared"
             },
             "problemMatcher": []
+        }
+    ],
+    "inputs": [
+        {
+            "id": "monolithFlavor",
+            "type": "pickString",
+            "description": "Which build flavor to install to the monolith",
+            "options": [
+                "internal",
+                "release",
+                "debug",
+                "trinitydev"
+            ],
+            "default": "internal"
+        },
+        {
+            "id": "perforceBranchRoot",
+            "type": "promptString",
+            "description": "Perforce branch root to install CarbonAudio into",
+            "default": "${config:carbonAudio.monolithBranchRoot}"
         }
     ]
 }
