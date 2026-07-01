@@ -26,6 +26,7 @@
 
 #include "AudActionLog.h"
 #include "AudEmitter.h"
+#include "AudGeometry.h"
 #include "AudSettings.h"
 #include "AudStaticDataRepository.h"
 #include "LogBridge.h"
@@ -65,6 +66,7 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_asyncOpen( true ),
 	m_log(),
 	m_spatialAudioEnabled( true ),
+	m_spatialAudioGeometryInitialized( false ),
 	m_moniteredParametersMapMutex( "AudManager", "m_monitoredParametersMapMutex" ),
 	m_soundBankMutex( "AudManager", "m_soundBankMutex" ),
 	m_callbackGameObjectsMutex( "AudManager", "m_callbackGameObjectsMutex" ),
@@ -73,12 +75,14 @@ AudManager::AudManager( IRoot* lockobj ) :
 {
 	// Initialize sound prioritization system
 	m_soundPrioritization = new SoundPrioritization();
+	m_spatialAudioSettings = new SpatialAudioSettings();
 }
 
 AudManager::~AudManager()
 {
 	// Clean up sound prioritization system
 	delete m_soundPrioritization;
+	delete m_spatialAudioSettings;
 
 	if( g_audioInitialized )
 	{
@@ -123,6 +127,8 @@ AkBankID AudManager::ComputeWwiseHashForSoundBank( const std::wstring& soundBank
 
 bool AudManager::Init()
 {
+	m_spatialAudioGeometryInitialized = false;
+
 	if( g_staticDataRepository == nullptr || !g_staticDataRepository->IsInitialized() )
 	{
 		CCP_LOGERR( "The static data repository in audio2 has not been generated and needs to exist for audio2 "
@@ -139,6 +145,15 @@ bool AudManager::Init()
 	{
 		CCP_LOGERR( "Failed to initialize audio : Sound" );
 		return false;
+	}
+
+	if( m_spatialAudioSettings->GetSpatialAudioGeometryEnabled() )
+	{
+		if( !InitSpatialAudioGeometry() )
+		{
+			CCP_LOGERR( "Failed to initialize Spatial Audio Geometry" );
+			return false;
+		}
 	}
 
 #ifndef AK_OPTIMIZED
@@ -177,6 +192,7 @@ void AudManager::Terminate()
 	// Terminate the Memory Manager
 	AK::MemoryMgr::Term();
 
+	m_spatialAudioGeometryInitialized = false;
 	g_audioInitialized = false;
 }
 
@@ -387,6 +403,27 @@ bool AudManager::InitSound()
 	return true;
 }
 
+bool AudManager::InitSpatialAudioGeometry()
+{
+	if( m_spatialAudioGeometryInitialized )
+	{
+		return true;
+	}
+
+	AkSpatialAudioInitSettings spatialSettings;
+	m_spatialAudioSettings->PopulateInitSettings( spatialSettings );
+
+	if( AK::SpatialAudio::Init( spatialSettings ) != AK_Success )
+	{
+		CCP_LOGERR( "Failed to initialize Wwise Spatial Audio for geometry processing" );
+		return false;
+	}
+
+	m_spatialAudioGeometryInitialized = true;
+	CCP_LOG_CH( s_ch, "Wwise Spatial Audio Geometry initialized" );
+	return true;
+}
+
 bool AudManager::SetGlobalRTPC( const std::wstring& rtpcName, float value )
 {
 	if( g_audioInitialized && !g_shuttingDown)
@@ -416,10 +453,44 @@ bool AudManager::SetState( const std::wstring& stateGroup, const std::wstring& s
 	return false;
 }
 
-//-----------------------------------------------------
-// Description:
-//   Signals whether Carbon Audio supports spatial audio features on this operating system.
-//-----------------------------------------------------
+bool AudManager::GetSpatialAudioGeometryEnabled() const
+{
+	return m_spatialAudioSettings->GetSpatialAudioGeometryEnabled();
+}
+
+void AudManager::SetSpatialAudioGeometryEnabled( bool enabled )
+{
+	const bool wasEnabled = GetSpatialAudioGeometryEnabled();
+	if( wasEnabled == enabled )
+	{
+		return;
+	}
+
+	if( !g_audioInitialized )
+	{
+		m_spatialAudioSettings->SetSpatialAudioGeometryEnabled( enabled );
+		return;
+	}
+
+	if( !enabled )
+	{
+		m_spatialAudioSettings->SetSpatialAudioGeometryEnabled( false );
+		AudGeometry::ClearAllGeometry();
+		CCP_LOG_CH( s_ch, "Spatial audio geometry disabled." );
+	}
+	else
+	{
+		if( !InitSpatialAudioGeometry() )
+		{
+			CCP_LOGERR_CH( s_ch, "Spatial audio geometry failed to initialize." );
+			return;
+		}
+
+		m_spatialAudioSettings->SetSpatialAudioGeometryEnabled( true );
+		CCP_LOG_CH( s_ch, "Spatial audio geometry enabled." );
+	}
+}
+
 const bool AudManager::SpatialAudioIsSupported()
 {
 	return s_systemSupportsSpatialAudio;
@@ -674,6 +745,7 @@ void AudManager::Disable()
 #ifndef AK_OPTIMIZED
 	AK::SoundEngine::UnregisterResourceMonitorCallback(ResourceMonitorCallback);
 #endif
+	AudGeometry::ClearAllGeometry();
 
 	Terminate();
 	g_audioEnabled = false;

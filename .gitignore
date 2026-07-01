@@ -12,6 +12,7 @@ build/
 # Wwise
 .backup*
 .cache*
+build*
 *.akd
 *.prof
 *.validationcache

@@ -3,6 +3,7 @@
 #include "stdafx.h"
 #include "AudListener.h"
 
+#include "AudManager.h"
 #include "Vector3.h"
 #include "Utilities.h"
 
@@ -15,8 +16,12 @@ AudListener::AudListener( IRoot* lockobj ) : AudGameObjResource( LISTENER_GAME_O
 
 AudListener::~AudListener()
 {
-	AK::SoundEngine::RemoveDefaultListener(m_ID);
-	AK::SoundEngine::UnregisterGameObj(m_ID);
+	if( g_audioManager != nullptr && g_audioManager->GetSpatialAudioGeometryEnabled() )
+	{
+		AK::SpatialAudio::UnregisterListener( m_ID );
+	}
+	AK::SoundEngine::RemoveDefaultListener( m_ID );
+	AK::SoundEngine::UnregisterGameObj( m_ID );
 }
 
 void AudListener::RegisterWwiseObject()
@@ -27,6 +32,13 @@ void AudListener::RegisterWwiseObject()
 		{
 			AK::SoundEngine::RegisterGameObj(m_ID, m_name.c_str());
 			AK::SoundEngine::AddDefaultListener(m_ID);
+
+			// Register listener for occlusion/diffraction processing
+			if( g_audioManager != nullptr && g_audioManager->GetSpatialAudioGeometryEnabled() )
+			{
+				AK::SpatialAudio::RegisterListener( m_ID );
+			}
+
 			m_gameObjRegistered = true;
 		}
 	}
@@ -48,7 +60,7 @@ int AudListener::SetPositionHelper( const Vector3& front, const Vector3& top, co
 			Vector3 correctFront = Normalize( front );
 			Vector3 correctUp = Normalize( top );
 			correctUp = Normalize( Cross( Cross( correctFront, correctUp ), correctFront ) );
-			tmp.Set( MakeAkVector(position), MakeAkVector(correctFront), MakeAkVector(correctUp) );
+			tmp.Set( MakeAkVector( position ), MakeAkVector( correctFront ), MakeAkVector( correctUp ) );
 
 			// all vectors come in RH, but WWISE is LH, so convert
 			AkSoundPosition soundPosLH;

@@ -8,6 +8,7 @@
 #include "AudSettings.h"
 #include "AudListener.h"
 #include "SoundPrioritization.h"
+#include "SpatialAudioSettings.h"
 #include "LowLevelIO/LowLevelIOHook.h"
 #include <atomic>
 #include <memory>
@@ -106,6 +107,10 @@ public:
 	bool SetGlobalRTPC( const std::wstring& rtpcName, float value );
 	// Set a global state in Wwise.
 	bool SetState( const std::wstring& stateGroup, const std::wstring& stateName );
+	// Returns whether spatial audio geometry is enabled.
+	bool GetSpatialAudioGeometryEnabled() const;
+	// Enables or disables spatial audio geometry.
+	void SetSpatialAudioGeometryEnabled( bool enabled );
 	// Can be called to see if the current platform supports spatial audio.
 	const bool SpatialAudioIsSupported();
 	// Stop all currently playing sounds on all game objects.
@@ -175,6 +180,8 @@ private:
 	bool InitMusic();
 	// Initializes Wwise's sound engine.
 	bool InitSound();
+	// Initializes Wwise's Spatial Audio for geometry-based occlusion and diffraction.
+	bool InitSpatialAudioGeometry();
 	// Tick handler
 	void Process();
 	// Registers audio2 for the tick handler.
@@ -202,6 +209,8 @@ private:
 	bool m_asyncOpen;
 	// Signals whether Carbon Audio's spatial audio features are enabled. If the user currently doesn't have an active spatial audio endpoint then output will still be in stereo.
 	bool m_spatialAudioEnabled;
+	// Tracks whether Wwise Spatial Audio geometry has been initialized in the current audio-engine lifetime.
+	bool m_spatialAudioGeometryInitialized;
 	mutable bool m_audioCullingEnabled;
 
 	std::map<AkBankID, SoundBankInfo> m_soundBankInfoMap;
@@ -216,6 +225,7 @@ private:
 	CcpMutex m_moniteredParametersMapMutex;
 
 	SoundPrioritization* m_soundPrioritization;
+	SpatialAudioSettings* m_spatialAudioSettings;
 
 	//  Map of game objects, used to guard Wwise callbacks
 	std::unordered_map<AkGameObjectID, AudGameObjResource*> m_callbackGameObjects;
@@ -281,6 +291,60 @@ private:
 
 #undef DELEGATE_GETTER
 #undef DELEGATE_SETTER
+
+public:
+	//-----------------------------------------------------
+	// Description:
+	//   Delegate macros to forward getter/setter calls to
+	//   the SpatialAudioSettings instance.
+	//-----------------------------------------------------
+
+#define DELEGATE_SA_GETTER( ReturnType, MethodName )         \
+	ReturnType MethodName() const                            \
+	{                                                        \
+		return m_spatialAudioSettings->MethodName();          \
+	}
+
+#define DELEGATE_SA_SETTER( ParamType, MethodName )          \
+	void MethodName( ParamType value )                       \
+	{                                                        \
+		m_spatialAudioSettings->MethodName( value );          \
+	}
+
+	// Getters
+	DELEGATE_SA_GETTER( float, GetMovementThreshold )
+	DELEGATE_SA_GETTER( int, GetNumberOfPrimaryRays )
+	DELEGATE_SA_GETTER( int, GetMaxReflectionOrder )
+	DELEGATE_SA_GETTER( int, GetMaxDiffractionOrder )
+	DELEGATE_SA_GETTER( int, GetMaxEmitterRoomAuxSends )
+	DELEGATE_SA_GETTER( int, GetDiffractionOnReflectionsOrder )
+	DELEGATE_SA_GETTER( float, GetMaxPathLength )
+	DELEGATE_SA_GETTER( float, GetCPULimitPercentage )
+	DELEGATE_SA_GETTER( int, GetLoadBalancingSpread )
+	DELEGATE_SA_GETTER( bool, GetEnableDiffractionAndTransmission )
+	DELEGATE_SA_GETTER( bool, GetCalcEmitterVirtualPosition )
+	DELEGATE_SA_GETTER( float, GetTransmissionLoss )
+	DELEGATE_SA_GETTER( bool, GetEnableDiffraction )
+	DELEGATE_SA_GETTER( bool, GetEnableDiffractionOnBoundaryEdges )
+
+	// Setters
+	DELEGATE_SA_SETTER( float, SetMovementThreshold )
+	DELEGATE_SA_SETTER( int, SetNumberOfPrimaryRays )
+	DELEGATE_SA_SETTER( int, SetMaxReflectionOrder )
+	DELEGATE_SA_SETTER( int, SetMaxDiffractionOrder )
+	DELEGATE_SA_SETTER( int, SetMaxEmitterRoomAuxSends )
+	DELEGATE_SA_SETTER( int, SetDiffractionOnReflectionsOrder )
+	DELEGATE_SA_SETTER( float, SetMaxPathLength )
+	DELEGATE_SA_SETTER( float, SetCPULimitPercentage )
+	DELEGATE_SA_SETTER( int, SetLoadBalancingSpread )
+	DELEGATE_SA_SETTER( bool, SetEnableDiffractionAndTransmission )
+	DELEGATE_SA_SETTER( bool, SetCalcEmitterVirtualPosition )
+	DELEGATE_SA_SETTER( float, SetTransmissionLoss )
+	DELEGATE_SA_SETTER( bool, SetEnableDiffraction )
+	DELEGATE_SA_SETTER( bool, SetEnableDiffractionOnBoundaryEdges )
+
+#undef DELEGATE_SA_GETTER
+#undef DELEGATE_SA_SETTER
 };
 
 TYPEDEF_BLUECLASS( AudManager );
