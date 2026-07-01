@@ -104,7 +104,7 @@
                 "--config",
                 "${input:monolithFlavor}",
                 "--prefix",
-                "${input:monolithBranchRoot}/vendor/github.com/ccpgames/carbon-audio/develop"
+                "${config:carbonAudio.monolithBranchRoot}/vendor/github.com/ccpgames/carbon-audio/develop"
             ],
             "dependsOn": [
                 "Configure Monolith",
@@ -119,6 +119,25 @@
                 "panel": "shared"
             },
             "problemMatcher": []
+        },
+        {
+            "label": "Set Perforce Branch",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-Command",
+                "$p = '${workspaceFolder}\\.vscode\\settings.json'; $root = '${input:perforceBranchRoot}'; if (Test-Path $p) { $c = Get-Content $p -Raw } else { $c = '' }; if ([string]::IsNullOrWhiteSpace($c)) { $j = [PSCustomObject]@{} } else { $j = $c | ConvertFrom-Json }; $j | Add-Member -NotePropertyName 'carbonAudio.monolithBranchRoot' -NotePropertyValue $root -Force; $j | ConvertTo-Json -Depth 10 | Set-Content -Path $p -Encoding UTF8; Write-Host \"Perforce branch root set to: $root\" -ForegroundColor Green"
+            ],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": [],
+            "windows": {
+                "command": "powershell"
+            }
         },
         {
             "label": "Clean Build Directory",
@@ -189,12 +208,10 @@
             "default": "internal"
         },
         {
-            "id": "monolithBranchRoot",
-            "type": "pickString",
+            "id": "perforceBranchRoot",
+            "type": "promptString",
             "description": "Perforce branch root to install CarbonAudio into",
-            "options": [
-                "C:/Users/phevos/Perforce/phevos_remote_frontier"
-            ]
+            "default": "${config:carbonAudio.monolithBranchRoot}"
         }
     ]
 }
