@@ -5,7 +5,6 @@ import unittest
 from audiotests.base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK, ONE_SHOT_EVENT, SOUNDBANK_FILEPATH
 from audiotests.base_test_class import BaseAudio2TestClass
 from audiotests.utils import GetAudioMetadataFromFile, PumpOSWithTimeout
-from audio2.audiomanager import AUDIO_STATE_DISABLED, AUDIO_STATE_ENABLED
 
 class TestPythonAudioManager(BaseAudio2TestClass):
     @classmethod
@@ -43,6 +42,7 @@ class TestPythonAudioManager(BaseAudio2TestClass):
         self.assertEqual(self.audioManager.GetLoadedSoundBanks(), [INIT_BANK])
 
     def test_disable_clears_banks(self):
+        from audio2.audiomanager import AUDIO_STATE_DISABLED
         self.audioManager.LoadSoundBanks([COMMON_BNK, LOOP_BNK])
         self.pumpUntil(lambda: self.expectedSoundBanksAreLoaded([COMMON_BNK, LOOP_BNK]))
         self.assertTrue(set([COMMON_BNK, LOOP_BNK]).issubset(set(self.audioManager.GetLoadedSoundBanks())))
@@ -53,7 +53,7 @@ class TestPythonAudioManager(BaseAudio2TestClass):
         self.assertEqual(self.audioManager.GetState(), AUDIO_STATE_DISABLED)
 
     def test_disable_then_enable_can_load_bank_and_play_event(self):
-        from audio2.audiomanager import INIT_BANK
+        from audio2.audiomanager import INIT_BANK, AUDIO_STATE_DISABLED, AUDIO_STATE_ENABLED
         import audio2
 
         self.audioManager.Disable()
@@ -125,6 +125,7 @@ class TestPythonAudioManager(BaseAudio2TestClass):
         self.assertNotIn(LOOP_EVENT, emitter.GetPlayingEvents().values())
 
     def test_engine_state_transitions_across_disable_enable(self):
+        from audio2.audiomanager import AUDIO_STATE_DISABLED, AUDIO_STATE_ENABLED
         self.audioManager.Disable()
         self.assertEqual(self.audioManager.GetState(), AUDIO_STATE_DISABLED)
 

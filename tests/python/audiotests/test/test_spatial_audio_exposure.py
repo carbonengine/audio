@@ -6,7 +6,6 @@ from audiotests.base_test_class import SOUNDBANK_FILEPATH
 from audiotests.base_test_class import BaseAudio2TestClass
 from audiotests.base_test_class import GetAudioMetadataFromFile
 from audiotests.utils import PumpOSWithTimeout
-from audio2.audiomanager import AUDIO_STATE_DISABLED
 
 class TestSpatialAudio(BaseAudio2TestClass):
     """Test spatial audio related features."""
@@ -114,6 +113,7 @@ class TestSpatialAudio(BaseAudio2TestClass):
         PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
 
     def test_spatial_audio_endpoints_dont_crash_when_audio_not_enabled(self):
+        from audio2.audiomanager import AUDIO_STATE_DISABLED
         self.Initialize()
         self.audioManager.Enable()
         self.audioManager.Disable()
