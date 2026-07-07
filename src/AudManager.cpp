@@ -500,7 +500,7 @@ void AudManager::SetSpatialAudioGeometryEnabled( bool enabled )
 		return;
 	}
 
-	if( !g_audioInitialized )
+	if( GetState() != AudioState::Enabled )
 	{
 		m_spatialAudioSettings->SetSpatialAudioGeometryEnabled( enabled );
 		return;
