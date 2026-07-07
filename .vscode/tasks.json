@@ -104,7 +104,7 @@
                 "--config",
                 "${input:monolithFlavor}",
                 "--prefix",
-                "${config:carbonAudio.monolithBranchRoot}/vendor/github.com/ccpgames/carbon-audio/develop"
+                "${config:carbonAudio.monolithBranchRoot}/vendor/github.com/carbonengine/audio/develop"
             ],
             "dependsOn": [
                 "Configure Monolith",
