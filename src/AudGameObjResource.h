@@ -113,18 +113,18 @@ protected:
 		Vector3 top;
 	};
 
+	// Force (front, top) into a valid orientation: unit length and mutually perpendicular,
+	// keeping front's direction and snapping top square to it (Gram-Schmidt).
+	static Orientation Orthonormalize( const Vector3& front, const Vector3& top );
+
 	enum ActionTypes
 	{
 		Stop = AkActionOnEventType_Stop,
 		Break = AkActionOnEventType_Break,
 	};
 	AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj = NULL );
-	// Convert a Trinity RH vector to a Wwise LH vector and set the position for this game object in Wwise.
-	virtual int SetPositionHelper( const Vector3& front, const Vector3& top, const Vector3& position );
-	int SetEffectivePositionHelper( const Vector3& front, const Vector3& top, const Vector3& position );
-	bool HasAuthoredRotation() const;
-	Orientation GetEffectiveOrientation() const;
-	void RefreshPlacementFromRotation();
+	// Records a new parent orientation, resolves it against any authored rotation, and applies the result.
+	virtual int SetPlacementFromParent( const Vector3& front, const Vector3& top, const Vector3& position );
 	// Prepend an event prefix if one exists on the given event.
 	std::wstring PrepareEvent( const std::wstring& event, bool bypassPrefix );
 	// Propagate any wwise callbacks received for this game object.
@@ -197,6 +197,13 @@ protected:
 
 	// A mutex to be used when working with m_playingEvents, m_pendingStoppedPlayingIDs and m_eventsOnWake as they are accessed in different threads.
 	CcpMutex m_mutex;
+
+private:
+	// Applies an already-resolved effective orientation to this game object and pushes it to Wwise.
+	int ApplyEffectivePlacement( const Vector3& front, const Vector3& top, const Vector3& position );
+	bool HasAuthoredRotation() const;
+	Orientation GetEffectiveOrientation() const;
+	void RefreshPlacementFromRotation();
 };
 
 TYPEDEF_BLUECLASS( AudGameObjResource );

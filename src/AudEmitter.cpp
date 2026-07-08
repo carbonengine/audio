@@ -10,6 +10,7 @@
 
 namespace
 {
+	// Debug render toggle names
 	constexpr const char* AUDIO_ATTENUATION_SPHERE_DEBUG_OPTION = "Audio Attenuation Sphere";
 	constexpr const char* AUDIO_EMITTER_DIRECTION_DEBUG_OPTION = "Audio Emitter Direction";
 }
@@ -74,7 +75,7 @@ void AudEmitter::SetPrefix( const std::wstring& prefix )
 int AudEmitter::SetPosition( const Vector3& front, const Vector3& top, const Vector3& pos )
 {
 	m_hasReceivedPosition = true;
-	return SetPositionHelper( front, top, pos );
+	return SetPlacementFromParent( front, top, pos );
 }
 
 unsigned int AudEmitter::SendEvent( const std::wstring& name, bool bypassPrefix )
@@ -146,8 +147,11 @@ void AudEmitter::RenderDebugBoundingSphere( ITr2DebugRenderer2& renderer )
 		return; 
 	}
 
-	uint32_t debugSphereSegments = static_cast<uint32_t>(8.f + m_visualizationRadius / 5000.f);
-	debugSphereSegments = (debugSphereSegments < 25) ? debugSphereSegments : 25; 
+	constexpr float BASE_SEGMENTS = 8.f;
+	constexpr float RADIUS_PER_SEGMENT = 5000.f;
+	constexpr uint32_t MAX_SEGMENTS = 25;
+	uint32_t debugSphereSegments = static_cast<uint32_t>( BASE_SEGMENTS + m_visualizationRadius / RADIUS_PER_SEGMENT );
+	debugSphereSegments = std::min( debugSphereSegments, MAX_SEGMENTS );
 
 	if( m_visualizationRadius > 0.f )
 	{
@@ -155,8 +159,7 @@ void AudEmitter::RenderDebugBoundingSphere( ITr2DebugRenderer2& renderer )
 		renderer.DrawSphere( this, m_position, scaledRadius, debugSphereSegments, ITr2DebugRenderer2::Wireframe, Tr2DebugColor( m_simulationColor ) );
 	}
 
-	float emitterRange = m_visualizationRadius;
-	emitterRange = std::max( emitterRange, AK::SoundEngine::Query::GetMaxRadius( m_ID ) );
+	float emitterRange = std::max( m_visualizationRadius, AK::SoundEngine::Query::GetMaxRadius( m_ID ) );
 	renderer.DrawSphere( this, m_position, emitterRange, debugSphereSegments, ITr2DebugRenderer2::Wireframe, Tr2DebugColor( m_debugColor ) );
 }
 
@@ -167,10 +170,18 @@ void AudEmitter::RenderDebugDirection( ITr2DebugRenderer2& renderer )
 		return;
 	}
 
+	constexpr float ARROW_LENGTH_PER_DISTANCE = 0.025f;
+	constexpr float ARROW_MIN_LENGTH = 25.0f;
+	constexpr float ARROW_MAX_LENGTH = 250.0f;
+	constexpr float ARROW_RADIUS_PER_LENGTH = 0.035f;
+	constexpr float ARROW_MIN_RADIUS = 1.5f;
+	constexpr float ARROW_POINTER_LENGTH = 0.22f;
+	constexpr uint32_t ARROW_SEGMENTS = 12;
+
 	AudListenerPtr listener = g_audioManager->GetListener();
 	const float distanceToListener = Length( m_position - listener->GetPosition() );
-	const float arrowLength = std::min( std::max( distanceToListener * 0.025f, 25.0f ), 250.0f );
-	const float arrowRadius = std::max( arrowLength * 0.035f, 1.5f );
+	const float arrowLength = std::min( std::max( distanceToListener * ARROW_LENGTH_PER_DISTANCE, ARROW_MIN_LENGTH ), ARROW_MAX_LENGTH );
+	const float arrowRadius = std::max( arrowLength * ARROW_RADIUS_PER_LENGTH, ARROW_MIN_RADIUS );
 	Vector3 direction = Normalize( m_effectiveOrientation.front );
 
 	renderer.DrawArrow(
@@ -178,8 +189,8 @@ void AudEmitter::RenderDebugDirection( ITr2DebugRenderer2& renderer )
 		m_position,
 		m_position + direction * arrowLength,
 		arrowRadius,
-		0.22f,
-		12,
+		ARROW_POINTER_LENGTH,
+		ARROW_SEGMENTS,
 		ITr2DebugRenderer2::Solid,
 		Tr2DebugColor( m_debugColor )
 	);

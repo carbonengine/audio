@@ -18,40 +18,6 @@ static AkGameObjectID GenerateEntityID()
 	return s_currentID++;
 }
 
-namespace
-{
-	bool IsIdentityRotation( const Quaternion& rotation )
-	{
-		return rotation.x == 0.0f && rotation.y == 0.0f && rotation.z == 0.0f && rotation.w == 1.0f;
-	}
-
-	Quaternion NormalizeAudioRotation( const Quaternion& rotation )
-	{
-		const float lengthSq = rotation.x * rotation.x + rotation.y * rotation.y + rotation.z * rotation.z + rotation.w * rotation.w;
-		if ( lengthSq <= 0.00000001f )
-		{
-			return Quaternion( 0.0f, 0.0f, 0.0f, 1.0f );
-		}
-
-		const float inverseLength = 1.0f / sqrtf( lengthSq );
-		return Quaternion( rotation.x * inverseLength, rotation.y * inverseLength, rotation.z * inverseLength, rotation.w * inverseLength );
-	}
-
-	Vector3 RotateAudioVector( const Vector3& vector, const Quaternion& rotation )
-	{
-		const Quaternion normalizedRotation = NormalizeAudioRotation( rotation );
-		const float tx = 2.0f * ( normalizedRotation.y * vector.z - normalizedRotation.z * vector.y );
-		const float ty = 2.0f * ( normalizedRotation.z * vector.x - normalizedRotation.x * vector.z );
-		const float tz = 2.0f * ( normalizedRotation.x * vector.y - normalizedRotation.y * vector.x );
-
-		return Vector3(
-			vector.x + normalizedRotation.w * tx + normalizedRotation.y * tz - normalizedRotation.z * ty,
-			vector.y + normalizedRotation.w * ty + normalizedRotation.z * tx - normalizedRotation.x * tz,
-			vector.z + normalizedRotation.w * tz + normalizedRotation.x * ty - normalizedRotation.y * tx
-		);
-	}
-}
-
 AudGameObjResource::Orientation::Orientation( const Vector3& front_, const Vector3& top_ ) :
 	front( front_ ),
 	top( top_ )
@@ -411,67 +377,72 @@ bool AudGameObjResource::SetAttenuationScalingFactor( float value )
 	return false;
 }
 
-int AudGameObjResource::SetPositionHelper( const Vector3& front, const Vector3& top, const Vector3& position )
+int AudGameObjResource::SetPlacementFromParent( const Vector3& front, const Vector3& top, const Vector3& position )
 {
 	m_parentOrientation = Orientation( front, top );
 	const Orientation effectiveOrientation = GetEffectiveOrientation();
-	return SetEffectivePositionHelper( effectiveOrientation.front, effectiveOrientation.top, position );
+	return ApplyEffectivePlacement( effectiveOrientation.front, effectiveOrientation.top, position );
 }
 
-int AudGameObjResource::SetEffectivePositionHelper( const Vector3& front, const Vector3& top, const Vector3& position )
+AudGameObjResource::Orientation AudGameObjResource::Orthonormalize( const Vector3& front, const Vector3& top )
 {
-	Vector3 correctFront = Normalize( front );
-	Vector3 correctUp = Normalize( top );
-	correctUp = Normalize( Cross( Cross( correctFront, correctUp ), correctFront ) );
+	const Vector3 correctFront = Normalize( front );
+	const Vector3 correctUp = Normalize( Cross( Cross( correctFront, Normalize( top ) ), correctFront ) );
+	return Orientation( correctFront, correctUp );
+}
+
+int AudGameObjResource::ApplyEffectivePlacement( const Vector3& front, const Vector3& top, const Vector3& position )
+{
+	const Orientation corrected = Orthonormalize( front, top );
 
 	m_position = position;
-	m_effectiveOrientation = Orientation( correctFront, correctUp );
+	m_effectiveOrientation = corrected;
 
-	if( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled )
+	if( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled && m_gameObjRegistered )
 	{
-		if( m_gameObjRegistered )
-		{
-			AkSoundPosition tmp;
-			tmp.Set( MakeAkVector(position), MakeAkVector(correctFront), MakeAkVector(correctUp) );
+		AkSoundPosition tmp;
+		tmp.Set( MakeAkVector( position ), MakeAkVector( corrected.front ), MakeAkVector( corrected.top ) );
 
-			// all vectors come in RH, but WWISE is LH, so convert
-			AkSoundPosition soundPosLH;
-			RH2LH::convertEmitter( &soundPosLH, &tmp);
+		// all vectors come in RH, but WWISE is LH, so convert
+		AkSoundPosition soundPosLH;
+		RH2LH::convertEmitter( &soundPosLH, &tmp );
 
-			AKRESULT result = AK::SoundEngine::SetPosition( m_ID, soundPosLH );
-		}
+		AK::SoundEngine::SetPosition( m_ID, soundPosLH );
 	}
 	return AK_Success;
 }
 
 bool AudGameObjResource::HasAuthoredRotation() const
 {
-	return !IsIdentityRotation( m_authoredRotation );
+	return m_authoredRotation != IdentityQuaternion();
 }
 
 AudGameObjResource::Orientation AudGameObjResource::GetEffectiveOrientation() const
 {
-	if ( !HasAuthoredRotation() )
+	// XMVector3Rotate requires a unit quaternion; ignore identity and degenerate
+	// (e.g. zero-length) authored rotations so placement never becomes NaN.
+	if ( !HasAuthoredRotation() || LengthSq( m_authoredRotation ) <= 0.0f )
 	{
 		return m_parentOrientation;
 	}
 
+	const Quaternion rotation = Normalize( m_authoredRotation );
 	return Orientation(
-		RotateAudioVector( m_parentOrientation.front, m_authoredRotation ),
-		RotateAudioVector( m_parentOrientation.top, m_authoredRotation )
+		Vector3( XMVector3Rotate( m_parentOrientation.front, rotation ) ),
+		Vector3( XMVector3Rotate( m_parentOrientation.top, rotation ) )
 	);
 }
 
 void AudGameObjResource::RefreshPlacementFromRotation()
 {
 	const Orientation effectiveOrientation = GetEffectiveOrientation();
-	SetEffectivePositionHelper( effectiveOrientation.front, effectiveOrientation.top, m_position );
+	ApplyEffectivePlacement( effectiveOrientation.front, effectiveOrientation.top, m_position );
 }
 
 bool AudGameObjResource::Initialize()
 {
 	RegisterWwiseObject();
-	SetPositionHelper( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ), m_position );
+	SetPlacementFromParent( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ), m_position );
 
 	if ( !m_eventName.empty() ) 
 	{
@@ -667,8 +638,8 @@ void AudGameObjResource::Wake()
 			return;
 		}
 
-		RegisterWwiseObject();	
-		SetEffectivePositionHelper( m_effectiveOrientation.front, m_effectiveOrientation.top, m_position );
+		RegisterWwiseObject();
+		ApplyEffectivePlacement( m_effectiveOrientation.front, m_effectiveOrientation.top, m_position );
 		m_culled = false;
 		if ( m_waitingOneShotInRange.second != L"" && m_listenerInRange )
 		{

@@ -49,24 +49,23 @@ void AudListener::RegisterWwiseObject()
 	}
 }
 
-int AudListener::SetPositionHelper( const Vector3& front, const Vector3& top, const Vector3& position )
+int AudListener::SetPlacementFromParent( const Vector3& front, const Vector3& top, const Vector3& position )
 {
 	if( g_audioManager != nullptr && g_audioManager->GetState() != AudioState::Uninitialized )
 	{
 		m_position = position;
 		if( m_gameObjRegistered )
 		{
+			const Orientation corrected = Orthonormalize( front, top );
+
 			AkSoundPosition tmp;
-			Vector3 correctFront = Normalize( front );
-			Vector3 correctUp = Normalize( top );
-			correctUp = Normalize( Cross( Cross( correctFront, correctUp ), correctFront ) );
-			tmp.Set( MakeAkVector( position ), MakeAkVector( correctFront ), MakeAkVector( correctUp ) );
+			tmp.Set( MakeAkVector( position ), MakeAkVector( corrected.front ), MakeAkVector( corrected.top ) );
 
 			// all vectors come in RH, but WWISE is LH, so convert
 			AkSoundPosition soundPosLH;
-			RH2LH::convertListener( &soundPosLH, &tmp);
+			RH2LH::convertListener( &soundPosLH, &tmp );
 
-			AKRESULT result = AK::SoundEngine::SetPosition( m_ID, soundPosLH );
+			AK::SoundEngine::SetPosition( m_ID, soundPosLH );
 		}
 	}
 	return AK_Success;
