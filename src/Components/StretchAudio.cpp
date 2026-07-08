@@ -43,7 +43,7 @@ bool StretchAudio::Initialize()
 
 void StretchAudio::Update( Vector3& sourcePosition, Vector3& destPosition )
 {
-	if ( !g_audioEnabled )
+	if ( g_audioManager == nullptr || g_audioManager->GetState() != AudioState::Enabled )
 	{
 		return;
 	}

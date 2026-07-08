@@ -18,7 +18,10 @@ AudioCurveSetDriver::AudioCurveSetDriver( IRoot* lockobj ) :
 
 AudioCurveSetDriver::~AudioCurveSetDriver()
 {
-	g_audioManager->UnregisterParameter(m_audioParameterName);
+	if( g_audioManager != nullptr && m_audioParameterName != L"" )
+	{
+		g_audioManager->UnregisterParameter( m_audioParameterName );
+	}
 }
 
 bool AudioCurveSetDriver::Initialize()
@@ -53,7 +56,7 @@ double AudioCurveSetDriver::GetCurveSetTime( double time )
 
 bool AudioCurveSetDriver::IsValid() const
 {
-	return g_audioEnabled && m_audioParameterName != L"" && m_audioParameterExists;
+	return g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled && m_audioParameterName != L"" && m_audioParameterExists;
 }
 
 const std::wstring& AudioCurveSetDriver::GetAudioParameterName()
