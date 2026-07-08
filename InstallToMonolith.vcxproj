@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Internal|x64">
+      <Configuration>Internal</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{9C3B4E71-6A2D-4F8B-A1E0-52C7D9B3F614}</ProjectGuid>
+    <Keyword>MakeFileProj</Keyword>
+    <ProjectName>InstallToMonolith</ProjectName>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Internal|x64'" Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup>
+    <!--
+      CCP_EVE_PERFORCE_BRANCH_PATH points at the P4V branch root, e.g. D:\frontier-master.
+      Fall back to HKCU\Environment so a Visual Studio started before the variable
+      was set still picks it up without a restart.
+    -->
+    <MonolithBranchRoot>$(CCP_EVE_PERFORCE_BRANCH_PATH)</MonolithBranchRoot>
+    <MonolithBranchRoot Condition="'$(MonolithBranchRoot)' == ''">$([MSBuild]::GetRegistryValue('HKEY_CURRENT_USER\Environment', 'CCP_EVE_PERFORCE_BRANCH_PATH'))</MonolithBranchRoot>
+    <MonolithInstallPrefix Condition="'$(MonolithBranchRoot)' != ''">$(MonolithBranchRoot.Replace('\', '/'))/vendor/github.com/ccpgames/carbon-audio/develop</MonolithInstallPrefix>
+    <MonolithBuildDir>.cmake-build-monolith</MonolithBuildDir>
+    <RepoRoot>$(ProjectDir.Replace('\', '/'))</RepoRoot>
+    <MonolithBuildScript>setlocal
+cd /d "$(ProjectDir)"
+if "$(MonolithInstallPrefix)"=="" echo ERROR: The CCP_EVE_PERFORCE_BRANCH_PATH environment variable is not set. Set it to your Perforce branch root, e.g. D:\frontier-master.
+if "$(MonolithInstallPrefix)"=="" exit /b 1
+set "VCPKG_ROOT=$(ProjectDir)vendor\github.com\microsoft\vcpkg"
+set "PATH_TO_VCPKG_ROOT=$(ProjectDir)vendor\github.com\microsoft\vcpkg"
+echo Installing CarbonAudio to: $(MonolithInstallPrefix)
+cmake -S . -B $(MonolithBuildDir) -G "Visual Studio 18 2026" "-DCMAKE_TOOLCHAIN_FILE=$(RepoRoot)vendor/github.com/microsoft/vcpkg/scripts/buildsystems/vcpkg.cmake" "-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=$(RepoRoot)vendor/github.com/carbonengine/vcpkg-registry/toolchains/x64-windows-145-carbon.cmake" "-DVCPKG_OVERLAY_TRIPLETS=$(RepoRoot)vendor/github.com/carbonengine/vcpkg-registry/triplets" -DVCPKG_TARGET_TRIPLET=x64-windows-internal -DVCPKG_HOST_TRIPLET=x64-windows-internal -DVCPKG_USE_HOST_TOOLS=ON -DINSTALL_TO_MONOLITH=ON -DBUILD_TESTING=OFF "-DCMAKE_INSTALL_PREFIX=$(MonolithInstallPrefix)"
+if errorlevel 1 exit /b 1
+cmake --build $(MonolithBuildDir) --config Internal --target INSTALL
+if errorlevel 1 exit /b 1
+echo === CarbonAudio installed to $(MonolithInstallPrefix) ===
+</MonolithBuildScript>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Internal|x64'">
+    <NMakeBuildCommandLine>$(MonolithBuildScript)</NMakeBuildCommandLine>
+    <NMakeReBuildCommandLine>cd /d "$(ProjectDir)"
+if exist $(MonolithBuildDir) rmdir /s /q $(MonolithBuildDir)
+$(MonolithBuildScript)</NMakeReBuildCommandLine>
+    <NMakeCleanCommandLine>cd /d "$(ProjectDir)"
+if exist $(MonolithBuildDir) rmdir /s /q $(MonolithBuildDir)</NMakeCleanCommandLine>
+    <NMakeOutput>$(ProjectDir)$(MonolithBuildDir)\Internal\_audio2_internal.pyd</NMakeOutput>
+    <NMakePreprocessorDefinitions>WIN32;NDEBUG;$(NMakePreprocessorDefinitions)</NMakePreprocessorDefinitions>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

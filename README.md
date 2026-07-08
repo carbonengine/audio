@@ -44,6 +44,8 @@ cmake --preset x64-windows-internal -DINSTALL_TO_MONOLITH=ON -DCMAKE_INSTALL_PRE
 cmake --build --preset x64-windows-internal --config Internal --target install
 ```
 
+Alternatively, on Windows you can use the InstalltoMonolith.sln for local development.
+
 ## Initializing and Enabling CarbonAudio
 CarbonAudio must be initialized and enabled using APIs exposed to Python. There are two ways to do this: 
 1. By using the `AudioManager` class found in `python/audio2/audiomanager.py` which simplifies the initialization process for you and also exposes
