@@ -6,7 +6,7 @@
 #include <AK/Tools/Common/AkObject.h>
 #include <AK/SoundEngine/Common/AkMemoryMgr.h>
 
-#include <CCPLog.h>
+#include <CcpLog.h>
 
 #if defined(__APPLE__)
 #include <unistd.h>
