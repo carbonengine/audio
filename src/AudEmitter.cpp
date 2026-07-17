@@ -142,9 +142,9 @@ void AudEmitter::RenderDebugInfo( ITr2DebugRenderer2& renderer )
 
 void AudEmitter::RenderDebugBoundingSphere( ITr2DebugRenderer2& renderer )
 {
-	if ( !g_debugDisplayAllEmitters && !renderer.HasOption( GetRawRoot(), AUDIO_ATTENUATION_SPHERE_DEBUG_OPTION ) )
+	if ( !( g_debugDisplayAllEmitters || renderer.HasOption( GetRawRoot(), AUDIO_ATTENUATION_SPHERE_DEBUG_OPTION ) ) )
 	{
-		return; 
+		return;
 	}
 
 	constexpr float BASE_SEGMENTS = 8.f;

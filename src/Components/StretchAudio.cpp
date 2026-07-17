@@ -6,11 +6,14 @@
 
 namespace
 {
+	// Vectors shorter than this have no reliable direction: avoid dividing by zero in Normalize.
+	const float kNormalizeEpsilonSquared = 1e-6f;
+
 	void GetStretchOrientation( const Vector3& sourcePosition, const Vector3& destPosition, Vector3& front, Vector3& top )
 	{
 		const Vector3 segment = destPosition - sourcePosition;
 		const float segmentLengthSquared = Dot( segment, segment );
-		if ( segmentLengthSquared < 1e-6f )
+		if ( segmentLengthSquared < kNormalizeEpsilonSquared )
 		{
 			front = Vector3( 0, 1, 0 );
 			top = Vector3( 0, 0, 1 );
@@ -20,7 +23,7 @@ namespace
 		front = Normalize( segment );
 		Vector3 preferredTop( 0, 0, 1 );
 		Vector3 topCandidate = preferredTop - front * Dot( preferredTop, front );
-		if ( Dot( topCandidate, topCandidate ) < 1e-6f )
+		if ( Dot( topCandidate, topCandidate ) < kNormalizeEpsilonSquared )
 		{
 			preferredTop = Vector3( 0, 1, 0 );
 			topCandidate = preferredTop - front * Dot( preferredTop, front );
