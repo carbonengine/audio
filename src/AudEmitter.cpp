@@ -8,6 +8,13 @@
 #include "DebugUtilities.h"
 #include "Vector3.h"
 
+namespace
+{
+	// Debug render toggle names
+	constexpr const char* AUDIO_ATTENUATION_SPHERE_DEBUG_OPTION = "Audio Attenuation Sphere";
+	constexpr const char* AUDIO_EMITTER_DIRECTION_DEBUG_OPTION = "Audio Emitter Direction";
+}
+
 AudEmitter::AudEmitter( IRoot* lockobj ) :
 	AudGameObjResource( lockobj ),
 	m_normalizeAttenuationScaling( false ),
@@ -15,7 +22,7 @@ AudEmitter::AudEmitter( IRoot* lockobj ) :
 	m_maxNormalizedValue( 9000.f), // ^
 	m_minNormalizedScalingFactor( 0.4f ),
 	m_maxNormalizedScalingFactor( 3.5f ),
-	m_debugColor(0, 0, 0, 0),
+	m_debugColor( DebugUtilities::GenerateDebugColor( 0.4f, 0.9f ) ),
 	m_simulationColor(0xff00ff00), // Green
 	m_visualizationRadius(0.f),
 	m_listenerDistanceScaleFactor(0.003f),
@@ -31,7 +38,7 @@ AudEmitter::AudEmitter( AkGameObjectID gameObjID, IRoot* lockobj ) :
 	m_maxNormalizedValue( 9000.f), // ^
 	m_minNormalizedScalingFactor( 0.4f ),
 	m_maxNormalizedScalingFactor( 3.5f ),
-	m_debugColor(0, 0, 0, 0),
+	m_debugColor( DebugUtilities::GenerateDebugColor( 0.4f, 0.9f ) ),
 	m_simulationColor(0xff00ff00), // Green
 	m_visualizationRadius(0.f),
 	m_listenerDistanceScaleFactor(0.003f),
@@ -68,7 +75,7 @@ void AudEmitter::SetPrefix( const std::wstring& prefix )
 int AudEmitter::SetPosition( const Vector3& front, const Vector3& top, const Vector3& pos )
 {
 	m_hasReceivedPosition = true;
-	return SetPositionHelper( front, top, pos );
+	return SetPlacementFromParent( front, top, pos );
 }
 
 unsigned int AudEmitter::SendEvent( const std::wstring& name, bool bypassPrefix )
@@ -115,67 +122,91 @@ void AudEmitter::SetVisibility( bool isVisible )
 	m_isVisible = isVisible;
 }
 
-// Debug
 void AudEmitter::GetDebugOptions( Tr2DebugRendererOptions& options )
 {
-	options.insert( "Audio Attenuation Sphere" );
+	options.insert( AUDIO_ATTENUATION_SPHERE_DEBUG_OPTION );
+	options.insert( AUDIO_EMITTER_DIRECTION_DEBUG_OPTION );
 }
 
 void AudEmitter::RenderDebugInfo( ITr2DebugRenderer2& renderer )
 {
-	if ( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled )
+	if ( m_culled || g_audioManager == nullptr || g_audioManager->GetState() != AudioState::Enabled )
 	{
-		if ( !g_debugDisplayAllEmitters )
-		{
-			if ( !renderer.HasOption( GetRawRoot(), "Audio Attenuation Sphere" ) )
-			{
-				return;
-			}
-		}
-
-		uint32_t debugSphereSegments = static_cast<uint32_t>(8.f + m_visualizationRadius / 5000.f);
-		debugSphereSegments = (debugSphereSegments < 25) ? debugSphereSegments : 25; 
-
-		if( m_visualizationRadius > 0.f )
-		{
-			float scaledRadius = m_visualizationRadius * m_scalingFactor;
-			renderer.DrawSphere( this, m_position, scaledRadius, debugSphereSegments, ITr2DebugRenderer2::Wireframe, Tr2DebugColor( m_simulationColor ) );
-		}
-
-		if ( !m_culled )
-		{
-			if ( Dot(m_debugColor, m_debugColor) == 0 )
-			{
-				float minRange = 0.4f;
-				float maxRange = 0.9f;
-				m_debugColor = DebugUtilities::GenerateDebugColor( minRange, maxRange );
-			}
-
-			const float emitterRange = AK::SoundEngine::Query::GetMaxRadius( m_ID );
-			renderer.DrawSphere( this, m_position, emitterRange, debugSphereSegments, ITr2DebugRenderer2::Wireframe, Tr2DebugColor( m_debugColor ) );
-
-			DrawClickableRadius(renderer);
-
-			std::string debugName = m_name + "(" + std::to_string(m_ID) + ")";
-			renderer.DrawText(TRI_DBG_FONT_SMALL, m_position, m_debugColor, debugName.c_str());
-		}
+		return;
 	}
+
+	RenderDebugBoundingSphere( renderer );
+	RenderDebugDirection( renderer );
+	RenderDebugName( renderer );
 }
 
-void AudEmitter::DrawClickableRadius(ITr2DebugRenderer2& renderer)
+void AudEmitter::RenderDebugBoundingSphere( ITr2DebugRenderer2& renderer )
 {
-	// In order to scale the clickable radius we need to know the distance to the camera. This is not so 
-	// easy to get from our library so we use the listener position because the listener follows the camera.
-	AudListenerPtr listener = g_audioManager->GetListener(); 
-	Vector3 listenerPos = listener->GetPosition();
-	float distanceToListener = Length( m_position - listenerPos );
-	float scaleFactor = distanceToListener * m_listenerDistanceScaleFactor; 
+	if ( !( g_debugDisplayAllEmitters || renderer.HasOption( GetRawRoot(), AUDIO_ATTENUATION_SPHERE_DEBUG_OPTION ) ) )
+	{
+		return;
+	}
 
-	float textWidth = m_name.length() * m_debugFontCharWidth * scaleFactor;
-	float radius = textWidth * m_radiusToTextWidthRatio; 
+	constexpr float BASE_SEGMENTS = 8.f;
+	constexpr float RADIUS_PER_SEGMENT = 5000.f;
+	constexpr uint32_t MAX_SEGMENTS = 25;
+	uint32_t debugSphereSegments = static_cast<uint32_t>( BASE_SEGMENTS + m_visualizationRadius / RADIUS_PER_SEGMENT );
+	debugSphereSegments = std::min( debugSphereSegments, MAX_SEGMENTS );
 
-	// Draw barely visible transparent sphere
-	renderer.DrawSphere( this, m_position, radius, 8, ITr2DebugRenderer2::Solid, Tr2DebugColor( 0x08000000 ) );
+	if( m_visualizationRadius > 0.f )
+	{
+		float scaledRadius = m_visualizationRadius * m_scalingFactor;
+		renderer.DrawSphere( this, m_position, scaledRadius, debugSphereSegments, ITr2DebugRenderer2::Wireframe, Tr2DebugColor( m_simulationColor ) );
+	}
+
+	float emitterRange = std::max( m_visualizationRadius, AK::SoundEngine::Query::GetMaxRadius( m_ID ) );
+	renderer.DrawSphere( this, m_position, emitterRange, debugSphereSegments, ITr2DebugRenderer2::Wireframe, Tr2DebugColor( m_debugColor ) );
+}
+
+void AudEmitter::RenderDebugDirection( ITr2DebugRenderer2& renderer )
+{
+	if ( !renderer.HasOption( GetRawRoot(), AUDIO_EMITTER_DIRECTION_DEBUG_OPTION ) )
+	{
+		return;
+	}
+
+	constexpr float ARROW_LENGTH_PER_DISTANCE = 0.025f;
+	constexpr float ARROW_MIN_LENGTH = 25.0f;
+	constexpr float ARROW_MAX_LENGTH = 250.0f;
+	constexpr float ARROW_RADIUS_PER_LENGTH = 0.035f;
+	constexpr float ARROW_MIN_RADIUS = 1.5f;
+	constexpr float ARROW_POINTER_LENGTH = 0.22f;
+	constexpr uint32_t ARROW_SEGMENTS = 12;
+
+	AudListenerPtr listener = g_audioManager->GetListener();
+	const float distanceToListener = Length( m_position - listener->GetPosition() );
+	const float arrowLength = std::min( std::max( distanceToListener * ARROW_LENGTH_PER_DISTANCE, ARROW_MIN_LENGTH ), ARROW_MAX_LENGTH );
+	const float arrowRadius = std::max( arrowLength * ARROW_RADIUS_PER_LENGTH, ARROW_MIN_RADIUS );
+	Vector3 direction = Normalize( m_effectiveOrientation.front );
+
+	renderer.DrawArrow(
+		this,
+		m_position,
+		m_position + direction * arrowLength,
+		arrowRadius,
+		ARROW_POINTER_LENGTH,
+		ARROW_SEGMENTS,
+		ITr2DebugRenderer2::Solid,
+		Tr2DebugColor( m_debugColor )
+	);
+}
+
+void AudEmitter::RenderDebugName( ITr2DebugRenderer2& renderer )
+{
+	if ( !g_debugDisplayAllEmitters &&
+		 !renderer.HasOption( GetRawRoot(), AUDIO_ATTENUATION_SPHERE_DEBUG_OPTION ) &&
+		 !renderer.HasOption( GetRawRoot(), AUDIO_EMITTER_DIRECTION_DEBUG_OPTION ) )
+	{
+		return;
+	}
+
+	std::string debugName = m_name + "(" + std::to_string(m_ID) + ")";
+	renderer.DrawText(TRI_DBG_FONT_SMALL, m_position, m_debugColor, debugName.c_str());
 }
 
 void AudEmitter::Mute()

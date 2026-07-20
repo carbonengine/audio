@@ -15,8 +15,8 @@ const Be::ClassInfo* AudListener::ExposeToBlue()
 
 		MAP_METHOD_AND_WRAP
 		( 
-			"SetPosition", 
-			SetPositionHelper, 
+			"SetPosition",
+			SetPlacementFromParent,
 			"Updates the entities orientation and position of an entity.\n"
 			":param front: Vector3 representing the orientation of the object.\n"
 			":param top: Vector3 representing the up vector of the object.\n"

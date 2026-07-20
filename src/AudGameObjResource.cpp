@@ -18,10 +18,19 @@ static AkGameObjectID GenerateEntityID()
 	return s_currentID++;
 }
 
+AudGameObjResource::Orientation::Orientation( const Vector3& front_, const Vector3& top_ ) :
+	front( front_ ),
+	top( top_ )
+{
+}
+
 AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_parameters ),
 														 m_eventPrefix(L""),
 														 m_scalingFactor( 1.0 ),
 														 m_position( WWISE_INIT_POSITION ), 
+														 m_parentOrientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) ),
+														 m_effectiveOrientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) ),
+														 m_authoredRotation( 0.0f, 0.0f, 0.0f, 1.0f ),
 														 m_mutex( "AudGameObjResource", "m_mutex" ),
 														 m_gameObjRegistered( false ),
 														 m_culled( true ),
@@ -58,6 +67,9 @@ AudGameObjResource::AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj
 																				   m_eventPrefix(L""),
 																				   m_scalingFactor( 1.0 ),
 																				   m_position( WWISE_INIT_POSITION ), 
+																				   m_parentOrientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) ),
+																				   m_effectiveOrientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) ),
+																				   m_authoredRotation( 0.0f, 0.0f, 0.0f, 1.0f ),
 														 						   m_mutex( "AudGameObjResource", "m_mutex" ),
 																				   m_gameObjRegistered( false ),
 														 						   m_culled( true ),
@@ -72,6 +84,7 @@ AudGameObjResource::AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj
 														 						   m_additionalCullingWeight( 0.0f ),
 																				   m_cumulativeWeight( 0.0f ),
 																				   m_maxAttenuationRadiusSq( 0.0f ),
+																				   m_hasReceivedPosition(false),
 																				   m_waitingOneShotInRange( std::pair( std::chrono::steady_clock::now(), L"" ) ),
 																				   m_eventName(L"")
 {
@@ -364,34 +377,72 @@ bool AudGameObjResource::SetAttenuationScalingFactor( float value )
 	return false;
 }
 
-int AudGameObjResource::SetPositionHelper( const Vector3& front, const Vector3& top, const Vector3& position )
+int AudGameObjResource::SetPlacementFromParent( const Vector3& front, const Vector3& top, const Vector3& position )
 {
+	m_parentOrientation = Orientation( front, top );
+	const Orientation effectiveOrientation = GetEffectiveOrientation();
+	return ApplyEffectivePlacement( effectiveOrientation.front, effectiveOrientation.top, position );
+}
+
+AudGameObjResource::Orientation AudGameObjResource::Orthonormalize( const Vector3& front, const Vector3& top )
+{
+	const Vector3 correctFront = Normalize( front );
+	const Vector3 correctUp = Normalize( Cross( Cross( correctFront, Normalize( top ) ), correctFront ) );
+	return Orientation( correctFront, correctUp );
+}
+
+int AudGameObjResource::ApplyEffectivePlacement( const Vector3& front, const Vector3& top, const Vector3& position )
+{
+	const Orientation corrected = Orthonormalize( front, top );
+
 	m_position = position;
+	m_effectiveOrientation = corrected;
 
-	if( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled )
+	if( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled && m_gameObjRegistered )
 	{
-		if( m_gameObjRegistered )
-		{
-			AkSoundPosition tmp;
-			Vector3 correctFront = Normalize( front );
-			Vector3 correctUp = Normalize( top );
-			correctUp = Normalize( Cross( Cross( correctFront, correctUp ), correctFront ) );
-			tmp.Set( MakeAkVector(position), MakeAkVector(correctFront), MakeAkVector(correctUp) );
+		AkSoundPosition tmp;
+		tmp.Set( MakeAkVector( position ), MakeAkVector( corrected.front ), MakeAkVector( corrected.top ) );
 
-			// all vectors come in RH, but WWISE is LH, so convert
-			AkSoundPosition soundPosLH;
-			RH2LH::convertEmitter( &soundPosLH, &tmp);
+		// all vectors come in RH, but WWISE is LH, so convert
+		AkSoundPosition soundPosLH;
+		RH2LH::convertEmitter( &soundPosLH, &tmp );
 
-			AKRESULT result = AK::SoundEngine::SetPosition( m_ID, soundPosLH );
-		}
+		AK::SoundEngine::SetPosition( m_ID, soundPosLH );
 	}
 	return AK_Success;
+}
+
+bool AudGameObjResource::HasAuthoredRotation() const
+{
+	return m_authoredRotation != IdentityQuaternion();
+}
+
+AudGameObjResource::Orientation AudGameObjResource::GetEffectiveOrientation() const
+{
+	// XMVector3Rotate requires a unit quaternion; ignore identity and degenerate
+	// (e.g. zero-length) authored rotations so placement never becomes NaN.
+	if ( !HasAuthoredRotation() || LengthSq( m_authoredRotation ) <= 0.0f )
+	{
+		return m_parentOrientation;
+	}
+
+	const Quaternion rotation = Normalize( m_authoredRotation );
+	return Orientation(
+		Vector3( XMVector3Rotate( m_parentOrientation.front, rotation ) ),
+		Vector3( XMVector3Rotate( m_parentOrientation.top, rotation ) )
+	);
+}
+
+void AudGameObjResource::RefreshPlacementFromRotation()
+{
+	const Orientation effectiveOrientation = GetEffectiveOrientation();
+	ApplyEffectivePlacement( effectiveOrientation.front, effectiveOrientation.top, m_position );
 }
 
 bool AudGameObjResource::Initialize()
 {
 	RegisterWwiseObject();
-	SetPositionHelper( Vector3( 1,0,0 ), Vector3( 0,1,0 ), m_position );
+	SetPlacementFromParent( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ), m_position );
 
 	if ( !m_eventName.empty() ) 
 	{
@@ -418,6 +469,12 @@ void AudGameObjResource::OnListModified( long event, ssize_t key, ssize_t key2, 
 
 bool AudGameObjResource::OnModified( Be::Var* value )
 {
+	if ( ( Be::Var* )&m_authoredRotation == value )
+	{
+		RefreshPlacementFromRotation();
+		return true;
+	}
+
 	if ( IsMatch( value, m_eventName ) )
 	{
 		StopAll();
@@ -581,8 +638,8 @@ void AudGameObjResource::Wake()
 			return;
 		}
 
-		RegisterWwiseObject();	
-		SetPositionHelper( Vector3( 1,0,0 ), Vector3( 0,1,0 ), m_position );
+		RegisterWwiseObject();
+		ApplyEffectivePlacement( m_effectiveOrientation.front, m_effectiveOrientation.top, m_position );
 		m_culled = false;
 		if ( m_waitingOneShotInRange.second != L"" && m_listenerInRange )
 		{
@@ -1000,6 +1057,16 @@ AkGameObjectID AudGameObjResource::GetID() const
 Vector3 AudGameObjResource::GetPosition() const 
 {
     return m_position;
+}
+
+Vector3 AudGameObjResource::GetFront() const
+{
+	return m_effectiveOrientation.front;
+}
+
+Vector3 AudGameObjResource::GetTop() const
+{
+	return m_effectiveOrientation.top;
 }
 
 std::wstring AudGameObjResource::GetEventName()
