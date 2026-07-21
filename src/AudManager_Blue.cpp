@@ -49,6 +49,10 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		MAP_PROPERTY( "transmissionLoss", GetTransmissionLoss, SetTransmissionLoss, "Per-mesh setting: transmission loss [0.0-1.0] applied to geometry surfaces when meshes are registered.")
 		MAP_PROPERTY( "enableDiffraction", GetEnableDiffraction, SetEnableDiffraction, "Per-mesh setting: enable or disable geometric diffraction on mesh geometry.")
 		MAP_PROPERTY( "enableDiffractionOnBoundaryEdges", GetEnableDiffractionOnBoundaryEdges, SetEnableDiffractionOnBoundaryEdges, "Per-mesh setting: switch to enable or disable geometric diffraction on boundary edges for this mesh.")
+
+		// Obstruction / occlusion
+		MAP_PROPERTY( "obstructionOcclusionEnabled", GetObstructionOcclusionEnabled, SetObstructionOcclusionEnabled, "Enable or disable game-driven obstruction/occlusion processing. Disabling fades all values back to clear.")
+		MAP_PROPERTY( "obstructionOcclusionFadeRate", GetObstructionOcclusionFadeRate, SetObstructionOcclusionFadeRate, "How fast obstruction/occlusion values fade towards their targets, in units per second. 0 = instantaneous.")
 		
 		MAP_METHOD_AND_WRAP
 		( 
@@ -158,6 +162,18 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 			"Set a global state in Wwise.\n"
 			":param stateGroup: The name of the state group the state belongs to in Wwise.\n"
 			":param stateName: The state you want to set in Wwise."
+		)
+		MAP_METHOD_AND_WRAP
+		(
+			"SetEmitterLineOfSightBlockage",
+			SetEmitterLineOfSightBlockage,
+			"Set a line-of-sight blockage ratio [0.0-1.0] for an emitter (0 = clear). Returns True if the emitter exists."
+		)
+		MAP_METHOD_AND_WRAP
+		(
+			"ClearObstructionOcclusion",
+			ClearObstructionOcclusion,
+			"Fade the obstruction/occlusion values of all tracked emitters back to clear."
 		)
 		MAP_METHOD_AND_WRAP
 		( 
