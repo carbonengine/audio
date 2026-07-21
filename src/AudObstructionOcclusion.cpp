@@ -11,6 +11,7 @@
 AudObstructionOcclusion::AudObstructionOcclusion()	:
 	m_fadeRate(DEFAULT_FADE_RATE),
 	m_hasUpdated(false),
+	m_enabled(true),
 	m_mutex("AudObstructionOcclusion", "m_mutex")
 {}
 
@@ -85,6 +86,11 @@ void AudObstructionOcclusion::Update()
 
 bool AudObstructionOcclusion::SetObstructionOcclusion(AkGameObjectID emitterID, float obstruction, float occlusion)
 {
+	if (!m_enabled)
+	{
+		return false;
+	}
+
 	if (g_audioManager == nullptr || g_audioManager->GetState() != AudioState::Enabled)
 	{
 		return false;
@@ -156,6 +162,25 @@ void AudObstructionOcclusion::ClearAll()
 	{
 		pair.second.obstruction.SetTarget(0.0f, m_fadeRate);
 		pair.second.occlusion.SetTarget(0.0f, m_fadeRate);
+	}
+}
+
+bool AudObstructionOcclusion::GetObstructionOcclusionEnabled() const
+{
+	return m_enabled;
+}
+
+void AudObstructionOcclusion::SetObstructionOcclusionEnabled(bool value)
+{
+	if (m_enabled == value)
+	{
+		return;
+	}
+
+	m_enabled = value;
+	if (!m_enabled)
+	{
+		ClearAll();
 	}
 }
 

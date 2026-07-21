@@ -33,6 +33,9 @@ public:
 
 	void ClearAll();
 
+	bool GetObstructionOcclusionEnabled() const;
+	void SetObstructionOcclusionEnabled(bool value);
+
 private:
 
 	struct FadingValue
@@ -63,6 +66,7 @@ private:
 	std::unordered_map<AkGameObjectID, EmitterState> m_emitters;
 	float m_fadeRate;
 	bool m_hasUpdated;
+	bool m_enabled;
 	mutable CcpMutex m_mutex;
 
 	std::chrono::steady_clock::time_point m_lastUpdateTime;
