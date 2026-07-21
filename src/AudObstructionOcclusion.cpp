@@ -27,6 +27,16 @@ bool AudObstructionOcclusion::SetEmitterLineOfSightBlockage(AkGameObjectID emitt
 	return false;
 }
 
+bool AudObstructionOcclusion::SendToWwise(AkGameObjectID emitterID, const EmitterState& state) const
+{
+	const AKRESULT result = AK::SoundEngine::SetObjectObstructionAndOcclusion(
+		emitterID,
+		LISTENER_GAME_OBJ_ID,
+		state.obstruction.currentValue,
+		state.occlusion.currentValue);
+	return result == AK_Success;
+
+
 void AudObstructionOcclusion::RemoveEmitter(AkGameObjectID emitterID)
 {}
 

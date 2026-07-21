@@ -9,6 +9,20 @@
 
 #include <AK/SoundEngine/Common/AkTypes.h> 
 
+struct FadingValue
+{
+	float currentValue = 0.0f;
+	float targetValue = 0.0f;
+	float rate = 0.0f;
+};
+
+struct EmitterState
+{
+	FadingValue obstruction;
+	FadingValue occlusion;
+
+};
+
 class AudObstructionOcclusion
 {
 public:
@@ -21,6 +35,8 @@ public:
 	bool SetObstructionOcclusion(AkGameObjectID emitterID, float obstruction, float occlusion);
 
 	bool SetEmitterLineOfSightBlockage(AkGameObjectID emitterID, float blockage);
+
+	bool SendToWwise(AkGameObjectID emitterID, const EmitterState& state) const;
 
 	void RemoveEmitter( AkGameObjectID emitterID );
 
