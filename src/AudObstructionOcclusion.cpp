@@ -9,7 +9,7 @@
 #include "AudManager.h"
 
 AudObstructionOcclusion::AudObstructionOcclusion()	:
-	m_fadeRate(0.0f),
+	m_fadeRate(DEFAULT_FADE_RATE),
 	m_hasUpdated(false),
 	m_mutex("AudObstructionOcclusion", "m_mutex")
 {}

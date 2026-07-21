@@ -57,6 +57,9 @@ private:
 
 	bool SendToWwise(AkGameObjectID emitterID, const EmitterState& state) const;
 
+	// Fades from clear to fully blocked in one second.
+	static constexpr float DEFAULT_FADE_RATE = 1.0f;
+
 	std::unordered_map<AkGameObjectID, EmitterState> m_emitters;
 	float m_fadeRate;
 	bool m_hasUpdated;
