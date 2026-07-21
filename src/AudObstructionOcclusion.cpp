@@ -116,13 +116,27 @@ bool AudObstructionOcclusion::SendToWwise(AkGameObjectID emitterID, const Emitte
 }
 
 void AudObstructionOcclusion::RemoveEmitter(AkGameObjectID emitterID)
-{}
+{
+	CcpAutoMutex lock(m_mutex);
+	m_emitters.erase(emitterID);
+}
 
 void AudObstructionOcclusion::Reset()
-{}
+{
+	CcpAutoMutex lock(m_mutex);
+	m_emitters.clear();
+	m_hasUpdated = false;
+}
 
 void AudObstructionOcclusion::ClearAll()
-{}
+{
+	CcpAutoMutex lock(m_mutex);
+	for (auto& pair : m_emitters)
+	{
+		pair.second.obstruction.SetTarget(0.0f, m_fadeRate);
+		pair.second.occlusion.SetTarget(0.0f, m_fadeRate);
+	}
+}
 
 void AudObstructionOcclusion::FadingValue::SetTarget(float target, float fadeRate)
 {
