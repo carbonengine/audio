@@ -64,5 +64,41 @@ void AudObstructionOcclusion::ClearAll()
 
 void AudObstructionOcclusion::FadingValue::SetTarget(float target, float fadeRate)
 {
+	targetValue = std::clamp(target, 0.0f, 1.0f);
 
+	if (targetValue >= currentValue)
+	{
+		rate = fadeRate;
+	}
+	else
+	{
+		rate = -fadeRate;
+	}
+}
+
+bool AudObstructionOcclusion::FadingValue::Advance(float deltaSeconds)
+{
+	if (currentValue == targetValue)
+	{
+		return false;
+	}
+
+	if (rate == 0.0f)
+	{
+		currentValue = targetValue;
+		return true;
+	}
+
+	const float oldValue = currentValue;
+	const float newValue = oldValue + rate * deltaSeconds;
+
+	if (oldValue > targetValue)
+	{
+		currentValue = std::clamp(newValue, targetValue, oldValue);
+	}
+	else
+	{
+		currentValue = std::clamp(newValue, oldValue, targetValue);
+	}
+	return currentValue != oldValue;
 }
