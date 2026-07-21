@@ -85,6 +85,17 @@ void AudObstructionOcclusion::Update()
 
 bool AudObstructionOcclusion::SetObstructionOcclusion(AkGameObjectID emitterID, float obstruction, float occlusion)
 {
+	if (g_audioManager == nullptr || g_audioManager->GetState() != AudioState::Enabled)
+	{
+		return false;
+	}
+
+	// Values are relative to the listener, so setting them on the listener itself is meaningless.
+	if (emitterID == LISTENER_GAME_OBJ_ID)
+	{
+		return false;
+	}
+
 	// We need to ask AudioManager about emitters that actually exist.
 	if (!g_audioManager->WithCallbackGameObject(emitterID, [](AudGameObjResource*) {}))
 	{
