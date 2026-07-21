@@ -8,7 +8,11 @@
 #include "AudObstructionOcclusion.h"
 #include "AudManager.h"
 
-AudObstructionOcclusion::AudObstructionOcclusion()
+AudObstructionOcclusion::AudObstructionOcclusion()	:
+	m_fadeRate(0.0f),
+	m_enabled(false),
+	m_hasUpdated(false),
+	m_mutex("AudObstructionOcclusion;", "m_mutex")
 {}
 
 AudObstructionOcclusion::~AudObstructionOcclusion()
@@ -19,7 +23,19 @@ void AudObstructionOcclusion::Update()
 
 bool AudObstructionOcclusion::SetObstructionOcclusion(AkGameObjectID emitterID, float obstruction, float occlusion)
 {
-	return false;
+	// We need to ask AudioManager about emitters that actually exist.
+	if (!g_audioManager->WithCallbackGameObject(emitterID, [](AudGameObjResource*) {}))
+	{
+		return false;
+	}
+
+	CcpAutoMutex lock(m_mutex);
+	EmitterState& state = m_emitters[emitterID];
+
+	state.obstruction.SetTarget(obstruction, m_fadeRate);
+	state.occlusion.SetTarget(occlusion, m_fadeRate);
+
+	return true;
 }
 
 bool AudObstructionOcclusion::SetEmitterLineOfSightBlockage(AkGameObjectID emitterID, float blockage)
@@ -35,7 +51,7 @@ bool AudObstructionOcclusion::SendToWwise(AkGameObjectID emitterID, const Emitte
 		state.obstruction.currentValue,
 		state.occlusion.currentValue);
 	return result == AK_Success;
-
+}
 
 void AudObstructionOcclusion::RemoveEmitter(AkGameObjectID emitterID)
 {}
@@ -45,3 +61,8 @@ void AudObstructionOcclusion::Reset()
 
 void AudObstructionOcclusion::ClearAll()
 {}
+
+void AudObstructionOcclusion::FadingValue::SetTarget(float target, float fadeRate)
+{
+
+}
