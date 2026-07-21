@@ -102,7 +102,17 @@ bool AudObstructionOcclusion::SetObstructionOcclusion(AkGameObjectID emitterID, 
 
 bool AudObstructionOcclusion::SetEmitterLineOfSightBlockage(AkGameObjectID emitterID, float blockage)
 {
-	return false;
+	// When Acoustics is On its transmission already attenuates, so skip occlusion to avoid stacking.
+	// Might change in the future with the addition of volumes.
+	const bool acousticsEnabled = g_audioManager != nullptr && g_audioManager->GetSpatialAudioGeometryEnabled();
+
+	float occlusion = 0.0f;
+	if (!acousticsEnabled)
+	{
+		occlusion = blockage;
+	}
+
+	return SetObstructionOcclusion(emitterID, 0.0f, occlusion);
 }
 
 bool AudObstructionOcclusion::SendToWwise(AkGameObjectID emitterID, const EmitterState& state) const
