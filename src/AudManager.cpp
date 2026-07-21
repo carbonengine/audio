@@ -80,6 +80,7 @@ AudManager::AudManager( IRoot* lockobj ) :
 	// Initialize sound prioritization system
 	m_soundPrioritization = new SoundPrioritization();
 	m_spatialAudioSettings = new SpatialAudioSettings();
+	m_obstructionOcclusion = new AudObstructionOcclusion();
 }
 
 AudManager::~AudManager()
@@ -87,6 +88,7 @@ AudManager::~AudManager()
 	// Clean up sound prioritization system
 	delete m_soundPrioritization;
 	delete m_spatialAudioSettings;
+	delete m_obstructionOcclusion;
 
 	if( GetState() == AudioState::Enabled )
 	{
@@ -116,6 +118,8 @@ void AudManager::Process()
 		{
 			m_soundPrioritization->CullAudio();
 		}
+
+		m_obstructionOcclusion->Update();
 
 		// Process bank requests, events, positions, RTPC, etc.
 		AK::SoundEngine::RenderAudio();
@@ -340,6 +344,11 @@ void AudManager::UnregisterGameObject( AkGameObjectID gameObjID )
 	{
 		m_soundPrioritization->UnregisterGameObject( gameObjID );
 	}
+
+	if( m_obstructionOcclusion )
+	{
+		m_obstructionOcclusion->RemoveEmitter( gameObjID );
+	}
 }
 
 bool AudManager::InitCommunication()
@@ -528,6 +537,36 @@ void AudManager::SetSpatialAudioGeometryEnabled( bool enabled )
 const bool AudManager::SpatialAudioIsSupported()
 {
 	return s_systemSupportsSpatialAudio;
+}
+
+bool AudManager::SetEmitterLineOfSightBlockage( AkGameObjectID emitterID, float blockage )
+{
+	return m_obstructionOcclusion->SetEmitterLineOfSightBlockage( emitterID, blockage );
+}
+
+void AudManager::ClearObstructionOcclusion()
+{
+	m_obstructionOcclusion->ClearAll();
+}
+
+bool AudManager::GetObstructionOcclusionEnabled() const
+{
+	return m_obstructionOcclusion->GetObstructionOcclusionEnabled();
+}
+
+void AudManager::SetObstructionOcclusionEnabled( bool value )
+{
+	m_obstructionOcclusion->SetObstructionOcclusionEnabled( value );
+}
+
+float AudManager::GetObstructionOcclusionFadeRate() const
+{
+	return m_obstructionOcclusion->GetObstructionOcclusionFadeRate();
+}
+
+void AudManager::SetObstructionOcclusionFadeRate( float value )
+{
+	m_obstructionOcclusion->SetObstructionOcclusionFadeRate( value );
 }
 
 void AudManager::UpdateSettings( AudSettings* settings )
@@ -776,6 +815,7 @@ void AudManager::Disable()
 	}
 
 	ClearBanks();
+	m_obstructionOcclusion->Reset();
   AudGeometry::ClearAllGeometry();
 #ifndef AK_OPTIMIZED
 	AK::SoundEngine::UnregisterResourceMonitorCallback(ResourceMonitorCallback);
