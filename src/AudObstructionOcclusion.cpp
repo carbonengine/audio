@@ -10,9 +10,8 @@
 
 AudObstructionOcclusion::AudObstructionOcclusion()	:
 	m_fadeRate(0.0f),
-	m_enabled(false),
 	m_hasUpdated(false),
-	m_mutex("AudObstructionOcclusion;", "m_mutex")
+	m_mutex("AudObstructionOcclusion", "m_mutex")
 {}
 
 AudObstructionOcclusion::~AudObstructionOcclusion()
@@ -27,11 +26,11 @@ void AudObstructionOcclusion::Update()
 	}
 
 	const auto now = std::chrono::steady_clock::now();
-	float detlaSeconds = 0.0f;
+	float deltaSeconds = 0.0f;
 
 	if (m_hasUpdated)
 	{
-		detlaSeconds = std::chrono::duration<float>(now - m_lastUpdateTime).count();
+		deltaSeconds = std::chrono::duration<float>(now - m_lastUpdateTime).count();
 	}
 	m_lastUpdateTime = now;
 	m_hasUpdated = true;
@@ -54,8 +53,8 @@ void AudObstructionOcclusion::Update()
 			continue;
 		}
 
-		const bool obstructionChanged = state.obstruction.Advance(detlaSeconds);
-		const bool occlusionChanged = state.occlusion.Advance(detlaSeconds);
+		const bool obstructionChanged = state.obstruction.Advance(deltaSeconds);
+		const bool occlusionChanged = state.occlusion.Advance(deltaSeconds);
 
 		if (culled)
 		{

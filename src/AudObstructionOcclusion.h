@@ -7,7 +7,12 @@
 
 #pragma once
 
-#include <AK/SoundEngine/Common/AkTypes.h> 
+#include <chrono>
+#include <unordered_map>
+
+#include <AK/SoundEngine/Common/AkTypes.h>
+
+#include <CcpMutex.h>
 
 class AudObstructionOcclusion
 {
@@ -54,7 +59,6 @@ private:
 
 	std::unordered_map<AkGameObjectID, EmitterState> m_emitters;
 	float m_fadeRate;
-	bool m_enabled;
 	bool m_hasUpdated;
 	mutable CcpMutex m_mutex;
 
