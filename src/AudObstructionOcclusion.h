@@ -58,4 +58,6 @@ private:
 	bool m_hasUpdated;
 	mutable CcpMutex m_mutex;
 
+	std::chrono::steady_clock::time_point m_lastUpdateTime;
+
 };
