@@ -36,6 +36,9 @@ public:
 	bool GetObstructionOcclusionEnabled() const;
 	void SetObstructionOcclusionEnabled(bool value);
 
+	float GetObstructionOcclusionFadeRate() const;
+	void SetObstructionOcclusionFadeRate(float value);
+
 private:
 
 	struct FadingValue

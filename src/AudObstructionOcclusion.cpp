@@ -8,6 +8,8 @@
 #include "AudObstructionOcclusion.h"
 #include "AudManager.h"
 
+#include <algorithm>
+
 AudObstructionOcclusion::AudObstructionOcclusion()	:
 	m_fadeRate(DEFAULT_FADE_RATE),
 	m_hasUpdated(false),
@@ -182,6 +184,16 @@ void AudObstructionOcclusion::SetObstructionOcclusionEnabled(bool value)
 	{
 		ClearAll();
 	}
+}
+
+float AudObstructionOcclusion::GetObstructionOcclusionFadeRate() const
+{
+	return m_fadeRate;
+}
+
+void AudObstructionOcclusion::SetObstructionOcclusionFadeRate(float value)
+{
+	m_fadeRate = std::max(value, 0.0f);
 }
 
 void AudObstructionOcclusion::FadingValue::SetTarget(float target, float fadeRate)
