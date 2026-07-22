@@ -265,7 +265,7 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
 
 
     def test_audgameobjresource_sanitizes_events(self):
-        def assert_event_sanitized(event_name)
+        def assert_event_sanitized(event_name):
             playingID = self.emitter.SendEvent(event_name)
             tries = 0
             while playingID <= 0 and tries < 5:
