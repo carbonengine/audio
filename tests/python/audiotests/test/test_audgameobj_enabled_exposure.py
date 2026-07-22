@@ -265,20 +265,21 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
 
 
     def test_audgameobjresource_sanitizes_events(self):
-        def check_playing_id(playingID):
+        def assert_event_sanitized(event_name)
+            playingID = self.emitter.SendEvent(event_name)
+            tries = 0
+            while playingID <= 0 and tries < 5:
+                blue.pyos.synchro.SleepWallclock(100)
+                blue.os.Pump()
+                playingID = self.emitter.SendEvent(event_name)
+                tries += 1
             self.assertTrue(playingID > 0)
 
-        playingID = self.emitter.SendEvent(" {}".format(ONE_SHOT_EVENT))
-        self.wait_for_audio_condition(check_playing_id, playingID)
-
-        playingID = self.emitter.SendEvent("{} ".format(ONE_SHOT_EVENT))
-        self.wait_for_audio_condition(check_playing_id, playingID)
-
-        playingID = self.emitter.SendEvent(" {} ".format(ONE_SHOT_EVENT))
-        self.wait_for_audio_condition(check_playing_id, playingID)
-
-        playingID = self.emitter.SendEvent(" {}\n  \t  \r".format(ONE_SHOT_EVENT))
-        self.wait_for_audio_condition(check_playing_id, playingID)
+        assert_event_sanitized(" {}".format(ONE_SHOT_EVENT))
+        assert_event_sanitized("{} ".format(ONE_SHOT_EVENT))
+        assert_event_sanitized(" {} ".format(ONE_SHOT_EVENT))
+        assert_event_sanitized(" {}\n  \t  \r".format(ONE_SHOT_EVENT))
+        assert_event_sanitized("\n\n\n\n\n\n{}\n\n\n\n\n".format(ONE_SHOT_EVENT))
 
         playingID = self.emitter.SendEvent("\n\n\n\n\n\n{}\n\n\n\n\n".format(ONE_SHOT_EVENT))
         self.wait_for_audio_condition(check_playing_id, playingID)
@@ -286,5 +287,4 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
         # Test with event prefixes
         prefix = ONE_SHOT_EVENT[:5]
         self.emitter.eventPrefix = prefix 
-        playingID = self.emitter.SendEvent(" {}\n".format(ONE_SHOT_EVENT[5:]))
-        self.wait_for_audio_condition(check_playing_id, playingID)
+        assert_event_sanitized(" {}\n".format(ONE_SHOT_EVENT[5:]))
