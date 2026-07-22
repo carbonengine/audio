@@ -32,7 +32,7 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
         self.listener = audio2.GetListener()
         self.listener.SetPosition((0,0,0), (0,0,0), (0,0,0))
         PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
-        
+
     def tearDown(self):
         self.emitter.eventPrefix = ""
         self.emitter.StopAll()
@@ -281,10 +281,7 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
         assert_event_sanitized(" {}\n  \t  \r".format(ONE_SHOT_EVENT))
         assert_event_sanitized("\n\n\n\n\n\n{}\n\n\n\n\n".format(ONE_SHOT_EVENT))
 
-        playingID = self.emitter.SendEvent("\n\n\n\n\n\n{}\n\n\n\n\n".format(ONE_SHOT_EVENT))
-        self.wait_for_audio_condition(check_playing_id, playingID)
-
         # Test with event prefixes
         prefix = ONE_SHOT_EVENT[:5]
-        self.emitter.eventPrefix = prefix 
+        self.emitter.eventPrefix = prefix
         assert_event_sanitized(" {}\n".format(ONE_SHOT_EVENT[5:]))
