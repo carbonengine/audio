@@ -2,7 +2,7 @@
   "dependencies": [
     {
       "name": "carbon-blue",
-      "version>=": "6.0.0"
+      "version>=": "5.1.2"
     },
     {
       "name": "carbon-math",
@@ -27,10 +27,6 @@
       "name": "carbon-exefile",
       "version>=": "4.1.1",
       "host": true
-    },
-    {
-      "name": "carbon-core",
-      "version>=": "3.0.1"
     }
   ],
   "overrides": [
