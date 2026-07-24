@@ -2,7 +2,7 @@
 //
 // Creator: Phevos Rinis
 // Creation Date: Jul 2026
-// Copyright (c) 2026 CCP Games
+// Copyright (c) 2026 Fernis Creations
 //
 
 #include "AudObstructionOcclusion.h"

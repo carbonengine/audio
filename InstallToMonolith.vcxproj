@@ -23,7 +23,7 @@
     <MonolithBranchRoot>$(CCP_EVE_PERFORCE_BRANCH_PATH)</MonolithBranchRoot>
     <MonolithBranchRoot Condition="'$(MonolithBranchRoot)' == ''">$([MSBuild]::GetRegistryValue('HKEY_CURRENT_USER\Environment', 'CCP_EVE_PERFORCE_BRANCH_PATH'))</MonolithBranchRoot>
     <MonolithInstallPrefix Condition="'$(MonolithBranchRoot)' != ''">$(MonolithBranchRoot.Replace('\', '/'))/vendor/github.com/ccpgames/carbon-audio/develop</MonolithInstallPrefix>
-    <MonolithInstallDirWin Condition="'$(MonolithBranchRoot)' != ''">$(MonolithBranchRoot)\vendor\github.com\ccpgames\carbon-audio\develop</MonolithInstallDirWin>
+    <MonolithInstallDirWin Condition="'$(MonolithBranchRoot)' != ''">$(MonolithBranchRoot)\vendor\github.com\carbonengine\audio\develop</MonolithInstallDirWin>
     <MonolithBuildDir>.cmake-build-monolith</MonolithBuildDir>
     <RepoRoot>$(ProjectDir.Replace('\', '/'))</RepoRoot>
     <MonolithBuildScript>setlocal
@@ -35,7 +35,6 @@ set "PATH_TO_VCPKG_ROOT=$(ProjectDir)vendor\github.com\microsoft\vcpkg"
 echo Installing CarbonAudio to: $(MonolithInstallPrefix)
 cmake -S . -B $(MonolithBuildDir) -G "Visual Studio 18 2026" "-DCMAKE_TOOLCHAIN_FILE=$(RepoRoot)vendor/github.com/microsoft/vcpkg/scripts/buildsystems/vcpkg.cmake" "-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=$(RepoRoot)vendor/github.com/carbonengine/vcpkg-registry/toolchains/x64-windows-145-carbon.cmake" "-DVCPKG_OVERLAY_TRIPLETS=$(RepoRoot)vendor/github.com/carbonengine/vcpkg-registry/triplets" -DVCPKG_TARGET_TRIPLET=x64-windows-internal -DVCPKG_HOST_TRIPLET=x64-windows-internal -DVCPKG_USE_HOST_TOOLS=ON -DINSTALL_TO_MONOLITH=ON -DBUILD_TESTING=OFF "-DCMAKE_INSTALL_PREFIX=$(MonolithInstallPrefix)"
 if errorlevel 1 exit /b 1
-rem Wipe any existing install so this build fully replaces it (cmake install never removes stale files).
 if exist "$(MonolithInstallDirWin)" echo Removing existing install at: $(MonolithInstallDirWin)
 if exist "$(MonolithInstallDirWin)" rmdir /s /q "$(MonolithInstallDirWin)"
 cmake --build $(MonolithBuildDir) --config Internal --target INSTALL
