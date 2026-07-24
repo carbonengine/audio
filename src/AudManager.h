@@ -250,7 +250,7 @@ private:
 
 	SoundPrioritization* m_soundPrioritization;
 	SpatialAudioSettings* m_spatialAudioSettings;
-	AudObstructionOcclusion* m_obstructionOcclusion;
+	std::unique_ptr<AudObstructionOcclusion> m_obstructionOcclusion;
 
 	//  Map of game objects, used to guard Wwise callbacks
 	std::unordered_map<AkGameObjectID, AudGameObjResource*> m_callbackGameObjects;

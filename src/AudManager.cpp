@@ -80,7 +80,7 @@ AudManager::AudManager( IRoot* lockobj ) :
 	// Initialize sound prioritization system
 	m_soundPrioritization = new SoundPrioritization();
 	m_spatialAudioSettings = new SpatialAudioSettings();
-	m_obstructionOcclusion = new AudObstructionOcclusion();
+	m_obstructionOcclusion = std::make_unique<AudObstructionOcclusion>( this );
 }
 
 AudManager::~AudManager()
@@ -88,7 +88,6 @@ AudManager::~AudManager()
 	// Clean up sound prioritization system
 	delete m_soundPrioritization;
 	delete m_spatialAudioSettings;
-	delete m_obstructionOcclusion;
 
 	if( GetState() == AudioState::Enabled )
 	{

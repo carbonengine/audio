@@ -10,7 +10,8 @@
 
 #include <algorithm>
 
-AudObstructionOcclusion::AudObstructionOcclusion()	:
+AudObstructionOcclusion::AudObstructionOcclusion(AudManager* audioManager)	:
+	m_audioManager(audioManager),
 	m_fadeRate(DEFAULT_FADE_RATE),
 	m_hasUpdated(false),
 	m_enabled(true),
@@ -23,7 +24,7 @@ AudObstructionOcclusion::~AudObstructionOcclusion()
 void AudObstructionOcclusion::Update()
 {
 
-	if (g_audioManager == nullptr || g_audioManager->GetState() != AudioState::Enabled)
+	if (m_audioManager == nullptr || m_audioManager->GetState() != AudioState::Enabled)
 	{
 		return;
 	}
@@ -46,7 +47,7 @@ void AudObstructionOcclusion::Update()
 		EmitterState& state = it->second;
 
 		bool culled = false;
-		const bool exists = g_audioManager->WithCallbackGameObject(emitterID, [&culled](AudGameObjResource* emitter) {
+		const bool exists = m_audioManager->WithCallbackGameObject(emitterID, [&culled](AudGameObjResource* emitter) {
 			culled = emitter->IsCulled();
 			});
 
@@ -56,8 +57,8 @@ void AudObstructionOcclusion::Update()
 			continue;
 		}
 
-		const bool obstructionChanged = state.obstruction.Advance(deltaSeconds);
-		const bool occlusionChanged = state.occlusion.Advance(deltaSeconds);
+		const bool obstructionChanged = state.obstruction.Advance(deltaSeconds, m_fadeRate);
+		const bool occlusionChanged = state.occlusion.Advance(deltaSeconds, m_fadeRate);
 
 		if (culled)
 		{
@@ -93,7 +94,7 @@ bool AudObstructionOcclusion::SetObstructionOcclusion(AkGameObjectID emitterID, 
 		return false;
 	}
 
-	if (g_audioManager == nullptr || g_audioManager->GetState() != AudioState::Enabled)
+	if (m_audioManager == nullptr || m_audioManager->GetState() != AudioState::Enabled)
 	{
 		return false;
 	}
@@ -105,7 +106,7 @@ bool AudObstructionOcclusion::SetObstructionOcclusion(AkGameObjectID emitterID, 
 	}
 
 	// We need to ask AudioManager about emitters that actually exist.
-	if (!g_audioManager->WithCallbackGameObject(emitterID, [](AudGameObjResource*) {}))
+	if (!m_audioManager->WithCallbackGameObject(emitterID, [](AudGameObjResource*) {}))
 	{
 		return false;
 	}
@@ -113,8 +114,8 @@ bool AudObstructionOcclusion::SetObstructionOcclusion(AkGameObjectID emitterID, 
 	CcpAutoMutex lock(m_mutex);
 	EmitterState& state = m_emitters[emitterID];
 
-	state.obstruction.SetTarget(obstruction, m_fadeRate);
-	state.occlusion.SetTarget(occlusion, m_fadeRate);
+	state.obstruction.SetTarget(obstruction);
+	state.occlusion.SetTarget(occlusion);
 
 	return true;
 }
@@ -123,7 +124,7 @@ bool AudObstructionOcclusion::SetEmitterLineOfSightBlockage(AkGameObjectID emitt
 {
 	// When Acoustics is On its transmission already attenuates, so skip occlusion to avoid stacking.
 	// Might change in the future with the addition of volumes.
-	const bool acousticsEnabled = g_audioManager != nullptr && g_audioManager->GetSpatialAudioGeometryEnabled();
+	const bool acousticsEnabled = m_audioManager != nullptr && m_audioManager->GetSpatialAudioGeometryEnabled();
 
 	float occlusion = 0.0f;
 	if (!acousticsEnabled)
@@ -162,8 +163,8 @@ void AudObstructionOcclusion::ClearAll()
 	CcpAutoMutex lock(m_mutex);
 	for (auto& pair : m_emitters)
 	{
-		pair.second.obstruction.SetTarget(0.0f, m_fadeRate);
-		pair.second.occlusion.SetTarget(0.0f, m_fadeRate);
+		pair.second.obstruction.SetTarget(0.0f);
+		pair.second.occlusion.SetTarget(0.0f);
 	}
 }
 
@@ -196,43 +197,34 @@ void AudObstructionOcclusion::SetObstructionOcclusionFadeRate(float value)
 	m_fadeRate = std::max(value, 0.0f);
 }
 
-void AudObstructionOcclusion::FadingValue::SetTarget(float target, float fadeRate)
+void AudObstructionOcclusion::FadingValue::SetTarget(float target)
 {
 	targetValue = std::clamp(target, 0.0f, 1.0f);
-
-	if (targetValue >= currentValue)
-	{
-		rate = fadeRate;
-	}
-	else
-	{
-		rate = -fadeRate;
-	}
 }
 
-bool AudObstructionOcclusion::FadingValue::Advance(float deltaSeconds)
+bool AudObstructionOcclusion::FadingValue::Advance(float deltaSeconds, float fadeRate)
 {
 	if (currentValue == targetValue)
 	{
 		return false;
 	}
 
-	if (rate == 0.0f)
+	if (fadeRate <= 0.0f)
 	{
 		currentValue = targetValue;
 		return true;
 	}
 
 	const float oldValue = currentValue;
-	const float newValue = oldValue + rate * deltaSeconds;
+	const float step = fadeRate * deltaSeconds;
 
 	if (oldValue > targetValue)
 	{
-		currentValue = std::clamp(newValue, targetValue, oldValue);
+		currentValue = std::clamp(oldValue - step, targetValue, oldValue);
 	}
 	else
 	{
-		currentValue = std::clamp(newValue, oldValue, targetValue);
+		currentValue = std::clamp(oldValue + step, oldValue, targetValue);
 	}
 	return currentValue != oldValue;
 }

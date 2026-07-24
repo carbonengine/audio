@@ -14,11 +14,13 @@
 
 #include <CcpMutex.h>
 
+class AudManager;
+
 class AudObstructionOcclusion
 {
 public:
 
-	AudObstructionOcclusion();
+	AudObstructionOcclusion(AudManager* audioManager);
 	~AudObstructionOcclusion();
 
 	void Update();
@@ -45,10 +47,9 @@ private:
 	{
 		float currentValue = 0.0f;
 		float targetValue = 0.0f;
-		float rate = 0.0f;
 
-		void SetTarget(float target, float fadeRate);
-		bool Advance(float deltaSeconds);
+		void SetTarget(float target);
+		bool Advance(float deltaSeconds, float fadeRate);
 		bool ReachedTarget() const { return currentValue == targetValue; };
 	};
 
@@ -66,6 +67,7 @@ private:
 	// Fades from clear to fully blocked in one second.
 	static constexpr float DEFAULT_FADE_RATE = 1.0f;
 
+	AudManager* m_audioManager;
 	std::unordered_map<AkGameObjectID, EmitterState> m_emitters;
 	float m_fadeRate;
 	bool m_hasUpdated;
