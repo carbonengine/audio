@@ -8,7 +8,7 @@ from audiotests.base_test_class import (
     NONESSENTIAL_BNK, NONESSENTIAL_BNK_EVENT, NONESSENTIAL_STREAM_BNK, NONESSENTIAL_STREAM_EVENT
 )
 from audiotests.base_test_class import BaseAudio2TestClass
-from audiotests.utils import PumpOSWithTimeout
+from audiotests.utils import WaitForEmitterToWake, WaitForSoundBanksToLoad
 
 
 
@@ -31,8 +31,14 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
 
         self.listener = audio2.GetListener()
         self.listener.SetPosition((0,0,0), (0,0,0), (0,0,0))
-        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
-        
+        self.assertTrue(
+            WaitForSoundBanksToLoad([
+                LOOP_EVENT, ONE_SHOT_EVENT, ESSENTIAL_EVENT, NONESSENTIAL_BNK_EVENT, NONESSENTIAL_STREAM_EVENT
+            ]),
+            "Timed out waiting for the test SoundBanks to load."
+        )
+        self.assertTrue(WaitForEmitterToWake(self.emitter), "Timed out waiting for the emitter to be woken up.")
+
     def tearDown(self):
         self.emitter.eventPrefix = ""
         self.emitter.StopAll()
@@ -266,14 +272,7 @@ class TestEnabledAudGameObjExposure(BaseAudio2TestClass):
 
     def test_audgameobjresource_sanitizes_events(self):
         def assert_event_sanitized(event_name):
-            playingID = self.emitter.SendEvent(event_name)
-            tries = 0
-            while playingID <= 0 and tries < 5:
-                blue.pyos.synchro.SleepWallclock(100)
-                blue.os.Pump()
-                playingID = self.emitter.SendEvent(event_name)
-                tries += 1
-            self.assertTrue(playingID > 0)
+            self.assertTrue(self.emitter.SendEvent(event_name) > 0)
 
         assert_event_sanitized(" {}".format(ONE_SHOT_EVENT))
         assert_event_sanitized("{} ".format(ONE_SHOT_EVENT))

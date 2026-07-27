@@ -8,7 +8,7 @@ import blue
 
 from audiotests.base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK
 from audiotests.base_test_class import GetAudioMetadataFromFile
-from audiotests.utils import PumpOSWithTimeout
+from audiotests.utils import PumpOSWithTimeout, WaitForSoundBanksToLoad
 
 class TestAudManagerExposure(unittest.TestCase):
     @classmethod
@@ -143,11 +143,11 @@ class TestAudManagerExposure(unittest.TestCase):
         import audio2
         self.audioManager.LoadBank(COMMON_BNK)
         self.audioManager.LoadBank(LOOP_BNK)
-        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
+        self.assertTrue(WaitForSoundBanksToLoad([LOOP_EVENT]), "Timed out waiting for the test SoundBanks to load.")
         emitter1 = audio2.AudEmitter("emitter1")
         emitter2 = audio2.AudEmitter("emitter2")
 
-        self.assertTrue(emitter1.SendEvent(LOOP_EVENT) > 0) 
+        self.assertTrue(emitter1.SendEvent(LOOP_EVENT) > 0)
         self.assertTrue(emitter2.SendEvent(LOOP_EVENT) > 0)
 
         self.audioManager.StopAll()

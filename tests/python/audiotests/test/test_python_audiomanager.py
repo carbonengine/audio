@@ -4,7 +4,7 @@ import unittest
 
 from audiotests.base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK, ONE_SHOT_EVENT, SOUNDBANK_FILEPATH
 from audiotests.base_test_class import BaseAudio2TestClass
-from audiotests.utils import GetAudioMetadataFromFile, PumpOSWithTimeout
+from audiotests.utils import GetAudioMetadataFromFile, PumpOSWithTimeout, WaitForEmitterToWake, WaitForSoundBanksToLoad
 
 class TestPythonAudioManager(BaseAudio2TestClass):
     @classmethod
@@ -68,7 +68,8 @@ class TestPythonAudioManager(BaseAudio2TestClass):
         emitter.SetPlacement((0,0,0), (0,0,0), (0,0,0))
         listener = audio2.GetListener()
         listener.SetPosition((0,0,0), (0,0,0), (0,0,0))
-        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
+        self.assertTrue(WaitForSoundBanksToLoad([LOOP_EVENT]), "Timed out waiting for the test SoundBanks to load.")
+        self.assertTrue(WaitForEmitterToWake(emitter), "Timed out waiting for the emitter to be woken up.")
         playingID = emitter.SendEvent(LOOP_EVENT)
         self.assertTrue(playingID > 0)
         emitter.StopAll()
@@ -83,7 +84,8 @@ class TestPythonAudioManager(BaseAudio2TestClass):
         emitter.SetPlacement((0,0,0), (0,0,0), (0,0,0))
         listener = audio2.GetListener()
         listener.SetPosition((0,0,0), (0,0,0), (0,0,0))
-        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
+        self.assertTrue(WaitForSoundBanksToLoad([LOOP_EVENT]), "Timed out waiting for the test SoundBanks to load.")
+        self.assertTrue(WaitForEmitterToWake(emitter), "Timed out waiting for the emitter to be woken up.")
 
         playingID = emitter.SendEvent(LOOP_EVENT)
         self.assertTrue(playingID > 0)
@@ -110,7 +112,11 @@ class TestPythonAudioManager(BaseAudio2TestClass):
         emitter.SetPlacement((0,0,0), (0,0,0), (0,0,0))
         listener = audio2.GetListener()
         listener.SetPosition((0,0,0), (0,0,0), (0,0,0))
-        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
+        self.assertTrue(
+            WaitForSoundBanksToLoad([LOOP_EVENT, ONE_SHOT_EVENT]),
+            "Timed out waiting for the test SoundBanks to load."
+        )
+        self.assertTrue(WaitForEmitterToWake(emitter), "Timed out waiting for the emitter to be woken up.")
 
         loopPlayingID = emitter.SendEvent(LOOP_EVENT)
         self.assertTrue(loopPlayingID > 0)

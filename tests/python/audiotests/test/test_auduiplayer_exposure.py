@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 
 from audiotests.base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT, ONE_SHOT_BNK, ONE_SHOT_EVENT
 from audiotests.base_test_class import BaseAudio2TestClass
-from audiotests.utils import PumpOSWithTimeout
+from audiotests.utils import PumpOSWithTimeout, WaitForEmitterToWake, WaitForSoundBanksToLoad
 
 
 class TestAudUIPlayerExposure(BaseAudio2TestClass):
@@ -14,8 +14,15 @@ class TestAudUIPlayerExposure(BaseAudio2TestClass):
         cls.Initialize(cls, defaultSoundBanks=[COMMON_BNK, LOOP_BNK, ONE_SHOT_BNK])
 
     def setUp(self):
+        import audio2
         self.audioManager.Enable()
-        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
+        uiPlayer = audio2.GetUIPlayer()
+        uiPlayer.SetPlacement((0,0,0), (0,0,0), (0,0,0))
+        self.assertTrue(
+            WaitForSoundBanksToLoad([LOOP_EVENT, ONE_SHOT_EVENT]),
+            "Timed out waiting for the test SoundBanks to load."
+        )
+        self.assertTrue(WaitForEmitterToWake(uiPlayer), "Timed out waiting for the UI player to be woken up.")
 
     def tearDown(self):
         self.audioManager.Disable()
