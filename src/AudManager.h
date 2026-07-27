@@ -125,6 +125,8 @@ public:
 	void SetSpatialAudioGeometryEnabled( bool enabled );
 	// Set a single line-of-sight blockage ratio for an emitter [0.0, 1.0]. 0 = clear line of sight.
 	bool SetEmitterLineOfSightBlockage( AkGameObjectID emitterID, float blockage );
+	// Current, mid-fade occlusion value for an emitter. 0.0 if the emitter is clear or not tracked.
+	float GetEmitterOcclusion( AkGameObjectID emitterID ) const;
 	// Fade all obstruction/occlusion values back to clear.
 	void ClearObstructionOcclusion();
 	// Enable or disable game-driven obstruction/occlusion processing.

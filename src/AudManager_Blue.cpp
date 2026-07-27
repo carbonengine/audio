@@ -171,6 +171,14 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		)
 		MAP_METHOD_AND_WRAP
 		(
+			"GetEmitterOcclusion",
+			GetEmitterOcclusion,
+			"Get the occlusion value currently applied to an emitter. This is the live, mid-fade value "
+			"rather than the target that was set, so it can be used to observe a fade in progress. "
+			"Returns 0.0 if the emitter is clear or is not being tracked."
+		)
+		MAP_METHOD_AND_WRAP
+		(
 			"ClearObstructionOcclusion",
 			ClearObstructionOcclusion,
 			"Fade the obstruction/occlusion values of all tracked emitters back to clear."

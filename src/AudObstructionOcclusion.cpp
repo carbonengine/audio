@@ -135,6 +135,19 @@ bool AudObstructionOcclusion::SetEmitterLineOfSightBlockage(AkGameObjectID emitt
 	return SetObstructionOcclusion(emitterID, 0.0f, occlusion);
 }
 
+float AudObstructionOcclusion::GetEmitterOcclusion(AkGameObjectID emitterID) const
+{
+	CcpAutoMutex lock(m_mutex);
+
+	auto it = m_emitters.find(emitterID);
+	if (it == m_emitters.end())
+	{
+		return 0.0f;
+	}
+
+	return it->second.occlusion.currentValue;
+}
+
 bool AudObstructionOcclusion::SendToWwise(AkGameObjectID emitterID, const EmitterState& state) const
 {
 	const AKRESULT result = AK::SoundEngine::SetObjectObstructionAndOcclusion(
@@ -168,12 +181,12 @@ void AudObstructionOcclusion::ClearAll()
 	}
 }
 
-bool AudObstructionOcclusion::GetObstructionOcclusionEnabled() const
+bool AudObstructionOcclusion::IsEnabled() const
 {
 	return m_enabled;
 }
 
-void AudObstructionOcclusion::SetObstructionOcclusionEnabled(bool value)
+void AudObstructionOcclusion::SetEnabled(bool value)
 {
 	if (m_enabled == value)
 	{
@@ -187,12 +200,12 @@ void AudObstructionOcclusion::SetObstructionOcclusionEnabled(bool value)
 	}
 }
 
-float AudObstructionOcclusion::GetObstructionOcclusionFadeRate() const
+float AudObstructionOcclusion::GetFadeRate() const
 {
 	return m_fadeRate;
 }
 
-void AudObstructionOcclusion::SetObstructionOcclusionFadeRate(float value)
+void AudObstructionOcclusion::SetFadeRate(float value)
 {
 	m_fadeRate = std::max(value, 0.0f);
 }
