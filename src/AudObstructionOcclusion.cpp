@@ -74,14 +74,6 @@ void AudObstructionOcclusion::Update()
 			state.needsSend = !SendToWwise(emitterID, state);
 		}
 
-		// Remove the emitter from the list if it has reached its target values and is no longer needed.
-		if (!state.needsSend &&
-			state.obstruction.ReachedTarget() && state.obstruction.targetValue == 0.0f &&
-			state.occlusion.ReachedTarget() && state.occlusion.targetValue == 0.0f)
-		{
-			it = m_emitters.erase(it);
-			continue;
-		}
 
 		++it;
 	}
@@ -112,10 +104,18 @@ bool AudObstructionOcclusion::SetObstructionOcclusion(AkGameObjectID emitterID, 
 	}
 
 	CcpAutoMutex lock(m_mutex);
-	EmitterState& state = m_emitters[emitterID];
+
+	const auto [entry, isNewEmitter] = m_emitters.try_emplace(emitterID);
+	EmitterState& state = entry->second;
 
 	state.obstruction.SetTarget(obstruction);
 	state.occlusion.SetTarget(occlusion);
+
+	if (isNewEmitter)
+	{
+		state.obstruction.SnapToTarget();
+		state.occlusion.SnapToTarget();
+	}
 
 	return true;
 }

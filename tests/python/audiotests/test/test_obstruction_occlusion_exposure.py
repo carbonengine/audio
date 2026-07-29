@@ -44,7 +44,37 @@ class TestObstructionOcclusionExposure(BaseAudio2TestClass):
     def SetBlockage(self, blockage):
         return self.manager.SetEmitterLineOfSightBlockage(self.emitter.ID, blockage)
 
+    def EstablishClear(self):
+        self.assertTrue(self.SetBlockage(0.0))
+        self.Pump()
+
+    def test_a_first_value_is_applied_at_once(self):
+        self.manager.obstructionOcclusionFadeRate = SLOW_FADE_RATE
+
+        self.assertTrue(self.SetBlockage(1.0))
+        self.Pump()
+
+        self.assertEqual(self.GetOcclusion(), 1.0)
+
+    def test_an_emitter_that_is_back_to_clear_still_fades(self):
+        
+        self.manager.obstructionOcclusionFadeRate = INSTANT_FADE_RATE
+        self.assertTrue(self.SetBlockage(1.0))
+        self.Pump()
+        self.assertTrue(self.SetBlockage(0.0))
+        self.Pump()
+        self.assertEqual(self.GetOcclusion(), 0.0)
+
+        self.manager.obstructionOcclusionFadeRate = SLOW_FADE_RATE
+        self.assertTrue(self.SetBlockage(1.0))
+        self.Pump()
+
+        occlusion = self.GetOcclusion()
+        self.assertGreater(occlusion, 0.0, "Occlusion never started fading back in.")
+        self.assertLess(occlusion, 1.0, "Occlusion jumped to its target instead of fading.")
+
     def test_occlusion_is_applied_immediately_at_a_zero_fade_rate(self):
+        self.EstablishClear()
         self.manager.obstructionOcclusionFadeRate = INSTANT_FADE_RATE
 
         self.assertTrue(self.SetBlockage(1.0))
@@ -54,6 +84,7 @@ class TestObstructionOcclusionExposure(BaseAudio2TestClass):
 
     def test_occlusion_fades_in_gradually(self):
         """The value has to interpolate towards its target rather than jumping straight to it."""
+        self.EstablishClear()
         self.manager.obstructionOcclusionFadeRate = SLOW_FADE_RATE
 
         self.assertTrue(self.SetBlockage(1.0))
@@ -85,6 +116,7 @@ class TestObstructionOcclusionExposure(BaseAudio2TestClass):
 
     def test_a_fade_settles_on_its_target_without_overshooting(self):
         """A single tick large enough to cover the whole fade must stop exactly on the target."""
+        self.EstablishClear()
         self.manager.obstructionOcclusionFadeRate = FAST_FADE_RATE
 
         self.assertTrue(self.SetBlockage(1.0))

@@ -22,9 +22,10 @@
   <PropertyGroup>
     <MonolithBranchRoot>$(CCP_EVE_PERFORCE_BRANCH_PATH)</MonolithBranchRoot>
     <MonolithBranchRoot Condition="'$(MonolithBranchRoot)' == ''">$([MSBuild]::GetRegistryValue('HKEY_CURRENT_USER\Environment', 'CCP_EVE_PERFORCE_BRANCH_PATH'))</MonolithBranchRoot>
-    <MonolithInstallPrefix Condition="'$(MonolithBranchRoot)' != ''">$(MonolithBranchRoot.Replace('\', '/'))/vendor/github.com/ccpgames/carbon-audio/develop</MonolithInstallPrefix>
+    <MonolithInstallPrefix Condition="'$(MonolithBranchRoot)' != ''">$(MonolithBranchRoot.Replace('\', '/'))/vendor/github.com/carbonengine/audio/develop</MonolithInstallPrefix>
     <MonolithInstallDirWin Condition="'$(MonolithBranchRoot)' != ''">$(MonolithBranchRoot)\vendor\github.com\carbonengine\audio\develop</MonolithInstallDirWin>
     <MonolithBuildDir>.cmake-build-monolith</MonolithBuildDir>
+    <VsScratchDir>$(ProjectDir)$(MonolithBuildDir)\.vs-installtomonolith\$(Platform)\$(Configuration)\</VsScratchDir>
     <RepoRoot>$(ProjectDir.Replace('\', '/'))</RepoRoot>
     <MonolithBuildScript>setlocal
 cd /d "$(ProjectDir)"
@@ -43,12 +44,16 @@ echo === CarbonAudio installed to $(MonolithInstallPrefix) ===
 </MonolithBuildScript>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Internal|x64'">
+    <IntDir>$(VsScratchDir)</IntDir>
+    <OutDir>$(VsScratchDir)</OutDir>
     <NMakeBuildCommandLine>$(MonolithBuildScript)</NMakeBuildCommandLine>
     <NMakeReBuildCommandLine>cd /d "$(ProjectDir)"
 if exist $(MonolithBuildDir) rmdir /s /q $(MonolithBuildDir)
+mkdir "$(VsScratchDir)" 2&gt;nul
 $(MonolithBuildScript)</NMakeReBuildCommandLine>
     <NMakeCleanCommandLine>cd /d "$(ProjectDir)"
 if exist $(MonolithBuildDir) rmdir /s /q $(MonolithBuildDir)
+mkdir "$(VsScratchDir)" 2&gt;nul
 if exist "$(MonolithInstallDirWin)" echo Removing install at: $(MonolithInstallDirWin)
 if exist "$(MonolithInstallDirWin)" rmdir /s /q "$(MonolithInstallDirWin)"</NMakeCleanCommandLine>
     <NMakeOutput>$(ProjectDir)$(MonolithBuildDir)\Internal\_audio2_internal.pyd</NMakeOutput>

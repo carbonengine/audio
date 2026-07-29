@@ -69,7 +69,7 @@ public:
 	/// Forgets every emitter and the fade clock, for when audio is disabled.
 	void Reset();
 
-	/// Fades every tracked emitter back to clear and keeps them around until they get there.
+	/// Fades every tracked emitter back to clear.
 	void ClearAll();
 
 	/**
@@ -95,6 +95,7 @@ private:
 		void SetTarget(float target);
 		bool Advance(float deltaSeconds, float fadeRate);
 		bool ReachedTarget() const { return currentValue == targetValue; };
+		void SnapToTarget() { currentValue = targetValue; };
 	};
 
 	/// Everything we keep for one blocked emitter.
