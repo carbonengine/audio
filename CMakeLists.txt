@@ -43,6 +43,7 @@ ccp_add_library(CarbonAudio SHARED
 	src/AudGameObjResource.cpp
 	src/AudGeometry.cpp
 	src/AudGeometry_Blue.cpp
+    src/AudObstructionOcclusion.cpp
 	src/SpatialAudioSettings.cpp
 	src/audio2.cpp
 	src/AudGameObjResource_Blue.cpp
@@ -83,6 +84,7 @@ target_sources(CarbonAudio PRIVATE
 	src/AudUIPlayer.h
 	src/AudMusicPlayer.h
 	src/AudGeometry.h
+    src/AudObstructionOcclusion.h
 	src/SpatialAudioSettings.h
 	src/autoversion.h
 	src/DebugUtilities.h
@@ -187,6 +189,14 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
             RUNTIME DESTINATION bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}
         )
 
+       if(MSVC)
+            install(
+                FILES $<TARGET_PDB_FILE:CarbonAudio>
+                CONFIGURATIONS ${CMAKE_CONFIGURATION_TYPES}
+                DESTINATION bin/${CCP_PLATFORM}/${CCP_ARCHITECTURE}/${CCP_TOOLSET}
+                OPTIONAL
+            )
+        endif()
         # Generate target configuration for the monolith
         configure_ccp_vendor_config_file(
             TARGET CarbonAudio
