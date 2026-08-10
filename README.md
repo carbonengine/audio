@@ -3,7 +3,8 @@ This repository holds the audio component of the Carbon engine, it supports both
 It provides a wrapper around the Wwise SDK together with some of our own solutions such as the sound prioritization system and more. As with most of the Carbon components, CarbonAudio is also exposed to Python through the Blue exposure layer. In addition to this there are header only includes that can be used to interact with CarbonAudio through C++.
 
 ## Contents
-- [Development Setup](#development-setup)
+- [Building](#building)
+- [Local dev workflow](#local-dev-workflow)
 - [Initializing and Enabling CarbonAudio](#initializing-and-enabling-carbonaudio)
 - [Sound Prioritization](#sound-prioritization)
 - [Spatial Audio (3D Audio)](#spatial-audio-3d-audio)
@@ -11,40 +12,42 @@ It provides a wrapper around the Wwise SDK together with some of our own solutio
 - [Contributing](#-contributing)
 - [License and Legal Notices](#-license-and-legal-notices)
 
-## Development Setup
+## Building
 
 ### Prerequisites
 - **Wwise C++ SDK**: Internally provided through the private registry. External contributors should provide their own personal license (free for personal use), available from [Audiokinetic](https://www.audiokinetic.com/en/wwise/overview/). 
 - **Windows**: Visual Studio 2026 with the v145 toolset.
 - **macOS**: Xcode command line tools.
-- **CMake** 3.16 or newer.
+- **CMake** 3.31 or newer.
 - **Git** with submodule support.
 
-### Quick Setup
-1. Clone the repository.
-2. Initialize submodules:
-   ```bash
-   git submodule update --init --recursive
-   ```
-3. Configure with the preset for your target:
-   ```bash
-   cmake --preset x64-windows-release
-   ```
-4. Build and test:
-   ```bash
-   cmake --build --preset x64-windows-release --config Release
-   ctest --preset x64-windows-release -C Release
-   ```
-
-### Installing into an EVE / Frontier branch
-This step is for CCP-internal development, where CarbonAudio is consumed as a vendored dependency of the EVE / Frontier monolith:
-
+### Configure submodules
 ```bash
-cmake --preset x64-windows-internal -DINSTALL_TO_MONOLITH=ON -DCMAKE_INSTALL_PREFIX=<branch-root>/vendor/github.com/ccpgames/carbon-audio/develop
-cmake --build --preset x64-windows-internal --config Internal --target install
+git clone --recurse-submodules <url>
 ```
 
-Alternatively, on Windows you can use the InstalltoMonolith.sln for local development.
+> On an existing clone, run `git submodule update --init --recursive` instead.
+
+### Build with CMake
+```bash
+cmake --preset x64-windows-release
+cmake --build .cmake-build-x64-windows-release --config Release
+ctest --test-dir .cmake-build-x64-windows-release -C Release
+```
+
+> Output goes to `.cmake-build-<preset-name>/`.
+
+## Local dev workflow
+Generate a Visual Studio solution .slnx with the command below which will basically cover you for most of your development needs e.g when working on the monolith.
+
+```powershell
+cmake --preset x64-windows-internal -A x64 -T v145 `
+  -DINSTALL_TO_MONOLITH=ON `
+  -DCMAKE_INSTALL_PREFIX="<vendor-folder>"
+```
+
+> If configure fails on a missing `/scripts/toolchains/windows.cmake`, set `PATH_TO_VCPKG_ROOT`
+> to `<repo>/vendor/github.com/microsoft/vcpkg`.
 
 ## Initializing and Enabling CarbonAudio
 CarbonAudio must be initialized and enabled using APIs exposed to Python. There are two ways to do this: 
