@@ -337,6 +337,15 @@ bool AudManager::WithCallbackGameObject( AkGameObjectID gameObjID, std::function
 	return false;
 }
 
+void AudManager::ForEachCallbackGameObject( const std::function<void(AkGameObjectID, AudGameObjResource*)>& fn )
+{
+	CcpAutoMutex lock( m_callbackGameObjectsMutex );
+	for( auto& pair : m_callbackGameObjects )
+	{
+		fn( pair.first, pair.second );
+	}
+}
+
 void AudManager::UnregisterGameObject( AkGameObjectID gameObjID )
 {
 	if( m_soundPrioritization )
@@ -571,6 +580,66 @@ float AudManager::GetObstructionOcclusionFadeRate() const
 void AudManager::SetObstructionOcclusionFadeRate( float value )
 {
 	m_obstructionOcclusion->SetFadeRate( value );
+}
+
+void AudManager::SetOccluderSphere( uint64_t occluderID, double x, double y, double z, float radius )
+{
+	m_obstructionOcclusion->SetOccluderSphere( occluderID, x, y, z, radius );
+}
+
+void AudManager::SetOccluderOrigin( double x, double y, double z )
+{
+	m_obstructionOcclusion->SetOccluderOrigin( x, y, z );
+}
+
+void AudManager::RemoveOccluderSphere( uint64_t occluderID )
+{
+	m_obstructionOcclusion->RemoveOccluderSphere( occluderID );
+}
+
+void AudManager::ClearOccluderSpheres()
+{
+	m_obstructionOcclusion->ClearOccluderSpheres();
+}
+
+float AudManager::GetOccluderBlockedOcclusion() const
+{
+	return m_obstructionOcclusion->GetBlockedOcclusion();
+}
+
+void AudManager::SetOccluderBlockedOcclusion( float value )
+{
+	m_obstructionOcclusion->SetBlockedOcclusion( value );
+}
+
+float AudManager::GetOccluderRadiusScale() const
+{
+	return m_obstructionOcclusion->GetOccluderRadiusScale();
+}
+
+void AudManager::SetOccluderRadiusScale( float value )
+{
+	m_obstructionOcclusion->SetOccluderRadiusScale( value );
+}
+
+float AudManager::GetOccluderLosRecomputeInterval() const
+{
+	return m_obstructionOcclusion->GetLosRecomputeInterval();
+}
+
+void AudManager::SetOccluderLosRecomputeInterval( float value )
+{
+	m_obstructionOcclusion->SetLosRecomputeInterval( value );
+}
+
+int AudManager::GetOccluderSphereCount() const
+{
+	return m_obstructionOcclusion->GetOccluderSphereCount();
+}
+
+std::string AudManager::DescribeEmitterOcclusion( AkGameObjectID emitterID ) const
+{
+	return m_obstructionOcclusion->DescribeEmitterOcclusion( emitterID );
 }
 
 void AudManager::UpdateSettings( AudSettings* settings )

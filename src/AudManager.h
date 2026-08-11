@@ -113,6 +113,8 @@ public:
 	void RemoveCallbackGameObject( AkGameObjectID gameObjID );
 	// Look up a game object by ID under lock.
 	bool WithCallbackGameObject( AkGameObjectID gameObjID, std::function<void(AudGameObjResource*)> fn );
+	// Visit every registered game object under lock. fn must not call back into the manager.
+	void ForEachCallbackGameObject( const std::function<void(AkGameObjectID, AudGameObjResource*)>& fn );
 	// Register an event to be sent to Wwise after it is done loading. Only works with soundbanks in the SoundBankStatus::Loading state.
 	void RegisterEventAfterSoundBankLoad( std::wstring & soundBankName, std::wstring & eventName, AudGameObjResource * emitter );
 	// Set an RTPC not associated with a specific game object.
@@ -135,6 +137,32 @@ public:
 	// How fast obstruction/occlusion values fade towards their targets, in units per second.
 	float GetObstructionOcclusionFadeRate() const;
 	void SetObstructionOcclusionFadeRate( float value );
+	// Add or move an occluder sphere. While any exist, occlusion is computed per emitter
+	// against them and per-emitter blockage calls are rejected.
+	void SetOccluderSphere( uint64_t occluderID, double x, double y, double z, float radius );
+	// The game world point that audio space is centred on. Occluder centres are given in game
+	// world space, which is too large for float, so the game reports its audio/render centre
+	// here as the player moves and occluders are translated as they are tested.
+	void SetOccluderOrigin( double x, double y, double z );
+	// Remove a single occluder sphere.
+	void RemoveOccluderSphere( uint64_t occluderID );
+	// Remove every occluder sphere and fade all emitters back to clear.
+	void ClearOccluderSpheres();
+	// The occlusion applied to an emitter whose sightline an occluder sphere blocks.
+	float GetOccluderBlockedOcclusion() const;
+	void SetOccluderBlockedOcclusion( float value );
+	// What fraction of an occluder's bounding radius counts as solid, in (0.0, 1.0].
+	float GetOccluderRadiusScale() const;
+	void SetOccluderRadiusScale( float value );
+	// How often sphere line of sight is recomputed, in seconds. 0 = every update.
+	float GetOccluderLosRecomputeInterval() const;
+	void SetOccluderLosRecomputeInterval( float value );
+	// How many occluder spheres are currently registered. For diagnostics.
+	int GetOccluderSphereCount() const;
+	// Why an emitter's sightline is blocked, or that it is not. For diagnostics: reports the
+	// audio-space listener and emitter positions alongside the occluder responsible, which is
+	// the only way to tell a real blockage from two positions in mismatched spaces.
+	std::string DescribeEmitterOcclusion( AkGameObjectID emitterID ) const;
 	// Can be called to see if the current platform supports spatial audio.
 	const bool SpatialAudioIsSupported();
 	// Stop all currently playing sounds on all game objects.

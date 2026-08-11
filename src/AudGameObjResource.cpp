@@ -398,6 +398,14 @@ int AudGameObjResource::ApplyEffectivePlacement( const Vector3& front, const Vec
 	m_position = position;
 	m_effectiveOrientation = corrected;
 
+	// Every path that gives this game object a real placement lands here, including
+	// the ones driven from C++ rather than Python, so this is where being positioned
+	// gets recorded. Initialize() re-applies the spawn sentinel, which does not count.
+	if( IsUsableWorldPosition( position ) )
+	{
+		m_hasReceivedPosition = true;
+	}
+
 	if( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled && m_gameObjRegistered )
 	{
 		AkSoundPosition tmp;
