@@ -21,6 +21,10 @@ class OcclusionManager(object):
         """Remove every occluder sphere and fade all emitters back to clear."""
         self.occlusion.ClearOccluderSpheres()
 
+    def ClearSightlineSource(self):
+        """Return sightlines to starting at the listener."""
+        self.occlusion.ClearSightlineSource()
+
     def GetBlockedOcclusion(self):
         """Return the occlusion applied to an emitter whose line of sight an occluder sphere blocks."""
         return self.occlusion.blockedOcclusion
@@ -82,6 +86,10 @@ class OcclusionManager(object):
     def GetRadiusScale(self):
         """Return what fraction of an occluder's radius counts as solid."""
         return self.occlusion.radiusScale
+
+    def HasSightlineSource(self):
+        """Return whether a sightline source override is currently set."""
+        return self.occlusion.HasSightlineSource()
 
     def RemoveOccluderSphere(self, occluderID):
         """Remove a single occluder sphere. Emitters it was blocking fade back to clear.
@@ -165,3 +173,17 @@ class OcclusionManager(object):
         :type scale: float
         """
         self.occlusion.radiusScale = scale
+
+    def SetSightlineSource(self, x, y, z):
+        """Trace sightlines from this game world point instead of from the listener.
+
+        For testing where occlusion should be judged from - the camera or the player's
+        ship. Feed the ship's world position every tick while the override is wanted;
+        ClearSightlineSource() flips back to the listener, so switching perspective
+        mid-flight is one call either way.
+
+        :param x, y, z: The point sightlines start from, in game world space (e.g. the
+                        ship's raw destiny ball position).
+        :type x, y, z: float
+        """
+        self.occlusion.SetSightlineSource(x, y, z)

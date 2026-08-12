@@ -17,8 +17,8 @@ namespace
 	/**
 	 * @brief A translated occluder ready for a single line-of-sight pass.
 	 *
-	 * Carries how far its near surface sits from the listener. That distance is what
-	 * lets an emitter stop scanning once the spheres are farther away than it is.
+	 * Carries how far its near surface sits from the sightline start. That distance is
+	 * what lets an emitter stop scanning once the spheres are farther away than it is.
 	 */
 	struct SortableOccluder
 	{
@@ -34,6 +34,10 @@ AudObstructionOcclusion::AudObstructionOcclusion(AudManager* audioManager)	:
 	m_originX(0.0),
 	m_originY(0.0),
 	m_originZ(0.0),
+	m_sightlineSourceX(0.0),
+	m_sightlineSourceY(0.0),
+	m_sightlineSourceZ(0.0),
+	m_hasSightlineSource(false),
 	m_fadeRate(DEFAULT_FADE_RATE),
 	m_blockedOcclusion(DEFAULT_BLOCKED_OCCLUSION),
 	m_occluderRadiusScale(DEFAULT_OCCLUDER_RADIUS_SCALE),
@@ -219,6 +223,39 @@ void AudObstructionOcclusion::SetOccluderOrigin(double x, double y, double z)
 	// It is read when line of sight is next computed, which is soon enough.
 }
 
+void AudObstructionOcclusion::SetSightlineSource(double x, double y, double z)
+{
+	CcpAutoMutex lock(m_mutex);
+	// Switching perspective should be audible immediately, but once the override is
+	// in place it moves with the ship every tick, and reacting to that would defeat
+	// the throttle just as reacting to the origin would (see SetOccluderOrigin).
+	if (!m_hasSightlineSource)
+	{
+		m_hasComputedLos = false;
+	}
+	m_hasSightlineSource = true;
+	m_sightlineSourceX = x;
+	m_sightlineSourceY = y;
+	m_sightlineSourceZ = z;
+}
+
+void AudObstructionOcclusion::ClearSightlineSource()
+{
+	CcpAutoMutex lock(m_mutex);
+	if (!m_hasSightlineSource)
+	{
+		return;
+	}
+	m_hasSightlineSource = false;
+	m_hasComputedLos = false;
+}
+
+bool AudObstructionOcclusion::HasSightlineSource() const
+{
+	CcpAutoMutex lock(m_mutex);
+	return m_hasSightlineSource;
+}
+
 void AudObstructionOcclusion::RemoveOccluderSphere(uint64_t occluderID)
 {
 	CcpAutoMutex lock(m_mutex);
@@ -312,13 +349,11 @@ uint64_t AudObstructionOcclusion::GetBlockingOccluder(AkGameObjectID emitterID) 
 		return 0;
 	}
 
-	Vector3 listenerPosition;
-	bool listenerIsPlaced = false;
-	const bool haveListener = m_audioManager->WithCallbackGameObject(LISTENER_GAME_OBJ_ID,
-		[&listenerPosition, &listenerIsPlaced](AudGameObjResource* listener) {
-			listenerPosition = listener->GetPosition();
-			listenerIsPlaced = listener->HasUsableWorldPosition();
-		});
+	Vector3 sightlineStart;
+	if (!GetSightlineStartLocked(sightlineStart))
+	{
+		return 0;
+	}
 
 	Vector3 emitterPosition;
 	bool emitterIsPlaced = false;
@@ -328,7 +363,7 @@ uint64_t AudObstructionOcclusion::GetBlockingOccluder(AkGameObjectID emitterID) 
 			emitterIsPlaced = emitter->HasUsableWorldPosition();
 		});
 
-	if (!haveListener || !listenerIsPlaced || !haveEmitter || !emitterIsPlaced)
+	if (!haveEmitter || !emitterIsPlaced)
 	{
 		return 0;
 	}
@@ -336,7 +371,7 @@ uint64_t AudObstructionOcclusion::GetBlockingOccluder(AkGameObjectID emitterID) 
 	for (const auto& occluderEntry : m_occluders)
 	{
 		const TranslatedOccluder translated = TranslateToAudioSpace(occluderEntry.second);
-		if (SegmentHitsSphere(listenerPosition, emitterPosition, translated.center, translated.radius))
+		if (SegmentHitsSphere(sightlineStart, emitterPosition, translated.center, translated.radius))
 		{
 			return occluderEntry.first;
 		}
@@ -379,6 +414,33 @@ AudObstructionOcclusion::TranslatedOccluder AudObstructionOcclusion::TranslateTo
 	         sphere.radius * m_occluderRadiusScale };
 }
 
+bool AudObstructionOcclusion::GetSightlineStartLocked(Vector3& start) const
+{
+	if (m_hasSightlineSource)
+	{
+		start = Vector3(static_cast<float>(m_sightlineSourceX - m_originX),
+		                static_cast<float>(m_sightlineSourceY - m_originY),
+		                static_cast<float>(m_sightlineSourceZ - m_originZ));
+		return true;
+	}
+
+	Vector3 listenerPosition;
+	bool listenerIsPlaced = false;
+	const bool haveListener = m_audioManager->WithCallbackGameObject(LISTENER_GAME_OBJ_ID,
+		[&listenerPosition, &listenerIsPlaced](AudGameObjResource* listener) {
+			listenerPosition = listener->GetPosition();
+			listenerIsPlaced = listener->HasUsableWorldPosition();
+		});
+	// Until a camera drives the listener it sits at the initial spawn position
+	if (!haveListener || !listenerIsPlaced)
+	{
+		return false;
+	}
+
+	start = listenerPosition;
+	return true;
+}
+
 void AudObstructionOcclusion::ComputeSphereOcclusion(std::chrono::steady_clock::time_point now)
 {
 	if (m_hasComputedLos &&
@@ -390,15 +452,8 @@ void AudObstructionOcclusion::ComputeSphereOcclusion(std::chrono::steady_clock::
 	m_hasComputedLos = true;
 	m_blockingOccluderIDs.clear();
 
-	Vector3 listenerPosition;
-	bool listenerIsPlaced = false;
-	const bool haveListener = m_audioManager->WithCallbackGameObject(LISTENER_GAME_OBJ_ID,
-		[&listenerPosition, &listenerIsPlaced](AudGameObjResource* listener) {
-			listenerPosition = listener->GetPosition();
-			listenerIsPlaced = listener->HasUsableWorldPosition();
-		});
-	// Until a camera drives the listener it sits at the initial spawn position
-	if (!haveListener || !listenerIsPlaced)
+	Vector3 sightlineStart;
+	if (!GetSightlineStartLocked(sightlineStart))
 	{
 		return;
 	}
@@ -431,9 +486,9 @@ void AudObstructionOcclusion::ComputeSphereOcclusion(std::chrono::steady_clock::
 		sortable.center = translated.center;
 		sortable.radius = translated.radius;
 
-		const Vector3 fromListener = translated.center - listenerPosition;
+		const Vector3 fromStart = translated.center - sightlineStart;
 		sortable.nearSurfaceDistance =
-			std::sqrt(Dot(fromListener, fromListener)) - translated.radius;
+			std::sqrt(Dot(fromStart, fromStart)) - translated.radius;
 
 		occluders.push_back(sortable);
 	}
@@ -449,7 +504,7 @@ void AudObstructionOcclusion::ComputeSphereOcclusion(std::chrono::steady_clock::
 
 	for (const auto& [emitterID, position] : emitters)
 	{
-		const Vector3 toEmitter = position - listenerPosition;
+		const Vector3 toEmitter = position - sightlineStart;
 		const float segmentLength = std::sqrt(Dot(toEmitter, toEmitter));
 
 		bool blocked = false;
@@ -463,7 +518,7 @@ void AudObstructionOcclusion::ComputeSphereOcclusion(std::chrono::steady_clock::
 				break;
 			}
 
-			if (SegmentHitsSphere(listenerPosition, position, occluder.center, occluder.radius))
+			if (SegmentHitsSphere(sightlineStart, position, occluder.center, occluder.radius))
 			{
 				blocked = true;
 				m_blockingOccluderIDs.insert(occluder.occluderID);
@@ -499,9 +554,9 @@ bool AudObstructionOcclusion::SegmentHitsSphere(const Vector3& segmentStart, con
 	const Vector3 toCenter = sphereCenter - segmentStart;
 	const float radiusSq = sphereRadius * sphereRadius;
 
-	// A sphere the listener is inside is not between the listener and anything. Occluder
-	// radii are coarse bounding spheres and the player routinely flies inside a large
-	// one, so counting that as blockage would muffle the entire world at once.
+	// A sphere the segment's start is inside is not between that point and anything.
+	// Occluder radii are coarse bounding spheres and the player routinely flies inside
+	// a large one, so counting that as blockage would muffle the entire world at once.
 	if (Dot(toCenter, toCenter) <= radiusSq)
 	{
 		return false;
@@ -512,7 +567,7 @@ bool AudObstructionOcclusion::SegmentHitsSphere(const Vector3& segmentStart, con
 	// division is needed to compare it against the ends.
 	const float centerProjection = Dot(toCenter, segment);
 
-	// An emitter inside a sphere needs more care than the listener did, because the two
+	// An emitter inside a sphere needs more care than the start did, because the two
 	// situations that produce it want opposite answers. A turret or beam emitter mounted
 	// on an object sits inside that object's own bounding sphere while being in plain
 	// sight, and muffling it would be permanent. A sound on the far side of the object,

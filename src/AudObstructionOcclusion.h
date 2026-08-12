@@ -96,6 +96,26 @@ public:
 	void SetOccluderOrigin(double x, double y, double z);
 
 	/**
+	 * @brief Traces sightlines from this game world point instead of from the listener.
+	 *
+	 * For testing where occlusion should be judged from - the camera or the player's
+	 * ship. The game feeds the ship's world position every tick while the override is
+	 * wanted; @c ClearSightlineSource() flips back to the listener, so switching
+	 * perspective mid-flight is one call either way. Like occluder centres, the point
+	 * is world-space doubles translated against the origin each time line of sight is
+	 * computed.
+	 */
+	void SetSightlineSource(double x, double y, double z);
+
+	/**
+	 * @brief Returns sightlines to starting at the listener.
+	 */
+	void ClearSightlineSource();
+
+	/// Whether a sightline source override is currently set.
+	bool HasSightlineSource() const;
+
+	/**
 	 * @brief Removes a single occluder sphere. Emitters it was blocking fade back to clear.
 	 */
 	void RemoveOccluderSphere(uint64_t occluderID);
@@ -207,6 +227,11 @@ private:
 	/// current origin. Callers must hold m_mutex.
 	TranslatedOccluder TranslateToAudioSpace(const OccluderSphere& sphere) const;
 
+	/// Where sightlines start: the translated source override if one is set, otherwise
+	/// the listener's position. Returns false when there is no usable start (no
+	/// override and the listener is missing or unplaced). Callers must hold m_mutex.
+	bool GetSightlineStartLocked(Vector3& start) const;
+
 	bool SendToWwise(AkGameObjectID emitterID, const EmitterState& state) const;
 
 	/// Fade every tracked emitter back to clear. Callers must hold m_mutex.
@@ -224,8 +249,8 @@ private:
 	/// All three positions are in audio space.
 	///
 	/// Not a pure intersection test at the endpoints, and deliberately asymmetric: a
-	/// sphere containing the listener never blocks, while one containing the emitter
-	/// blocks only if the emitter is past the deepest point of the crossing. 
+	/// sphere containing the segment's start never blocks, while one containing the
+	/// emitter blocks only if the emitter is past the deepest point of the crossing.
 	static bool SegmentHitsSphere(const Vector3& segmentStart, const Vector3& segmentEnd,
 	                              const Vector3& sphereCenter, float sphereRadius);
 
@@ -244,6 +269,11 @@ private:
 	double m_originX;
 	double m_originY;
 	double m_originZ;
+	// An optional game world point sightlines start from instead of the listener.
+	double m_sightlineSourceX;
+	double m_sightlineSourceY;
+	double m_sightlineSourceZ;
+	bool m_hasSightlineSource;
 	float m_fadeRate;
 	float m_blockedOcclusion;
 	float m_occluderRadiusScale;

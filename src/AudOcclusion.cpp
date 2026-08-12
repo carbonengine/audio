@@ -101,6 +101,28 @@ void AudOcclusion::SetOrigin( double x, double y, double z )
 	}
 }
 
+void AudOcclusion::SetSightlineSource( double x, double y, double z )
+{
+	if( AudObstructionOcclusion* occlusion = Occlusion() )
+	{
+		occlusion->SetSightlineSource( x, y, z );
+	}
+}
+
+void AudOcclusion::ClearSightlineSource()
+{
+	if( AudObstructionOcclusion* occlusion = Occlusion() )
+	{
+		occlusion->ClearSightlineSource();
+	}
+}
+
+bool AudOcclusion::HasSightlineSource() const
+{
+	AudObstructionOcclusion* occlusion = Occlusion();
+	return occlusion != nullptr ? occlusion->HasSightlineSource() : false;
+}
+
 void AudOcclusion::RemoveOccluderSphere( uint64_t occluderID )
 {
 	if( AudObstructionOcclusion* occlusion = Occlusion() )

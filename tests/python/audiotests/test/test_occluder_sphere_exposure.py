@@ -20,6 +20,11 @@ OFF_AXIS_SPHERE = (0, 200, 50)
 # On the segment's line but beyond the emitter.
 BEYOND_EMITTER_SPHERE = (0, 0, 150)
 
+# A sightline source past BEYOND_EMITTER_SPHERE, looking back through it at the emitter.
+SOURCE_BEYOND_SPHERE = (0, 0, 200)
+# A sightline source with a clear line to the emitter.
+SOURCE_BESIDE_EMITTER = (0, 200, 100)
+
 SPHERE_RADIUS = 10.0
 OCCLUDER_ID = 1
 
@@ -64,6 +69,7 @@ class TestOccluderSphereExposure(BaseAudio2TestClass):
 
     def tearDown(self):
         self.occlusion.SetOrigin(0.0, 0.0, 0.0)
+        self.occlusion.ClearSightlineSource()
         self.occlusion.ClearOccluderSpheres()
         self.emitter = None
         self.listener = None
@@ -441,6 +447,86 @@ class TestOccluderSphereExposure(BaseAudio2TestClass):
         # Far enough that the sphere would leave the sightline entirely once this is
         # taken into account, which the throttle is expected to postpone.
         self.occlusion.SetOrigin(0.0, SPHERE_RADIUS * 100.0, 0.0)
+        self.Pump()
+
+        self.assertEqual(self.GetOcclusion(), self.occlusion.blockedOcclusion)
+
+    def test_a_sightline_source_replaces_the_listener_as_the_segment_start(self):
+        """A sphere beyond the emitter is clear from the listener, but a source past the
+        sphere looks back through it, so the same layout blocks once the source is set."""
+        self.SetSphere(BEYOND_EMITTER_SPHERE)
+        self.Pump()
+        self.assertEqual(self.GetOcclusion(), 0.0)
+
+        self.occlusion.SetSightlineSource(*SOURCE_BEYOND_SPHERE)
+        self.Pump()
+
+        self.assertEqual(self.GetOcclusion(), self.occlusion.blockedOcclusion)
+        self.assertEqual(self.occlusion.GetBlockingOccluder(self.emitter.ID), OCCLUDER_ID)
+
+    def test_clearing_the_sightline_source_returns_to_the_listener(self):
+        self.assertFalse(self.occlusion.HasSightlineSource())
+
+        self.SetSphere(BEYOND_EMITTER_SPHERE)
+        self.occlusion.SetSightlineSource(*SOURCE_BEYOND_SPHERE)
+        self.Pump()
+        self.assertTrue(self.occlusion.HasSightlineSource())
+        self.assertGreater(self.GetOcclusion(), 0.0)
+
+        self.occlusion.ClearSightlineSource()
+        self.Pump()
+
+        self.assertFalse(self.occlusion.HasSightlineSource())
+        self.assertEqual(self.GetOcclusion(), 0.0)
+
+    def test_the_sightline_source_is_given_in_game_world_space(self):
+        """The source arrives in the same coordinates as occluder centres, so a ship
+        position at solar system range only lines up once the origin relates the two."""
+        origin = (5524469439110.0, 15879459987.0, 1989687970679.0)
+        world_source = (origin[0] + SOURCE_BEYOND_SPHERE[0],
+                        origin[1] + SOURCE_BEYOND_SPHERE[1],
+                        origin[2] + SOURCE_BEYOND_SPHERE[2])
+        world_sphere = (origin[0] + BEYOND_EMITTER_SPHERE[0],
+                        origin[1] + BEYOND_EMITTER_SPHERE[1],
+                        origin[2] + BEYOND_EMITTER_SPHERE[2])
+
+        self.occlusion.SetOrigin(*origin)
+        self.occlusion.SetSightlineSource(*world_source)
+        self.SetSphere(world_sphere)
+        self.Pump()
+
+        self.assertEqual(self.GetOcclusion(), self.occlusion.blockedOcclusion)
+
+    def test_flipping_the_sightline_source_is_not_delayed_by_the_recompute_throttle(self):
+        """Switching perspective is done by ear mid-test, so setting or clearing the
+        source must be audible on the next update however long the interval is."""
+        self.occlusion.losRecomputeInterval = LONG_RECOMPUTE_INTERVAL
+
+        self.SetSphere(BEYOND_EMITTER_SPHERE)
+        self.Pump()
+        self.assertEqual(self.GetOcclusion(), 0.0)
+
+        self.occlusion.SetSightlineSource(*SOURCE_BEYOND_SPHERE)
+        self.Pump()
+        self.assertEqual(self.GetOcclusion(), self.occlusion.blockedOcclusion)
+
+        self.occlusion.ClearSightlineSource()
+        self.Pump()
+        self.assertEqual(self.GetOcclusion(), 0.0)
+
+    def test_moving_an_existing_sightline_source_waits_for_the_recompute_throttle(self):
+        """Once set, the source follows the ship every tick, so like the origin it must
+        not force a recompute; it is picked up by the next scheduled pass."""
+        self.occlusion.losRecomputeInterval = LONG_RECOMPUTE_INTERVAL
+
+        self.occlusion.SetSightlineSource(*SOURCE_BEYOND_SPHERE)
+        self.SetSphere(BEYOND_EMITTER_SPHERE)
+        self.Pump()
+        self.assertEqual(self.GetOcclusion(), self.occlusion.blockedOcclusion)
+
+        # A vantage the sphere would not block, which the throttle is expected
+        # to postpone reacting to.
+        self.occlusion.SetSightlineSource(*SOURCE_BESIDE_EMITTER)
         self.Pump()
 
         self.assertEqual(self.GetOcclusion(), self.occlusion.blockedOcclusion)

@@ -99,6 +99,24 @@ public:
 	void SetOrigin( double x, double y, double z );
 
 	/**
+	 * @brief Traces sightlines from this game world point instead of from the listener.
+	 *
+	 * For testing where occlusion should be judged from - the camera or the player's
+	 * ship. Feed the ship's world position every tick while the override is wanted;
+	 * @c ClearSightlineSource() flips back to the listener, so switching perspective
+	 * mid-flight is one call either way.
+	 */
+	void SetSightlineSource( double x, double y, double z );
+
+	/**
+	 * @brief Returns sightlines to starting at the listener.
+	 */
+	void ClearSightlineSource();
+
+	/// Whether a sightline source override is currently set.
+	bool HasSightlineSource() const;
+
+	/**
 	 * @brief Removes a single occluder sphere. Emitters it was blocking fade back to clear.
 	 */
 	void RemoveOccluderSphere( uint64_t occluderID );

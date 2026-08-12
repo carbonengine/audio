@@ -44,6 +44,29 @@ const Be::ClassInfo* AudOcclusion::ExposeToBlue()
 		)
 		MAP_METHOD_AND_WRAP
 		(
+			"SetSightlineSource",
+			SetSightlineSource,
+			"Trace sightlines from this game world point instead of from the listener. For testing\n"
+			"where occlusion should be judged from - the camera or the player's ship. Feed the ship's\n"
+			"world position every tick while the override is wanted; ClearSightlineSource() flips back\n"
+			"to the listener.\n"
+			":param x, y, z: The point sightlines start from, in game world space (e.g. the\n"
+			"                ship's raw destiny ball position)."
+		)
+		MAP_METHOD_AND_WRAP
+		(
+			"ClearSightlineSource",
+			ClearSightlineSource,
+			"Return sightlines to starting at the listener."
+		)
+		MAP_METHOD_AND_WRAP
+		(
+			"HasSightlineSource",
+			HasSightlineSource,
+			"Whether a sightline source override is currently set."
+		)
+		MAP_METHOD_AND_WRAP
+		(
 			"RemoveOccluderSphere",
 			RemoveOccluderSphere,
 			"Remove a single occluder sphere. Emitters it was blocking fade back to clear.\n"
