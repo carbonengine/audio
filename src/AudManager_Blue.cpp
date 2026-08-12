@@ -50,15 +50,8 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		MAP_PROPERTY( "enableDiffraction", GetEnableDiffraction, SetEnableDiffraction, "Per-mesh setting: enable or disable geometric diffraction on mesh geometry.")
 		MAP_PROPERTY( "enableDiffractionOnBoundaryEdges", GetEnableDiffractionOnBoundaryEdges, SetEnableDiffractionOnBoundaryEdges, "Per-mesh setting: switch to enable or disable geometric diffraction on boundary edges for this mesh.")
 
-		// Obstruction / occlusion
-		MAP_PROPERTY( "obstructionOcclusionEnabled", GetObstructionOcclusionEnabled, SetObstructionOcclusionEnabled, "Enable or disable game-driven obstruction/occlusion processing. Disabling fades all values back to clear.")
-		MAP_PROPERTY( "obstructionOcclusionFadeRate", GetObstructionOcclusionFadeRate, SetObstructionOcclusionFadeRate, "How fast obstruction/occlusion values fade towards their targets, in units per second. 0 = instantaneous.")
-		MAP_PROPERTY( "occluderBlockedOcclusion", GetOccluderBlockedOcclusion, SetOccluderBlockedOcclusion, "Occlusion [0.0-1.0] applied to an emitter whose line of sight an occluder sphere blocks. Kept below 1.0 so blocked sounds stay muffled instead of silenced.")
-		MAP_PROPERTY( "occluderRadiusScale", GetOccluderRadiusScale, SetOccluderRadiusScale, "What fraction [0.0-1.0] of an occluder's radius counts as solid. The game registers bounding spheres, which are much larger than the objects inside them, so a sightline can clip a sphere while passing visibly clear of the rock. Lower this to require real overlap instead of a graze. 1.0 uses the radii as given.")
-		MAP_PROPERTY( "occluderLosRecomputeInterval", GetOccluderLosRecomputeInterval, SetOccluderLosRecomputeInterval, "How often sphere line of sight is recomputed, in seconds. Fades still advance every update. 0 = every update.")
-
 		MAP_METHOD_AND_WRAP
-		( 
+		(
 			"UpdateSettings",
 			UpdateSettings,
 			"Update settings to be used when starting Wwise. Needs to be called before SetEnabled in order to apply.\n"
@@ -168,80 +161,6 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		)
 		MAP_METHOD_AND_WRAP
 		(
-			"SetEmitterLineOfSightBlockage",
-			SetEmitterLineOfSightBlockage,
-			"Set a line-of-sight blockage ratio [0.0-1.0] for an emitter (0 = clear). Returns True if the emitter exists."
-		)
-		MAP_METHOD_AND_WRAP
-		(
-			"GetEmitterOcclusion",
-			GetEmitterOcclusion,
-			"Get the occlusion value currently applied to an emitter. This is the live, mid-fade value "
-			"rather than the target that was set, so it can be used to observe a fade in progress. "
-			"Returns 0.0 if the emitter is clear or is not being tracked."
-		)
-		MAP_METHOD_AND_WRAP
-		(
-			"ClearObstructionOcclusion",
-			ClearObstructionOcclusion,
-			"Fade the obstruction/occlusion values of all tracked emitters back to clear."
-		)
-		MAP_METHOD_AND_WRAP
-		(
-			"SetOccluderSphere",
-			SetOccluderSphere,
-			"Add or move a sphere that blocks the line of sight to emitters behind it. While any occluder\n"
-			"spheres are registered, occlusion is computed per emitter against them every update and\n"
-			"per-emitter blockage calls (SetEmitterLineOfSightBlockage) are rejected.\n"
-			":param occluderID: Stable identifier of the occluder (e.g. a destiny ball ID).\n"
-			":param x, y, z:   Centre of the sphere in game world space (e.g. raw destiny ball\n"
-			"                  coordinates). Kept in double precision and translated into audio\n"
-			"                  space via SetOccluderOrigin, so occluders never need re-sending\n"
-			"                  as the player moves.\n"
-			":param radius:    Radius of the sphere. Values <= 0 remove the occluder."
-		)
-		MAP_METHOD_AND_WRAP
-		(
-			"SetOccluderOrigin",
-			SetOccluderOrigin,
-			"Report the game world point that audio space is centred on. Emitter and listener positions\n"
-			"reach audio as floats relative to this point, while occluder centres are given in game world\n"
-			"space, so this is what relates the two. Send it every tick; it costs one call no matter how\n"
-			"many occluders are registered.\n"
-			":param x, y, z: The game world position corresponding to the audio space origin\n"
-			"                (in EVE, the ego ball's position)."
-		)
-		MAP_METHOD_AND_WRAP
-		(
-			"GetOccluderSphereCount",
-			GetOccluderSphereCount,
-			"How many occluder spheres are currently registered."
-		)
-		MAP_METHOD_AND_WRAP
-		(
-			"DescribeEmitterOcclusion",
-			DescribeEmitterOcclusion,
-			"Explain an emitter's sightline, for diagnosing occlusion that looks wrong. Reports the\n"
-			"audio-space listener and emitter positions this system is comparing, the occluder origin,\n"
-			"the emitter's current and target occlusion, and which occluder blocks it if any.\n"
-			":param emitterID: The emitter to explain.\n"
-			":return: A human-readable summary."
-		)
-		MAP_METHOD_AND_WRAP
-		(
-			"RemoveOccluderSphere",
-			RemoveOccluderSphere,
-			"Remove a single occluder sphere. Emitters it was blocking fade back to clear.\n"
-			":param occluderID: The identifier the occluder was registered with."
-		)
-		MAP_METHOD_AND_WRAP
-		(
-			"ClearOccluderSpheres",
-			ClearOccluderSpheres,
-			"Remove every occluder sphere and fade all emitters back to clear."
-		)
-		MAP_METHOD_AND_WRAP
-		( 
 			"SpatialAudioIsSupported",
 			SpatialAudioIsSupported,
 			"Signals whether Carbon Audio suports spatial audio on the current operating system."

@@ -10,16 +10,19 @@
 
 #include <algorithm>
 #include <cmath>
-#include <sstream>
 #include <vector>
 
 namespace
 {
-	/// An occluder translated into audio space for a single line-of-sight pass,
-	/// with how far its near surface sits from the listener. That distance is what
-	/// lets an emitter stop scanning once the spheres are farther away than it is.
-	struct TranslatedOccluder
+	/**
+	 * @brief A translated occluder ready for a single line-of-sight pass.
+	 *
+	 * Carries how far its near surface sits from the listener. That distance is what
+	 * lets an emitter stop scanning once the spheres are farther away than it is.
+	 */
+	struct SortableOccluder
 	{
+		uint64_t occluderID = 0;
 		Vector3 center;
 		float radius = 0.0f;
 		float nearSurfaceDistance = 0.0f;
@@ -64,7 +67,7 @@ void AudObstructionOcclusion::Update()
 
 	CcpAutoMutex lock( m_mutex );
 
-	if (InSphereMode())
+	if (SphereOcclusionActive())
 	{
 		ComputeSphereOcclusion(now);
 	}
@@ -107,69 +110,6 @@ void AudObstructionOcclusion::Update()
 	}
 }
 
-bool AudObstructionOcclusion::SetObstructionOcclusion(AkGameObjectID emitterID, float obstruction, float occlusion)
-{
-	if (!m_enabled)
-	{
-		return false;
-	}
-
-	if (m_audioManager == nullptr || m_audioManager->GetState() != AudioState::Enabled)
-	{
-		return false;
-	}
-
-	// Values are relative to the listener, so setting them on the listener itself is meaningless.
-	if (emitterID == LISTENER_GAME_OBJ_ID)
-	{
-		return false;
-	}
-
-	// We need to ask AudioManager about emitters that actually exist.
-	if (!m_audioManager->WithCallbackGameObject(emitterID, [](AudGameObjResource*) {}))
-	{
-		return false;
-	}
-
-	CcpAutoMutex lock(m_mutex);
-
-	// While occluder spheres drive the occlusion, per-emitter values would fight
-	// with what Update() computes, so they are rejected instead of merged.
-	if (InSphereMode())
-	{
-		return false;
-	}
-
-	const auto [entry, isNewEmitter] = m_emitters.try_emplace(emitterID);
-	EmitterState& state = entry->second;
-
-	state.obstruction.SetTarget(obstruction);
-	state.occlusion.SetTarget(occlusion);
-
-	if (isNewEmitter)
-	{
-		state.obstruction.SnapToTarget();
-		state.occlusion.SnapToTarget();
-	}
-
-	return true;
-}
-
-bool AudObstructionOcclusion::SetEmitterLineOfSightBlockage(AkGameObjectID emitterID, float blockage)
-{
-	// When Acoustics is On its transmission already attenuates, so skip occlusion to avoid stacking.
-	// Might change in the future with the addition of volumes.
-	const bool acousticsEnabled = m_audioManager != nullptr && m_audioManager->GetSpatialAudioGeometryEnabled();
-
-	float occlusion = 0.0f;
-	if (!acousticsEnabled)
-	{
-		occlusion = blockage;
-	}
-
-	return SetObstructionOcclusion(emitterID, 0.0f, occlusion);
-}
-
 float AudObstructionOcclusion::GetEmitterOcclusion(AkGameObjectID emitterID) const
 {
 	CcpAutoMutex lock(m_mutex);
@@ -204,6 +144,7 @@ void AudObstructionOcclusion::Reset()
 	CcpAutoMutex lock(m_mutex);
 	m_emitters.clear();
 	m_occluders.clear();
+	m_blockingOccluderIDs.clear();
 	m_hasUpdated = false;
 	m_hasComputedLos = false;
 }
@@ -286,6 +227,7 @@ void AudObstructionOcclusion::RemoveOccluderSphere(uint64_t occluderID)
 		return;
 	}
 	m_hasComputedLos = false;
+	m_blockingOccluderIDs.erase(occluderID);
 
 	// The last sphere leaving ends sphere mode, so nothing would ever compute
 	// the emitters back to clear. Fade them out here instead.
@@ -303,6 +245,7 @@ void AudObstructionOcclusion::ClearOccluderSpheres()
 		return;
 	}
 	m_occluders.clear();
+	m_blockingOccluderIDs.clear();
 	m_hasComputedLos = false;
 	ClearAllTargetsLocked();
 }
@@ -350,114 +293,90 @@ int AudObstructionOcclusion::GetOccluderSphereCount() const
 	return static_cast<int>(m_occluders.size());
 }
 
-std::string AudObstructionOcclusion::DescribeEmitterOcclusion(AkGameObjectID emitterID) const
+std::vector<uint64_t> AudObstructionOcclusion::GetBlockingOccluderIDs() const
+{
+	CcpAutoMutex lock(m_mutex);
+	if (!SphereOcclusionActive())
+	{
+		return {};
+	}
+	return std::vector<uint64_t>(m_blockingOccluderIDs.begin(), m_blockingOccluderIDs.end());
+}
+
+uint64_t AudObstructionOcclusion::GetBlockingOccluder(AkGameObjectID emitterID) const
 {
 	CcpAutoMutex lock(m_mutex);
 
-	std::ostringstream out;
-	out.precision(1);
-	out << std::fixed;
-
 	if (m_audioManager == nullptr)
 	{
-		return "no audio manager";
+		return 0;
 	}
 
 	Vector3 listenerPosition;
-	bool haveListener = false;
 	bool listenerIsPlaced = false;
-	Vector3 emitterPosition;
-	bool haveEmitter = false;
-	bool emitterIsPlaced = false;
-
-	m_audioManager->ForEachCallbackGameObject(
-		[&](AkGameObjectID gameObjID, AudGameObjResource* gameObj) {
-			if (gameObjID == LISTENER_GAME_OBJ_ID)
-			{
-				haveListener = true;
-				listenerPosition = gameObj->GetPosition();
-				listenerIsPlaced = gameObj->HasReceivedPosition()
-					&& IsUsableWorldPosition(listenerPosition);
-			}
-			else if (gameObjID == emitterID)
-			{
-				haveEmitter = true;
-				emitterPosition = gameObj->GetPosition();
-				emitterIsPlaced = gameObj->HasReceivedPosition()
-					&& IsUsableWorldPosition(emitterPosition);
-			}
+	const bool haveListener = m_audioManager->WithCallbackGameObject(LISTENER_GAME_OBJ_ID,
+		[&listenerPosition, &listenerIsPlaced](AudGameObjResource* listener) {
+			listenerPosition = listener->GetPosition();
+			listenerIsPlaced = listener->HasUsableWorldPosition();
 		});
 
-	if (!haveEmitter)
-	{
-		return "emitter does not exist";
-	}
-	if (!haveListener)
-	{
-		return "listener is not registered";
-	}
+	Vector3 emitterPosition;
+	bool emitterIsPlaced = false;
+	const bool haveEmitter = m_audioManager->WithCallbackGameObject(emitterID,
+		[&emitterPosition, &emitterIsPlaced](AudGameObjResource* emitter) {
+			emitterPosition = emitter->GetPosition();
+			emitterIsPlaced = emitter->HasUsableWorldPosition();
+		});
 
-	out << "occluders=" << m_occluders.size()
-		<< " sphereMode=" << (InSphereMode() ? "yes" : "no")
-		<< " radiusScale=" << m_occluderRadiusScale
-		<< " origin=(" << m_originX << ", " << m_originY << ", " << m_originZ << ")"
-		<< " listener=(" << listenerPosition.x << ", " << listenerPosition.y << ", "
-		<< listenerPosition.z << ")" << (listenerIsPlaced ? "" : " [UNPLACED]")
-		<< " emitter=(" << emitterPosition.x << ", " << emitterPosition.y << ", "
-		<< emitterPosition.z << ")" << (emitterIsPlaced ? "" : " [UNPLACED]");
-
-	const auto tracked = m_emitters.find(emitterID);
-	out << " occlusion=";
-	if (tracked == m_emitters.end())
+	if (!haveListener || !listenerIsPlaced || !haveEmitter || !emitterIsPlaced)
 	{
-		out << "untracked";
-	}
-	else
-	{
-		out << tracked->second.occlusion.currentValue
-			<< "->" << tracked->second.occlusion.targetValue;
+		return 0;
 	}
 
-	if (!listenerIsPlaced || !emitterIsPlaced)
-	{
-		return out.str();
-	}
-
-	// How far away the emitter is. Worth printing: an emitter on a star or a planet is
-	// millions of kilometres out, and a sightline that long crosses the whole local
-	// occluder field, so it reads as blocked for reasons that have nothing to do with
-	// what you can see.
-	const Vector3 toEmitter = emitterPosition - listenerPosition;
-	out << " range=" << std::sqrt(Dot(toEmitter, toEmitter));
-
-	// The rest mirrors ComputeSphereOcclusion, shrunken radii included. A diagnostic
-	// reporting raw radii would explain a different answer than the emitter actually got.
 	for (const auto& occluderEntry : m_occluders)
 	{
-		const OccluderSphere& sphere = occluderEntry.second;
-		const Vector3 center(static_cast<float>(sphere.centerX - m_originX),
-		                     static_cast<float>(sphere.centerY - m_originY),
-		                     static_cast<float>(sphere.centerZ - m_originZ));
-		const float scaledRadius = sphere.radius * m_occluderRadiusScale;
-		if (SegmentHitsSphere(listenerPosition, emitterPosition, center, scaledRadius))
+		const TranslatedOccluder translated = TranslateToAudioSpace(occluderEntry.second);
+		if (SegmentHitsSphere(listenerPosition, emitterPosition, translated.center, translated.radius))
 		{
-			out << " blockedBy=" << occluderEntry.first
-				<< " at=(" << center.x << ", " << center.y << ", " << center.z << ")"
-				<< " radius=" << sphere.radius << " scaledRadius=" << scaledRadius;
-			return out.str();
+			return occluderEntry.first;
 		}
 	}
 
-	out << " blockedBy=none";
-	return out.str();
+	return 0;
 }
 
-bool AudObstructionOcclusion::InSphereMode() const
+double AudObstructionOcclusion::GetOriginX() const
+{
+	CcpAutoMutex lock(m_mutex);
+	return m_originX;
+}
+
+double AudObstructionOcclusion::GetOriginY() const
+{
+	CcpAutoMutex lock(m_mutex);
+	return m_originY;
+}
+
+double AudObstructionOcclusion::GetOriginZ() const
+{
+	CcpAutoMutex lock(m_mutex);
+	return m_originZ;
+}
+
+bool AudObstructionOcclusion::SphereOcclusionActive() const
 {
 	return m_enabled
 		&& !m_occluders.empty()
 		&& m_audioManager != nullptr
 		&& !m_audioManager->GetSpatialAudioGeometryEnabled();
+}
+
+AudObstructionOcclusion::TranslatedOccluder AudObstructionOcclusion::TranslateToAudioSpace(const OccluderSphere& sphere) const
+{
+	return { Vector3(static_cast<float>(sphere.centerX - m_originX),
+	                 static_cast<float>(sphere.centerY - m_originY),
+	                 static_cast<float>(sphere.centerZ - m_originZ)),
+	         sphere.radius * m_occluderRadiusScale };
 }
 
 void AudObstructionOcclusion::ComputeSphereOcclusion(std::chrono::steady_clock::time_point now)
@@ -469,67 +388,54 @@ void AudObstructionOcclusion::ComputeSphereOcclusion(std::chrono::steady_clock::
 	}
 	m_lastLosComputeTime = now;
 	m_hasComputedLos = true;
+	m_blockingOccluderIDs.clear();
 
 	Vector3 listenerPosition;
 	bool listenerIsPlaced = false;
 	const bool haveListener = m_audioManager->WithCallbackGameObject(LISTENER_GAME_OBJ_ID,
 		[&listenerPosition, &listenerIsPlaced](AudGameObjResource* listener) {
 			listenerPosition = listener->GetPosition();
-			listenerIsPlaced = IsUsableWorldPosition(listenerPosition);
+			listenerIsPlaced = listener->HasUsableWorldPosition();
 		});
-	// Until a camera drives the listener it sits on the spawn sentinel, and every
-	// segment test against it would be meaningless rather than merely wrong.
+	// Until a camera drives the listener it sits at the initial spawn position
 	if (!haveListener || !listenerIsPlaced)
 	{
 		return;
 	}
 
-	// Snapshot the positioned emitters so targets are not set while the
-	// manager's game object map is locked.
+	// Snapshot the positioned emitters so targets are not set while the manager's game object map is locked.
 	std::vector<std::pair<AkGameObjectID, Vector3>> emitters;
 	m_audioManager->ForEachCallbackGameObject(
 		[&emitters](AkGameObjectID gameObjID, AudGameObjResource* gameObj) {
-			if (gameObjID == LISTENER_GAME_OBJ_ID || !gameObj->HasReceivedPosition())
+			if (gameObjID == LISTENER_GAME_OBJ_ID || !gameObj->HasUsableWorldPosition())
 			{
 				return;
 			}
-			// A culled emitter is outside Wwise's view, so working out its sightline
-			// buys nothing. Update() already resends a culled emitter's values when it
-			// wakes, and the pass after that retargets it, so it is stale for at most
-			// one recompute interval.
+			// A culled emitter is outside Wwise's view, so working out its sightline buys nothing. 
 			if (gameObj->IsCulled())
 			{
 				return;
 			}
-			const Vector3 position = gameObj->GetPosition();
-			if (!IsUsableWorldPosition(position))
-			{
-				return;
-			}
-			emitters.emplace_back(gameObjID, position);
+			emitters.emplace_back(gameObjID, gameObj->GetPosition());
 		});
 
 	// Translate the occluders into audio space once, rather than once per emitter.
-	// The subtraction is what the double precision is for; the result is local to
-	// the player and small enough for a float to carry.
-	std::vector<TranslatedOccluder> occluders;
+	std::vector<SortableOccluder> occluders;
 	occluders.reserve(m_occluders.size());
 	for (const auto& occluderEntry : m_occluders)
 	{
-		const OccluderSphere& sphere = occluderEntry.second;
-		TranslatedOccluder translated;
-		translated.center = Vector3(static_cast<float>(sphere.centerX - m_originX),
-		                            static_cast<float>(sphere.centerY - m_originY),
-		                            static_cast<float>(sphere.centerZ - m_originZ));
-		// Shrunk once here, so every test below and the culling that skips them agree
-		// on how big this sphere is.
-		translated.radius = sphere.radius * m_occluderRadiusScale;
+		const TranslatedOccluder translated = TranslateToAudioSpace(occluderEntry.second);
+
+		SortableOccluder sortable;
+		sortable.occluderID = occluderEntry.first;
+		sortable.center = translated.center;
+		sortable.radius = translated.radius;
 
 		const Vector3 fromListener = translated.center - listenerPosition;
-		translated.nearSurfaceDistance =
+		sortable.nearSurfaceDistance =
 			std::sqrt(Dot(fromListener, fromListener)) - translated.radius;
 
-		occluders.push_back(translated);
+		occluders.push_back(sortable);
 	}
 
 	// Nearest surface first, so each emitter can stop scanning early below. The game
@@ -537,7 +443,7 @@ void AudObstructionOcclusion::ComputeSphereOcclusion(std::chrono::steady_clock::
 	// a few kilometres out, so ordering the list once per pass saves testing most of
 	// it once per emitter.
 	std::sort(occluders.begin(), occluders.end(),
-		[](const TranslatedOccluder& lhs, const TranslatedOccluder& rhs) {
+		[](const SortableOccluder& lhs, const SortableOccluder& rhs) {
 			return lhs.nearSurfaceDistance < rhs.nearSurfaceDistance;
 		});
 
@@ -560,6 +466,7 @@ void AudObstructionOcclusion::ComputeSphereOcclusion(std::chrono::steady_clock::
 			if (SegmentHitsSphere(listenerPosition, position, occluder.center, occluder.radius))
 			{
 				blocked = true;
+				m_blockingOccluderIDs.insert(occluder.occluderID);
 				break;
 			}
 		}
@@ -573,8 +480,8 @@ void AudObstructionOcclusion::ComputeSphereOcclusion(std::chrono::steady_clock::
 				continue;
 			}
 			EmitterState& state = m_emitters[emitterID];
-			// First value snaps, matching SetObstructionOcclusion: an emitter that
-			// spawns behind cover starts muffled instead of fading in from clear.
+			// The first value snaps: an emitter that spawns behind cover starts
+			// muffled instead of fading in from clear.
 			state.occlusion.SetTarget(m_blockedOcclusion);
 			state.occlusion.SnapToTarget();
 			continue;

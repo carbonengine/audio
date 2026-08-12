@@ -25,10 +25,8 @@ const int START_GAME_OBJ_COUNT = 5;
 // Game objects are culled by default so this value will never hit Wwise.
 const Vector3 WWISE_INIT_POSITION = Vector3(FLT_MAX, FLT_MAX, FLT_MAX);
 
-// Whether a position is a real world placement rather than the spawn sentinel above.
-// Geometric systems must ask this before doing math with a position: the sentinel is
-// finite, so it silently poisons distance and line-of-sight results with infinities
-// and NaNs instead of failing loudly.
+// Whether a position is a real world placement rather than initial position. 
+// Also defends against positions that are NaN or infinite when calculating distances and line-of-sight.
 inline bool IsUsableWorldPosition( const Vector3& position )
 {
 	return std::isfinite( position.x ) && std::isfinite( position.y ) && std::isfinite( position.z )

@@ -1062,9 +1062,14 @@ AkGameObjectID AudGameObjResource::GetID() const
     return m_ID;
 }
 
-Vector3 AudGameObjResource::GetPosition() const 
+Vector3 AudGameObjResource::GetPosition() const
 {
     return m_position;
+}
+
+bool AudGameObjResource::HasUsableWorldPosition() const
+{
+	return m_hasReceivedPosition && IsUsableWorldPosition( GetPosition() );
 }
 
 Vector3 AudGameObjResource::GetFront() const
