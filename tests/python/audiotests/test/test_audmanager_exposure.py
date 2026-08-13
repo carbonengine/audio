@@ -90,8 +90,9 @@ class TestAudManagerExposure(unittest.TestCase):
         emitter1 = audio2.AudEmitter("emitter1")
         self.audioManager.LoadBank(COMMON_BNK)
         self.audioManager.LoadBank(LOOP_BNK)
-        self.assertEqual(emitter1.SendEvent(LOOP_EVENT), 0) 
-        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
+        self.assertEqual(emitter1.SendEvent(LOOP_EVENT), 0)
+        self.assertTrue(PumpOSWithTimeout(lambda: not emitter1.GetPlayingEvents(), maxTries=20),
+                        "Timed out waiting for the queued event to be resent after the SoundBank loaded.")
         self.assertEqual(list(emitter1.GetPlayingEvents().values())[0], LOOP_EVENT)
 
     def test_audmanager_sends_events_sent_while_loading_after_complete_with_prefix(self):
@@ -104,8 +105,9 @@ class TestAudManagerExposure(unittest.TestCase):
         self.audioManager.LoadBank(COMMON_BNK)
         self.audioManager.LoadBank(LOOP_BNK)
         # Send event without Play_ at the beginning, as the audio emitter will prepend it for us.
-        self.assertEqual(prefixEmitter.SendEvent(LOOP_EVENT.replace(eventPrefix, "")), 0) 
-        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
+        self.assertEqual(prefixEmitter.SendEvent(LOOP_EVENT.replace(eventPrefix, "")), 0)
+        self.assertTrue(PumpOSWithTimeout(lambda: not prefixEmitter.GetPlayingEvents(), maxTries=20),
+                        "Timed out waiting for the queued event to be resent after the SoundBank loaded.")
         # The event, at the send, should come out with the full prefix (e.g. Play_TestLoop)
         self.assertEqual(list(prefixEmitter.GetPlayingEvents().values())[0], LOOP_EVENT)
 
