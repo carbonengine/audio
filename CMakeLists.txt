@@ -44,6 +44,8 @@ ccp_add_library(CarbonAudio SHARED
 	src/AudGeometry.cpp
 	src/AudGeometry_Blue.cpp
     src/AudObstructionOcclusion.cpp
+	src/AudOcclusion.cpp
+	src/AudOcclusion_Blue.cpp
 	src/SpatialAudioSettings.cpp
 	src/audio2.cpp
 	src/AudGameObjResource_Blue.cpp
@@ -85,6 +87,7 @@ target_sources(CarbonAudio PRIVATE
 	src/AudMusicPlayer.h
 	src/AudGeometry.h
     src/AudObstructionOcclusion.h
+	src/AudOcclusion.h
 	src/SpatialAudioSettings.h
 	src/autoversion.h
 	src/DebugUtilities.h

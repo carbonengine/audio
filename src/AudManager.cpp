@@ -538,39 +538,9 @@ const bool AudManager::SpatialAudioIsSupported()
 	return s_systemSupportsSpatialAudio;
 }
 
-bool AudManager::SetEmitterLineOfSightBlockage( AkGameObjectID emitterID, float blockage )
+AudObstructionOcclusion* AudManager::GetObstructionOcclusion() const
 {
-	return m_obstructionOcclusion->SetEmitterLineOfSightBlockage( emitterID, blockage );
-}
-
-float AudManager::GetEmitterOcclusion( AkGameObjectID emitterID ) const
-{
-	return m_obstructionOcclusion->GetEmitterOcclusion( emitterID );
-}
-
-void AudManager::ClearObstructionOcclusion()
-{
-	m_obstructionOcclusion->ClearAll();
-}
-
-bool AudManager::GetObstructionOcclusionEnabled() const
-{
-	return m_obstructionOcclusion->IsEnabled();
-}
-
-void AudManager::SetObstructionOcclusionEnabled( bool value )
-{
-	m_obstructionOcclusion->SetEnabled( value );
-}
-
-float AudManager::GetObstructionOcclusionFadeRate() const
-{
-	return m_obstructionOcclusion->GetFadeRate();
-}
-
-void AudManager::SetObstructionOcclusionFadeRate( float value )
-{
-	m_obstructionOcclusion->SetFadeRate( value );
+	return m_obstructionOcclusion.get();
 }
 
 void AudManager::UpdateSettings( AudSettings* settings )

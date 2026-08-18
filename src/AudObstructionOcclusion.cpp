@@ -13,6 +13,7 @@
 AudObstructionOcclusion::AudObstructionOcclusion(AudManager* audioManager)	:
 	m_audioManager(audioManager),
 	m_fadeRate(DEFAULT_FADE_RATE),
+	m_blockedOcclusion(DEFAULT_BLOCKED_OCCLUSION),
 	m_hasUpdated(false),
 	m_enabled(true),
 	m_mutex("AudObstructionOcclusion", "m_mutex")
@@ -57,7 +58,6 @@ void AudObstructionOcclusion::Update()
 			continue;
 		}
 
-		const bool obstructionChanged = state.obstruction.Advance(deltaSeconds, m_fadeRate);
 		const bool occlusionChanged = state.occlusion.Advance(deltaSeconds, m_fadeRate);
 
 		if (culled)
@@ -69,7 +69,7 @@ void AudObstructionOcclusion::Update()
 			continue;
 		}
 
-		if (obstructionChanged || occlusionChanged || state.needsSend)
+		if (occlusionChanged || state.needsSend)
 		{
 			state.needsSend = !SendToWwise(emitterID, state);
 		}
@@ -79,60 +79,50 @@ void AudObstructionOcclusion::Update()
 	}
 }
 
-bool AudObstructionOcclusion::SetObstructionOcclusion(AkGameObjectID emitterID, float obstruction, float occlusion)
+void AudObstructionOcclusion::SetEmitterBlocked(AkGameObjectID emitterID, bool blocked)
 {
-	if (!m_enabled)
-	{
-		return false;
-	}
-
-	if (m_audioManager == nullptr || m_audioManager->GetState() != AudioState::Enabled)
-	{
-		return false;
-	}
-
-	// Values are relative to the listener, so setting them on the listener itself is meaningless.
+	// Occlusion is relative to the listener, so blocking the listener is meaningless.
 	if (emitterID == LISTENER_GAME_OBJ_ID)
 	{
-		return false;
+		return;
 	}
 
-	// We need to ask AudioManager about emitters that actually exist.
-	if (!m_audioManager->WithCallbackGameObject(emitterID, [](AudGameObjResource*) {}))
+	if (!m_enabled)
 	{
-		return false;
+		return;
+	}
+
+	// When acoustics is on its transmission already attenuates, so treat everything
+	// as clear to avoid stacking. Might change in the future with the addition of volumes.
+	if (m_audioManager != nullptr && m_audioManager->GetSpatialAudioGeometryEnabled())
+	{
+		blocked = false;
 	}
 
 	CcpAutoMutex lock(m_mutex);
 
-	const auto [entry, isNewEmitter] = m_emitters.try_emplace(emitterID);
-	EmitterState& state = entry->second;
-
-	state.obstruction.SetTarget(obstruction);
-	state.occlusion.SetTarget(occlusion);
-
-	if (isNewEmitter)
+	auto it = m_emitters.find(emitterID);
+	if (it == m_emitters.end())
 	{
-		state.obstruction.SnapToTarget();
+		// Do not track emitters that have never been blocked; most never are.
+		if (!blocked)
+		{
+			return;
+		}
+
+		// If the emitter does not exist yet the entry is dropped by the next
+		// Update(); the game's regular feed re-establishes it once it does.
+		EmitterState& state = m_emitters[emitterID];
+		state.blocked = true;
+		// The first value snaps: an emitter that starts out behind cover is
+		// muffled immediately instead of fading in from clear.
+		state.occlusion.SetTarget(m_blockedOcclusion);
 		state.occlusion.SnapToTarget();
+		return;
 	}
 
-	return true;
-}
-
-bool AudObstructionOcclusion::SetEmitterLineOfSightBlockage(AkGameObjectID emitterID, float blockage)
-{
-	// When Acoustics is On its transmission already attenuates, so skip occlusion to avoid stacking.
-	// Might change in the future with the addition of volumes.
-	const bool acousticsEnabled = m_audioManager != nullptr && m_audioManager->GetSpatialAudioGeometryEnabled();
-
-	float occlusion = 0.0f;
-	if (!acousticsEnabled)
-	{
-		occlusion = blockage;
-	}
-
-	return SetObstructionOcclusion(emitterID, 0.0f, occlusion);
+	it->second.blocked = blocked;
+	it->second.occlusion.SetTarget(blocked ? m_blockedOcclusion : 0.0f);
 }
 
 float AudObstructionOcclusion::GetEmitterOcclusion(AkGameObjectID emitterID) const
@@ -153,7 +143,7 @@ bool AudObstructionOcclusion::SendToWwise(AkGameObjectID emitterID, const Emitte
 	const AKRESULT result = AK::SoundEngine::SetObjectObstructionAndOcclusion(
 		emitterID,
 		LISTENER_GAME_OBJ_ID,
-		state.obstruction.currentValue,
+		0.0f,
 		state.occlusion.currentValue);
 	return result == AK_Success;
 }
@@ -174,9 +164,14 @@ void AudObstructionOcclusion::Reset()
 void AudObstructionOcclusion::ClearAll()
 {
 	CcpAutoMutex lock(m_mutex);
+	ClearAllTargetsLocked();
+}
+
+void AudObstructionOcclusion::ClearAllTargetsLocked()
+{
 	for (auto& pair : m_emitters)
 	{
-		pair.second.obstruction.SetTarget(0.0f);
+		pair.second.blocked = false;
 		pair.second.occlusion.SetTarget(0.0f);
 	}
 }
@@ -208,6 +203,26 @@ float AudObstructionOcclusion::GetFadeRate() const
 void AudObstructionOcclusion::SetFadeRate(float value)
 {
 	m_fadeRate = std::max(value, 0.0f);
+}
+
+float AudObstructionOcclusion::GetBlockedOcclusion() const
+{
+	return m_blockedOcclusion;
+}
+
+void AudObstructionOcclusion::SetBlockedOcclusion(float value)
+{
+	CcpAutoMutex lock(m_mutex);
+	m_blockedOcclusion = std::clamp(value, 0.0f, 1.0f);
+
+	// QA tooling tunes this live, so emitters already blocked follow it.
+	for (auto& pair : m_emitters)
+	{
+		if (pair.second.blocked)
+		{
+			pair.second.occlusion.SetTarget(m_blockedOcclusion);
+		}
+	}
 }
 
 void AudObstructionOcclusion::FadingValue::SetTarget(float target)

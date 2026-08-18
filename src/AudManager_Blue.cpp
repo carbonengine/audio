@@ -50,12 +50,8 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		MAP_PROPERTY( "enableDiffraction", GetEnableDiffraction, SetEnableDiffraction, "Per-mesh setting: enable or disable geometric diffraction on mesh geometry.")
 		MAP_PROPERTY( "enableDiffractionOnBoundaryEdges", GetEnableDiffractionOnBoundaryEdges, SetEnableDiffractionOnBoundaryEdges, "Per-mesh setting: switch to enable or disable geometric diffraction on boundary edges for this mesh.")
 
-		// Obstruction / occlusion
-		MAP_PROPERTY( "obstructionOcclusionEnabled", GetObstructionOcclusionEnabled, SetObstructionOcclusionEnabled, "Enable or disable game-driven obstruction/occlusion processing. Disabling fades all values back to clear.")
-		MAP_PROPERTY( "obstructionOcclusionFadeRate", GetObstructionOcclusionFadeRate, SetObstructionOcclusionFadeRate, "How fast obstruction/occlusion values fade towards their targets, in units per second. 0 = instantaneous.")
-		
 		MAP_METHOD_AND_WRAP
-		( 
+		(
 			"UpdateSettings",
 			UpdateSettings,
 			"Update settings to be used when starting Wwise. Needs to be called before SetEnabled in order to apply.\n"
@@ -165,26 +161,6 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		)
 		MAP_METHOD_AND_WRAP
 		(
-			"SetEmitterLineOfSightBlockage",
-			SetEmitterLineOfSightBlockage,
-			"Set a line-of-sight blockage ratio [0.0-1.0] for an emitter (0 = clear). Returns True if the emitter exists."
-		)
-		MAP_METHOD_AND_WRAP
-		(
-			"GetEmitterOcclusion",
-			GetEmitterOcclusion,
-			"Get the occlusion value currently applied to an emitter. This is the live, mid-fade value "
-			"rather than the target that was set, so it can be used to observe a fade in progress. "
-			"Returns 0.0 if the emitter is clear or is not being tracked."
-		)
-		MAP_METHOD_AND_WRAP
-		(
-			"ClearObstructionOcclusion",
-			ClearObstructionOcclusion,
-			"Fade the obstruction/occlusion values of all tracked emitters back to clear."
-		)
-		MAP_METHOD_AND_WRAP
-		( 
 			"SpatialAudioIsSupported",
 			SpatialAudioIsSupported,
 			"Signals whether Carbon Audio suports spatial audio on the current operating system."

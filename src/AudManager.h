@@ -123,18 +123,9 @@ public:
 	bool GetSpatialAudioGeometryEnabled() const;
 	// Enables or disables spatial audio geometry.
 	void SetSpatialAudioGeometryEnabled( bool enabled );
-	// Set a single line-of-sight blockage ratio for an emitter [0.0, 1.0]. 0 = clear line of sight.
-	bool SetEmitterLineOfSightBlockage( AkGameObjectID emitterID, float blockage );
-	// Current, mid-fade occlusion value for an emitter. 0.0 if the emitter is clear or not tracked.
-	float GetEmitterOcclusion( AkGameObjectID emitterID ) const;
-	// Fade all obstruction/occlusion values back to clear.
-	void ClearObstructionOcclusion();
-	// Enable or disable game-driven obstruction/occlusion processing.
-	bool GetObstructionOcclusionEnabled() const;
-	void SetObstructionOcclusionEnabled( bool value );
-	// How fast obstruction/occlusion values fade towards their targets, in units per second.
-	float GetObstructionOcclusionFadeRate() const;
-	void SetObstructionOcclusionFadeRate( float value );
+	// The occlusion subsystem this manager owns and updates. Exposed to the
+	// game through the AudOcclusion Blue facade rather than through this class.
+	AudObstructionOcclusion* GetObstructionOcclusion() const;
 	// Can be called to see if the current platform supports spatial audio.
 	const bool SpatialAudioIsSupported();
 	// Stop all currently playing sounds on all game objects.
