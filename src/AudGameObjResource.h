@@ -76,6 +76,9 @@ public:
 	std::wstring GetEventName();
 	// Get the current position of this game object.
 	Vector3 GetPosition() const override;
+	// Whether this game object has been given a real world position at some point and its current position is usable for
+	// geometry. Excludes UI players and music game objects that are not meant to be placed in the world.
+	bool HasUsableWorldPosition() const;
 	// Get the effective front vector sent to Wwise.
 	Vector3 GetFront() const;
 	// Get the effective top vector sent to Wwise.

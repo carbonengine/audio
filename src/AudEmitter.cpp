@@ -74,7 +74,6 @@ void AudEmitter::SetPrefix( const std::wstring& prefix )
 
 int AudEmitter::SetPosition( const Vector3& front, const Vector3& top, const Vector3& pos )
 {
-	m_hasReceivedPosition = true;
 	return SetPlacementFromParent( front, top, pos );
 }
 

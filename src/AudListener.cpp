@@ -54,6 +54,12 @@ int AudListener::SetPlacementFromParent( const Vector3& front, const Vector3& to
 	if( g_audioManager != nullptr && g_audioManager->GetState() != AudioState::Uninitialized )
 	{
 		m_position = position;
+		// The listener does not go through ApplyEffectivePlacement, so it has to record
+		// this itself or world-space systems can never trust its position.
+		if( IsUsableWorldPosition( position ) )
+		{
+			m_hasReceivedPosition = true;
+		}
 		if( m_gameObjRegistered )
 		{
 			const Orientation corrected = Orthonormalize( front, top );
