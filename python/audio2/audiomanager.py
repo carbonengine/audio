@@ -2,6 +2,8 @@
 
 import audio2
 
+from audio2.occlusion import OcclusionManager
+
 INIT_BANK = "Init.bnk"
 AUDIO_STATE_UNINITIALIZED = 0
 AUDIO_STATE_DISABLED = 1
@@ -35,6 +37,7 @@ class AudioManager(object):
         """
         self.defaultSoundBanks = []
         self.manager = audio2.GetOrCreateManager()
+        self.occlusion = OcclusionManager(self.manager)
         self.staticDataRepository = audio2.GetStaticDataRepository()
         self.banksWaitingToLoad = set()
 
