@@ -207,6 +207,28 @@ class TestPythonAudioManager(BaseAudio2TestClass):
         PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
         self.assertEqual(self.audioManager.GetLoadedSoundBanks(), [INIT_BANK])
 
+    def test_occlusion_is_reachable_without_the_raw_manager(self):
+        """The occlusion sub-object covers the whole occlusion API so callers never need .manager."""
+        import audio2
+
+        occlusion = self.audioManager.occlusion
+        occlusion.enabled = True
+        self.assertTrue(occlusion.enabled)
+
+        occlusion.fadeRate = 0.0
+        self.assertEqual(occlusion.fadeRate, 0.0)
+
+        emitter = audio2.AudEmitter("wrapperOcclusionEmitter")
+        emitter.SetPlacement((0, 0, 0), (0, 0, 0), (0, 0, 0))
+
+        self.assertTrue(occlusion.SetEmitterLineOfSightBlockage(emitter.ID, 1.0))
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
+        self.assertEqual(occlusion.GetEmitterOcclusion(emitter.ID), 1.0)
+
+        occlusion.ClearAll()
+        PumpOSWithTimeout(self.alwaysTrueBoolean, maxTries=3)
+        self.assertEqual(occlusion.GetEmitterOcclusion(emitter.ID), 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()
