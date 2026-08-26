@@ -21,6 +21,11 @@ const int MUSIC_GAME_OBJ_ID = 3;
 const int LISTENER_GAME_OBJ_ID = 4;
 const int START_GAME_OBJ_COUNT = 5;
 
+inline bool IsReservedGameObjectID( AkGameObjectID id )
+{
+	return id < START_GAME_OBJ_COUNT;
+}
+
 // Makes sure objects are initialized far away so you don't hear them when they spawn.
 // Game objects are culled by default so this value will never hit Wwise.
 const Vector3 WWISE_INIT_POSITION = Vector3(FLT_MAX, FLT_MAX, FLT_MAX);

@@ -113,6 +113,13 @@ class AudioManager(object):
         """
         return self.manager.GetPrioritizedEmitters()
 
+    def GetAwakeEmitters(self):
+        """
+        Returns a list of audio emitter objects that are currently awake (not culled)
+        in the sound prioritization system.
+        """
+        return self.manager.GetAwakeEmitters()
+
     def Initialize(self, audioMetadata, defaultSoundBanks=[]):
         """Initialize the audio manager so that is ready to be enabled.
 

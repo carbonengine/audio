@@ -239,6 +239,12 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		)
 		MAP_METHOD_AND_WRAP
 		(
+			"GetAwakeEmitters",
+			GetAwakeAudioEmitters,
+			"Exposes the audio emitters that are currently awake (not culled) in the sound prioritization system. Built-in system objects (UI, music, listener) are not included."
+		)
+		MAP_METHOD_AND_WRAP
+		(
 			"StartProfilerCapture",
 			StartProfilerCapture,
 			"Starts recording the sound engine profiling information into a file."

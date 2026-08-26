@@ -186,6 +186,8 @@ public:
 
 	// Debug
 	std::vector<AudGameObjResource*> GetPrioritizedAudioEmitters();
+	// Get the emitters that are currently awake (not culled) in the sound prioritization system. Built-in system objects (UI, music, listener) are excluded.
+	std::vector<AudGameObjResource*> GetAwakeAudioEmitters();
 #ifndef AK_OPTIMIZED
 	// Get the event name for the given playingID and emitter.
 	const std::wstring GetEventName( AkGameObjectID emitterID, AkPlayingID playingID );
