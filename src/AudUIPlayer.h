@@ -14,6 +14,9 @@ public:
 
 	EXPOSE_TO_BLUE();
 	
+	// The UI emitter is never spatialized and should not be considered for any calculations that depend on world position.
+	bool HasUsableWorldPosition() const override;
+
 	unsigned int SendEventWithCallback( const std:: wstring& name );
 	// Post an event meant for dialogue. Allows for getting the duration of the playing event.
 	unsigned int PostDialogueEvent( const std:: wstring& eventName );

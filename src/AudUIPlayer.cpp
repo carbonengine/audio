@@ -17,6 +17,11 @@ AudUIPlayer::~AudUIPlayer()
 {
 }
 
+bool AudUIPlayer::HasUsableWorldPosition() const
+{
+	return false;
+}
+
 // ---------------------------------------------------------------------------------------
 // Description:
 //   Sends an event that will trigger the callback defined on m_callback when finished playing.
