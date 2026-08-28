@@ -94,3 +94,44 @@ class TestAudEmitterExposure(BaseAudio2TestClass):
 
         self.assertFalse(hasattr(listener, "front"))
         self.assertFalse(hasattr(listener, "top"))
+
+    def test_emitter_has_no_usable_world_position_before_placement(self):
+        """A fresh emitter still sits at the spawn sentinel, which is not a usable world position."""
+        self.assertFalse(self.emitter.HasUsableWorldPosition())
+
+    def test_emitter_has_usable_world_position_after_placement(self):
+        self.emitter.SetPlacement((1, 0, 0), (0, 1, 0), (0, 50, 0))
+
+        self.assertTrue(self.emitter.HasUsableWorldPosition())
+        self.assertVectorAlmostEqual(self.emitter.position, (0, 50, 0))
+
+    def test_emitter_at_origin_has_usable_world_position(self):
+        """(0, 0, 0) is a legitimate world position, not a sentinel."""
+        self.emitter.SetPlacement((1, 0, 0), (0, 1, 0), (0, 0, 0))
+
+        self.assertTrue(self.emitter.HasUsableWorldPosition())
+
+    def test_emitter_with_non_finite_position_has_no_usable_world_position(self):
+        self.emitter.SetPlacement((1, 0, 0), (0, 1, 0), (0, float("nan"), 0))
+
+        self.assertFalse(self.emitter.HasUsableWorldPosition())
+
+    def test_listener_has_usable_world_position_after_placement(self):
+        import audio2
+        listener = audio2.GetListener()
+        listener.SetPosition((1, 0, 0), (0, 1, 0), (10, 20, 30))
+
+        self.assertTrue(listener.HasUsableWorldPosition())
+        self.assertVectorAlmostEqual(listener.position, (10, 20, 30))
+
+    def test_ui_and_music_players_never_have_usable_world_position(self):
+        """UI and music game objects get a position for Wwise's sake but are not placed in the world,
+        so world-space systems such as line-of-sight must ignore them."""
+        import audio2
+        uiPlayer = audio2.GetUIPlayer()
+        musicPlayer = audio2.GetMusicPlayer()
+        uiPlayer.SetPlacement((1, 0, 0), (0, 1, 0), (0, 0, 0))
+        musicPlayer.SetPlacement((1, 0, 0), (0, 1, 0), (0, 0, 0))
+
+        self.assertFalse(uiPlayer.HasUsableWorldPosition())
+        self.assertFalse(musicPlayer.HasUsableWorldPosition())

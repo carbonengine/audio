@@ -76,6 +76,8 @@ public:
 	std::wstring GetEventName();
 	// Get the current position of this game object.
 	Vector3 GetPosition() const override;
+	// Whether this game object has a valid world position.
+	virtual bool HasUsableWorldPosition() const;
 	// Get the effective front vector sent to Wwise.
 	Vector3 GetFront() const;
 	// Get the effective top vector sent to Wwise.
@@ -170,6 +172,8 @@ protected:
 	bool m_forceCullingState;
 	// Signals whether this audio emitter is currently muted or not.
 	bool m_muted;
+	// Set once the game has pushed a real position via SetPosition. 
+	bool m_hasReceivedPosition;
 	// The distance of this game object from the listener.
 	float m_distanceSqFromListener;
 	// Any additional weight you want this game object to have in the culling system. Can be from 0.0 to infinity. The higher the value the less likely it is to be culled.
@@ -180,8 +184,6 @@ protected:
 	float m_scalingFactor;
 	// The max attenuation radius this game object has.
 	float m_maxAttenuationRadiusSq;
-
-	bool m_hasReceivedPosition;
 	// Events waiting to play on this game object when it wakes up from being culled.
 	std::set<std::wstring> m_eventsOnWake;
 	// Playing IDs that have been explicitly stopped but have not received their Wwise end callback yet.

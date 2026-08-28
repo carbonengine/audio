@@ -31,6 +31,7 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 		MAP_ATTRIBUTE( "distanceFromListener", m_distanceSqFromListener, "The distance of this game object from the listener.\n:jessica-hidden: True", Be::READ )
 		MAP_ATTRIBUTE( "forceCullingState", m_forceCullingState, "Whether this game object's culling state is currently forced and not automatically\n:jessica-hidden: True", Be::READ )
 		MAP_ATTRIBUTE( "eventName", m_eventName, "The audio event that you want played on this audio object when it is initially created", Be::READWRITE | Be::PERSIST | Be::NOTIFY )
+		MAP_ATTRIBUTE( "position", m_position, "The position of this game object as audio sees it.\n:jessica-hidden: True", Be::READ )
 
 		MAP_PROPERTY_READONLY
 		( 
@@ -169,6 +170,12 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 			IsMuted,
 			"Whether or not this game object is currently muted."
 		)
-			
+		MAP_METHOD_AND_WRAP
+		(
+			"HasUsableWorldPosition",
+			HasUsableWorldPosition,
+			"Whether this game object has a valid world position."
+		)
+
 	EXPOSURE_END()
 }

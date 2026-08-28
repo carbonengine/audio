@@ -13,3 +13,8 @@ AudMusicPlayer::AudMusicPlayer( IRoot* lockobj ) : AudEmitter( MUSIC_GAME_OBJ_ID
 AudMusicPlayer::~AudMusicPlayer()
 {
 }
+
+bool AudMusicPlayer::HasUsableWorldPosition() const
+{
+	return false;
+}

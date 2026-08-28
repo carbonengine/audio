@@ -45,7 +45,7 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 														 m_additionalCullingWeight( 0.0f ),
 														 m_cumulativeWeight( 0.0f ),
 														 m_maxAttenuationRadiusSq( 0.0f ),
-														 m_hasReceivedPosition(false),
+														 m_hasReceivedPosition( false ),
 														 m_waitingOneShotInRange( std::pair( std::chrono::steady_clock::now(), L"" ) ),
 														 m_eventName(L"")
 {
@@ -84,7 +84,7 @@ AudGameObjResource::AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj
 														 						   m_additionalCullingWeight( 0.0f ),
 																				   m_cumulativeWeight( 0.0f ),
 																				   m_maxAttenuationRadiusSq( 0.0f ),
-																				   m_hasReceivedPosition(false),
+																				   m_hasReceivedPosition( false ),
 																				   m_waitingOneShotInRange( std::pair( std::chrono::steady_clock::now(), L"" ) ),
 																				   m_eventName(L"")
 {
@@ -633,7 +633,12 @@ void AudGameObjResource::Wake()
 			return;	
 		}
 
-		if(!m_hasReceivedPosition) 
+		if( !m_hasReceivedPosition )
+		{
+			return;
+		}
+
+		if( !IsUsableWorldPosition( m_position ) )
 		{
 			return;
 		}
@@ -1057,6 +1062,11 @@ AkGameObjectID AudGameObjResource::GetID() const
 Vector3 AudGameObjResource::GetPosition() const 
 {
     return m_position;
+}
+
+bool AudGameObjResource::HasUsableWorldPosition() const
+{
+	return IsUsableWorldPosition( m_position );
 }
 
 Vector3 AudGameObjResource::GetFront() const

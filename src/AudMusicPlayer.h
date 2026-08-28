@@ -10,6 +10,9 @@ public:
 	AudMusicPlayer( IRoot* lockobj = NULL );
 	~AudMusicPlayer();
 
+	// The music player is never spatialized and should not be considered for any calculations that depend on world position.
+	bool HasUsableWorldPosition() const override;
+
 	EXPOSE_TO_BLUE();
 };
 
