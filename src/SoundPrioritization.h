@@ -256,6 +256,23 @@ public:
 
      const std::vector<IPrioritizedObject*>& GetPrioritizedAudioObjects() const;
 
+    /**
+     * @brief Visit every audio object that is currently awake (not culled).
+     * @param visitor Callable taking an IPrioritizedObject*
+     */
+    template<typename Visitor>
+    void ForEachAwakeAudioObject( Visitor&& visitor ) const
+    {
+        CcpAutoMutex mutex( m_objectsMutex );
+        for( auto obj : m_gameObjects )
+        {
+            if( !obj->IsCulled() )
+            {
+                visitor( obj );
+            }
+        }
+    }
+
 private:
 
     bool m_audioCullingEnabled;              /**< Current state of the culling system */

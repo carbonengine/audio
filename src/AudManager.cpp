@@ -1243,6 +1243,19 @@ std::vector<AudGameObjResource*> AudManager::GetPrioritizedAudioEmitters()
 	}
 	return result;
 }
+
+std::vector<AudGameObjResource*> AudManager::GetAwakeAudioEmitters()
+{
+	std::vector<AudGameObjResource*> result;
+	m_soundPrioritization->ForEachAwakeAudioObject( [&result]( IPrioritizedObject* obj )
+	{
+		if( !IsReservedGameObjectID( obj->GetID() ) )
+		{
+			result.push_back( static_cast<AudGameObjResource*>( obj ) );
+		}
+	} );
+	return result;
+}
 // Callback from Wwise to use for tracking performance of the sound engine. This is called when a timer stops. Only applicable in Profile or Debug Wwise flavors.
 void AudManager::AkPlatformProfilerPopTimer()
 {
