@@ -13,6 +13,13 @@
 #include <stdio.h>
 #endif
 
+// printf spec for AkOSChar strings in CCP log calls.
+#if defined(_WIN32)
+#define AUD_OSCHAR_FMT "%S"
+#else
+#define AUD_OSCHAR_FMT "%s"
+#endif
+
 namespace
 {
 #if defined(_WIN32)
@@ -95,13 +102,18 @@ AKRESULT LowLevelIOHook::Open(const AkFileOpenData& request, AkFileDesc*& outFil
     if (!outFileDesc)
         return AK_InsufficientMemory;
 
-    AkOSChar path[AK_MAX_PATH];
-    AKRESULT result = AK_FileNotFound;
+    // Localized files fall back to the default location only when the localized copy does not exist.
+    const bool tryLanguage = request.pFlags && request.pFlags->bIsLanguageSpecific && request.eOpenMode == AK_OpenModeRead;
 
-    if (request.pFlags && request.pFlags->bIsLanguageSpecific && request.eOpenMode == AK_OpenModeRead)
-        result = TryOpen(request, true, path, *outFileDesc);
+    AkOSChar languagePath[AK_MAX_PATH] = { 0 };
+    AkOSChar path[AK_MAX_PATH] = { 0 };
+    AKRESULT result = AK_Fail;
 
-    if (result != AK_Success)
+    if (tryLanguage)
+        result = TryOpen(request, true, languagePath, *outFileDesc);
+
+    const bool tryDefault = !tryLanguage || result == AK_FileNotFound;
+    if (tryDefault)
         result = TryOpen(request, false, path, *outFileDesc);
 
     if (result == AK_Success)
@@ -110,13 +122,12 @@ AKRESULT LowLevelIOHook::Open(const AkFileOpenData& request, AkFileDesc*& outFil
         return AK_Success;
     }
 
-#if defined(_WIN32)
-    CCP_LOGERR("Failed to open audio file (id %u, path '%S'): result %d",
-        (unsigned int)request.fileID, path, result);
-#else
-    CCP_LOGERR("Failed to open audio file (id %u, path '%s'): result %d",
-        (unsigned int)request.fileID, path, result);
-#endif
+    if (tryLanguage && tryDefault)
+        CCP_LOGERR("Failed to open audio file (id %u): result %d, tried '" AUD_OSCHAR_FMT "' and '" AUD_OSCHAR_FMT "'",
+            (unsigned int)request.fileID, result, languagePath, path);
+    else
+        CCP_LOGERR("Failed to open audio file (id %u, path '" AUD_OSCHAR_FMT "'): result %d",
+            (unsigned int)request.fileID, tryLanguage ? languagePath : path, result);
 
     AkDelete(AkMemID_Streaming, outFileDesc);
     outFileDesc = nullptr;
