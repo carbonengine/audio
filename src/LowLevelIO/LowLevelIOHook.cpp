@@ -80,6 +80,15 @@ AkFileDesc* LowLevelIOHook::CreateDescriptor(const AkFileDesc* copy)
     return AkNew(AkMemID_Streaming, AkFileDesc(*copy));
 }
 
+AKRESULT LowLevelIOHook::TryOpen(const AkFileOpenData& request, bool useLanguageFolder, AkOSChar* path, AkFileDesc& fileDesc)
+{
+    AKRESULT result = m_resolver.Resolve(request, path, useLanguageFolder);
+    if (result != AK_Success)
+        return result;
+
+    return FileHelpers::Open(path, request.eOpenMode, true, fileDesc);
+}
+
 AKRESULT LowLevelIOHook::Open(const AkFileOpenData& request, AkFileDesc*& outFileDesc)
 {
     outFileDesc = CreateDescriptor();
@@ -87,9 +96,13 @@ AKRESULT LowLevelIOHook::Open(const AkFileOpenData& request, AkFileDesc*& outFil
         return AK_InsufficientMemory;
 
     AkOSChar path[AK_MAX_PATH];
-    AKRESULT result = m_resolver.Resolve(request, path);
-    if (result == AK_Success)
-        result = FileHelpers::Open(path, request.eOpenMode, true, *outFileDesc);
+    AKRESULT result = AK_FileNotFound;
+
+    if (request.pFlags && request.pFlags->bIsLanguageSpecific && request.eOpenMode == AK_OpenModeRead)
+        result = TryOpen(request, true, path, *outFileDesc);
+
+    if (result != AK_Success)
+        result = TryOpen(request, false, path, *outFileDesc);
 
     if (result == AK_Success)
     {

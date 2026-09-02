@@ -29,9 +29,10 @@ public:
      * @brief Build the file path for an open request.
      * @param request The Wwise open request with its codec, file id, flags and name.
      * @param outPath Buffer of AK_MAX_PATH that receives the resolved path.
+     * @param useLanguageFolder Look under the current language folder instead of the essential or audio source folder.
      * @return AK_Success when a path was produced.
      */
-    AKRESULT Resolve(const AkFileOpenData& request, AkOSChar* outPath);
+    AKRESULT Resolve(const AkFileOpenData& request, AkOSChar* outPath, bool useLanguageFolder);
 
 private:
     AkOSChar m_basePath[AK_MAX_PATH];
