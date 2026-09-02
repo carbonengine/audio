@@ -110,11 +110,15 @@ AKRESULT LowLevelIOHook::Open(const AkFileOpenData& request, AkFileDesc*& outFil
     AKRESULT result = AK_Fail;
 
     if (tryLanguage)
+    {
         result = TryOpen(request, true, languagePath, *outFileDesc);
+    }
 
     const bool tryDefault = !tryLanguage || result == AK_FileNotFound;
     if (tryDefault)
+    {
         result = TryOpen(request, false, path, *outFileDesc);
+    }
 
     if (result == AK_Success)
     {
@@ -123,11 +127,15 @@ AKRESULT LowLevelIOHook::Open(const AkFileOpenData& request, AkFileDesc*& outFil
     }
 
     if (tryLanguage && tryDefault)
+    {
         CCP_LOGERR("Failed to open audio file (id %u): result %d, tried '" AUD_OSCHAR_FMT "' and '" AUD_OSCHAR_FMT "'",
             (unsigned int)request.fileID, result, languagePath, path);
+    }
     else
+    {
         CCP_LOGERR("Failed to open audio file (id %u, path '" AUD_OSCHAR_FMT "'): result %d",
             (unsigned int)request.fileID, tryLanguage ? languagePath : path, result);
+    }
 
     AkDelete(AkMemID_Streaming, outFileDesc);
     outFileDesc = nullptr;
