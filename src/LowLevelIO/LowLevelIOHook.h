@@ -54,6 +54,9 @@ private:
     // Resolve and open one file. Called per item by BatchOpen.
     AKRESULT Open(const AkFileOpenData& request, AkFileDesc*& outFileDesc);
 
+    // Resolve one candidate location and try to open it there.
+    AKRESULT TryOpen(const AkFileOpenData& request, bool useLanguageFolder, AkOSChar* path, AkFileDesc& fileDesc);
+
     AkFileDesc* CreateDescriptor(const AkFileDesc* copy = nullptr);
 
     void Read(AkFileDesc& fileDesc, const AkIoHeuristics& heuristics, AkAsyncIOTransferInfo& transfer);

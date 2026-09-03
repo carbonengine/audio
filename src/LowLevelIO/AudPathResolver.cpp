@@ -129,7 +129,7 @@ AKRESULT AudPathResolver::SetAudioSrcPath(const AkOSChar* path)
     return AK_Success;
 }
 
-AKRESULT AudPathResolver::Resolve(const AkFileOpenData& request, AkOSChar* outPath)
+AKRESULT AudPathResolver::Resolve(const AkFileOpenData& request, AkOSChar* outPath, bool useLanguageFolder)
 {
     if (!outPath)
         return AK_InvalidParameter;
@@ -143,8 +143,8 @@ AKRESULT AudPathResolver::Resolve(const AkFileOpenData& request, AkOSChar* outPa
         AKPLATFORM::SafeStrCpy(fullPath, m_basePath, AK_MAX_PATH);
         AppendSeparator(fullPath);
 
-        // Language files are checked first. They only get the language folder.
-        if (request.pFlags->bIsLanguageSpecific)
+        // Localized files only get the language folder.
+        if (useLanguageFolder)
         {
             const AkOSChar* language = AK::StreamMgr::GetCurrentLanguage();
             if (AKPLATFORM::OsStrLen(language) > 0)
