@@ -1,6 +1,6 @@
 // Copyright © 2014 CCP ehf.
 
-#include "StdAfx.h"
+#include "stdafx.h"
 #include "LogBridge.h"
 #include "AudManager.h"
 

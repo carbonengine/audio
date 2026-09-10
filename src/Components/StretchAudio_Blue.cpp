@@ -1,6 +1,6 @@
 // Copyright © 2020 CCP ehf.
 
-#include "StdAfx.h"
+#include "stdafx.h"
 #include "StretchAudio.h"
 
 BLUE_DEFINE( StretchAudio );
