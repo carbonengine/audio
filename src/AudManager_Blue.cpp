@@ -4,6 +4,7 @@
 #include "AudManager.h"
 
 #include "AudGameObjResource.h"
+#include "IEveObstructionQuery.h"
 
 const Be::VarChooser AudioStateChooser[] = {
 	{ "Uninitialized", static_cast<int>(AudioState::Uninitialized) },
@@ -53,7 +54,8 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		// Obstruction / occlusion
 		MAP_PROPERTY( "obstructionOcclusionEnabled", GetObstructionOcclusionEnabled, SetObstructionOcclusionEnabled, "Enable or disable game-driven obstruction/occlusion processing. Disabling fades all values back to clear.")
 		MAP_PROPERTY( "obstructionOcclusionFadeRate", GetObstructionOcclusionFadeRate, SetObstructionOcclusionFadeRate, "How fast obstruction/occlusion values fade towards their targets, in units per second. 0 = instantaneous.")
-		
+		MAP_ATTRIBUTE( "obstructionQuery", m_obstructionQuery, "The game's sightline oracle: an object implementing IEveObstructionQuery, in practice destiny's ballpark. While set, the engine judges line of sight itself, every emitter the moment a voice starts on it and every audible emitter periodically. None turns that off; SetEmitterLineOfSightBlockage keeps working either way.", Be::READWRITE )
+
 		MAP_METHOD_AND_WRAP
 		( 
 			"UpdateSettings",

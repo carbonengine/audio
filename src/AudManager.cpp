@@ -2,6 +2,7 @@
 
 #include "stdafx.h"
 #include "AudManager.h"
+#include "IEveObstructionQuery.h"
 
 #include <AK/Plugin/AkCompressorFXFactory.h>
 #include <AK/Plugin/AkDelayFXFactory.h>
@@ -571,6 +572,11 @@ float AudManager::GetObstructionOcclusionFadeRate() const
 void AudManager::SetObstructionOcclusionFadeRate( float value )
 {
 	m_obstructionOcclusion->SetFadeRate( value );
+}
+
+IEveObstructionQueryPtr AudManager::GetObstructionQuery() const
+{
+	return m_obstructionQuery;
 }
 
 void AudManager::UpdateSettings( AudSettings* settings )

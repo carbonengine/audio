@@ -18,6 +18,7 @@
 BLUE_DECLARE( AudConfig );
 BLUE_DECLARE( AudGameObjResource );
 BLUE_DECLARE_INTERFACE( IAudActionLog );
+BLUE_DECLARE_INTERFACE( IEveObstructionQuery );
 
 typedef std::vector<std::wstring> BankVector;
 typedef std::vector<AkGameObjectID> GameObjIDVector;
@@ -135,6 +136,8 @@ public:
 	// How fast obstruction/occlusion values fade towards their targets, in units per second.
 	float GetObstructionOcclusionFadeRate() const;
 	void SetObstructionOcclusionFadeRate( float value );
+	// The game's sightline oracle, or null when none is plugged in (then only external blockage feeds apply). See IEveObstructionQuery.h.
+	IEveObstructionQueryPtr GetObstructionQuery() const;
 	// Can be called to see if the current platform supports spatial audio.
 	const bool SpatialAudioIsSupported();
 	// Stop all currently playing sounds on all game objects.
@@ -275,6 +278,9 @@ private:
 #endif
 	//Debug
 	IAudActionLogPtr m_log;
+
+	// Game-supplied line-of-sight oracle, assigned from script once per session. Exposed as "obstructionQuery".
+	IEveObstructionQueryPtr m_obstructionQuery;
 
 
 

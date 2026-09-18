@@ -4,9 +4,12 @@
 class OcclusionManager(object):
     """Wrapper for Carbon Audio's line-of-sight obstruction/occlusion API.
 
-    The game runs its own sightline queries and feeds per-emitter blockage values in here.
-    Carbon Audio fades the applied occlusion towards each emitter's latest value and never
-    times values out, so keeping feeds fresh is the caller's responsibility.
+    Two ways to drive it. Assign a sightline oracle to ``query`` (an object implementing
+    IEveObstructionQuery, in practice the destiny ballpark) and Carbon Audio judges line of
+    sight itself: every emitter the moment a voice starts on it, and every audible emitter
+    periodically. Or leave ``query`` unset and feed per-emitter blockage values in through
+    SetEmitterLineOfSightBlockage; Carbon Audio never times those out, so keeping them fresh
+    is then the caller's responsibility.
 
     Reached through AudioManager as audioManager.occlusion rather than constructed directly.
     """
@@ -16,6 +19,15 @@ class OcclusionManager(object):
         :param manager: The raw Carbon Audio manager whose occlusion API this wraps.
         """
         self._manager = manager
+
+    @property
+    def query(self):
+        """The sightline oracle Carbon Audio asks about line of sight, or None when the game feeds blockage values itself."""
+        return self._manager.obstructionQuery
+
+    @query.setter
+    def query(self, value):
+        self._manager.obstructionQuery = value
 
     @property
     def enabled(self):

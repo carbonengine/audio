@@ -243,7 +243,14 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 			if ( playingID != AK_INVALID_PLAYING_ID )
 			{
 				ApplyEventStopRelationships( fullEventName );
+				if ( m_playingEvents.empty() )
+				{
+					// First voice on a silent game object: nobody has judged its line of sight yet.
+					// Flag it so the obstruction pass does so before this voice reaches the speakers.
+					m_occlusionOnsetPending.store( true, std::memory_order_release );
+				}
 				m_playingEvents.insert({playingID, fullEventName});
+				m_hasPlayingVoices.store( true, std::memory_order_release );
 				eventUsed = true;
 			}
 			else
@@ -302,7 +309,23 @@ void AudGameObjResource::EventFinishedCallback( AkEventCallbackInfo* cbInfo )
 	CcpAutoMutex mutex( m_mutex );
 	m_pendingStoppedPlayingIDs.erase( cbInfo->playingID );
 	m_playingEvents.erase( cbInfo->playingID );
+	m_hasPlayingVoices.store( !m_playingEvents.empty(), std::memory_order_release );
 	UpdateEventSoundPrioritizationAttributes();
+}
+
+bool AudGameObjResource::HasPlayingVoices() const
+{
+	return m_hasPlayingVoices.load( std::memory_order_acquire );
+}
+
+bool AudGameObjResource::TakeOcclusionOnsetPending()
+{
+	return m_occlusionOnsetPending.exchange( false, std::memory_order_acq_rel );
+}
+
+void AudGameObjResource::MarkOcclusionOnsetPending()
+{
+	m_occlusionOnsetPending.store( true, std::memory_order_release );
 }
 
 bool AudGameObjResource::StopEvent( const std::wstring& eventName, uint32_t fadeOutDuration )

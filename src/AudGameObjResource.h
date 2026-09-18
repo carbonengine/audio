@@ -6,6 +6,8 @@
 #include "AudParameter.h"
 #include "IPrioritizedObject.h"
 
+#include <atomic>
+
 struct Vector3;
 
 // ------------------------------------------------------------------------
@@ -92,6 +94,12 @@ public:
 	void Unmute();
 	// Whether or not this game object is currently muted.
 	bool IsMuted();
+	// Whether at least one voice is playing on this game object. Lock-free, safe from the audio tick.
+	bool HasPlayingVoices() const;
+	// Whether a voice just started on a silent game object and its line of sight has not been judged yet. Clears the flag.
+	bool TakeOcclusionOnsetPending();
+	// Re-arm the onset flag, for when the judgement could not run this tick.
+	void MarkOcclusionOnsetPending();
 
 
 	// Callbacks
@@ -196,6 +204,10 @@ protected:
 	std::map<std::wstring, std::wstring> m_switchValues;
 	// A one shot event sent to this game object while it was culled. 
 	std::pair<std::chrono::steady_clock::time_point, std::wstring> m_waitingOneShotInRange;
+	// Lock-free mirror of !m_playingEvents.empty(), so the obstruction pass can read it without m_mutex.
+	std::atomic<bool> m_hasPlayingVoices{ false };
+	// Set when a voice starts on a silent game object. The obstruction pass consumes it to judge line of sight before the first buffer plays.
+	std::atomic<bool> m_occlusionOnsetPending{ false };
 
 	// A mutex to be used when working with m_playingEvents, m_pendingStoppedPlayingIDs and m_eventsOnWake as they are accessed in different threads.
 	CcpMutex m_mutex;

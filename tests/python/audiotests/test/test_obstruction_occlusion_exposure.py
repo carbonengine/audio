@@ -1,8 +1,8 @@
 # Copyright © 2026 CCP ehf.
 
-from audiotests.base_test_class import COMMON_BNK
+from audiotests.base_test_class import COMMON_BNK, LOOP_BNK, LOOP_EVENT
 from audiotests.base_test_class import BaseAudio2TestClass
-from audiotests.utils import PumpOSWithTimeout
+from audiotests.utils import PumpOSWithTimeout, WaitForEmitterToWake, WaitForSoundBanksToLoad
 
 
 INSTANT_FADE_RATE = 0.0
@@ -16,7 +16,7 @@ class TestObstructionOcclusionExposure(BaseAudio2TestClass):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.Initialize(cls, defaultSoundBanks=[COMMON_BNK])
+        cls.Initialize(cls, defaultSoundBanks=[COMMON_BNK, LOOP_BNK])
 
     def setUp(self):
         import audio2
@@ -30,6 +30,7 @@ class TestObstructionOcclusionExposure(BaseAudio2TestClass):
         self.manager.obstructionOcclusionFadeRate = INSTANT_FADE_RATE
 
     def tearDown(self):
+        self.emitter.StopAll()
         self.emitter = None
         self.audioManager.Disable()
 
@@ -48,6 +49,16 @@ class TestObstructionOcclusionExposure(BaseAudio2TestClass):
         self.assertTrue(self.SetBlockage(0.0))
         self.Pump()
 
+    def MakeAudible(self):
+        """A fade only protects a sound that is playing; a silent emitter takes its new value at once.
+        Start a loop on the emitter so the fade tests have something to fade.
+        """
+        import audio2
+        audio2.GetListener().SetPosition((0, 0, 0), (0, 0, 0), (0, 0, 0))
+        self.assertTrue(WaitForSoundBanksToLoad([LOOP_EVENT]), "Timed out waiting for the test SoundBank to load.")
+        self.assertTrue(WaitForEmitterToWake(self.emitter), "Timed out waiting for the emitter to be woken up.")
+        self.assertGreater(self.emitter.SendEvent(LOOP_EVENT), 0, "The loop did not start playing.")
+
     def test_a_first_value_is_applied_at_once(self):
         self.manager.obstructionOcclusionFadeRate = SLOW_FADE_RATE
 
@@ -57,7 +68,8 @@ class TestObstructionOcclusionExposure(BaseAudio2TestClass):
         self.assertEqual(self.GetOcclusion(), 1.0)
 
     def test_an_emitter_that_is_back_to_clear_still_fades(self):
-        
+        self.MakeAudible()
+
         self.manager.obstructionOcclusionFadeRate = INSTANT_FADE_RATE
         self.assertTrue(self.SetBlockage(1.0))
         self.Pump()
@@ -84,6 +96,7 @@ class TestObstructionOcclusionExposure(BaseAudio2TestClass):
 
     def test_occlusion_fades_in_gradually(self):
         """The value has to interpolate towards its target rather than jumping straight to it."""
+        self.MakeAudible()
         self.EstablishClear()
         self.manager.obstructionOcclusionFadeRate = SLOW_FADE_RATE
 
@@ -98,6 +111,7 @@ class TestObstructionOcclusionExposure(BaseAudio2TestClass):
         self.assertLess(secondValue, 1.0, "Occlusion jumped to its target instead of fading.")
 
     def test_occlusion_fades_back_out_gradually(self):
+        self.MakeAudible()
         self.manager.obstructionOcclusionFadeRate = INSTANT_FADE_RATE
         self.assertTrue(self.SetBlockage(1.0))
         self.Pump()

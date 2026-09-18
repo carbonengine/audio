@@ -15,6 +15,7 @@ find_package(TBB                    CONFIG REQUIRED)
 find_package(Python3 COMPONENTS Development Interpreter REQUIRED)
 
 set(PUBLIC_HEADER_FILES_INCLUDE
+	include/IEveObstructionQuery.h
 )
 
 ccp_add_library(CarbonAudio SHARED
