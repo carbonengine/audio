@@ -7,8 +7,6 @@
 
 #pragma once
 
-#include "Blue.h"
-
 struct Vector3;
 
 /**
@@ -19,10 +17,12 @@ struct Vector3;
  * game assigns that object to AudManager::obstructionQuery once per session. CarbonAudio never links
  * against the implementer: Blue resolves the interface at runtime by name.
  *
- * This header is hand-copied into the implementing module, exactly like trinity's IEveBallpark.
- * A Blue interface's identity is its name, so the two copies must declare the same method list.
- * Append-only: never reorder, remove or change an existing method. Add new ones at the end, or
- * introduce IEveObstructionQuery2.
+ * This header is hand-copied verbatim into the implementing module, the way destiny shares its
+ * ballpark interface with trinity. It includes nothing itself so it compiles in either module's
+ * include order; the includer provides Blue.
+ * A Blue interface's identity is its name, so the copies must declare the same method list. Any
+ * change to that list, including adding a method, renames the interface (IEveObstructionQuery2):
+ * a stale copy then fails the interface cast instead of calling the wrong slot.
  */
 BLUE_INTERFACE( IEveObstructionQuery ) : public IRoot
 {
