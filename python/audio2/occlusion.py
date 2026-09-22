@@ -73,3 +73,14 @@ class OcclusionManager(object):
         :return: True if the emitter exists, otherwise False.
         """
         return self._manager.SetEmitterLineOfSightBlockage(emitterID, blockage)
+
+    def GetLastSightlineVerdicts(self):
+        """The sightline oracle's verdicts from Carbon Audio's last pass, as {emitterID: blocked}.
+
+        Only emitters the pass judged appear: awake, positioned, in listener range, with a voice
+        playing or one just started. An emitter that is absent was not judged; one present at
+        False has a clear line of sight. Empty while no oracle is set or nothing is audible.
+
+        :return: dict of emitter ID to bool
+        """
+        return self._manager.GetLastSightlineVerdicts()

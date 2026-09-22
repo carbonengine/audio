@@ -18,7 +18,8 @@ AudObstructionOcclusion::AudObstructionOcclusion(AudManager* audioManager)	:
 	m_hasUpdated(false),
 	m_enabled(true),
 	m_mutex("AudObstructionOcclusion", "m_mutex"),
-	m_hasRefreshed(false)
+	m_hasRefreshed(false),
+	m_blockedCapacity(0)
 {}
 
 AudObstructionOcclusion::~AudObstructionOcclusion()
@@ -228,15 +229,26 @@ void AudObstructionOcclusion::RunSightlinePass(std::chrono::steady_clock::time_p
 		m_targets.push_back(emitter->GetPosition());
 	});
 
-	if (m_candidates.empty())
+	const size_t count = m_candidates.size();
+	if (count == 0)
 	{
+		if (refreshDue)
+		{
+			// A refresh with nothing audible to judge: the record says so.
+			CcpAutoMutex lock(m_mutex);
+			m_lastVerdicts.clear();
+		}
 		return;
 	}
 
-	m_blockers.assign(m_candidates.size(), 0);
+	if (count > m_blockedCapacity)
+	{
+		m_blocked = std::make_unique<bool[]>(count);
+		m_blockedCapacity = count;
+	}
 
 	// No CarbonAudio lock is held while the game does its geometry.
-	const bool answered = oracle->QuerySightlines(source, m_targets.data(), static_cast<unsigned int>(m_targets.size()), m_blockers.data());
+	const bool answered = oracle->QuerySightlines(source, m_targets.data(), static_cast<unsigned int>(count), m_blocked.get());
 	if (!answered)
 	{
 		// Keep the previous verdicts. Re-arm the onsets so they are judged on the next tick that can answer.
@@ -252,10 +264,23 @@ void AudObstructionOcclusion::RunSightlinePass(std::chrono::steady_clock::time_p
 		return;
 	}
 
-	for (size_t i = 0; i < m_candidates.size(); ++i)
+	{
+		// A refresh judged everything audible, so it replaces the record; an onset-only tick adds to it.
+		CcpAutoMutex lock(m_mutex);
+		if (refreshDue)
+		{
+			m_lastVerdicts.clear();
+		}
+		for (size_t i = 0; i < count; ++i)
+		{
+			m_lastVerdicts[m_candidates[i].id] = m_blocked[i];
+		}
+	}
+
+	for (size_t i = 0; i < count; ++i)
 	{
 		const Candidate& candidate = m_candidates[i];
-		const bool blocked = m_blockers[i] != 0;
+		const bool blocked = m_blocked[i];
 		if (!blocked && !IsTracked(candidate.id))
 		{
 			// Clear and not occluded before: nothing to fade, and nothing Wwise needs to hear about.
@@ -285,6 +310,12 @@ float AudObstructionOcclusion::GetEmitterOcclusion(AkGameObjectID emitterID) con
 	return it->second.occlusion.currentValue;
 }
 
+std::map<AkGameObjectID, bool> AudObstructionOcclusion::GetLastSightlineVerdicts() const
+{
+	CcpAutoMutex lock(m_mutex);
+	return m_lastVerdicts;
+}
+
 bool AudObstructionOcclusion::SendToWwise(AkGameObjectID emitterID, const EmitterState& state) const
 {
 	const AKRESULT result = AK::SoundEngine::SetObjectObstructionAndOcclusion(
@@ -299,12 +330,14 @@ void AudObstructionOcclusion::RemoveEmitter(AkGameObjectID emitterID)
 {
 	CcpAutoMutex lock(m_mutex);
 	m_emitters.erase(emitterID);
+	m_lastVerdicts.erase(emitterID);
 }
 
 void AudObstructionOcclusion::Reset()
 {
 	CcpAutoMutex lock(m_mutex);
 	m_emitters.clear();
+	m_lastVerdicts.clear();
 	m_hasUpdated = false;
 	m_hasRefreshed = false;
 }

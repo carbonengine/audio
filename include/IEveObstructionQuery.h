@@ -29,15 +29,15 @@ BLUE_INTERFACE( IEveObstructionQuery ) : public IRoot
 	/**
 	 * @brief Reports which sightlines from one source to many targets are blocked.
 	 *
-	 * @param source        Listener position, in audio space (the same frame emitters are positioned in).
-	 * @param targets       targetCount emitter positions, audio space.
-	 * @param targetCount   Number of entries in targets and outBlockerIDs.
-	 * @param outBlockerIDs Pre-zeroed by the caller. On success every entry is written: 0 for a clear
-	 *                      sightline, otherwise the id of the first body that blocks it. The
-	 *                      implementer excludes bodies that must never occlude, such as the player's own ship.
+	 * @param source      Listener position, in audio space (the same frame emitters are positioned in).
+	 * @param targets     targetCount emitter positions, audio space.
+	 * @param targetCount Number of entries in targets and outBlocked.
+	 * @param outBlocked  On success every entry is written: true when a body lies on the sightline, false
+	 *                    when it is clear. The implementer excludes bodies that must never occlude, such
+	 *                    as the player's own ship.
 	 *
 	 * @return False when no answer is possible right now (no world loaded, mid-transition). The caller
 	 *         then keeps its previous verdicts and asks again next tick.
 	 */
-	virtual bool QuerySightlines( const Vector3& source, const Vector3* targets, unsigned int targetCount, unsigned long long* outBlockerIDs ) = 0;
+	virtual bool QuerySightlines( const Vector3& source, const Vector3* targets, unsigned int targetCount, bool* outBlocked ) = 0;
 };

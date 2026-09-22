@@ -181,6 +181,14 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		)
 		MAP_METHOD_AND_WRAP
 		(
+			"GetLastSightlineVerdicts",
+			GetLastSightlineVerdicts,
+			"The sightline oracle's verdicts from the engine's last pass, as a dict of emitter id to blocked. "
+			"Only judged emitters appear: awake, positioned, in listener range, with a voice playing or just started. "
+			"Empty while no oracle is set."
+		)
+		MAP_METHOD_AND_WRAP
+		(
 			"ClearObstructionOcclusion",
 			ClearObstructionOcclusion,
 			"Fade the obstruction/occlusion values of all tracked emitters back to clear."

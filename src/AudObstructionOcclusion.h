@@ -8,6 +8,8 @@
 #pragma once
 
 #include <chrono>
+#include <map>
+#include <memory>
 #include <unordered_map>
 #include <vector>
 
@@ -34,6 +36,9 @@ struct Vector3;
  * snaps when nothing is playing, so the next voice starts at the right level. Only emitters that
  * are occluded, fading or waiting to be sent are tracked; an entry that comes to rest at clear is
  * dropped, so the per-tick work scales with what is occluded, not with what has ever played.
+ *
+ * The verdicts of the last sightline pass are kept as a record for tooling, separate from the
+ * fading values: an emitter absent from the record was not judged, one present at false is clear.
  */
 class AudObstructionOcclusion
 {
@@ -75,6 +80,14 @@ public:
 	 * @brief The occlusion currently applied to an emitter.
 	 */
 	float GetEmitterOcclusion(AkGameObjectID emitterID) const;
+
+	/**
+	 * @brief The sightline oracle's verdicts from the last pass, emitter id to blocked.
+	 *
+	 * Rebuilt on every refresh pass, so it holds exactly the emitters judged audible then, updated in
+	 * between by the emitters a voice started on. Empty while no oracle is set or nothing is audible.
+	 */
+	std::map<AkGameObjectID, bool> GetLastSightlineVerdicts() const;
 
 	/// Drops an emitter straight away without fading it out, for when the game object goes away.
 	void RemoveEmitter( AkGameObjectID emitterID );
@@ -151,6 +164,8 @@ private:
 
 	AudManager* m_audioManager;
 	std::unordered_map<AkGameObjectID, EmitterState> m_emitters;
+	// What the oracle answered last, see GetLastSightlineVerdicts. Guarded by m_mutex.
+	std::map<AkGameObjectID, bool> m_lastVerdicts;
 	float m_fadeRate;
 	bool m_hasUpdated;
 	bool m_enabled;
@@ -162,9 +177,11 @@ private:
 	std::chrono::steady_clock::time_point m_lastRefreshTime;
 
 	// Scratch space for the sightline pass, kept between ticks so a pass allocates nothing once warm.
-	// Only touched from the audio tick.
+	// Only touched from the audio tick. The answers live in a plain bool array because the oracle
+	// writes them through a bool*, which std::vector<bool> cannot hand out.
 	std::vector<Candidate> m_candidates;
 	std::vector<Vector3> m_targets;
-	std::vector<unsigned long long> m_blockers;
+	std::unique_ptr<bool[]> m_blocked;
+	size_t m_blockedCapacity;
 
 };
