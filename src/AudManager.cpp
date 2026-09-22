@@ -1015,7 +1015,7 @@ const MonitoredParameterInfo* AudManager::GetParameterInfo( const std::wstring& 
 //-----------------------------------------------------
 AudGameObjResource* AudManager::GetAudioEmitter( AkGameObjectID emitterID )
 {
-	auto objects = m_soundPrioritization->GetPrioritizedAudioObjects();
+	const auto& objects = m_soundPrioritization->GetPrioritizedAudioObjects();
 	for( auto obj : objects )
 	{
 		if( obj->GetID() == emitterID )
@@ -1233,15 +1233,17 @@ bool AudManager::GetAudioCullingEnabledProperty() const
 
 AudListenerPtr AudManager::GetListener()
 {
-	AudGameObjResourcePtr listenerGameObj = GetAudioEmitter( LISTENER_GAME_OBJ_ID );
-	AudListenerPtr listener = dynamic_cast<AudListener*>( listenerGameObj.p );
+	// The prioritizer already holds the listener. Scanning every game object for it, as GetAudioEmitter
+	// does, is too slow for callers on the audio tick.
+	IPrioritizedObject* prioritized = m_soundPrioritization != nullptr ? m_soundPrioritization->GetListener() : nullptr;
+	AudListenerPtr listener = dynamic_cast<AudListener*>( static_cast<AudGameObjResource*>( prioritized ) );
 	return listener;
 }
 
 std::vector<AudGameObjResource*> AudManager::GetPrioritizedAudioEmitters()
 {
 	std::vector<AudGameObjResource*> result;
-	auto objects = m_soundPrioritization->GetPrioritizedAudioObjects();
+	const auto& objects = m_soundPrioritization->GetPrioritizedAudioObjects();
 	result.reserve( objects.size() );
 	for( auto obj : objects )
 	{

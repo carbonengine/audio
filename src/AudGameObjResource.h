@@ -96,7 +96,13 @@ public:
 	bool IsMuted();
 	// Whether at least one voice is playing on this game object. Lock-free, safe from the audio tick.
 	bool HasPlayingVoices() const;
-	// Whether a voice just started on a silent game object and its line of sight has not been judged yet. Clears the flag.
+	// Whether the listener at the given position is within attenuation range of what plays here. The same test the culling weight uses.
+	bool IsListenerInRange( const Vector3& listenerPosition ) const;
+	// Whether a 2D sound is playing on this game object. A 2D voice has no position to occlude.
+	bool IsPlaying2DSound() const;
+	// Whether a voice started here while nothing was live and its line of sight has not been judged yet. Lock-free peek, leaves the flag set.
+	bool IsOcclusionOnsetPending() const;
+	// Consume the onset flag once the judgement is about to run. Returns whether it was set.
 	bool TakeOcclusionOnsetPending();
 	// Re-arm the onset flag, for when the judgement could not run this tick.
 	void MarkOcclusionOnsetPending();
@@ -147,6 +153,8 @@ protected:
 	void ApplyEventStopRelationships( const std::wstring& stoppingEventName );
 	// Calculates and updates sound prioritization attributes that are determined by currently playing events or events that will play on wake.
 	void UpdateEventSoundPrioritizationAttributes();
+	// Whether any voice is playing that has not been asked to stop. The caller holds m_mutex.
+	bool HasLiveVoiceLocked() const;
 	// Update the max attenuation radius of this game object if the given event's radius is larger than the current value.
 	void UpdateMaxAttenuationRadiusForEvent( const std::wstring& eventName );
 	// Get the max attenuation radius. The scaling factor of this game object will also be taken into account.
@@ -206,7 +214,8 @@ protected:
 	std::pair<std::chrono::steady_clock::time_point, std::wstring> m_waitingOneShotInRange;
 	// Lock-free mirror of !m_playingEvents.empty(), so the obstruction pass can read it without m_mutex.
 	std::atomic<bool> m_hasPlayingVoices{ false };
-	// Set when a voice starts on a silent game object. The obstruction pass consumes it to judge line of sight before the first buffer plays.
+	// Set when a voice starts while no voice is live. The obstruction pass consumes it to judge line of sight before the
+	// first buffer plays; it is also cleared when the last voice ends, so it never outlives the sound it was raised for.
 	std::atomic<bool> m_occlusionOnsetPending{ false };
 
 	// A mutex to be used when working with m_playingEvents, m_pendingStoppedPlayingIDs and m_eventsOnWake as they are accessed in different threads.

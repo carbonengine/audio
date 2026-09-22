@@ -11,19 +11,6 @@
 #include "IEveObstructionQuery.h"
 
 #include <algorithm>
-#include <vector>
-
-namespace
-{
-	/// One emitter the sightline pass is about to ask the oracle about.
-	struct Candidate
-	{
-		AkGameObjectID id;
-		Vector3 position;
-		// A voice just started on a silent emitter: judged every tick and applied without a fade.
-		bool onset;
-	};
-}
 
 AudObstructionOcclusion::AudObstructionOcclusion(AudManager* audioManager)	:
 	m_audioManager(audioManager),
@@ -85,15 +72,20 @@ void AudObstructionOcclusion::Update()
 			// The emitter is outside Wwise's view. Keep fading so time stays
 			// consistent, and make sure the values are resent once the emitter wakes up.
 			state.needsSend = true;
-			++it;
-			continue;
 		}
-
-		if (obstructionChanged || occlusionChanged || state.needsSend)
+		else if (obstructionChanged || occlusionChanged || state.needsSend)
 		{
 			state.needsSend = !SendToWwise(emitterID, state);
 		}
 
+		// A clear entry with nothing left to send carries no information: Wwise already holds clear
+		// for it, and a culled game object comes back from Wake() registered clear. Drop it so the
+		// walk above only ever visits emitters that are occluded or fading.
+		if (state.AtRestClear() && (!state.needsSend || culled))
+		{
+			it = m_emitters.erase(it);
+			continue;
+		}
 
 		++it;
 	}
@@ -132,13 +124,14 @@ bool AudObstructionOcclusion::SetObstructionOcclusion(AkGameObjectID emitterID, 
 
 	CcpAutoMutex lock(m_mutex);
 
-	const auto [entry, isNewEmitter] = m_emitters.try_emplace(emitterID);
-	EmitterState& state = entry->second;
+	EmitterState& state = m_emitters[emitterID];
 
 	state.obstruction.SetTarget(obstruction);
 	state.occlusion.SetTarget(occlusion);
 
-	if (isNewEmitter || snap || culled || !playing)
+	// Fade only while something audible could pop. A first verdict on an emitter that is already
+	// playing fades in like any other change; the pass snaps onsets explicitly.
+	if (snap || culled || !playing)
 	{
 		state.obstruction.SnapToTarget();
 		state.occlusion.SnapToTarget();
@@ -188,51 +181,66 @@ void AudObstructionOcclusion::RunSightlinePass(std::chrono::steady_clock::time_p
 
 	const bool refreshDue = !m_hasRefreshed
 		|| std::chrono::duration<float>(now - m_lastRefreshTime).count() >= REFRESH_INTERVAL;
-
-	// Emitters a voice just started on are judged every tick; everything audible is re-judged on the
-	// refresh interval. Silent emitters are left alone, they are judged the moment they start playing.
-	// Culled emitters are not awake, so they keep their stored value until they wake and play.
-	std::vector<Candidate> candidates;
-	for (AudGameObjResource* emitter : m_audioManager->GetAwakeAudioEmitters())
-	{
-		if (!emitter->HasUsableWorldPosition())
-		{
-			// Leave any onset flag armed; the emitter is judged once it has a position.
-			continue;
-		}
-
-		const bool onset = emitter->TakeOcclusionOnsetPending();
-		if (onset || (refreshDue && emitter->HasPlayingVoices()))
-		{
-			candidates.push_back({ emitter->GetID(), emitter->GetPosition(), onset });
-		}
-	}
-
 	if (refreshDue)
 	{
 		m_lastRefreshTime = now;
 		m_hasRefreshed = true;
 	}
 
-	if (candidates.empty())
+	// Collect under the prioritization lock, copying out only what the oracle needs, so no emitter
+	// pointer outlives the lock. Emitters a voice just started on are judged every tick; everything
+	// the listener can hear is re-judged on the refresh interval. Silent emitters are left alone,
+	// they are judged the moment they start playing. Culled emitters are not awake, so they keep
+	// their stored value until they wake and play. Emitters out of listener range or playing 2D are
+	// skipped: Wwise renders neither positionally, and rays to far emitters cross the most geometry.
+	// An out-of-range onset keeps its flag and is judged the tick it comes into range.
+	m_candidates.clear();
+	m_targets.clear();
+	m_audioManager->ForEachAwakeAudioEmitter([&](AudGameObjResource* emitter)
+	{
+		const bool onsetPending = emitter->IsOcclusionOnsetPending();
+		if (!onsetPending && !(refreshDue && emitter->HasPlayingVoices()))
+		{
+			return;
+		}
+		if (!emitter->HasUsableWorldPosition())
+		{
+			// Leave any onset flag armed; the emitter is judged once it has a position.
+			return;
+		}
+		if (emitter->IsPlaying2DSound())
+		{
+			// Nothing positional to occlude. Drop the onset; a later 3D voice starting on silence re-arms it.
+			emitter->TakeOcclusionOnsetPending();
+			return;
+		}
+		if (!emitter->IsListenerInRange(source))
+		{
+			return;
+		}
+		const bool onset = onsetPending && emitter->TakeOcclusionOnsetPending();
+		if (!onset && !refreshDue)
+		{
+			// The flag was cleared between the peek and the take: the voice already ended.
+			return;
+		}
+		m_candidates.push_back({ emitter->GetID(), onset });
+		m_targets.push_back(emitter->GetPosition());
+	});
+
+	if (m_candidates.empty())
 	{
 		return;
 	}
 
-	std::vector<Vector3> targets;
-	targets.reserve(candidates.size());
-	for (const Candidate& candidate : candidates)
-	{
-		targets.push_back(candidate.position);
-	}
-	std::vector<unsigned long long> blockers(candidates.size(), 0);
+	m_blockers.assign(m_candidates.size(), 0);
 
 	// No CarbonAudio lock is held while the game does its geometry.
-	const bool answered = oracle->QuerySightlines(source, targets.data(), static_cast<unsigned int>(targets.size()), blockers.data());
+	const bool answered = oracle->QuerySightlines(source, m_targets.data(), static_cast<unsigned int>(m_targets.size()), m_blockers.data());
 	if (!answered)
 	{
 		// Keep the previous verdicts. Re-arm the onsets so they are judged on the next tick that can answer.
-		for (const Candidate& candidate : candidates)
+		for (const Candidate& candidate : m_candidates)
 		{
 			if (candidate.onset)
 			{
@@ -244,12 +252,24 @@ void AudObstructionOcclusion::RunSightlinePass(std::chrono::steady_clock::time_p
 		return;
 	}
 
-	for (size_t i = 0; i < candidates.size(); ++i)
+	for (size_t i = 0; i < m_candidates.size(); ++i)
 	{
-		const float blockage = blockers[i] != 0 ? BLOCKED_OCCLUSION : 0.0f;
+		const Candidate& candidate = m_candidates[i];
+		const bool blocked = m_blockers[i] != 0;
+		if (!blocked && !IsTracked(candidate.id))
+		{
+			// Clear and not occluded before: nothing to fade, and nothing Wwise needs to hear about.
+			continue;
+		}
 		// An emitter destroyed since the snapshot is rejected as unknown, which is fine.
-		SetEmitterLineOfSightBlockage(candidates[i].id, blockage, candidates[i].onset);
+		SetEmitterLineOfSightBlockage(candidate.id, blocked ? BLOCKED_OCCLUSION : 0.0f, candidate.onset);
 	}
+}
+
+bool AudObstructionOcclusion::IsTracked(AkGameObjectID emitterID) const
+{
+	CcpAutoMutex lock(m_mutex);
+	return m_emitters.find(emitterID) != m_emitters.end();
 }
 
 float AudObstructionOcclusion::GetEmitterOcclusion(AkGameObjectID emitterID) const

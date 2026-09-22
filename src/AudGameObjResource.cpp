@@ -243,10 +243,10 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 			if ( playingID != AK_INVALID_PLAYING_ID )
 			{
 				ApplyEventStopRelationships( fullEventName );
-				if ( m_playingEvents.empty() )
+				if ( !HasLiveVoiceLocked() )
 				{
-					// First voice on a silent game object: nobody has judged its line of sight yet.
-					// Flag it so the obstruction pass does so before this voice reaches the speakers.
+					// First voice while nothing is live (voices already asked to stop do not count): nobody has
+					// judged this position yet. Flag it so the obstruction pass does so before the first buffer plays.
 					m_occlusionOnsetPending.store( true, std::memory_order_release );
 				}
 				m_playingEvents.insert({playingID, fullEventName});
@@ -309,13 +309,49 @@ void AudGameObjResource::EventFinishedCallback( AkEventCallbackInfo* cbInfo )
 	CcpAutoMutex mutex( m_mutex );
 	m_pendingStoppedPlayingIDs.erase( cbInfo->playingID );
 	m_playingEvents.erase( cbInfo->playingID );
-	m_hasPlayingVoices.store( !m_playingEvents.empty(), std::memory_order_release );
+	const bool silent = m_playingEvents.empty();
+	m_hasPlayingVoices.store( !silent, std::memory_order_release );
+	if ( silent )
+	{
+		// Nothing left to judge. An onset the pass never got to (out of range, no position) must not
+		// keep it looking at this object, nor be applied to whatever voice starts here next.
+		m_occlusionOnsetPending.store( false, std::memory_order_release );
+	}
 	UpdateEventSoundPrioritizationAttributes();
 }
 
 bool AudGameObjResource::HasPlayingVoices() const
 {
 	return m_hasPlayingVoices.load( std::memory_order_acquire );
+}
+
+bool AudGameObjResource::HasLiveVoiceLocked() const
+{
+	for ( const auto& playing : m_playingEvents )
+	{
+		if ( m_pendingStoppedPlayingIDs.find( playing.first ) == m_pendingStoppedPlayingIDs.end() )
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool AudGameObjResource::IsListenerInRange( const Vector3& listenerPosition ) const
+{
+	// Mirrors CalculateCullingWeight, so the obstruction pass and the culler agree on what is audible
+	// whether or not culling ran this tick.
+	return m_playing2DSound || LengthSq( m_position - listenerPosition ) < GetMaxAttenuationRadius();
+}
+
+bool AudGameObjResource::IsPlaying2DSound() const
+{
+	return m_playing2DSound;
+}
+
+bool AudGameObjResource::IsOcclusionOnsetPending() const
+{
+	return m_occlusionOnsetPending.load( std::memory_order_acquire );
 }
 
 bool AudGameObjResource::TakeOcclusionOnsetPending()
