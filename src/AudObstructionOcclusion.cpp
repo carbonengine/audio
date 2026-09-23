@@ -92,7 +92,7 @@ void AudObstructionOcclusion::Update()
 	}
 }
 
-bool AudObstructionOcclusion::SetObstructionOcclusion(AkGameObjectID emitterID, float obstruction, float occlusion, bool snap)
+bool AudObstructionOcclusion::SetObstructionOcclusion(AkGameObjectID emitterID, float obstruction, float occlusion)
 {
 	if (!m_enabled)
 	{
@@ -125,38 +125,24 @@ bool AudObstructionOcclusion::SetObstructionOcclusion(AkGameObjectID emitterID, 
 
 	CcpAutoMutex lock(m_mutex);
 
-	EmitterState& state = m_emitters[emitterID];
-
-	state.obstruction.SetTarget(obstruction);
-	state.occlusion.SetTarget(occlusion);
-
-	// Fade only while something audible could pop. A first verdict on an emitter that is already
-	// playing fades in like any other change; the pass snaps onsets explicitly.
-	if (snap || culled || !playing)
-	{
-		state.obstruction.SnapToTarget();
-		state.occlusion.SnapToTarget();
-		// Update() only sends a value a fade has moved, and a snapped value has nothing left to move.
-		// Flag it so the next Update() hands it to Wwise anyway.
-		state.needsSend = true;
-	}
+	// Fade only while something audible could pop. A first value on an emitter that is already
+	// playing fades in like any other change.
+	m_emitters[emitterID].SetTargets(obstruction, occlusion, culled || !playing);
 
 	return true;
 }
 
-bool AudObstructionOcclusion::SetEmitterLineOfSightBlockage(AkGameObjectID emitterID, float blockage, bool snap)
+bool AudObstructionOcclusion::SetEmitterLineOfSightBlockage(AkGameObjectID emitterID, float blockage)
+{
+	return SetObstructionOcclusion(emitterID, 0.0f, OcclusionForBlockage(blockage));
+}
+
+float AudObstructionOcclusion::OcclusionForBlockage(float blockage) const
 {
 	// When Acoustics is On its transmission already attenuates, so skip occlusion to avoid stacking.
 	// Might change in the future with the addition of volumes.
 	const bool acousticsEnabled = m_audioManager != nullptr && m_audioManager->GetSpatialAudioGeometryEnabled();
-
-	float occlusion = 0.0f;
-	if (!acousticsEnabled)
-	{
-		occlusion = blockage;
-	}
-
-	return SetObstructionOcclusion(emitterID, 0.0f, occlusion, snap);
+	return acousticsEnabled ? 0.0f : blockage;
 }
 
 void AudObstructionOcclusion::RunSightlinePass(std::chrono::steady_clock::time_point now)
@@ -199,8 +185,8 @@ void AudObstructionOcclusion::RunSightlinePass(std::chrono::steady_clock::time_p
 	m_targets.clear();
 	m_audioManager->ForEachAwakeAudioEmitter([&](AudGameObjResource* emitter)
 	{
-		const bool onsetPending = emitter->IsOcclusionOnsetPending();
-		if (!onsetPending && !(refreshDue && emitter->HasPlayingVoices()))
+		const bool refresh = refreshDue && emitter->HasPlayingVoices();
+		if (!refresh && !emitter->IsOcclusionOnsetPending())
 		{
 			return;
 		}
@@ -219,8 +205,8 @@ void AudObstructionOcclusion::RunSightlinePass(std::chrono::steady_clock::time_p
 		{
 			return;
 		}
-		const bool onset = onsetPending && emitter->TakeOcclusionOnsetPending();
-		if (!onset && !refreshDue)
+		const bool onset = emitter->TakeOcclusionOnsetPending();
+		if (!onset && !refresh)
 		{
 			// The flag was cleared between the peek and the take: the voice already ended.
 			return;
@@ -264,37 +250,29 @@ void AudObstructionOcclusion::RunSightlinePass(std::chrono::steady_clock::time_p
 		return;
 	}
 
-	{
-		// A refresh judged everything audible, so it replaces the record; an onset-only tick adds to it.
-		CcpAutoMutex lock(m_mutex);
-		if (refreshDue)
-		{
-			m_lastVerdicts.clear();
-		}
-		for (size_t i = 0; i < count; ++i)
-		{
-			m_lastVerdicts[m_candidates[i].id] = m_blocked[i];
-		}
-	}
+	const float blockedOcclusion = OcclusionForBlockage(BLOCKED_OCCLUSION);
 
+	// Record and apply under one hold. A refresh judged everything audible, so it replaces the record;
+	// an onset-only tick adds to it. Every candidate was awake and existed when collected; one destroyed
+	// since leaves an entry that the fade loop, which runs next, drops.
+	CcpAutoMutex lock(m_mutex);
+	if (refreshDue)
+	{
+		m_lastVerdicts.clear();
+	}
 	for (size_t i = 0; i < count; ++i)
 	{
 		const Candidate& candidate = m_candidates[i];
 		const bool blocked = m_blocked[i];
-		if (!blocked && !IsTracked(candidate.id))
+		m_lastVerdicts[candidate.id] = blocked;
+		// A clear verdict only reaches emitters that already have an entry: Wwise holds clear for the rest.
+		const auto entry = blocked ? m_emitters.try_emplace(candidate.id).first : m_emitters.find(candidate.id);
+		if (entry != m_emitters.end())
 		{
-			// Clear and not occluded before: nothing to fade, and nothing Wwise needs to hear about.
-			continue;
+			// A candidate that is not an onset was playing when collected, so only an onset snaps.
+			entry->second.SetTargets(0.0f, blocked ? blockedOcclusion : 0.0f, candidate.onset);
 		}
-		// An emitter destroyed since the snapshot is rejected as unknown, which is fine.
-		SetEmitterLineOfSightBlockage(candidate.id, blocked ? BLOCKED_OCCLUSION : 0.0f, candidate.onset);
 	}
-}
-
-bool AudObstructionOcclusion::IsTracked(AkGameObjectID emitterID) const
-{
-	CcpAutoMutex lock(m_mutex);
-	return m_emitters.find(emitterID) != m_emitters.end();
 }
 
 float AudObstructionOcclusion::GetEmitterOcclusion(AkGameObjectID emitterID) const

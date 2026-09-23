@@ -55,26 +55,25 @@ public:
 	/**
 	 * @brief Sets the obstruction and occlusion an emitter fades towards.
 	 *
+	 * Silent and culled emitters take the targets at once, since there is nothing audible to pop.
+	 *
 	 * @param emitterID   The emitter to block.
 	 * @param obstruction Target obstruction [0.0, 1.0]
 	 * @param occlusion   Target occlusion [0.0, 1.0]
-	 * @param snap        Apply the targets at once instead of fading. Silent and culled emitters snap
-	 *                    regardless, since there is nothing audible to pop.
 	 *
 	 * @return True if the emitter exists and the values were accepted.
 	 */
-	bool SetObstructionOcclusion(AkGameObjectID emitterID, float obstruction, float occlusion, bool snap = false);
+	bool SetObstructionOcclusion(AkGameObjectID emitterID, float obstruction, float occlusion);
 
 	/**
 	 * @brief Sets how much of an emitter's line of sight to the listener is blocked.
 	 *
 	 * @param emitterID The emitter to block.
 	 * @param blockage  How blocked the line of sight is [0.0, 1.0]. 0 is a clear line of sight.
-	 * @param snap      See SetObstructionOcclusion.
 	 *
 	 * @return True if the emitter exists and the value was accepted.
 	 */
-	bool SetEmitterLineOfSightBlockage(AkGameObjectID emitterID, float blockage, bool snap = false);
+	bool SetEmitterLineOfSightBlockage(AkGameObjectID emitterID, float blockage);
 
 	/**
 	 * @brief The occlusion currently applied to an emitter.
@@ -132,6 +131,20 @@ private:
 
 		bool needsSend = true;
 
+		/// Points both values at new targets. A snap jumps straight there and flags the entry for sending:
+		/// Update() only sends a value a fade has moved, and a snapped value has nothing left to move.
+		void SetTargets(float obstructionTarget, float occlusionTarget, bool snap)
+		{
+			obstruction.SetTarget(obstructionTarget);
+			occlusion.SetTarget(occlusionTarget);
+			if (snap)
+			{
+				obstruction.SnapToTarget();
+				occlusion.SnapToTarget();
+				needsSend = true;
+			}
+		}
+
 		/// Clear with nothing left to fade: the entry says nothing Wwise does not already assume.
 		bool AtRestClear() const
 		{
@@ -153,8 +166,8 @@ private:
 	/// Asks the game's sightline oracle about every emitter that needs judging this tick and applies the answers.
 	void RunSightlinePass(std::chrono::steady_clock::time_point now);
 
-	/// Whether an entry exists for the emitter: it is occluded, fading, or waiting to be sent.
-	bool IsTracked(AkGameObjectID emitterID) const;
+	/// The occlusion a line-of-sight blockage becomes: none while acoustics attenuates on its own.
+	float OcclusionForBlockage(float blockage) const;
 
 	static constexpr float DEFAULT_FADE_RATE = 1.0f;
 	/// Seconds between re-judging audible emitters. Emitters a voice just started on are judged every tick.
