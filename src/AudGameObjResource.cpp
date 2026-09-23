@@ -1015,7 +1015,8 @@ void AudGameObjResource::UpdateMaxAttenuationRadiusForEvent( const std::wstring&
 //-----------------------------------------------------
 float AudGameObjResource::GetMaxAttenuationRadius() const
 {
-	return m_maxAttenuationRadiusSq * m_scalingFactor;
+	// Wwise's scaling factor stretches the attenuation distance, so it scales the squared radius by its square.
+	return m_maxAttenuationRadiusSq * m_scalingFactor * m_scalingFactor;
 }
 
 const std::map<std::wstring, std::wstring>& AudGameObjResource::GetSwitches() const

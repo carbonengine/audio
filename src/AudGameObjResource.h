@@ -157,7 +157,7 @@ protected:
 	bool HasLiveVoiceLocked() const;
 	// Update the max attenuation radius of this game object if the given event's radius is larger than the current value.
 	void UpdateMaxAttenuationRadiusForEvent( const std::wstring& eventName );
-	// Get the max attenuation radius. The scaling factor of this game object will also be taken into account.
+	// Get the max attenuation radius, squared. The scaling factor of this game object will also be taken into account.
 	float GetMaxAttenuationRadius() const;
 
 	AkGameObjectID m_ID;
