@@ -23,22 +23,17 @@ struct Vector3;
 /**
  * @brief Owns the obstruction and occlusion of every emitter and feeds those values to Wwise.
  *
- * Blockage arrives in one of two ways. When the game has plugged a sightline oracle into
- * AudManager (see IEveObstructionQuery.h) this class asks it itself: every tick for each emitter a
- * voice just started on, and every REFRESH_INTERVAL for each emitter the listener can hear. Emitters
- * out of listener range or playing 2D are not asked about, Wwise does not render them positionally
- * and long rays are the expensive ones. Otherwise the game feeds values directly through
- * SetEmitterLineOfSightBlockage.
+ * Blockage comes from one of two places. If the game has set a sightline query on AudManager
+ * (see IEveObstructionQuery.h), this class runs it itself: every tick for emitters that just
+ * started playing, and every REFRESH_INTERVAL for emitters the listener can hear. Otherwise the
+ * game feeds values through SetEmitterLineOfSightBlockage.
  *
  * Either way the value becomes the obstruction and occlusion Wwise applies
- * (see @c AK::SoundEngine::SetObjectObstructionAndOcclusion). A value fades towards its target
- * while the emitter is audible, so sounds do not pop when something moves in front of them, and
- * snaps when nothing is playing, so the next voice starts at the right level. Only emitters that
- * are occluded, fading or waiting to be sent are tracked; an entry that comes to rest at clear is
- * dropped, so the per-tick work scales with what is occluded, not with what has ever played.
+ * (see @c AK::SoundEngine::SetObjectObstructionAndOcclusion). Values fade while the emitter is
+ * playing so sounds do not pop, and snap when it is silent. Emitters are only tracked while they
+ * are occluded or fading.
  *
- * The verdicts of the last sightline pass are kept as a record for tooling, separate from the
- * fading values: an emitter absent from the record was not judged, one present at false is clear.
+ * The results of the last sightline pass are kept for debug tools, see GetLastSightlineResults.
  */
 class AudObstructionOcclusion
 {
@@ -55,7 +50,7 @@ public:
 	/**
 	 * @brief Sets the obstruction and occlusion an emitter fades towards.
 	 *
-	 * Silent and culled emitters take the targets at once, since there is nothing audible to pop.
+	 * Silent and culled emitters snap straight to the targets.
 	 *
 	 * @param emitterID   The emitter to block.
 	 * @param obstruction Target obstruction [0.0, 1.0]
@@ -81,12 +76,12 @@ public:
 	float GetEmitterOcclusion(AkGameObjectID emitterID) const;
 
 	/**
-	 * @brief The sightline oracle's verdicts from the last pass, emitter id to blocked.
+	 * @brief Results of the last sightline pass, emitter id to blocked.
 	 *
-	 * Rebuilt on every refresh pass, so it holds exactly the emitters judged audible then, updated in
-	 * between by the emitters a voice started on. Empty while nothing is audible, and emptied by ClearAll.
+	 * Replaced on every refresh and added to when an emitter starts playing in between. Emitters that
+	 * were not checked are missing. Empty while nothing is audible, and cleared by ClearAll.
 	 */
-	std::map<AkGameObjectID, bool> GetLastSightlineVerdicts() const;
+	std::map<AkGameObjectID, bool> GetLastSightlineResults() const;
 
 	/// Drops an emitter straight away without fading it out, for when the game object goes away.
 	void RemoveEmitter( AkGameObjectID emitterID );
@@ -94,7 +89,7 @@ public:
 	/// Forgets every emitter and the fade clock, for when audio is disabled.
 	void Reset();
 
-	/// Fades every tracked emitter back to clear and forgets the last sightline verdicts.
+	/// Fades every tracked emitter back to clear and clears the last sightline results.
 	void ClearAll();
 
 	/**
@@ -131,8 +126,8 @@ private:
 
 		bool needsSend = true;
 
-		/// Points both values at new targets. A snap jumps straight there and flags the entry for sending:
-		/// Update() only sends a value a fade has moved, and a snapped value has nothing left to move.
+		/// Sets both targets. A snap jumps straight to them and marks the entry for sending, since
+		/// Update() only sends values that a fade changed.
 		void SetTargets(float obstructionTarget, float occlusionTarget, bool snap)
 		{
 			obstruction.SetTarget(obstructionTarget);
@@ -145,53 +140,52 @@ private:
 			}
 		}
 
-		/// Clear with nothing left to fade: the entry says nothing Wwise does not already assume.
-		bool AtRestClear() const
+		/// Both values are 0 and not fading.
+		bool IsClear() const
 		{
 			return obstruction.currentValue == 0.0f && obstruction.targetValue == 0.0f
 				&& occlusion.currentValue == 0.0f && occlusion.targetValue == 0.0f;
 		}
 	};
 
-	/// One emitter the sightline pass is asking the oracle about this tick.
+	/// An emitter the sightline pass checks this tick.
 	struct Candidate
 	{
 		AkGameObjectID id;
-		// A voice just started while nothing was live on the emitter: the verdict is applied without a fade.
+		// First voice after silence, the result is applied without a fade.
 		bool onset;
 	};
 
 	bool SendToWwise(AkGameObjectID emitterID, const EmitterState& state) const;
 
-	/// Asks the game's sightline oracle about every emitter that needs judging this tick and applies the answers.
+	/// Runs the game's sightline query for the emitters that need checking this tick and applies the results.
 	void RunSightlinePass(std::chrono::steady_clock::time_point now);
 
-	/// The occlusion a line-of-sight blockage becomes: none while acoustics attenuates on its own.
+	/// Converts a line-of-sight blockage into the occlusion to apply.
 	float OcclusionForBlockage(float blockage) const;
 
 	static constexpr float DEFAULT_FADE_RATE = 1.0f;
-	/// Seconds between re-judging audible emitters. Emitters a voice just started on are judged every tick.
+	/// Seconds between rechecks of audible emitters. Emitters that just started playing are checked every tick.
 	static constexpr float REFRESH_INTERVAL = 0.2f;
-	/// Occlusion applied to an emitter whose sightline the oracle reports blocked.
+	/// Occlusion applied when the sightline query reports an emitter blocked.
 	static constexpr float BLOCKED_OCCLUSION = 1.0f;
 
 	AudManager* m_audioManager;
 	std::unordered_map<AkGameObjectID, EmitterState> m_emitters;
-	// What the oracle answered last, see GetLastSightlineVerdicts. Guarded by m_mutex.
-	std::map<AkGameObjectID, bool> m_lastVerdicts;
+	// Last sightline results, see GetLastSightlineResults. Guarded by m_mutex.
+	std::map<AkGameObjectID, bool> m_lastResults;
 	float m_fadeRate;
 	bool m_hasUpdated;
 	bool m_enabled;
 	mutable CcpMutex m_mutex;
 
 	std::chrono::steady_clock::time_point m_lastUpdateTime;
-	// Clock of the periodic re-judging of audible emitters, separate from the fade clock.
+	// Timer for rechecking audible emitters, separate from the fade timer.
 	bool m_hasRefreshed;
 	std::chrono::steady_clock::time_point m_lastRefreshTime;
 
-	// Scratch space for the sightline pass, kept between ticks so a pass allocates nothing once warm.
-	// Only touched from the audio tick. The answers live in a plain bool array because the oracle
-	// writes them through a bool*, which std::vector<bool> cannot hand out.
+	// Reused by the sightline pass so it does not allocate every tick. Audio tick only.
+	// m_blocked is a plain array because std::vector<bool> can't give out a bool*.
 	std::vector<Candidate> m_candidates;
 	std::vector<Vector3> m_targets;
 	std::unique_ptr<bool[]> m_blocked;

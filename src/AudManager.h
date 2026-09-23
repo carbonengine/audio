@@ -128,8 +128,8 @@ public:
 	bool SetEmitterLineOfSightBlockage( AkGameObjectID emitterID, float blockage );
 	// Current, mid-fade occlusion value for an emitter. 0.0 if the emitter is clear or not tracked.
 	float GetEmitterOcclusion( AkGameObjectID emitterID ) const;
-	// The sightline oracle's verdicts from the last pass, emitter id to blocked. See AudObstructionOcclusion::GetLastSightlineVerdicts.
-	std::map<AkGameObjectID, bool> GetLastSightlineVerdicts() const;
+	// Results of the last sightline pass, emitter id to blocked. See AudObstructionOcclusion::GetLastSightlineResults.
+	std::map<AkGameObjectID, bool> GetLastSightlineResults() const;
 	// Fade all obstruction/occlusion values back to clear.
 	void ClearObstructionOcclusion();
 	// Enable or disable game-driven obstruction/occlusion processing.
@@ -138,7 +138,7 @@ public:
 	// How fast obstruction/occlusion values fade towards their targets, in units per second.
 	float GetObstructionOcclusionFadeRate() const;
 	void SetObstructionOcclusionFadeRate( float value );
-	// The game's sightline oracle, or null when none is plugged in (then only external blockage feeds apply). See IEveObstructionQuery.h.
+	// The game's sightline query, or null if the game feeds blockage values itself. See IEveObstructionQuery.h.
 	IEveObstructionQueryPtr GetObstructionQuery() const;
 	// Can be called to see if the current platform supports spatial audio.
 	const bool SpatialAudioIsSupported();
@@ -193,8 +193,8 @@ public:
 	std::vector<AudGameObjResource*> GetPrioritizedAudioEmitters();
 	// Get the emitters that are currently awake (not culled) in the sound prioritization system. Built-in system objects (UI, music, listener) are excluded.
 	std::vector<AudGameObjResource*> GetAwakeAudioEmitters();
-	// Visit the awake emitters in place, under the prioritization lock, without building a list. Same exclusions as
-	// GetAwakeAudioEmitters. The visitor must be cheap, must not take audio locks, and must not keep the pointer.
+	// Calls visitor for each awake emitter under the prioritization lock. Same exclusions as GetAwakeAudioEmitters.
+	// Keep the visitor cheap, don't take audio locks in it and don't keep the pointer.
 	template<typename Visitor>
 	void ForEachAwakeAudioEmitter( Visitor&& visitor )
 	{
@@ -294,7 +294,7 @@ private:
 	//Debug
 	IAudActionLogPtr m_log;
 
-	// Game-supplied line-of-sight oracle, assigned from script once per session. Exposed as "obstructionQuery".
+	// Set from script once per session, exposed as "obstructionQuery". See IEveObstructionQuery.h.
 	IEveObstructionQueryPtr m_obstructionQuery;
 
 

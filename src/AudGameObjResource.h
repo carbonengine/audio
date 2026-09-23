@@ -100,11 +100,11 @@ public:
 	bool IsListenerInRange( const Vector3& listenerPosition ) const;
 	// Whether a 2D sound is playing on this game object. A 2D voice has no position to occlude.
 	bool IsPlaying2DSound() const;
-	// Whether a voice started here while nothing was live and its line of sight has not been judged yet. Lock-free peek, leaves the flag set.
+	// Whether a voice started after silence and its line of sight hasn't been checked yet. Doesn't clear the flag.
 	bool IsOcclusionOnsetPending() const;
-	// Consume the onset flag once the judgement is about to run. Returns whether it was set.
+	// Clears the onset flag and returns whether it was set.
 	bool TakeOcclusionOnsetPending();
-	// Re-arm the onset flag, for when the judgement could not run this tick.
+	// Sets the onset flag again, for when the check could not run this tick.
 	void MarkOcclusionOnsetPending();
 
 
@@ -212,10 +212,10 @@ protected:
 	std::map<std::wstring, std::wstring> m_switchValues;
 	// A one shot event sent to this game object while it was culled. 
 	std::pair<std::chrono::steady_clock::time_point, std::wstring> m_waitingOneShotInRange;
-	// Lock-free mirror of !m_playingEvents.empty(), so the obstruction pass can read it without m_mutex.
+	// Lock-free mirror of !m_playingEvents.empty(), so the sightline pass can read it without m_mutex.
 	std::atomic<bool> m_hasPlayingVoices{ false };
-	// Set when a voice starts while no voice is live. The obstruction pass consumes it to judge line of sight before the
-	// first buffer plays; it is also cleared when the last voice ends, so it never outlives the sound it was raised for.
+	// Set when a voice starts after silence so the sightline pass checks it before the first buffer plays.
+	// Cleared when the last voice ends.
 	std::atomic<bool> m_occlusionOnsetPending{ false };
 
 	// A mutex to be used when working with m_playingEvents, m_pendingStoppedPlayingIDs and m_eventsOnWake as they are accessed in different threads.

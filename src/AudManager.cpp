@@ -549,9 +549,9 @@ float AudManager::GetEmitterOcclusion( AkGameObjectID emitterID ) const
 	return m_obstructionOcclusion->GetEmitterOcclusion( emitterID );
 }
 
-std::map<AkGameObjectID, bool> AudManager::GetLastSightlineVerdicts() const
+std::map<AkGameObjectID, bool> AudManager::GetLastSightlineResults() const
 {
-	return m_obstructionOcclusion->GetLastSightlineVerdicts();
+	return m_obstructionOcclusion->GetLastSightlineResults();
 }
 
 void AudManager::ClearObstructionOcclusion()
@@ -1238,8 +1238,7 @@ bool AudManager::GetAudioCullingEnabledProperty() const
 
 AudListenerPtr AudManager::GetListener()
 {
-	// The prioritizer already holds the listener. Scanning every game object for it, as GetAudioEmitter
-	// does, is too slow for callers on the audio tick.
+	// Get it from the prioritizer, GetAudioEmitter scans every game object which is too slow for the audio tick.
 	IPrioritizedObject* prioritized = m_soundPrioritization != nullptr ? m_soundPrioritization->GetListener() : nullptr;
 	AudListenerPtr listener = dynamic_cast<AudListener*>( static_cast<AudGameObjResource*>( prioritized ) );
 	return listener;

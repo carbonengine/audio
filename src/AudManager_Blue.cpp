@@ -54,7 +54,7 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		// Obstruction / occlusion
 		MAP_PROPERTY( "obstructionOcclusionEnabled", GetObstructionOcclusionEnabled, SetObstructionOcclusionEnabled, "Enable or disable game-driven obstruction/occlusion processing. Disabling fades all values back to clear.")
 		MAP_PROPERTY( "obstructionOcclusionFadeRate", GetObstructionOcclusionFadeRate, SetObstructionOcclusionFadeRate, "How fast obstruction/occlusion values fade towards their targets, in units per second. 0 = instantaneous.")
-		MAP_ATTRIBUTE( "obstructionQuery", m_obstructionQuery, "The game's sightline oracle: an object implementing IEveObstructionQuery, in practice destiny's ballpark. While set, the engine judges line of sight itself, every emitter the moment a voice starts on it and every audible emitter periodically. None turns that off; SetEmitterLineOfSightBlockage keeps working either way.", Be::READWRITE )
+		MAP_ATTRIBUTE( "obstructionQuery", m_obstructionQuery, "Object implementing IEveObstructionQuery, normally destiny's ballpark. While set, the engine checks line of sight itself when a voice starts and periodically while it plays. Set to None to turn it off. SetEmitterLineOfSightBlockage works either way.", Be::READWRITE )
 
 		MAP_METHOD_AND_WRAP
 		( 
@@ -181,17 +181,17 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		)
 		MAP_METHOD_AND_WRAP
 		(
-			"GetLastSightlineVerdicts",
-			GetLastSightlineVerdicts,
-			"The sightline oracle's verdicts from the engine's last pass, as a dict of emitter id to blocked. "
-			"Only judged emitters appear: awake, positioned, in listener range, with a voice playing or just started. "
-			"Empty while nothing is audible, and emptied by ClearObstructionOcclusion."
+			"GetLastSightlineResults",
+			GetLastSightlineResults,
+			"Results of the engine's last sightline pass, as a dict of emitter id to blocked. "
+			"Only emitters that were checked are included: awake, positioned, in listener range and playing. "
+			"Empty while nothing is audible, and cleared by ClearObstructionOcclusion."
 		)
 		MAP_METHOD_AND_WRAP
 		(
 			"ClearObstructionOcclusion",
 			ClearObstructionOcclusion,
-			"Fade the obstruction/occlusion values of all tracked emitters back to clear and forget the last sightline verdicts."
+			"Fade the obstruction/occlusion values of all tracked emitters back to clear and clear the last sightline results."
 		)
 		MAP_METHOD_AND_WRAP
 		( 

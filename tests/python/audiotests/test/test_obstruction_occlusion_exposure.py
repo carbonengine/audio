@@ -50,8 +50,7 @@ class TestObstructionOcclusionExposure(BaseAudio2TestClass):
         self.Pump()
 
     def MakeAudible(self):
-        """A fade only protects a sound that is playing; a silent emitter takes its new value at once.
-        Start a loop on the emitter so the fade tests have something to fade.
+        """Start a loop on the emitter. Silent emitters snap to new values, so the fade tests need something playing.
         """
         import audio2
         audio2.GetListener().SetPosition((0, 0, 0), (0, 0, 0), (0, 0, 0))

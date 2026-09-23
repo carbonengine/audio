@@ -245,8 +245,8 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 				ApplyEventStopRelationships( fullEventName );
 				if ( !HasLiveVoiceLocked() )
 				{
-					// First voice while nothing is live (voices already asked to stop do not count): nobody has
-					// judged this position yet. Flag it so the obstruction pass does so before the first buffer plays.
+					// First voice after silence (stopping voices don't count). Flag it so the sightline pass
+					// checks it before the first buffer plays.
 					m_occlusionOnsetPending.store( true, std::memory_order_release );
 				}
 				m_playingEvents.insert({playingID, fullEventName});
@@ -313,8 +313,7 @@ void AudGameObjResource::EventFinishedCallback( AkEventCallbackInfo* cbInfo )
 	m_hasPlayingVoices.store( !silent, std::memory_order_release );
 	if ( silent )
 	{
-		// Nothing left to judge. An onset the pass never got to (out of range, no position) must not
-		// keep it looking at this object, nor be applied to whatever voice starts here next.
+		// Nothing playing anymore, drop an onset flag the sightline pass never got to.
 		m_occlusionOnsetPending.store( false, std::memory_order_release );
 	}
 	UpdateEventSoundPrioritizationAttributes();
@@ -339,8 +338,7 @@ bool AudGameObjResource::HasLiveVoiceLocked() const
 
 bool AudGameObjResource::IsListenerInRange( const Vector3& listenerPosition ) const
 {
-	// Mirrors CalculateCullingWeight, so the obstruction pass and the culler agree on what is audible
-	// whether or not culling ran this tick.
+	// Same test as CalculateCullingWeight, done here too because that only runs while culling is on.
 	return m_playing2DSound || LengthSq( m_position - listenerPosition ) < GetMaxAttenuationRadius();
 }
 
@@ -1015,7 +1013,7 @@ void AudGameObjResource::UpdateMaxAttenuationRadiusForEvent( const std::wstring&
 //-----------------------------------------------------
 float AudGameObjResource::GetMaxAttenuationRadius() const
 {
-	// Wwise's scaling factor stretches the attenuation distance, so it scales the squared radius by its square.
+	// The scaling factor scales distance, so the squared radius scales by its square.
 	return m_maxAttenuationRadiusSq * m_scalingFactor * m_scalingFactor;
 }
 
