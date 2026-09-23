@@ -48,7 +48,7 @@ class OcclusionManager(object):
         self._manager.obstructionOcclusionFadeRate = value
 
     def ClearAll(self):
-        """Fade the occlusion values of all tracked emitters back to clear."""
+        """Fade the occlusion values of all tracked emitters back to clear and forget the last sightline verdicts."""
         self._manager.ClearObstructionOcclusion()
 
     def GetEmitterOcclusion(self, emitterID):
@@ -79,7 +79,7 @@ class OcclusionManager(object):
 
         Only emitters the pass judged appear: awake, positioned, in listener range, with a voice
         playing or one just started. An emitter that is absent was not judged; one present at
-        False has a clear line of sight. Empty while no oracle is set or nothing is audible.
+        False has a clear line of sight. Empty while nothing is audible, and emptied by ClearAll.
 
         :return: dict of emitter ID to bool
         """

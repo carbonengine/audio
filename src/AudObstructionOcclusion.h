@@ -84,7 +84,7 @@ public:
 	 * @brief The sightline oracle's verdicts from the last pass, emitter id to blocked.
 	 *
 	 * Rebuilt on every refresh pass, so it holds exactly the emitters judged audible then, updated in
-	 * between by the emitters a voice started on. Empty while no oracle is set or nothing is audible.
+	 * between by the emitters a voice started on. Empty while nothing is audible, and emptied by ClearAll.
 	 */
 	std::map<AkGameObjectID, bool> GetLastSightlineVerdicts() const;
 
@@ -94,7 +94,7 @@ public:
 	/// Forgets every emitter and the fade clock, for when audio is disabled.
 	void Reset();
 
-	/// Fades every tracked emitter back to clear.
+	/// Fades every tracked emitter back to clear and forgets the last sightline verdicts.
 	void ClearAll();
 
 	/**

@@ -323,6 +323,8 @@ void AudObstructionOcclusion::Reset()
 void AudObstructionOcclusion::ClearAll()
 {
 	CcpAutoMutex lock(m_mutex);
+	// The verdicts belong to whatever was judged before; the next pass that runs records its own.
+	m_lastVerdicts.clear();
 	for (auto& pair : m_emitters)
 	{
 		pair.second.obstruction.SetTarget(0.0f);
