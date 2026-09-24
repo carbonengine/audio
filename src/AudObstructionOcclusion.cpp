@@ -171,8 +171,6 @@ void AudObstructionOcclusion::RunSightlinePass(std::chrono::steady_clock::time_p
 	}
 
 	// Copy out ids and positions under the prioritization lock so no emitter pointer is kept after it.
-	// Emitters that just started playing are checked every tick, everything audible on the refresh
-	// interval. Out of range and 2D emitters are skipped since Wwise doesn't render them positionally.
 	m_candidates.clear();
 	m_targets.clear();
 	m_audioManager->ForEachAwakeAudioEmitter([&](AudGameObjResource* emitter)

@@ -23,17 +23,9 @@ struct Vector3;
 /**
  * @brief Owns the obstruction and occlusion of every emitter and feeds those values to Wwise.
  *
- * Blockage comes from one of two places. If the game has set a sightline query on AudManager
- * (see IEveObstructionQuery.h), this class runs it itself: every tick for emitters that just
- * started playing, and every REFRESH_INTERVAL for emitters the listener can hear. Otherwise the
- * game feeds values through SetEmitterLineOfSightBlockage.
- *
- * Either way the value becomes the obstruction and occlusion Wwise applies
- * (see @c AK::SoundEngine::SetObjectObstructionAndOcclusion). Values fade while the emitter is
- * playing so sounds do not pop, and snap when it is silent. Emitters are only tracked while they
- * are occluded or fading.
- *
- * The results of the last sightline pass are kept for debug tools, see GetLastSightlineResults.
+ * Blockage comes from destiny when a sightline query is set on AudManager (see
+ * IEveObstructionQuery.h), otherwise from the game through SetEmitterLineOfSightBlockage. Either
+ * way it fades while the emitter is playing so sounds do not pop, and snaps when it is silent.
  */
 class AudObstructionOcclusion
 {
@@ -75,12 +67,7 @@ public:
 	 */
 	float GetEmitterOcclusion(AkGameObjectID emitterID) const;
 
-	/**
-	 * @brief Results of the last sightline pass, emitter id to blocked.
-	 *
-	 * Replaced on every refresh and added to when an emitter starts playing in between. Emitters that
-	 * were not checked are missing. Empty while nothing is audible, and cleared by ClearAll.
-	 */
+	/// Results of the last sightline pass, emitter id to blocked. Emitters that were not checked are missing.
 	std::map<AkGameObjectID, bool> GetLastSightlineResults() const;
 
 	/// Drops an emitter straight away without fading it out, for when the game object goes away.
@@ -118,7 +105,7 @@ private:
 		void SnapToTarget() { currentValue = targetValue; };
 	};
 
-	/// Everything we keep for one emitter that is occluded, fading, or waiting to be sent to Wwise.
+	/// Everything we keep for one tracked emitter.
 	struct EmitterState
 	{
 		FadingValue obstruction;
@@ -126,8 +113,8 @@ private:
 
 		bool needsSend = true;
 
-		/// Sets both targets. A snap jumps straight to them and marks the entry for sending, since
-		/// Update() only sends values that a fade changed.
+		/// A snap jumps straight to the targets and marks the entry for sending, since Update() only
+		/// sends what a fade changed.
 		void SetTargets(float obstructionTarget, float occlusionTarget, bool snap)
 		{
 			obstruction.SetTarget(obstructionTarget);

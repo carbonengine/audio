@@ -94,13 +94,13 @@ public:
 	void Unmute();
 	// Whether or not this game object is currently muted.
 	bool IsMuted();
-	// Whether at least one voice is playing on this game object. Lock-free, safe from the audio tick.
+	// Whether at least one voice is playing. Lock-free, safe from the audio tick.
 	bool HasPlayingVoices() const;
-	// Whether the listener at the given position is within attenuation range of what plays here. The same test the culling weight uses.
+	// Whether the listener is within attenuation range of what plays here. Same test as the culling weight.
 	bool IsListenerInRange( const Vector3& listenerPosition ) const;
-	// Whether a 2D sound is playing on this game object. A 2D voice has no position to occlude.
+	// Whether a 2D sound is playing, which has no position to occlude.
 	bool IsPlaying2DSound() const;
-	// Whether a voice started after silence and its line of sight hasn't been checked yet. Doesn't clear the flag.
+	// Whether a voice started after silence and its line of sight hasn't been checked yet.
 	bool IsOcclusionOnsetPending() const;
 	// Clears the onset flag and returns whether it was set.
 	bool TakeOcclusionOnsetPending();

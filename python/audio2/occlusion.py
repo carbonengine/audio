@@ -4,11 +4,9 @@
 class OcclusionManager(object):
     """Wrapper for Carbon Audio's line-of-sight obstruction/occlusion API.
 
-    Two ways to drive it. Set ``query`` to an object implementing IEveObstructionQuery (the
-    destiny ballpark) and Carbon Audio checks line of sight itself, when a voice starts and
-    periodically while it plays. Or leave ``query`` unset and feed per-emitter blockage values
-    through SetEmitterLineOfSightBlockage; Carbon Audio never times those out, so keeping them
-    fresh is then the caller's responsibility.
+    Set ``query`` to the destiny ballpark and Carbon Audio checks line of sight itself. Otherwise
+    feed blockage per emitter through SetEmitterLineOfSightBlockage; those values never time out,
+    so keeping them fresh is the caller's job.
 
     Reached through AudioManager as audioManager.occlusion rather than constructed directly.
     """
@@ -74,10 +72,7 @@ class OcclusionManager(object):
         return self._manager.SetEmitterLineOfSightBlockage(emitterID, blockage)
 
     def GetLastSightlineResults(self):
-        """Results of Carbon Audio's last sightline pass, as {emitterID: blocked}.
-
-        Only emitters that were checked are included: awake, positioned, in listener range and
-        playing. Empty while nothing is audible, and cleared by ClearAll.
+        """Results of Carbon Audio's last sightline pass. Emitters that were not checked are missing.
 
         :return: dict of emitter ID to bool
         """
