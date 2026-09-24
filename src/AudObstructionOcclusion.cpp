@@ -122,7 +122,6 @@ bool AudObstructionOcclusion::SetObstructionOcclusion(AkGameObjectID emitterID, 
 
 	CcpAutoMutex lock(m_mutex);
 
-	// Only fade while something is playing, silent or culled emitters snap.
 	m_emitters[emitterID].SetTargets(obstruction, occlusion, culled || !playing);
 
 	return true;
@@ -210,7 +209,6 @@ void AudObstructionOcclusion::RunSightlinePass(std::chrono::steady_clock::time_p
 	{
 		if (refreshDue)
 		{
-			// Nothing audible on a refresh, so clear the last results.
 			CcpAutoMutex lock(m_mutex);
 			m_lastResults.clear();
 		}
@@ -227,7 +225,7 @@ void AudObstructionOcclusion::RunSightlinePass(std::chrono::steady_clock::time_p
 	const bool answered = query->QuerySightlines(source, m_targets.data(), static_cast<unsigned int>(count), m_blocked.get());
 	if (!answered)
 	{
-		// No answer this tick. Keep the last results and flag the onsets again so they get checked next tick.
+		// Keep the last results and flag the onsets again so they get checked next tick.
 		for (const Candidate& candidate : m_candidates)
 		{
 			if (candidate.onset)

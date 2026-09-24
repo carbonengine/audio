@@ -245,8 +245,7 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 				ApplyEventStopRelationships( fullEventName );
 				if ( !HasLiveVoiceLocked() )
 				{
-					// First voice after silence (stopping voices don't count). Flag it so the sightline pass
-					// checks it before the first buffer plays.
+					// First voice after silence, stopping voices don't count.
 					m_occlusionOnsetPending.store( true, std::memory_order_release );
 				}
 				m_playingEvents.insert({playingID, fullEventName});
@@ -313,7 +312,6 @@ void AudGameObjResource::EventFinishedCallback( AkEventCallbackInfo* cbInfo )
 	m_hasPlayingVoices.store( !silent, std::memory_order_release );
 	if ( silent )
 	{
-		// Nothing playing anymore, drop an onset flag the sightline pass never got to.
 		m_occlusionOnsetPending.store( false, std::memory_order_release );
 	}
 	UpdateEventSoundPrioritizationAttributes();
