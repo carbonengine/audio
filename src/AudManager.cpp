@@ -2,6 +2,7 @@
 
 #include "stdafx.h"
 #include "AudManager.h"
+#include "IEveObstructionQuery.h"
 
 #include <AK/Plugin/AkCompressorFXFactory.h>
 #include <AK/Plugin/AkDelayFXFactory.h>
@@ -548,6 +549,11 @@ float AudManager::GetEmitterOcclusion( AkGameObjectID emitterID ) const
 	return m_obstructionOcclusion->GetEmitterOcclusion( emitterID );
 }
 
+std::map<AkGameObjectID, bool> AudManager::GetLastSightlineResults() const
+{
+	return m_obstructionOcclusion->GetLastSightlineResults();
+}
+
 void AudManager::ClearObstructionOcclusion()
 {
 	m_obstructionOcclusion->ClearAll();
@@ -571,6 +577,11 @@ float AudManager::GetObstructionOcclusionFadeRate() const
 void AudManager::SetObstructionOcclusionFadeRate( float value )
 {
 	m_obstructionOcclusion->SetFadeRate( value );
+}
+
+IEveObstructionQueryPtr AudManager::GetObstructionQuery() const
+{
+	return m_obstructionQuery;
 }
 
 void AudManager::UpdateSettings( AudSettings* settings )
@@ -1009,7 +1020,7 @@ const MonitoredParameterInfo* AudManager::GetParameterInfo( const std::wstring& 
 //-----------------------------------------------------
 AudGameObjResource* AudManager::GetAudioEmitter( AkGameObjectID emitterID )
 {
-	auto objects = m_soundPrioritization->GetPrioritizedAudioObjects();
+	const auto& objects = m_soundPrioritization->GetPrioritizedAudioObjects();
 	for( auto obj : objects )
 	{
 		if( obj->GetID() == emitterID )
@@ -1227,15 +1238,16 @@ bool AudManager::GetAudioCullingEnabledProperty() const
 
 AudListenerPtr AudManager::GetListener()
 {
-	AudGameObjResourcePtr listenerGameObj = GetAudioEmitter( LISTENER_GAME_OBJ_ID );
-	AudListenerPtr listener = dynamic_cast<AudListener*>( listenerGameObj.p );
+	// Get it from the prioritizer, GetAudioEmitter scans every game object which is too slow for the audio tick.
+	IPrioritizedObject* prioritized = m_soundPrioritization != nullptr ? m_soundPrioritization->GetListener() : nullptr;
+	AudListenerPtr listener = dynamic_cast<AudListener*>( static_cast<AudGameObjResource*>( prioritized ) );
 	return listener;
 }
 
 std::vector<AudGameObjResource*> AudManager::GetPrioritizedAudioEmitters()
 {
 	std::vector<AudGameObjResource*> result;
-	auto objects = m_soundPrioritization->GetPrioritizedAudioObjects();
+	const auto& objects = m_soundPrioritization->GetPrioritizedAudioObjects();
 	result.reserve( objects.size() );
 	for( auto obj : objects )
 	{
@@ -1247,13 +1259,7 @@ std::vector<AudGameObjResource*> AudManager::GetPrioritizedAudioEmitters()
 std::vector<AudGameObjResource*> AudManager::GetAwakeAudioEmitters()
 {
 	std::vector<AudGameObjResource*> result;
-	m_soundPrioritization->ForEachAwakeAudioObject( [&result]( IPrioritizedObject* obj )
-	{
-		if( !IsReservedGameObjectID( obj->GetID() ) )
-		{
-			result.push_back( static_cast<AudGameObjResource*>( obj ) );
-		}
-	} );
+	ForEachAwakeAudioEmitter( [&result]( AudGameObjResource* emitter ) { result.push_back( emitter ); } );
 	return result;
 }
 // Callback from Wwise to use for tracking performance of the sound engine. This is called when a timer stops. Only applicable in Profile or Debug Wwise flavors.

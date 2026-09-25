@@ -18,6 +18,7 @@
 BLUE_DECLARE( AudConfig );
 BLUE_DECLARE( AudGameObjResource );
 BLUE_DECLARE_INTERFACE( IAudActionLog );
+BLUE_DECLARE_INTERFACE( IEveObstructionQuery );
 
 typedef std::vector<std::wstring> BankVector;
 typedef std::vector<AkGameObjectID> GameObjIDVector;
@@ -127,6 +128,8 @@ public:
 	bool SetEmitterLineOfSightBlockage( AkGameObjectID emitterID, float blockage );
 	// Current, mid-fade occlusion value for an emitter. 0.0 if the emitter is clear or not tracked.
 	float GetEmitterOcclusion( AkGameObjectID emitterID ) const;
+	// Results of the last sightline pass, emitter id to blocked. See AudObstructionOcclusion::GetLastSightlineResults.
+	std::map<AkGameObjectID, bool> GetLastSightlineResults() const;
 	// Fade all obstruction/occlusion values back to clear.
 	void ClearObstructionOcclusion();
 	// Enable or disable game-driven obstruction/occlusion processing.
@@ -135,6 +138,8 @@ public:
 	// How fast obstruction/occlusion values fade towards their targets, in units per second.
 	float GetObstructionOcclusionFadeRate() const;
 	void SetObstructionOcclusionFadeRate( float value );
+	// The game's sightline query, or null if the game feeds blockage values itself. See IEveObstructionQuery.h.
+	IEveObstructionQueryPtr GetObstructionQuery() const;
 	// Can be called to see if the current platform supports spatial audio.
 	const bool SpatialAudioIsSupported();
 	// Stop all currently playing sounds on all game objects.
@@ -188,6 +193,19 @@ public:
 	std::vector<AudGameObjResource*> GetPrioritizedAudioEmitters();
 	// Get the emitters that are currently awake (not culled) in the sound prioritization system. Built-in system objects (UI, music, listener) are excluded.
 	std::vector<AudGameObjResource*> GetAwakeAudioEmitters();
+	// Calls visitor for each awake emitter under the prioritization lock. Same exclusions as GetAwakeAudioEmitters.
+	// Keep the visitor cheap, don't take audio locks in it and don't keep the pointer.
+	template<typename Visitor>
+	void ForEachAwakeAudioEmitter( Visitor&& visitor )
+	{
+		m_soundPrioritization->ForEachAwakeAudioObject( [&visitor]( IPrioritizedObject* obj )
+		{
+			if( !IsReservedGameObjectID( obj->GetID() ) )
+			{
+				visitor( static_cast<AudGameObjResource*>( obj ) );
+			}
+		} );
+	}
 #ifndef AK_OPTIMIZED
 	// Get the event name for the given playingID and emitter.
 	const std::wstring GetEventName( AkGameObjectID emitterID, AkPlayingID playingID );
@@ -275,6 +293,9 @@ private:
 #endif
 	//Debug
 	IAudActionLogPtr m_log;
+
+	// Set from script once per session, exposed as "obstructionQuery". See IEveObstructionQuery.h.
+	IEveObstructionQueryPtr m_obstructionQuery;
 
 
 

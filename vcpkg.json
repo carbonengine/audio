@@ -5,6 +5,10 @@
       "version>=": "6.2.0"
     },
     {
+      "name": "carbon-destiny",
+      "version>=": "3.1.1#1"
+    },
+    {
       "name": "carbon-math",
       "version>=": "1.2.1"
     },
