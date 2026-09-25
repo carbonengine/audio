@@ -129,7 +129,7 @@ public:
 	// Current, mid-fade occlusion value for an emitter. 0.0 if the emitter is clear or not tracked.
 	float GetEmitterOcclusion( AkGameObjectID emitterID ) const;
 	// Results of the last sightline pass, emitter id to blocked. See AudObstructionOcclusion::GetLastSightlineResults.
-	std::map<AkGameObjectID, bool> GetLastSightlineResults() const;
+	const std::map<AkGameObjectID, bool>& GetLastSightlineResults() const;
 	// Fade all obstruction/occlusion values back to clear.
 	void ClearObstructionOcclusion();
 	// Enable or disable game-driven obstruction/occlusion processing.

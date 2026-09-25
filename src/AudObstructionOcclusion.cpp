@@ -275,7 +275,7 @@ float AudObstructionOcclusion::GetEmitterOcclusion(AkGameObjectID emitterID) con
 	return it->second.occlusion.currentValue;
 }
 
-std::map<AkGameObjectID, bool> AudObstructionOcclusion::GetLastSightlineResults() const
+const std::map<AkGameObjectID, bool>& AudObstructionOcclusion::GetLastSightlineResults() const
 {
 	CcpAutoMutex lock(m_mutex);
 	return m_lastResults;

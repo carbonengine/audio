@@ -68,7 +68,8 @@ public:
 	float GetEmitterOcclusion(AkGameObjectID emitterID) const;
 
 	/// Results of the last sightline pass, emitter id to blocked. Emitters that were not checked are missing.
-	std::map<AkGameObjectID, bool> GetLastSightlineResults() const;
+	/// Only valid on the thread that drives Update, and only until the next one.
+	const std::map<AkGameObjectID, bool>& GetLastSightlineResults() const;
 
 	/// Drops an emitter straight away without fading it out, for when the game object goes away.
 	void RemoveEmitter( AkGameObjectID emitterID );

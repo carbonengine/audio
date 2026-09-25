@@ -549,7 +549,7 @@ float AudManager::GetEmitterOcclusion( AkGameObjectID emitterID ) const
 	return m_obstructionOcclusion->GetEmitterOcclusion( emitterID );
 }
 
-std::map<AkGameObjectID, bool> AudManager::GetLastSightlineResults() const
+const std::map<AkGameObjectID, bool>& AudManager::GetLastSightlineResults() const
 {
 	return m_obstructionOcclusion->GetLastSightlineResults();
 }
