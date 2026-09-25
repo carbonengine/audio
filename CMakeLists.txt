@@ -8,15 +8,12 @@ include(cmake/CcpBuildConfigurations.cmake)
 include(cmake/CcpPackageConfigHelpers.cmake)
 
 find_package(carbon-blue            CONFIG REQUIRED)
+find_package(carbon-destiny         CONFIG REQUIRED)
 find_package(carbon-math            CONFIG REQUIRED)
 find_package(carbon-trinityaudioapi CONFIG REQUIRED)
 find_package(Wwise                  CONFIG REQUIRED)
 find_package(TBB                    CONFIG REQUIRED)
 find_package(Python3 COMPONENTS Development Interpreter REQUIRED)
-
-set(PUBLIC_HEADER_FILES_INCLUDE
-	include/IEveObstructionQuery.h
-)
 
 ccp_add_library(CarbonAudio SHARED
 	src/AudListener_Blue.cpp
@@ -102,7 +99,6 @@ target_sources(CarbonAudio PRIVATE
 	src/IPrioritizedObject.h
 	src/SoundPrioritization.h
     src/WAAPI/WaapiManager.h
-	${PUBLIC_HEADER_FILES_INCLUDE}
 )
 
 set(WWISE_LIBRARIES
@@ -140,12 +136,11 @@ if(APPLE)
 endif()
 
 target_precompile_headers(CarbonAudio PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/stdafx.h)
+get_target_property(DESTINY_INCLUDE_DIRS destiny INTERFACE_INCLUDE_DIRECTORIES)
 target_include_directories(CarbonAudio
-		PUBLIC
-			$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-			$<INSTALL_INTERFACE:include>
 		PRIVATE
 			${CMAKE_CURRENT_SOURCE_DIR}/src
+			${DESTINY_INCLUDE_DIRS}
 		)
 
 set_target_properties(CarbonAudio PROPERTIES OUTPUT_NAME "_audio2")
@@ -226,9 +221,6 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
             DESTINATION ${CMAKE_INSTALL_PREFIX}/share/carbon-audio
         )
     endif()
-
-    # Install rule for available public headers
-    install(DIRECTORY include DESTINATION . FILES_MATCHING PATTERN "*.h")
 
     # Install python package
     install(DIRECTORY python/ DESTINATION python

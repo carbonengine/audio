@@ -1,5 +1,4 @@
 # Copyright © 2025 CCP ehf.
-
 #[===[
 Note: Use of this file is deprecated, but is being kept around for backwards compatability purposes. It will be deleted soon
 
@@ -63,6 +62,11 @@ function(configure_ccp_vendor_config_file)
     # relative to the generated configuration script - e.g. CMAKE_CURRENT_LIST_DIR - and that's what we attempt to do here.
     # This is likely not sufficient for more complex use cases, but seems to get us far enough at the moment.
     get_target_property(CCP_PACKAGE_CONFIG_TARGET_INTERFACE_INCLUDE_DIRECTORIES ${CCP_PACKAGE_CONFIG_TARGET} INTERFACE_INCLUDE_DIRECTORIES)
+    # A target that exports no public headers has no such property, and the -NOTFOUND string would
+    # end up in the generated config as an include directory that does not exist.
+    if(NOT CCP_PACKAGE_CONFIG_TARGET_INTERFACE_INCLUDE_DIRECTORIES)
+        set(CCP_PACKAGE_CONFIG_TARGET_INTERFACE_INCLUDE_DIRECTORIES "")
+    endif()
     set(_DIRS "")
     foreach(_DIR ${CCP_PACKAGE_CONFIG_TARGET_INTERFACE_INCLUDE_DIRECTORIES})
         string(REPLACE ${CMAKE_CURRENT_SOURCE_DIR} [=[${CMAKE_CURRENT_LIST_DIR}]=] _DIR ${_DIR})
