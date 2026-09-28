@@ -242,6 +242,7 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     option(BUILD_TESTING "Build tests. Enabled by default." ON)
     if(BUILD_TESTING)
         include(CTest)
+        add_subdirectory(tests/native)
 
         set(ENV{PYTHONPATH} ${CMAKE_CURRENT_SOURCE_DIR}/python)
         execute_process(COMMAND ${Python3_EXECUTABLE} discover.py

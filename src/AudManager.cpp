@@ -830,6 +830,7 @@ void AudManager::Disable()
 	}
 
 	ClearBanks();
+	m_obstructionQuery = nullptr;
 	m_obstructionOcclusion->Reset();
   AudGeometry::ClearAllGeometry();
 #ifndef AK_OPTIMIZED

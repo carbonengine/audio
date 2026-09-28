@@ -54,6 +54,19 @@ class TestObstructionOcclusionExposure(BaseAudio2TestClass):
         self.assertTrue(WaitForEmitterToWake(self.emitter), "Timed out waiting for the emitter to be woken up.")
         self.assertGreater(self.emitter.SendEvent(LOOP_EVENT), 0, "The loop did not start playing.")
 
+    def UseFakeQuery(self, blocked):
+        """Have Carbon Audio check line of sight itself, against a stand-in for destiny that gives every emitter the same answer.
+        """
+        import blue
+        query = blue.LoadExtension("_audiotests").FakeObstructionQuery()
+        query.blocked = blocked
+        self.manager.obstructionQuery = query
+        return query
+
+    def GetSightlineResult(self):
+        """True or False from the last sightline pass, or None if the emitter was not checked."""
+        return self.manager.GetLastSightlineResults().get(self.emitter.ID)
+
     def test_a_silent_emitter_snaps_to_new_values(self):
         """Nothing is playing so there is nothing to pop, every value applies at once even at a slow fade rate."""
         self.manager.obstructionOcclusionFadeRate = SLOW_FADE_RATE
@@ -163,3 +176,73 @@ class TestObstructionOcclusionExposure(BaseAudio2TestClass):
             self.assertEqual(self.GetOcclusion(), 0.0)
         finally:
             self.manager.spatialAudioGeometryEnabled = False
+
+    def test_last_sightline_results_hold_what_was_checked_until_cleared(self):
+        """Only emitters with a voice are checked, a recheck replaces the results and clearing drops them."""
+        import audio2
+        self.manager.obstructionOcclusionFadeRate = SLOW_FADE_RATE
+        query = self.UseFakeQuery(blocked=True)
+
+        self.MakeAudible()
+        silentEmitter = audio2.AudEmitter("silentOcclusionTestEmitter")
+        silentEmitter.SetPlacement((0, 0, 0), (0, 0, 0), (0, 0, 0))
+        self.assertTrue(WaitForEmitterToWake(silentEmitter), "Timed out waiting for the silent emitter to be woken up.")
+        self.Pump()
+        results = self.manager.GetLastSightlineResults()
+        self.assertIs(results.get(self.emitter.ID), True, "The playing emitter was not reported blocked.")
+        self.assertNotIn(silentEmitter.ID, results, "An emitter with nothing playing was checked.")
+        # A new voice is checked before it plays, so it starts blocked instead of fading in at this rate.
+        self.assertEqual(self.GetOcclusion(), 1.0, "The new voice did not start blocked.")
+
+        query.blocked = False
+        self.Pump()
+        self.assertIs(self.GetSightlineResult(), False, "A recheck did not replace the result.")
+        # The voice was already playing, so it fades back out instead of snapping.
+        occlusion = self.GetOcclusion()
+        self.assertLess(occlusion, 1.0, "The occlusion did not start fading out once the sightline cleared.")
+        self.assertGreater(occlusion, 0.0, "The occlusion snapped to clear instead of fading out.")
+
+        self.manager.ClearObstructionOcclusion()
+        self.assertEqual(self.manager.GetLastSightlineResults(), {}, "Clearing did not drop the last sightline results.")
+
+    def test_a_sightline_query_without_an_answer_is_asked_again_next_tick(self):
+        """No answer means ask again, not clear. The new voice keeps its onset and still starts blocked once the query answers."""
+        self.manager.obstructionOcclusionFadeRate = SLOW_FADE_RATE
+        query = self.UseFakeQuery(blocked=True)
+        query.hasAnswer = False
+
+        self.MakeAudible()
+        self.Pump()
+        self.assertIsNone(self.GetSightlineResult(), "A query without an answer produced a result.")
+        self.assertEqual(self.GetOcclusion(), 0.0, "A query without an answer changed the occlusion.")
+
+        query.hasAnswer = True
+        self.Pump(times=1)
+        self.assertIs(self.GetSightlineResult(), True, "The query was not asked again once it could answer.")
+        # Only a new voice snaps, a periodic recheck would fade in at this rate.
+        self.assertEqual(self.GetOcclusion(), 1.0, "The new voice lost its onset when the query had no answer.")
+
+    def test_a_culled_emitter_is_skipped_and_checked_when_it_wakes(self):
+        """Culled emitters are not checked. The loop that restarts on wake is checked before it plays and starts blocked."""
+        self.manager.obstructionOcclusionFadeRate = SLOW_FADE_RATE
+        query = self.UseFakeQuery(blocked=False)
+
+        self.MakeAudible()
+        self.Pump()
+        self.assertIs(self.GetSightlineResult(), False, "The playing emitter was not checked.")
+        self.assertEqual(self.GetOcclusion(), 0.0, "A clear sightline occluded the emitter.")
+
+        self.emitter.ForceCullingStateChange()
+        self.assertTrue(self.emitter.IsCulled())
+        query.blocked = True
+        self.Pump()
+        self.assertIsNone(self.GetSightlineResult(), "A culled emitter was checked.")
+
+        # Cull fades the loop out over three seconds. Let it end so the loop restarts from silence on wake.
+        self.assertTrue(PumpOSWithTimeout(lambda: len(self.emitter.GetPlayingEvents()) > 0, maxTries=50), "The culled loop never finished.")
+
+        self.emitter.ForceCullingStateChange()
+        self.assertFalse(self.emitter.IsCulled())
+        self.Pump(times=1)
+        self.assertIs(self.GetSightlineResult(), True, "The woken emitter was not checked.")
+        self.assertEqual(self.GetOcclusion(), 1.0, "The woken emitter did not start blocked.")
