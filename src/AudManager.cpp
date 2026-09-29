@@ -579,9 +579,14 @@ void AudManager::SetObstructionOcclusionFadeRate( float value )
 	m_obstructionOcclusion->SetFadeRate( value );
 }
 
-IEveObstructionQueryPtr AudManager::GetObstructionQuery() const
+IEveObstructionQuery* AudManager::GetObstructionQuery() const
 {
 	return m_obstructionQuery;
+}
+
+void AudManager::SetObstructionQuery( IEveObstructionQuery* query )
+{
+	m_obstructionQuery = query;
 }
 
 void AudManager::UpdateSettings( AudSettings* settings )

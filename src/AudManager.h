@@ -139,7 +139,8 @@ public:
 	float GetObstructionOcclusionFadeRate() const;
 	void SetObstructionOcclusionFadeRate( float value );
 	// The game's sightline query, or null if the game feeds blockage values itself. See IEveObstructionQuery.h.
-	IEveObstructionQueryPtr GetObstructionQuery() const;
+	IEveObstructionQuery* GetObstructionQuery() const;
+	void SetObstructionQuery( IEveObstructionQuery* query );
 	// Can be called to see if the current platform supports spatial audio.
 	const bool SpatialAudioIsSupported();
 	// Stop all currently playing sounds on all game objects.
@@ -295,7 +296,8 @@ private:
 	IAudActionLogPtr m_log;
 
 	// Set from script once per session, exposed as "obstructionQuery". See IEveObstructionQuery.h.
-	IEveObstructionQueryPtr m_obstructionQuery;
+	// Weak so audio never keeps the ballpark alive after the game lets go of it.
+	BlueWeakRef<IEveObstructionQuery> m_obstructionQuery;
 
 
 

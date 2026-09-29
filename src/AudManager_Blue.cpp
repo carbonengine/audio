@@ -54,7 +54,7 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		// Obstruction / occlusion
 		MAP_PROPERTY( "obstructionOcclusionEnabled", GetObstructionOcclusionEnabled, SetObstructionOcclusionEnabled, "Enable or disable game-driven obstruction/occlusion processing. Disabling fades all values back to clear.")
 		MAP_PROPERTY( "obstructionOcclusionFadeRate", GetObstructionOcclusionFadeRate, SetObstructionOcclusionFadeRate, "How fast obstruction/occlusion values fade towards their targets, in units per second. 0 = instantaneous.")
-		MAP_ATTRIBUTE( "obstructionQuery", m_obstructionQuery, "Object implementing IEveObstructionQuery, normally destiny's ballpark. While set, the engine checks line of sight itself when a voice starts and periodically while it plays. Set to None to turn it off. SetEmitterLineOfSightBlockage works either way.", Be::READWRITE )
+		MAP_PROPERTY( "obstructionQuery", GetObstructionQuery, SetObstructionQuery, "Object implementing IEveObstructionQuery, normally destiny's ballpark. Held weakly, so it clears itself when the object goes away. While set, the engine checks line of sight itself when a voice starts and periodically while it plays. Set to None to turn it off. SetEmitterLineOfSightBlockage works either way.")
 
 		MAP_METHOD_AND_WRAP
 		( 
