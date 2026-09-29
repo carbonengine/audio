@@ -4,9 +4,9 @@
 class OcclusionManager(object):
     """Wrapper for Carbon Audio's line-of-sight obstruction/occlusion API.
 
-    The game runs its own sightline queries and feeds per-emitter blockage values in here.
-    Carbon Audio fades the applied occlusion towards each emitter's latest value and never
-    times values out, so keeping feeds fresh is the caller's responsibility.
+    Set ``query`` to the destiny ballpark and Carbon Audio checks line of sight itself. Otherwise
+    feed blockage per emitter through SetEmitterLineOfSightBlockage; those values never time out,
+    so keeping them fresh is the caller's job.
 
     Reached through AudioManager as audioManager.occlusion rather than constructed directly.
     """
@@ -16,6 +16,15 @@ class OcclusionManager(object):
         :param manager: The raw Carbon Audio manager whose occlusion API this wraps.
         """
         self._manager = manager
+
+    @property
+    def query(self):
+        """The sightline query Carbon Audio uses, or None when the game feeds blockage values itself."""
+        return self._manager.obstructionQuery
+
+    @query.setter
+    def query(self, value):
+        self._manager.obstructionQuery = value
 
     @property
     def enabled(self):
@@ -36,7 +45,7 @@ class OcclusionManager(object):
         self._manager.obstructionOcclusionFadeRate = value
 
     def ClearAll(self):
-        """Fade the occlusion values of all tracked emitters back to clear."""
+        """Fade the occlusion values of all tracked emitters back to clear and clear the last sightline results."""
         self._manager.ClearObstructionOcclusion()
 
     def GetEmitterOcclusion(self, emitterID):
@@ -61,3 +70,10 @@ class OcclusionManager(object):
         :return: True if the emitter exists, otherwise False.
         """
         return self._manager.SetEmitterLineOfSightBlockage(emitterID, blockage)
+
+    def GetLastSightlineResults(self):
+        """Results of Carbon Audio's last sightline pass. Emitters that were not checked are missing.
+
+        :return: dict of emitter ID to bool
+        """
+        return self._manager.GetLastSightlineResults()

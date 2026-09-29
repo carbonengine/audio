@@ -6,6 +6,8 @@
 #include "AudParameter.h"
 #include "IPrioritizedObject.h"
 
+#include <atomic>
+
 struct Vector3;
 
 // ------------------------------------------------------------------------
@@ -92,6 +94,18 @@ public:
 	void Unmute();
 	// Whether or not this game object is currently muted.
 	bool IsMuted();
+	// Whether at least one voice is playing. Lock-free, safe from the audio tick.
+	bool HasPlayingVoices() const;
+	// Whether the listener is within attenuation range of what plays here. Same test as the culling weight.
+	bool IsListenerInRange( const Vector3& listenerPosition ) const;
+	// Whether a 2D sound is playing, which has no position to occlude.
+	bool IsPlaying2DSound() const;
+	// Whether a voice started after silence and its line of sight hasn't been checked yet.
+	bool IsOcclusionOnsetPending() const;
+	// Clears the onset flag and returns whether it was set.
+	bool TakeOcclusionOnsetPending();
+	// Sets the onset flag again, for when the check could not run this tick.
+	void MarkOcclusionOnsetPending();
 
 
 	// Callbacks
@@ -139,9 +153,11 @@ protected:
 	void ApplyEventStopRelationships( const std::wstring& stoppingEventName );
 	// Calculates and updates sound prioritization attributes that are determined by currently playing events or events that will play on wake.
 	void UpdateEventSoundPrioritizationAttributes();
+	// Whether any voice is playing that has not been asked to stop. The caller holds m_mutex.
+	bool HasLiveVoiceLocked() const;
 	// Update the max attenuation radius of this game object if the given event's radius is larger than the current value.
 	void UpdateMaxAttenuationRadiusForEvent( const std::wstring& eventName );
-	// Get the max attenuation radius. The scaling factor of this game object will also be taken into account.
+	// Get the max attenuation radius, squared. The scaling factor of this game object will also be taken into account.
 	float GetMaxAttenuationRadius() const;
 
 	AkGameObjectID m_ID;
@@ -196,6 +212,11 @@ protected:
 	std::map<std::wstring, std::wstring> m_switchValues;
 	// A one shot event sent to this game object while it was culled. 
 	std::pair<std::chrono::steady_clock::time_point, std::wstring> m_waitingOneShotInRange;
+	// Lock-free mirror of !m_playingEvents.empty(), so the sightline pass can read it without m_mutex.
+	std::atomic<bool> m_hasPlayingVoices{ false };
+	// Set when a voice starts after silence so the sightline pass checks it before the first buffer plays.
+	// Cleared when the last voice ends.
+	std::atomic<bool> m_occlusionOnsetPending{ false };
 
 	// A mutex to be used when working with m_playingEvents, m_pendingStoppedPlayingIDs and m_eventsOnWake as they are accessed in different threads.
 	CcpMutex m_mutex;
