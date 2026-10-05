@@ -243,7 +243,13 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 			if ( playingID != AK_INVALID_PLAYING_ID )
 			{
 				ApplyEventStopRelationships( fullEventName );
+				if ( !HasLiveVoiceLocked() )
+				{
+					// First voice after silence, stopping voices don't count.
+					m_occlusionOnsetPending.store( true, std::memory_order_release );
+				}
 				m_playingEvents.insert({playingID, fullEventName});
+				m_hasPlayingVoices.store( true, std::memory_order_release );
 				eventUsed = true;
 			}
 			else
@@ -302,7 +308,56 @@ void AudGameObjResource::EventFinishedCallback( AkEventCallbackInfo* cbInfo )
 	CcpAutoMutex mutex( m_mutex );
 	m_pendingStoppedPlayingIDs.erase( cbInfo->playingID );
 	m_playingEvents.erase( cbInfo->playingID );
+	const bool silent = m_playingEvents.empty();
+	m_hasPlayingVoices.store( !silent, std::memory_order_release );
+	if ( silent )
+	{
+		m_occlusionOnsetPending.store( false, std::memory_order_release );
+	}
 	UpdateEventSoundPrioritizationAttributes();
+}
+
+bool AudGameObjResource::HasPlayingVoices() const
+{
+	return m_hasPlayingVoices.load( std::memory_order_acquire );
+}
+
+bool AudGameObjResource::HasLiveVoiceLocked() const
+{
+	for ( const auto& playing : m_playingEvents )
+	{
+		if ( m_pendingStoppedPlayingIDs.find( playing.first ) == m_pendingStoppedPlayingIDs.end() )
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool AudGameObjResource::IsListenerInRange( const Vector3& listenerPosition ) const
+{
+	// Same test as CalculateCullingWeight, done here too because that only runs while culling is on.
+	return m_playing2DSound || LengthSq( m_position - listenerPosition ) < GetMaxAttenuationRadius();
+}
+
+bool AudGameObjResource::IsPlaying2DSound() const
+{
+	return m_playing2DSound;
+}
+
+bool AudGameObjResource::IsOcclusionOnsetPending() const
+{
+	return m_occlusionOnsetPending.load( std::memory_order_acquire );
+}
+
+bool AudGameObjResource::TakeOcclusionOnsetPending()
+{
+	return m_occlusionOnsetPending.exchange( false, std::memory_order_acq_rel );
+}
+
+void AudGameObjResource::MarkOcclusionOnsetPending()
+{
+	m_occlusionOnsetPending.store( true, std::memory_order_release );
 }
 
 bool AudGameObjResource::StopEvent( const std::wstring& eventName, uint32_t fadeOutDuration )
@@ -956,7 +1011,8 @@ void AudGameObjResource::UpdateMaxAttenuationRadiusForEvent( const std::wstring&
 //-----------------------------------------------------
 float AudGameObjResource::GetMaxAttenuationRadius() const
 {
-	return m_maxAttenuationRadiusSq * m_scalingFactor;
+	// The scaling factor scales distance, so the squared radius scales by its square.
+	return m_maxAttenuationRadiusSq * m_scalingFactor * m_scalingFactor;
 }
 
 const std::map<std::wstring, std::wstring>& AudGameObjResource::GetSwitches() const

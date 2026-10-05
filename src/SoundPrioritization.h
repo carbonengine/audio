@@ -60,6 +60,11 @@ public:
     void UnregisterGameObject(AkGameObjectID objectID);
 
     /**
+     * @brief The registered listener object, or nullptr while there is none
+     */
+    IPrioritizedObject* GetListener() const { return m_listener; }
+
+    /**
      * @brief Execute the main culling algorithm
      * 
      * Evaluates all registered objects and determines which should be active
