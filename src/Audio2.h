@@ -26,6 +26,10 @@ inline bool IsReservedGameObjectID( AkGameObjectID id )
 	return id < START_GAME_OBJ_COUNT;
 }
 
+// Hands out the next free Wwise game object ID. Also used for Spatial Audio rooms,
+// which share the game object ID space (see AkRoomID).
+AkGameObjectID AllocateGameObjectID();
+
 // Makes sure objects are initialized far away so you don't hear them when they spawn.
 // Game objects are culled by default so this value will never hit Wwise.
 const Vector3 WWISE_INIT_POSITION = Vector3(FLT_MAX, FLT_MAX, FLT_MAX);

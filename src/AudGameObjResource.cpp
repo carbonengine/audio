@@ -10,9 +10,10 @@
 #include "SoundPrioritization.h"
 
 //-----------------------------------------------------------------------------
-// Helper function to distribute ID's
+// Helper function to distribute ID's. Shared with AudRoom so room IDs never
+// collide with game object IDs.
 //-----------------------------------------------------------------------------
-static AkGameObjectID GenerateEntityID()
+AkGameObjectID AllocateGameObjectID()
 {
 	static AkGameObjectID s_currentID = START_GAME_OBJ_COUNT;
 	return s_currentID++;
@@ -49,7 +50,7 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 														 m_waitingOneShotInRange( std::pair( std::chrono::steady_clock::now(), L"" ) ),
 														 m_eventName(L"")
 {
-	m_ID = GenerateEntityID();
+	m_ID = AllocateGameObjectID();
 
 	if (g_audioManager != nullptr)
 	{
