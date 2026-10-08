@@ -11,12 +11,13 @@
 
 //-----------------------------------------------------------------------------
 // Helper function to distribute ID's. Shared with AudRoom so room IDs never
-// collide with game object IDs.
+// collide with game object IDs. Atomic because Blue objects can be created on
+// loading threads.
 //-----------------------------------------------------------------------------
 AkGameObjectID AllocateGameObjectID()
 {
-	static AkGameObjectID s_currentID = START_GAME_OBJ_COUNT;
-	return s_currentID++;
+	static std::atomic<AkGameObjectID> s_currentID{ START_GAME_OBJ_COUNT };
+	return s_currentID.fetch_add( 1, std::memory_order_relaxed );
 }
 
 AudGameObjResource::Orientation::Orientation( const Vector3& front_, const Vector3& top_ ) :

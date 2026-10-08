@@ -78,6 +78,20 @@ void AudRoom::Sync()
 
 void AudRoom::SetTransform( const Matrix& unitBoxToWorld )
 {
+	if( EnsureRegistered() )
+	{
+		// Emitter position reports, some from trinity worker threads, test against the box; the manager stores it under its lock.
+		g_audioManager->GetRoomManager().SetTransform( *this, unitBoxToWorld );
+	}
+	else
+	{
+		// No audio manager yet: nothing reads the box, so store it for when the manager appears.
+		ApplyTransform( unitBoxToWorld );
+	}
+}
+
+void AudRoom::ApplyTransform( const Matrix& unitBoxToWorld )
+{
 	m_unitBoxToWorld = unitBoxToWorld;
 	// The determinant of the affine part is the volume scale of the unit cube.
 	m_volume = std::fabs( Determinant( m_unitBoxToWorld ) );
@@ -94,9 +108,6 @@ void AudRoom::SetTransform( const Matrix& unitBoxToWorld )
 		CCP_LOGWARN( "Room '%s' (%llu) has a box with a zero-length axis; it is not sent to Wwise until it is scaled.", m_name.c_str(), m_roomID );
 		m_warnedDegenerate = true;
 	}
-
-	// Sends the room, or removes it when the new box is degenerate.
-	Sync();
 }
 
 bool AudRoom::ContainsPoint( const Vector3& worldPosition ) const
@@ -145,8 +156,15 @@ void AudRoom::SetEnabled( bool enabled )
 
 void AudRoom::Remove()
 {
-	m_hasTransform = false;
-	Sync();
+	if( EnsureRegistered() )
+	{
+		// Clears the box under the manager's lock, then removes the room from Wwise.
+		g_audioManager->GetRoomManager().RemoveShape( *this );
+	}
+	else
+	{
+		m_hasTransform = false;
+	}
 }
 
 bool AudRoom::OnModified( Be::Var* value )

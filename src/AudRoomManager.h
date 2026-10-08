@@ -10,8 +10,10 @@
 #include <AK/SoundEngine/Common/AkTypes.h>
 
 #include <CcpMutex.h>
+#include "Matrix.h"
 #include "Vector3.h"
 
+#include <atomic>
 #include <unordered_map>
 
 class AudManager;
@@ -48,6 +50,11 @@ public:
 	void Push( AudRoom& room );
 	/// Removes the room from Wwise. The room stays known to the manager.
 	void Remove( AudRoom& room );
+	/// Stores the room's box under the lock and sends the room. The box is read for containment by emitter
+	/// position reports, which also arrive from trinity worker threads.
+	void SetTransform( AudRoom& room, const Matrix& unitBoxToWorld );
+	/// Forgets the room's box under the lock and removes the room from Wwise. Pairs with ITr2VolumeObject::Remove.
+	void RemoveShape( AudRoom& room );
 
 	/// Removes every room from Wwise but keeps them known so they can be re-sent. For Disable() and the geometry switch turning off.
 	void RemoveAllFromWwise();
@@ -109,7 +116,7 @@ private:
 	bool m_outdoorConfigured;
 	/// Set when rooms changed in Wwise, so Update() re-evaluates every tracked object.
 	bool m_assignmentsDirty;
-	/// Rooms currently in Wwise. Position reports skip all work while there are none.
-	size_t m_roomsInWwise;
+	/// Rooms currently in Wwise. Written under m_mutex, read without it so position reports skip all work while there are none.
+	std::atomic<size_t> m_roomsInWwise;
 	mutable CcpMutex m_mutex;
 };

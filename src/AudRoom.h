@@ -76,6 +76,8 @@ private:
 	bool EnsureRegistered();
 	/// Sends the current state to Wwise, or removes the room if it is disabled.
 	void Sync();
+	/// Stores the box. Called by AudRoomManager under its lock, because emitter position reports (also from trinity worker threads) read it for containment.
+	void ApplyTransform( const Matrix& unitBoxToWorld );
 
 	AkUInt64 m_roomID;
 

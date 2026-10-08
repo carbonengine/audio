@@ -118,9 +118,15 @@ size_t AudRoomManager::GetTrackedGameObjectCount() const
 
 void AudRoomManager::UpdateGameObjectPosition( AkGameObjectID gameObjectID, const Vector3& position )
 {
+	// Every emitter position send lands here; skip the lock entirely while no room is in Wwise.
+	if( m_roomsInWwise.load( std::memory_order_acquire ) == 0 )
+	{
+		return;
+	}
+
 	CcpAutoMutex lock( m_mutex );
-	// Every emitter position send lands here; nothing to assign while no room is in Wwise.
-	if( m_roomsInWwise == 0 )
+	// The last room may have left while this thread waited for the lock.
+	if( m_roomsInWwise.load( std::memory_order_relaxed ) == 0 )
 	{
 		return;
 	}
@@ -368,7 +374,7 @@ void AudRoomManager::PushLocked( AudRoom& room )
 
 	if( firstSend )
 	{
-		++m_roomsInWwise;
+		m_roomsInWwise.fetch_add( 1, std::memory_order_release );
 
 		// GetIDFromString hashes any name, so a mistyped bus is silent. Log what was resolved for the Profiler.
 		if( room.GetReverbAuxBus().empty() )
@@ -396,7 +402,7 @@ void AudRoomManager::RemoveLocked( AudRoom& room )
 
 	room.m_sentToWwise = false;
 	m_assignmentsDirty = true;
-	const bool lastRoom = --m_roomsInWwise == 0;
+	const bool lastRoom = m_roomsInWwise.fetch_sub( 1, std::memory_order_acq_rel ) == 1;
 	const bool soundEngineUp = AK::SoundEngine::IsInitialized();
 
 	if( soundEngineUp )
@@ -448,6 +454,21 @@ void AudRoomManager::Remove( AudRoom& room )
 	RemoveLocked( room );
 }
 
+void AudRoomManager::SetTransform( AudRoom& room, const Matrix& unitBoxToWorld )
+{
+	CcpAutoMutex lock( m_mutex );
+	room.ApplyTransform( unitBoxToWorld );
+	// Sends the room, or removes it when the new box is degenerate.
+	PushLocked( room );
+}
+
+void AudRoomManager::RemoveShape( AudRoom& room )
+{
+	CcpAutoMutex lock( m_mutex );
+	room.m_hasTransform = false;
+	RemoveLocked( room );
+}
+
 void AudRoomManager::RemoveAllFromWwise()
 {
 	CcpAutoMutex lock( m_mutex );
@@ -481,7 +502,7 @@ void AudRoomManager::ForgetWwiseState()
 	{
 		entry.second->m_sentToWwise = false;
 	}
-	m_roomsInWwise = 0;
+	m_roomsInWwise.store( 0, std::memory_order_release );
 	m_cubeSent = false;
 	m_outdoorConfigured = false;
 	// Game objects are gone with the sound engine; they re-report their position when re-registered.
