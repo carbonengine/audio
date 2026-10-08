@@ -10,6 +10,7 @@
 
 #include "AudManager.h"
 #include "AudRoom.h"
+#include "AudStaticDataRepository.h"
 #include "Utilities.h"
 
 #include <algorithm>
@@ -78,6 +79,7 @@ AudRoomManager::AudRoomManager( AudManager* audioManager ) :
 	m_outdoorConfigured( false ),
 	m_assignmentsDirty( false ),
 	m_roomsInWwise( 0 ),
+	m_pendingRoomTones( 0 ),
 	m_mutex( "AudRoomManager", "m_mutex" )
 {
 }
@@ -149,6 +151,20 @@ void AudRoomManager::Update()
 	{
 		// Keep the flags; the next tick after rooms come back will catch up.
 		return;
+	}
+
+	if( m_pendingRoomTones > 0 )
+	{
+		// Room tones whose SoundBanks were still loading when the room was sent.
+		for( auto& entry : m_rooms )
+		{
+			AudRoom& room = *entry.second;
+			if( room.m_roomTonePending )
+			{
+				const std::wstring eventName = room.m_postedRoomTone;
+				PostRoomToneLocked( room, eventName );
+			}
+		}
 	}
 
 	if( !m_assignmentsDirty )
@@ -333,6 +349,14 @@ void AudRoomManager::PushLocked( AudRoom& room )
 		return;
 	}
 
+	// The room tone plays on the room game object. A changed tone stops the old one first, while SetRoom
+	// below has not yet released the game object; a plain move never touches the tone.
+	const std::wstring roomTone = StringUtils::trim( room.GetRoomToneEvent() );
+	if( room.m_postedRoomTone != roomTone )
+	{
+		StopRoomToneLocked( room );
+	}
+
 	AkRoomParams roomParams;
 	roomParams.Front = transform.OrientationFront();
 	roomParams.Up = transform.OrientationTop();
@@ -343,7 +367,8 @@ void AudRoomManager::PushLocked( AudRoom& room )
 	roomParams.ReverbLevel = std::clamp( room.GetReverbLevel(), 0.0f, 1.0f );
 	roomParams.TransmissionLoss = std::clamp( room.GetTransmissionLoss(), 0.0f, 1.0f );
 	roomParams.RoomGameObj_AuxSendLevelToSelf = std::clamp( room.GetAuxSendLevelToSelf(), 0.0f, 1.0f );
-	roomParams.RoomGameObj_KeepRegistered = room.GetKeepRegistered();
+	// Events can only be posted on the room game object while it stays registered.
+	roomParams.RoomGameObj_KeepRegistered = room.GetKeepRegistered() || !roomTone.empty();
 	roomParams.GeometryInstanceID = instanceID;
 	roomParams.RoomPriority = room.GetPriority();
 
@@ -388,6 +413,11 @@ void AudRoomManager::PushLocked( AudRoom& room )
 		}
 	}
 
+	if( !roomTone.empty() && room.m_postedRoomTone != roomTone )
+	{
+		PostRoomToneLocked( room, roomTone );
+	}
+
 	room.m_sentToWwise = true;
 	// The room appeared or moved; objects may have entered or left it.
 	m_assignmentsDirty = true;
@@ -399,6 +429,9 @@ void AudRoomManager::RemoveLocked( AudRoom& room )
 	{
 		return;
 	}
+
+	// The tone goes before the room releases its game object; it is posted again on the next send.
+	StopRoomToneLocked( room );
 
 	room.m_sentToWwise = false;
 	m_assignmentsDirty = true;
@@ -439,6 +472,81 @@ void AudRoomManager::RemoveLocked( AudRoom& room )
 			}
 		}
 		m_trackedObjects.clear();
+	}
+}
+
+void AudRoomManager::StopRoomToneLocked( AudRoom& room )
+{
+	if( room.m_roomTonePlayingID != AK_INVALID_PLAYING_ID && AK::SoundEngine::IsInitialized() )
+	{
+		AK::SoundEngine::StopPlayingID( room.m_roomTonePlayingID );
+	}
+	room.m_roomTonePlayingID = AK_INVALID_PLAYING_ID;
+
+	if( room.m_roomTonePending )
+	{
+		room.m_roomTonePending = false;
+		--m_pendingRoomTones;
+	}
+	room.m_postedRoomTone.clear();
+}
+
+void AudRoomManager::PostRoomToneLocked( AudRoom& room, const std::wstring& eventName )
+{
+	// From here on the tone counts as handled: playing, waiting for SoundBanks, or failed until its name changes.
+	room.m_postedRoomTone = eventName;
+
+	if( g_staticDataRepository == nullptr )
+	{
+		CCP_LOGERR_CH( s_ch, "Room '%s' (%llu): room tone %S cannot play without the static data repository.",
+			room.GetName().c_str(), room.GetRoomID(), eventName.c_str() );
+		return;
+	}
+
+	// Same checks as AudGameObjResource::PostEvent, without the emitter machinery.
+	const std::vector<std::wstring>& soundBanks = g_staticDataRepository->SoundBanksRequiredForEvent( eventName );
+	if( soundBanks.empty() )
+	{
+		CCP_LOGERR_CH( s_ch, "Room '%s' (%llu): room tone %S is not in any SoundBank.",
+			room.GetName().c_str(), room.GetRoomID(), eventName.c_str() );
+		return;
+	}
+
+	for( const std::wstring& soundBank : soundBanks )
+	{
+		const SoundBankStatus status = m_audioManager->GetSoundBankStatus( soundBank );
+		if( status != SoundBankStatus::LOADED )
+		{
+			if( !room.m_roomTonePending )
+			{
+				room.m_roomTonePending = true;
+				++m_pendingRoomTones;
+				if( status != SoundBankStatus::LOADING )
+				{
+					CCP_LOGWARN_CH( s_ch, "Room '%s' (%llu): room tone %S waits for SoundBank %S, which is not loaded.",
+						room.GetName().c_str(), room.GetRoomID(), eventName.c_str(), soundBank.c_str() );
+				}
+			}
+			return;
+		}
+	}
+
+	if( room.m_roomTonePending )
+	{
+		room.m_roomTonePending = false;
+		--m_pendingRoomTones;
+	}
+
+	// The room ID doubles as the room game object, kept registered while a tone is set (see PushLocked).
+	const AkGameObjectID roomGameObjectID = AkRoomID( room.GetRoomID() ).AsGameObjectID();
+	const AkUniqueID eventID = g_staticDataRepository->GetEventID( eventName );
+	room.m_roomTonePlayingID = AK::SoundEngine::PostEvent( eventID, roomGameObjectID );
+	m_audioManager->LogPostEvent( roomGameObjectID, room.m_roomTonePlayingID, eventID, eventName );
+
+	if( room.m_roomTonePlayingID == AK_INVALID_PLAYING_ID )
+	{
+		CCP_LOGERR_CH( s_ch, "Room '%s' (%llu): room tone %S failed to play even though its SoundBanks are loaded.",
+			room.GetName().c_str(), room.GetRoomID(), eventName.c_str() );
 	}
 }
 
@@ -500,8 +608,14 @@ void AudRoomManager::ForgetWwiseState()
 	CcpAutoMutex lock( m_mutex );
 	for( auto& entry : m_rooms )
 	{
-		entry.second->m_sentToWwise = false;
+		AudRoom& room = *entry.second;
+		room.m_sentToWwise = false;
+		// Room tones died with the sound engine; nothing to stop.
+		room.m_roomTonePlayingID = AK_INVALID_PLAYING_ID;
+		room.m_roomTonePending = false;
+		room.m_postedRoomTone.clear();
 	}
+	m_pendingRoomTones = 0;
 	m_roomsInWwise.store( 0, std::memory_order_release );
 	m_cubeSent = false;
 	m_outdoorConfigured = false;

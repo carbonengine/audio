@@ -1129,6 +1129,11 @@ AudGameObjResource* AudManager::GetAudioEmitter( AkGameObjectID emitterID )
 const std::wstring AudManager::GetEventName( AkGameObjectID emitterID, AkPlayingID playingID )
 {
 	AudGameObjResource* emitter = GetAudioEmitter( emitterID );
+	if( emitter == nullptr )
+	{
+		// Not one of ours, e.g. a room game object playing a room tone.
+		return L"";
+	}
 	std::map<AkPlayingID, std::wstring> playingEvents = emitter->GetPlayingEvents();
 	auto it = playingEvents.find( playingID );
 	if( it != playingEvents.end() )

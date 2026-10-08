@@ -34,7 +34,11 @@ class AudRoom;
  * know the room too.
  *
  * The manager mirrors the audio engine lifecycle: rooms are removed from Wwise when audio is disabled
- * or the rooms switch is turned off, and re-sent when it comes back.
+ * or the rooms switch is turned off, and re-sent when it comes back. A room's tone plays on the room
+ * game object while the room is in Wwise and is posted again whenever the room is re-sent.
+ *
+ * Lock order: m_mutex may be held while AudManager's SoundBank and action-log locks are taken (room
+ * tones), never the other way round.
  */
 class AudRoomManager
 {
@@ -103,6 +107,10 @@ private:
 	void PushLocked( AudRoom& room );
 	/// Removes one room. Caller holds m_mutex.
 	void RemoveLocked( AudRoom& room );
+	/// Stops the room tone and forgets it, so the next send posts it again. Caller holds m_mutex.
+	void StopRoomToneLocked( AudRoom& room );
+	/// Plays the room tone on the room game object, or waits for its SoundBanks to load. Caller holds m_mutex.
+	void PostRoomToneLocked( AudRoom& room, const std::wstring& eventName );
 
 	/// Room containing the position, or the outdoor room. Highest priority wins, then the smallest box. Caller holds m_mutex.
 	AkUInt64 ResolveRoomLocked( const Vector3& position ) const;
@@ -118,5 +126,7 @@ private:
 	bool m_assignmentsDirty;
 	/// Rooms currently in Wwise. Written under m_mutex, read without it so position reports skip all work while there are none.
 	std::atomic<size_t> m_roomsInWwise;
+	/// Rooms whose tone waits for its SoundBanks; Update() retries them.
+	size_t m_pendingRoomTones;
 	mutable CcpMutex m_mutex;
 };

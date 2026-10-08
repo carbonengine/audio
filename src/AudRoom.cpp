@@ -28,7 +28,9 @@ AudRoom::AudRoom( IRoot* lockobj ) :
 	m_warnedDegenerate( false ),
 	m_hasTransform( false ),
 	m_sentToWwise( false ),
-	m_registeredWithManager( false )
+	m_registeredWithManager( false ),
+	m_roomTonePlayingID( AK_INVALID_PLAYING_ID ),
+	m_roomTonePending( false )
 {
 	EnsureRegistered();
 }

@@ -55,6 +55,8 @@ public:
 	float GetPriority() const { return m_priority; }
 	float GetAuxSendLevelToSelf() const { return m_auxSendLevelToSelf; }
 	bool GetKeepRegistered() const { return m_keepRegistered; }
+	/// Wwise event played on the room game object while the room is in Wwise. Empty means no room tone.
+	const std::wstring& GetRoomToneEvent() const { return m_roomToneEvent; }
 	/// Active only when both the authored attribute and the shape owner (trinity) say so.
 	bool IsEnabled() const { return m_enabled && m_shapeEnabled; }
 	bool HasTransform() const { return m_hasTransform; }
@@ -88,6 +90,7 @@ private:
 	float m_priority;
 	float m_auxSendLevelToSelf;
 	bool m_keepRegistered;
+	std::wstring m_roomToneEvent;
 	/// Authored attribute: the acoustic side of "enabled".
 	bool m_enabled;
 	/// Set through ITr2VolumeObject::SetEnabled by whoever owns the shape. Starts enabled, never persisted.
@@ -104,6 +107,13 @@ private:
 	/// What Wwise currently holds for this room, so unchanged parameters are not re-sent on every move.
 	AkRoomParams m_sentRoomParams;
 	std::string m_sentName;
+
+	/// Room tone state, owned by AudRoomManager under its lock.
+	/// The event last handled while the room is in Wwise (playing, waiting for SoundBanks, or failed); empty when none.
+	std::wstring m_postedRoomTone;
+	AkPlayingID m_roomTonePlayingID;
+	/// Waiting for the room tone's SoundBanks to load; AudRoomManager::Update() retries it.
+	bool m_roomTonePending;
 };
 
 TYPEDEF_BLUECLASS( AudRoom );
