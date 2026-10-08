@@ -13,6 +13,7 @@
 #include "Utilities.h"
 
 #include <algorithm>
+#include <cmath>
 #include <iterator>
 
 static CcpLogChannel_t s_ch = CCP_LOG_DEFINE_CHANNEL( "AudRoomManager" );
@@ -47,6 +48,28 @@ namespace
 namespace
 {
 	const AkUInt64 OUTDOOR_ROOM_ID = static_cast<AkUInt64>( AK::SpatialAudio::kOutdoorRoomID );
+
+	/// Room orientation is rebuilt from a rotation matrix on every move; ignore float noise (same tolerance as trinity's EveVolumeObject).
+	bool OrientationsNearlyEqual( const AkVector& a, const AkVector& b )
+	{
+		constexpr float epsilon = 1e-4f;
+		return std::fabs( a.X - b.X ) <= epsilon && std::fabs( a.Y - b.Y ) <= epsilon && std::fabs( a.Z - b.Z ) <= epsilon;
+	}
+
+	/// Field-wise comparison of everything SetRoom consumes, so an unchanged room is not re-sent on every move.
+	bool RoomParamsEqual( const AkRoomParams& a, const AkRoomParams& b )
+	{
+		return OrientationsNearlyEqual( a.Front, b.Front )
+			&& OrientationsNearlyEqual( a.Up, b.Up )
+			&& a.ReverbAuxBus == b.ReverbAuxBus
+			&& a.ReverbLevel == b.ReverbLevel
+			&& a.TransmissionLoss == b.TransmissionLoss
+			&& a.RoomGameObj_AuxSendLevelToSelf == b.RoomGameObj_AuxSendLevelToSelf
+			&& a.GeometryInstanceID == b.GeometryInstanceID
+			&& a.RoomPriority == b.RoomPriority
+			&& a.DistanceBehavior == b.DistanceBehavior
+			&& a.RoomGameObj_KeepRegistered == b.RoomGameObj_KeepRegistered;
+	}
 }
 
 AudRoomManager::AudRoomManager( AudManager* audioManager ) :
@@ -145,9 +168,10 @@ AkUInt64 AudRoomManager::ResolveRoomLocked( const Vector3& position ) const
 			continue;
 		}
 
-		// Same rule as Wwise's own containment: highest priority, and the inner room on a tie.
-		const float priority = room->GetPriority();
-		const float bestPriority = best != nullptr ? best->GetPriority() : 0.0f;
+		// Same rule as Wwise's own containment: highest priority, and the inner room on a tie. The priority
+		// is the one Wwise holds, so both containments agree while an edited priority is not sent yet.
+		const float priority = room->m_sentRoomParams.RoomPriority;
+		const float bestPriority = best != nullptr ? best->m_sentRoomParams.RoomPriority : 0.0f;
 		if( best == nullptr
 			|| priority > bestPriority
 			|| ( priority == bestPriority && room->GetVolume() < best->GetVolume() ) )
@@ -317,19 +341,29 @@ void AudRoomManager::PushLocked( AudRoom& room )
 	roomParams.GeometryInstanceID = instanceID;
 	roomParams.RoomPriority = room.GetPriority();
 
+	// Only Front/Up depend on the transform, so a pure move or resize only needs the geometry instance above.
 	const bool firstSend = !room.m_sentToWwise;
+	const bool roomChanged = firstSend
+		|| !RoomParamsEqual( roomParams, room.m_sentRoomParams )
+		|| room.GetName() != room.m_sentName;
 
-	// Calling SetRoom again with the same ID updates the room.
-	result = AK::SpatialAudio::SetRoom( room.GetRoomID(), roomParams, room.GetName().c_str() );
-	if( result != AK_Success )
+	if( roomChanged )
 	{
-		CCP_LOGERR_CH( s_ch, "Failed to set room '%s' (%llu), AKRESULT: %d",
-			room.GetName().c_str(), room.GetRoomID(), result );
-		if( firstSend )
+		// Calling SetRoom again with the same ID updates the room.
+		result = AK::SpatialAudio::SetRoom( room.GetRoomID(), roomParams, room.GetName().c_str() );
+		if( result != AK_Success )
 		{
-			AK::SpatialAudio::RemoveGeometryInstance( instanceID );
+			CCP_LOGERR_CH( s_ch, "Failed to set room '%s' (%llu), AKRESULT: %d",
+				room.GetName().c_str(), room.GetRoomID(), result );
+			if( firstSend )
+			{
+				AK::SpatialAudio::RemoveGeometryInstance( instanceID );
+			}
+			return;
 		}
-		return;
+
+		room.m_sentRoomParams = roomParams;
+		room.m_sentName = room.GetName();
 	}
 
 	if( firstSend )

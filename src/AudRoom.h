@@ -10,6 +10,7 @@
 #include <ITr2VolumeObject.h>
 
 #include <AK/SoundEngine/Common/AkTypes.h>
+#include <AK/SpatialAudio/Common/AkSpatialAudioTypes.h>
 
 #include <string>
 
@@ -97,6 +98,10 @@ private:
 	bool m_hasTransform;
 	bool m_sentToWwise;
 	bool m_registeredWithManager;
+
+	/// What Wwise currently holds for this room, so unchanged parameters are not re-sent on every move.
+	AkRoomParams m_sentRoomParams;
+	std::string m_sentName;
 };
 
 TYPEDEF_BLUECLASS( AudRoom );
