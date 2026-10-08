@@ -143,6 +143,7 @@ void AudGameObjResource::UnregisterWwiseObject()
 			return;
 		}
 		m_gameObjRegistered = false;
+		g_audioManager->GetRoomManager().ForgetGameObject( m_ID );
 	}
 }
 
@@ -464,6 +465,9 @@ int AudGameObjResource::ApplyEffectivePlacement( const Vector3& front, const Vec
 		RH2LH::convertEmitter( &soundPosLH, &tmp );
 
 		AK::SoundEngine::SetPosition( m_ID, soundPosLH );
+
+		// Explicit room containment, in the right-handed space rooms are placed in.
+		g_audioManager->GetRoomManager().UpdateGameObjectPosition( m_ID, position );
 	}
 	return AK_Success;
 }

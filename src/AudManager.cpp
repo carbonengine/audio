@@ -121,6 +121,8 @@ void AudManager::Process()
 		}
 
 		m_obstructionOcclusion->Update();
+		// Re-assigns emitters and the listener to rooms when rooms changed this frame.
+		m_roomManager->Update();
 
 		// Process bank requests, events, positions, RTPC, etc.
 		AK::SoundEngine::RenderAudio();

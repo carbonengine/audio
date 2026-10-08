@@ -21,7 +21,9 @@
  * persisted attributes, the same split used between EveChildAudio and AudEmitter.
  *
  * The room is registered in Wwise with a containment-only geometry instance of a shared unit
- * cube (see AudRoomManager), which Wwise uses to place game objects in the room.
+ * cube (see AudRoomManager). Containment is done twice: Wwise uses the cube for game objects we
+ * never assigned, and AudRoomManager tests every emitter and the listener against the box
+ * (ContainsPoint) and assigns them explicitly, so the game knows the room too.
  */
 BLUE_CLASS( AudRoom ) :
 	public ITr2VolumeObject,
@@ -61,6 +63,11 @@ public:
 	/// Whether the room currently exists in Wwise.
 	bool IsRegistered() const { return m_sentToWwise; }
 
+	/// Game-side containment test, in right-handed world space (the same space SetTransform receives).
+	bool ContainsPoint( const Vector3& worldPosition ) const;
+	/// Volume of the box in cubic metres. Used to prefer the inner room when priorities tie, as Wwise does.
+	float GetVolume() const { return m_volume; }
+
 private:
 	friend class AudRoomManager;
 
@@ -84,6 +91,7 @@ private:
 	bool m_shapeEnabled;
 
 	Matrix m_unitBoxToWorld;
+	float m_volume;
 	bool m_shapeValid;
 	bool m_warnedDegenerate;
 	bool m_hasTransform;

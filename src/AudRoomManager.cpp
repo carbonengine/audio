@@ -44,10 +44,17 @@ namespace
 	};
 }
 
+namespace
+{
+	const AkUInt64 OUTDOOR_ROOM_ID = static_cast<AkUInt64>( AK::SpatialAudio::kOutdoorRoomID );
+}
+
 AudRoomManager::AudRoomManager( AudManager* audioManager ) :
 	m_audioManager( audioManager ),
 	m_cubeSent( false ),
 	m_outdoorConfigured( false ),
+	m_assignmentsDirty( false ),
+	m_roomsInWwise( 0 ),
 	m_mutex( "AudRoomManager", "m_mutex" )
 {
 }
@@ -78,6 +85,109 @@ size_t AudRoomManager::GetRoomCount() const
 {
 	CcpAutoMutex lock( m_mutex );
 	return m_rooms.size();
+}
+
+size_t AudRoomManager::GetTrackedGameObjectCount() const
+{
+	CcpAutoMutex lock( m_mutex );
+	return m_trackedObjects.size();
+}
+
+void AudRoomManager::UpdateGameObjectPosition( AkGameObjectID gameObjectID, const Vector3& position )
+{
+	CcpAutoMutex lock( m_mutex );
+	// Every emitter position send lands here; nothing to assign while no room is in Wwise.
+	if( m_roomsInWwise == 0 )
+	{
+		return;
+	}
+
+	TrackedGameObject& tracked = m_trackedObjects[gameObjectID];
+	tracked.position = position;
+	AssignLocked( gameObjectID, tracked );
+}
+
+void AudRoomManager::ForgetGameObject( AkGameObjectID gameObjectID )
+{
+	CcpAutoMutex lock( m_mutex );
+	m_trackedObjects.erase( gameObjectID );
+}
+
+void AudRoomManager::Update()
+{
+	CcpAutoMutex lock( m_mutex );
+	if( m_audioManager == nullptr || !m_audioManager->AreRoomsReady() )
+	{
+		// Keep the flags; the next tick after rooms come back will catch up.
+		return;
+	}
+
+	if( !m_assignmentsDirty )
+	{
+		return;
+	}
+
+	m_assignmentsDirty = false;
+	for( auto& entry : m_trackedObjects )
+	{
+		AssignLocked( entry.first, entry.second );
+	}
+}
+
+AkUInt64 AudRoomManager::ResolveRoomLocked( const Vector3& position ) const
+{
+	const AudRoom* best = nullptr;
+	for( const auto& entry : m_rooms )
+	{
+		const AudRoom* room = entry.second;
+		if( !room->m_sentToWwise || !room->ContainsPoint( position ) )
+		{
+			continue;
+		}
+
+		// Same rule as Wwise's own containment: highest priority, and the inner room on a tie.
+		const float priority = room->GetPriority();
+		const float bestPriority = best != nullptr ? best->GetPriority() : 0.0f;
+		if( best == nullptr
+			|| priority > bestPriority
+			|| ( priority == bestPriority && room->GetVolume() < best->GetVolume() ) )
+		{
+			best = room;
+		}
+	}
+
+	return best != nullptr ? best->GetRoomID() : OUTDOOR_ROOM_ID;
+}
+
+void AudRoomManager::AssignLocked( AkGameObjectID gameObjectID, TrackedGameObject& tracked )
+{
+	if( m_audioManager == nullptr || !m_audioManager->AreRoomsReady() )
+	{
+		return;
+	}
+
+	const AkUInt64 roomID = ResolveRoomLocked( tracked.position );
+
+	if( tracked.assigned && tracked.roomID == roomID )
+	{
+		return;
+	}
+
+	if( !tracked.assigned && roomID == OUTDOOR_ROOM_ID )
+	{
+		// Never placed in a room by us and not in one now: leave Wwise's own containment in charge.
+		return;
+	}
+
+	const AKRESULT result = AK::SpatialAudio::SetGameObjectInRoom( gameObjectID, AkRoomID( roomID ) );
+	if( result != AK_Success )
+	{
+		CCP_LOGWARN_CH( s_ch, "Failed to set room %llu on game object %llu, AKRESULT: %d", roomID, gameObjectID, result );
+		return;
+	}
+
+	tracked.assigned = true;
+	tracked.roomID = roomID;
 }
 
 bool AudRoomManager::EnsureSharedCubeGeometry()
@@ -224,6 +334,8 @@ void AudRoomManager::PushLocked( AudRoom& room )
 
 	if( firstSend )
 	{
+		++m_roomsInWwise;
+
 		// GetIDFromString hashes any name, so a mistyped bus is silent. Log what was resolved for the Profiler.
 		if( room.GetReverbAuxBus().empty() )
 		{
@@ -237,6 +349,8 @@ void AudRoomManager::PushLocked( AudRoom& room )
 	}
 
 	room.m_sentToWwise = true;
+	// The room appeared or moved; objects may have entered or left it.
+	m_assignmentsDirty = true;
 }
 
 void AudRoomManager::RemoveLocked( AudRoom& room )
@@ -247,12 +361,44 @@ void AudRoomManager::RemoveLocked( AudRoom& room )
 	}
 
 	room.m_sentToWwise = false;
+	m_assignmentsDirty = true;
+	const bool lastRoom = --m_roomsInWwise == 0;
+	const bool soundEngineUp = AK::SoundEngine::IsInitialized();
 
-	if( AK::SoundEngine::IsInitialized() )
+	if( soundEngineUp )
 	{
+		// Objects we placed in this room go back to Wwise's own containment before the room disappears,
+		// so none is left on a stale override; the next Update() places them again if another room holds them.
+		for( auto& entry : m_trackedObjects )
+		{
+			TrackedGameObject& tracked = entry.second;
+			if( tracked.assigned && tracked.roomID == room.GetRoomID() )
+			{
+				AK::SpatialAudio::UnsetGameObjectInRoom( entry.first );
+				tracked.assigned = false;
+			}
+		}
+
 		// Remove the room before its geometry so nothing in Wwise references the instance. The shared cube stays.
 		AK::SpatialAudio::RemoveRoom( room.GetRoomID() );
 		AK::SpatialAudio::RemoveGeometryInstance( GeometryInstanceIDForRoom( room ) );
+	}
+
+	if( lastRoom )
+	{
+		// No room left: the remaining overrides (explicit outdoor) go back to Wwise too, and nothing is tracked
+		// until a room returns. Objects then fall back to Wwise's containment until their next position report.
+		if( soundEngineUp )
+		{
+			for( const auto& entry : m_trackedObjects )
+			{
+				if( entry.second.assigned )
+				{
+					AK::SpatialAudio::UnsetGameObjectInRoom( entry.first );
+				}
+			}
+		}
+		m_trackedObjects.clear();
 	}
 }
 
@@ -301,6 +447,10 @@ void AudRoomManager::ForgetWwiseState()
 	{
 		entry.second->m_sentToWwise = false;
 	}
+	m_roomsInWwise = 0;
 	m_cubeSent = false;
 	m_outdoorConfigured = false;
+	// Game objects are gone with the sound engine; they re-report their position when re-registered.
+	m_trackedObjects.clear();
+	m_assignmentsDirty = false;
 }
