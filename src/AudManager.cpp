@@ -87,10 +87,7 @@ AudManager::AudManager( IRoot* lockobj ) :
 
 AudManager::~AudManager()
 {
-	// Clean up sound prioritization system
-	delete m_soundPrioritization;
-	delete m_spatialAudioSettings;
-
+	// Disable() and Terminate() still use the prioritization and settings objects, so shut down first.
 	if( GetState() == AudioState::Enabled )
 	{
 		Disable();
@@ -101,8 +98,8 @@ AudManager::~AudManager()
 		Terminate();
 	}
 
-	// Clean up sound prioritization system
 	delete m_soundPrioritization;
+	delete m_spatialAudioSettings;
 }
 
 void AudManager::Process()
