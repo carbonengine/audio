@@ -34,7 +34,7 @@ class AudRoom;
  * know the room too.
  *
  * The manager mirrors the audio engine lifecycle: rooms are removed from Wwise when audio is disabled
- * or Spatial Audio geometry is turned off, and re-sent when it comes back.
+ * or the rooms switch is turned off, and re-sent when it comes back.
  */
 class AudRoomManager
 {
@@ -56,9 +56,9 @@ public:
 	/// Forgets the room's box under the lock and removes the room from Wwise. Pairs with ITr2VolumeObject::Remove.
 	void RemoveShape( AudRoom& room );
 
-	/// Removes every room from Wwise but keeps them known so they can be re-sent. For Disable() and the geometry switch turning off.
+	/// Removes every room from Wwise but keeps them known so they can be re-sent. For Disable() and the rooms switch turning off.
 	void RemoveAllFromWwise();
-	/// Re-sends every enabled, placed room. For Enable() and the geometry switch turning on.
+	/// Re-sends every enabled, placed room. For Enable() and the rooms switch turning on.
 	void ResendAll();
 	/// Forgets what Wwise knows without talking to it. For after the sound engine has been terminated.
 	void ForgetWwiseState();

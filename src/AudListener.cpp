@@ -16,7 +16,7 @@ AudListener::AudListener( IRoot* lockobj ) : AudGameObjResource( LISTENER_GAME_O
 
 AudListener::~AudListener()
 {
-	if( g_audioManager != nullptr && g_audioManager->GetSpatialAudioGeometryEnabled() )
+	if( g_audioManager != nullptr && g_audioManager->IsSpatialAudioInitialized() )
 	{
 		AK::SpatialAudio::UnregisterListener( m_ID );
 	}
@@ -37,8 +37,8 @@ void AudListener::RegisterWwiseObject()
 			AK::SoundEngine::RegisterGameObj(m_ID, m_name.c_str());
 			AK::SoundEngine::AddDefaultListener(m_ID);
 
-			// Register listener for occlusion/diffraction processing
-			if( g_audioManager != nullptr && g_audioManager->GetSpatialAudioGeometryEnabled() )
+			// Register listener for Spatial Audio (geometry and rooms)
+			if( g_audioManager != nullptr && g_audioManager->IsSpatialAudioInitialized() )
 			{
 				AK::SpatialAudio::RegisterListener( m_ID );
 			}
