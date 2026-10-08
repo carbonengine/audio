@@ -82,6 +82,7 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_soundPrioritization = new SoundPrioritization();
 	m_spatialAudioSettings = new SpatialAudioSettings();
 	m_obstructionOcclusion = std::make_unique<AudObstructionOcclusion>( this );
+	m_roomManager = std::make_unique<AudRoomManager>( this );
 }
 
 AudManager::~AudManager()
@@ -221,6 +222,8 @@ void AudManager::Terminate()
 	// Terminate the Memory Manager
 	AK::MemoryMgr::Term();
 
+	// The sound engine is gone, so is everything Spatial Audio knew about rooms.
+	m_roomManager->ForgetWwiseState();
 
 	m_spatialAudioGeometryInitialized = false;
 	SetAudioState( AudioState::Uninitialized );
@@ -501,6 +504,14 @@ bool AudManager::GetSpatialAudioGeometryEnabled() const
 	return m_spatialAudioSettings->GetSpatialAudioGeometryEnabled();
 }
 
+bool AudManager::AreRoomsReady() const
+{
+	return GetState() == AudioState::Enabled
+		&& m_spatialAudioGeometryInitialized
+		&& GetSpatialAudioGeometryEnabled()
+		&& !g_shuttingDown;
+}
+
 void AudManager::SetSpatialAudioGeometryEnabled( bool enabled )
 {
 	const bool wasEnabled = GetSpatialAudioGeometryEnabled();
@@ -518,6 +529,8 @@ void AudManager::SetSpatialAudioGeometryEnabled( bool enabled )
 	if( !enabled )
 	{
 		m_spatialAudioSettings->SetSpatialAudioGeometryEnabled( false );
+		// Rooms run on Spatial Audio geometry, so they leave Wwise with it.
+		m_roomManager->RemoveAllFromWwise();
 		AudGeometry::ClearAllGeometry();
 		CCP_LOG_CH( s_ch, "Spatial audio geometry disabled." );
 	}
@@ -530,6 +543,7 @@ void AudManager::SetSpatialAudioGeometryEnabled( bool enabled )
 		}
 
 		m_spatialAudioSettings->SetSpatialAudioGeometryEnabled( true );
+		m_roomManager->ResendAll();
 		CCP_LOG_CH( s_ch, "Spatial audio geometry enabled." );
 	}
 }
@@ -837,7 +851,9 @@ void AudManager::Disable()
 	ClearBanks();
 	m_obstructionQuery = nullptr;
 	m_obstructionOcclusion->Reset();
-  AudGeometry::ClearAllGeometry();
+	// Rooms leave Wwise with audio and are re-sent by Enable().
+	m_roomManager->RemoveAllFromWwise();
+	AudGeometry::ClearAllGeometry();
 #ifndef AK_OPTIMIZED
 	AK::SoundEngine::UnregisterResourceMonitorCallback(ResourceMonitorCallback);
 #endif
@@ -936,6 +952,9 @@ void AudManager::Enable( BankVector soundBanksToLoad )
 	{
 		obj->Wake();
 	}
+
+	// Rooms that were placed while audio was disabled, or removed by Disable(), go back into Wwise.
+	m_roomManager->ResendAll();
 
 	BeOS->RegisterForTicks( this, (void*)"Audio::Tick" );
 	return;

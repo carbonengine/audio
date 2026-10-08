@@ -8,7 +8,8 @@
 #include "stdafx.h"
 #include "AudRoom.h"
 
-#include "Audio2.h"
+#include "AudManager.h"
+#include "AudRoomManager.h"
 
 AudRoom::AudRoom( IRoot* lockobj ) :
 	m_roomID( AllocateGameObjectID() ),
@@ -22,12 +23,54 @@ AudRoom::AudRoom( IRoot* lockobj ) :
 	m_unitBoxToWorld( IdentityMatrix() ),
 	m_shapeValid( false ),
 	m_warnedDegenerate( false ),
-	m_hasTransform( false )
+	m_hasTransform( false ),
+	m_sentToWwise( false ),
+	m_registeredWithManager( false )
 {
+	EnsureRegistered();
 }
 
 AudRoom::~AudRoom()
 {
+	if( g_audioManager != nullptr && m_registeredWithManager )
+	{
+		g_audioManager->GetRoomManager().UnregisterRoom( this );
+	}
+}
+
+bool AudRoom::EnsureRegistered()
+{
+	if( m_registeredWithManager )
+	{
+		return true;
+	}
+
+	if( g_audioManager == nullptr )
+	{
+		return false;
+	}
+
+	g_audioManager->GetRoomManager().RegisterRoom( this );
+	m_registeredWithManager = true;
+	return true;
+}
+
+void AudRoom::Sync()
+{
+	if( !EnsureRegistered() )
+	{
+		return;
+	}
+
+	AudRoomManager& manager = g_audioManager->GetRoomManager();
+	if( IsEnabled() && m_hasTransform && m_shapeValid )
+	{
+		manager.Push( *this );
+	}
+	else
+	{
+		manager.Remove( *this );
+	}
 }
 
 void AudRoom::SetTransform( const Matrix& unitBoxToWorld )
@@ -46,14 +89,31 @@ void AudRoom::SetTransform( const Matrix& unitBoxToWorld )
 		CCP_LOGWARN( "Room '%s' (%llu) has a box with a zero-length axis; it is not sent to Wwise until it is scaled.", m_name.c_str(), m_roomID );
 		m_warnedDegenerate = true;
 	}
+
+	// Sends the room, or removes it when the new box is degenerate.
+	Sync();
 }
 
 void AudRoom::SetEnabled( bool enabled )
 {
+	if( m_shapeEnabled == enabled )
+	{
+		return;
+	}
+
 	m_shapeEnabled = enabled;
+	Sync();
 }
 
 void AudRoom::Remove()
 {
 	m_hasTransform = false;
+	Sync();
+}
+
+bool AudRoom::OnModified( Be::Var* value )
+{
+	// Any authored attribute changed (e.g. edited in Graphite); re-send the room with the new parameters.
+	Sync();
+	return true;
 }

@@ -1,0 +1,306 @@
+////////////////////////////////////////////////////////////
+//
+// Creator: Phevos Rinis
+// Creation Date: Sep 2026
+// Copyright (c) 2026 CCP Games
+//
+
+#include "stdafx.h"
+#include "AudRoomManager.h"
+
+#include "AudManager.h"
+#include "AudRoom.h"
+#include "Utilities.h"
+
+#include <algorithm>
+#include <iterator>
+
+static CcpLogChannel_t s_ch = CCP_LOG_DEFINE_CHANNEL( "AudRoomManager" );
+
+namespace
+{
+	// Unit cube [-0.5, 0.5]^3. Defined directly in Wwise space: the cube is symmetric under the
+	// right- to left-handed Z flip, and Wwise triangles are double-sided so winding does not matter.
+	const AkVertex CUBE_VERTICES[8] =
+	{
+		AkVertex( -0.5f, -0.5f, -0.5f ),
+		AkVertex(  0.5f, -0.5f, -0.5f ),
+		AkVertex(  0.5f,  0.5f, -0.5f ),
+		AkVertex( -0.5f,  0.5f, -0.5f ),
+		AkVertex( -0.5f, -0.5f,  0.5f ),
+		AkVertex(  0.5f, -0.5f,  0.5f ),
+		AkVertex(  0.5f,  0.5f,  0.5f ),
+		AkVertex( -0.5f,  0.5f,  0.5f ),
+	};
+
+	const AkTriangle CUBE_TRIANGLES[12] =
+	{
+		AkTriangle( 0, 1, 2, 0 ), AkTriangle( 0, 2, 3, 0 ), // -Z
+		AkTriangle( 4, 6, 5, 0 ), AkTriangle( 4, 7, 6, 0 ), // +Z
+		AkTriangle( 0, 5, 1, 0 ), AkTriangle( 0, 4, 5, 0 ), // -Y
+		AkTriangle( 3, 2, 6, 0 ), AkTriangle( 3, 6, 7, 0 ), // +Y
+		AkTriangle( 0, 3, 7, 0 ), AkTriangle( 0, 7, 4, 0 ), // -X
+		AkTriangle( 1, 5, 6, 0 ), AkTriangle( 1, 6, 2, 0 ), // +X
+	};
+}
+
+AudRoomManager::AudRoomManager( AudManager* audioManager ) :
+	m_audioManager( audioManager ),
+	m_cubeSent( false ),
+	m_outdoorConfigured( false ),
+	m_mutex( "AudRoomManager", "m_mutex" )
+{
+}
+
+AudRoomManager::~AudRoomManager()
+{
+}
+
+AkUInt64 AudRoomManager::GeometryInstanceIDForRoom( const AudRoom& room )
+{
+	return room.GetRoomID() | ROOM_SPATIAL_ID_TAG;
+}
+
+void AudRoomManager::RegisterRoom( AudRoom* room )
+{
+	CcpAutoMutex lock( m_mutex );
+	m_rooms[room->GetRoomID()] = room;
+}
+
+void AudRoomManager::UnregisterRoom( AudRoom* room )
+{
+	CcpAutoMutex lock( m_mutex );
+	RemoveLocked( *room );
+	m_rooms.erase( room->GetRoomID() );
+}
+
+size_t AudRoomManager::GetRoomCount() const
+{
+	CcpAutoMutex lock( m_mutex );
+	return m_rooms.size();
+}
+
+bool AudRoomManager::EnsureSharedCubeGeometry()
+{
+	if( m_cubeSent )
+	{
+		return true;
+	}
+
+	// One placeholder surface for the whole cube until rooms get acoustic materials. Containment-only geometry
+	// is not ray traced, so the room's own TransmissionLoss applies to direct paths; Wwise still uses room
+	// geometry surfaces for the transmission of reverb and room tones through the walls.
+	AkAcousticSurface surface;
+	surface.strName = "AudRoomCube";
+	surface.textureID = AK_INVALID_UNIQUE_ID;
+	surface.transmissionLoss = 1.0f;
+
+	AkGeometryParams params;
+	params.Vertices = const_cast<AkVertex*>( CUBE_VERTICES );
+	params.NumVertices = static_cast<AkVertIdx>( std::size( CUBE_VERTICES ) );
+	params.Triangles = const_cast<AkTriangle*>( CUBE_TRIANGLES );
+	params.NumTriangles = static_cast<AkTriIdx>( std::size( CUBE_TRIANGLES ) );
+	params.Surfaces = &surface;
+	params.NumSurfaces = 1;
+	params.EnableDiffraction = false;
+	params.EnableDiffractionOnBoundaryEdges = false;
+
+	AKRESULT result = AK::SpatialAudio::SetGeometry( SHARED_CUBE_GEOMETRY_SET_ID, params );
+	if( result != AK_Success )
+	{
+		CCP_LOGERR_CH( s_ch, "Failed to set the shared room geometry, AKRESULT: %d", result );
+		return false;
+	}
+
+	m_cubeSent = true;
+	return true;
+}
+
+void AudRoomManager::ReleaseSharedCubeGeometry()
+{
+	if( !m_cubeSent )
+	{
+		return;
+	}
+
+	AK::SpatialAudio::RemoveGeometry( SHARED_CUBE_GEOMETRY_SET_ID );
+	m_cubeSent = false;
+}
+
+bool AudRoomManager::EnsureOutdoorRoomConfigured()
+{
+	if( m_outdoorConfigured )
+	{
+		return true;
+	}
+
+	// Wwise applies room transmission loss from both the emitter's and the listener's room. Give the
+	// outdoor room (space, station exteriors) none, so an interior's own TransmissionLoss is what is heard.
+	AkRoomParams params;
+	params.TransmissionLoss = 0.0f;
+	params.ReverbAuxBus = AK_INVALID_AUX_ID;
+	params.RoomGameObj_KeepRegistered = false;
+	params.GeometryInstanceID = AkGeometryInstanceID();
+
+	AKRESULT result = AK::SpatialAudio::SetRoom( AK::SpatialAudio::kOutdoorRoomID, params, "Outdoors" );
+	if( result != AK_Success )
+	{
+		CCP_LOGERR_CH( s_ch, "Failed to configure the outdoor room, AKRESULT: %d", result );
+		return false;
+	}
+
+	m_outdoorConfigured = true;
+	return true;
+}
+
+void AudRoomManager::PushLocked( AudRoom& room )
+{
+	if( !room.IsEnabled() || !room.HasTransform() || !room.HasUsableShape() )
+	{
+		RemoveLocked( room );
+		return;
+	}
+
+	if( m_audioManager == nullptr || !m_audioManager->AreRoomsReady() )
+	{
+		return;
+	}
+
+	if( !EnsureSharedCubeGeometry() || !EnsureOutdoorRoomConfigured() )
+	{
+		return;
+	}
+
+	const AkUInt64 instanceID = GeometryInstanceIDForRoom( room );
+
+	// The room shape: the shared unit cube placed and scaled by the unit box transform.
+	AkTransform transform;
+	RH2LH::convertTransform( room.GetUnitBoxToWorld(), transform );
+
+	AkGeometryInstanceParams instanceParams;
+	instanceParams.PositionAndOrientation = transform;
+	instanceParams.Scale = RH2LH::extractScale( room.GetUnitBoxToWorld() );
+	instanceParams.GeometrySetID = SHARED_CUBE_GEOMETRY_SET_ID;
+	instanceParams.UseForReflectionAndDiffraction = false; // containment only, keeps it out of the ray tracer
+	instanceParams.BypassPortalSubtraction = false;
+	instanceParams.IsSolid = false;
+
+	AKRESULT result = AK::SpatialAudio::SetGeometryInstance( instanceID, instanceParams );
+	if( result != AK_Success )
+	{
+		CCP_LOGERR_CH( s_ch, "Failed to set geometry instance for room '%s' (%llu), AKRESULT: %d",
+			room.GetName().c_str(), room.GetRoomID(), result );
+		return;
+	}
+
+	AkRoomParams roomParams;
+	roomParams.Front = transform.OrientationFront();
+	roomParams.Up = transform.OrientationTop();
+	roomParams.ReverbAuxBus = room.GetReverbAuxBus().empty()
+		? AK_INVALID_AUX_ID
+		: AK::SoundEngine::GetIDFromString( room.GetReverbAuxBus().c_str() );
+	// Wwise documents these three as valid in [0, 1].
+	roomParams.ReverbLevel = std::clamp( room.GetReverbLevel(), 0.0f, 1.0f );
+	roomParams.TransmissionLoss = std::clamp( room.GetTransmissionLoss(), 0.0f, 1.0f );
+	roomParams.RoomGameObj_AuxSendLevelToSelf = std::clamp( room.GetAuxSendLevelToSelf(), 0.0f, 1.0f );
+	roomParams.RoomGameObj_KeepRegistered = room.GetKeepRegistered();
+	roomParams.GeometryInstanceID = instanceID;
+	roomParams.RoomPriority = room.GetPriority();
+
+	const bool firstSend = !room.m_sentToWwise;
+
+	// Calling SetRoom again with the same ID updates the room.
+	result = AK::SpatialAudio::SetRoom( room.GetRoomID(), roomParams, room.GetName().c_str() );
+	if( result != AK_Success )
+	{
+		CCP_LOGERR_CH( s_ch, "Failed to set room '%s' (%llu), AKRESULT: %d",
+			room.GetName().c_str(), room.GetRoomID(), result );
+		if( firstSend )
+		{
+			AK::SpatialAudio::RemoveGeometryInstance( instanceID );
+		}
+		return;
+	}
+
+	if( firstSend )
+	{
+		// GetIDFromString hashes any name, so a mistyped bus is silent. Log what was resolved for the Profiler.
+		if( room.GetReverbAuxBus().empty() )
+		{
+			CCP_LOG_CH( s_ch, "Room '%s' (%llu) sent to Wwise without a reverb aux bus.", room.GetName().c_str(), room.GetRoomID() );
+		}
+		else
+		{
+			CCP_LOG_CH( s_ch, "Room '%s' (%llu) sent to Wwise, reverb aux bus '%s' -> %u.",
+				room.GetName().c_str(), room.GetRoomID(), room.GetReverbAuxBus().c_str(), roomParams.ReverbAuxBus );
+		}
+	}
+
+	room.m_sentToWwise = true;
+}
+
+void AudRoomManager::RemoveLocked( AudRoom& room )
+{
+	if( !room.m_sentToWwise )
+	{
+		return;
+	}
+
+	room.m_sentToWwise = false;
+
+	if( AK::SoundEngine::IsInitialized() )
+	{
+		// Remove the room before its geometry so nothing in Wwise references the instance. The shared cube stays.
+		AK::SpatialAudio::RemoveRoom( room.GetRoomID() );
+		AK::SpatialAudio::RemoveGeometryInstance( GeometryInstanceIDForRoom( room ) );
+	}
+}
+
+void AudRoomManager::Push( AudRoom& room )
+{
+	CcpAutoMutex lock( m_mutex );
+	PushLocked( room );
+}
+
+void AudRoomManager::Remove( AudRoom& room )
+{
+	CcpAutoMutex lock( m_mutex );
+	RemoveLocked( room );
+}
+
+void AudRoomManager::RemoveAllFromWwise()
+{
+	CcpAutoMutex lock( m_mutex );
+	for( auto& entry : m_rooms )
+	{
+		RemoveLocked( *entry.second );
+	}
+
+	if( AK::SoundEngine::IsInitialized() )
+	{
+		ReleaseSharedCubeGeometry();
+	}
+	m_cubeSent = false;
+	// The outdoor room is Wwise's own, always-present room, so it is only parameterized here, never removed.
+	// Its parameters survive until the sound engine terminates, see ForgetWwiseState().
+}
+
+void AudRoomManager::ResendAll()
+{
+	CcpAutoMutex lock( m_mutex );
+	for( auto& entry : m_rooms )
+	{
+		PushLocked( *entry.second );
+	}
+}
+
+void AudRoomManager::ForgetWwiseState()
+{
+	CcpAutoMutex lock( m_mutex );
+	for( auto& entry : m_rooms )
+	{
+		entry.second->m_sentToWwise = false;
+	}
+	m_cubeSent = false;
+	m_outdoorConfigured = false;
+}

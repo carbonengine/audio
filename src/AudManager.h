@@ -10,6 +10,7 @@
 #include "SoundPrioritization.h"
 #include "SpatialAudioSettings.h"
 #include "AudObstructionOcclusion.h"
+#include "AudRoomManager.h"
 #include "LowLevelIO/LowLevelIOHook.h"
 #include <atomic>
 #include <memory>
@@ -124,6 +125,10 @@ public:
 	bool GetSpatialAudioGeometryEnabled() const;
 	// Enables or disables spatial audio geometry.
 	void SetSpatialAudioGeometryEnabled( bool enabled );
+	// True when Wwise Spatial Audio is initialized, geometry is on and audio is enabled, i.e. rooms may be sent.
+	bool AreRoomsReady() const;
+	// Owns the Wwise side of every AudRoom.
+	AudRoomManager& GetRoomManager() { return *m_roomManager; }
 	// Set a single line-of-sight blockage ratio for an emitter [0.0, 1.0]. 0 = clear line of sight.
 	bool SetEmitterLineOfSightBlockage( AkGameObjectID emitterID, float blockage );
 	// Current, mid-fade occlusion value for an emitter. 0.0 if the emitter is clear or not tracked.
@@ -274,6 +279,7 @@ private:
 	SoundPrioritization* m_soundPrioritization;
 	SpatialAudioSettings* m_spatialAudioSettings;
 	std::unique_ptr<AudObstructionOcclusion> m_obstructionOcclusion;
+	std::unique_ptr<AudRoomManager> m_roomManager;
 
 	//  Map of game objects, used to guard Wwise callbacks
 	std::unordered_map<AkGameObjectID, AudGameObjResource*> m_callbackGameObjects;
