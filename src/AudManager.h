@@ -127,15 +127,15 @@ public:
 	void SetSpatialAudioGeometryEnabled( bool enabled );
 	// Returns whether Spatial Audio rooms are enabled.
 	bool GetSpatialAudioRoomsEnabled() const;
-	// Enables or disables Spatial Audio rooms. Independent of geometry.
+	// Enables or disables Spatial Audio rooms.
 	void SetSpatialAudioRoomsEnabled( bool enabled );
-	// True when either geometry or rooms are switched on, i.e. Wwise Spatial Audio is needed.
+	// Returns whether geometry or rooms need Wwise Spatial Audio.
 	bool UsesSpatialAudio() const;
-	// True once Wwise Spatial Audio has been initialized in the current audio-engine lifetime.
+	// Returns whether Wwise Spatial Audio is initialized.
 	bool IsSpatialAudioInitialized() const { return m_spatialAudioInitialized; }
-	// True when Wwise Spatial Audio is initialized, rooms are on and audio is enabled, i.e. rooms may be sent.
+	// Returns whether rooms can be sent to Wwise.
 	bool AreRoomsReady() const;
-	// Owns the Wwise side of every AudRoom.
+	// Returns the room manager.
 	AudRoomManager& GetRoomManager() { return *m_roomManager; }
 	// Set a single line-of-sight blockage ratio for an emitter [0.0, 1.0]. 0 = clear line of sight.
 	bool SetEmitterLineOfSightBlockage( AkGameObjectID emitterID, float blockage );
@@ -238,7 +238,7 @@ private:
 	bool InitMusic();
 	// Initializes Wwise's sound engine.
 	bool InitSound();
-	// Initializes Wwise's Spatial Audio, used by both geometry and rooms.
+	// Initializes Wwise Spatial Audio.
 	bool InitSpatialAudio();
 	// Initializes Spatial Audio if needed and registers the listener with it.
 	bool EnsureSpatialAudio();
@@ -271,7 +271,7 @@ private:
 	bool m_asyncOpen;
 	// Signals whether Carbon Audio's spatial audio features are enabled. If the user currently doesn't have an active spatial audio endpoint then output will still be in stereo.
 	bool m_spatialAudioEnabled;
-	// Tracks whether Wwise Spatial Audio has been initialized in the current audio-engine lifetime.
+	// Whether Wwise Spatial Audio is initialized.
 	bool m_spatialAudioInitialized;
 	mutable bool m_audioCullingEnabled;
 

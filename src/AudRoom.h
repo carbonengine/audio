@@ -15,16 +15,7 @@
 #include <string>
 
 /**
- * @brief A Wwise Spatial Audio room described by a unit box placed in the world.
- *
- * Implements ITr2VolumeObject so that trinity can place the box without knowing anything about
- * acoustics. Everything acoustic (reverb aux bus, priority, transmission loss) lives here as
- * persisted attributes, the same split used between EveChildAudio and AudEmitter.
- *
- * The room is registered in Wwise with a containment-only geometry instance of a shared unit
- * cube (see AudRoomManager). Containment is done twice: Wwise uses the cube for game objects we
- * never assigned, and AudRoomManager tests every emitter and the listener against the box
- * (ContainsPoint) and assigns them explicitly, so the game knows the room too.
+ * @brief A Wwise Spatial Audio room, placed as a unit box through ITr2VolumeObject.
  */
 BLUE_CLASS( AudRoom ) :
 	public ITr2VolumeObject,
@@ -44,41 +35,37 @@ public:
 	// INotify
 	bool OnModified( Be::Var* value ) override;
 
-	/// Room identifier. Shares the Wwise game object ID space, see AkRoomID.
 	AkUInt64 GetRoomID() const { return m_roomID; }
-	/// Name shown in the Wwise profiler.
 	const std::string& GetName() const { return m_name; }
-	/// Wwise aux bus name used for the room reverb. Empty means no reverb.
 	const std::string& GetReverbAuxBus() const { return m_reverbAuxBus; }
 	float GetReverbLevel() const { return m_reverbLevel; }
 	float GetTransmissionLoss() const { return m_transmissionLoss; }
 	float GetPriority() const { return m_priority; }
 	float GetAuxSendLevelToSelf() const { return m_auxSendLevelToSelf; }
 	bool GetKeepRegistered() const { return m_keepRegistered; }
-	/// Wwise event played on the room game object while the room is in Wwise. Empty means no room tone.
 	const std::wstring& GetRoomToneEvent() const { return m_roomToneEvent; }
-	/// Active only when both the authored attribute and the shape owner (trinity) say so.
+	/// True when the room and its volume object are both enabled.
 	bool IsEnabled() const { return m_enabled && m_shapeEnabled; }
 	bool HasTransform() const { return m_hasTransform; }
-	/// False when the box has a zero-length axis; such a room contains nothing and is not sent to Wwise.
+	/// False when the box has a zero-length axis.
 	bool HasUsableShape() const { return m_shapeValid; }
 	const Matrix& GetUnitBoxToWorld() const { return m_unitBoxToWorld; }
-	/// Whether the room currently exists in Wwise.
+	/// Whether the room is in Wwise.
 	bool IsRegistered() const { return m_sentToWwise; }
 
-	/// Game-side containment test, in right-handed world space (the same space SetTransform receives).
+	/// Returns whether the point is inside the room, in right-handed world space.
 	bool ContainsPoint( const Vector3& worldPosition ) const;
-	/// Volume of the box in cubic metres. Used to prefer the inner room when priorities tie, as Wwise does.
+	/// Volume of the box, the smaller room wins when priorities are equal.
 	float GetVolume() const { return m_volume; }
 
 private:
 	friend class AudRoomManager;
 
-	/// Registers with the room manager if that has not happened yet (the manager may not exist at construction).
+	/// Registers with the room manager once it exists.
 	bool EnsureRegistered();
-	/// Sends the current state to Wwise, or removes the room if it is disabled.
+	/// Sends the room to Wwise, or removes it when disabled.
 	void Sync();
-	/// Stores the box. Called by AudRoomManager under its lock, because emitter position reports (also from trinity worker threads) read it for containment.
+	/// Stores the box. Called by AudRoomManager under its lock.
 	void ApplyTransform( const Matrix& unitBoxToWorld );
 
 	AkUInt64 m_roomID;
@@ -91,9 +78,8 @@ private:
 	float m_auxSendLevelToSelf;
 	bool m_keepRegistered;
 	std::wstring m_roomToneEvent;
-	/// Authored attribute: the acoustic side of "enabled".
 	bool m_enabled;
-	/// Set through ITr2VolumeObject::SetEnabled by whoever owns the shape. Starts enabled, never persisted.
+	/// Set through ITr2VolumeObject::SetEnabled.
 	bool m_shapeEnabled;
 
 	Matrix m_unitBoxToWorld;
@@ -104,15 +90,13 @@ private:
 	bool m_sentToWwise;
 	bool m_registeredWithManager;
 
-	/// What Wwise currently holds for this room, so unchanged parameters are not re-sent on every move.
+	/// Last parameters sent to Wwise.
 	AkRoomParams m_sentRoomParams;
 	std::string m_sentName;
 
-	/// Room tone state, owned by AudRoomManager under its lock.
-	/// The event last handled while the room is in Wwise (playing, waiting for SoundBanks, or failed); empty when none.
+	/// Room tone state, owned by AudRoomManager.
 	std::wstring m_postedRoomTone;
 	AkPlayingID m_roomTonePlayingID;
-	/// Waiting for the room tone's SoundBanks to load; AudRoomManager::Update() retries it.
 	bool m_roomTonePending;
 };
 

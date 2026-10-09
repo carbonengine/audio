@@ -87,7 +87,6 @@ AudManager::AudManager( IRoot* lockobj ) :
 
 AudManager::~AudManager()
 {
-	// Disable() and Terminate() still use the prioritization and settings objects, so shut down first.
 	if( GetState() == AudioState::Enabled )
 	{
 		Disable();
@@ -118,7 +117,6 @@ void AudManager::Process()
 		}
 
 		m_obstructionOcclusion->Update();
-		// Re-assigns emitters and the listener to rooms when rooms changed this frame.
 		m_roomManager->Update();
 
 		// Process bank requests, events, positions, RTPC, etc.
@@ -221,7 +219,6 @@ void AudManager::Terminate()
 	// Terminate the Memory Manager
 	AK::MemoryMgr::Term();
 
-	// The sound engine is gone, so is everything Spatial Audio knew about rooms.
 	m_roomManager->ForgetWwiseState();
 
 	m_spatialAudioInitialized = false;
@@ -476,7 +473,6 @@ bool AudManager::EnsureSpatialAudio()
 		return false;
 	}
 
-	// The listener may have been created before Spatial Audio was initialized.
 	if( AudListenerPtr listener = GetListener() )
 	{
 		AK::SpatialAudio::RegisterListener( listener->GetID() );
@@ -578,7 +574,6 @@ void AudManager::SetSpatialAudioRoomsEnabled( bool enabled )
 
 	if( GetState() != AudioState::Enabled )
 	{
-		// Enable() picks the setting up.
 		m_spatialAudioSettings->SetSpatialAudioRoomsEnabled( enabled );
 		return;
 	}
@@ -906,7 +901,6 @@ void AudManager::Disable()
 	ClearBanks();
 	m_obstructionQuery = nullptr;
 	m_obstructionOcclusion->Reset();
-	// Rooms leave Wwise with audio and are re-sent by Enable().
 	m_roomManager->RemoveAllFromWwise();
 	AudGeometry::ClearAllGeometry();
 #ifndef AK_OPTIMIZED
@@ -995,7 +989,6 @@ void AudManager::Enable( BankVector soundBanksToLoad )
 
 	SetAudioState( AudioState::Enabled );
 
-	// Spatial Audio comes up before banks and game objects. Also covers a switch turned on while audio was disabled.
 	if( UsesSpatialAudio() && !EnsureSpatialAudio() )
 	{
 		CCP_LOGERR_CH( s_ch, "Spatial audio failed to initialize; geometry and rooms are inactive." );
@@ -1015,7 +1008,6 @@ void AudManager::Enable( BankVector soundBanksToLoad )
 		obj->Wake();
 	}
 
-	// Rooms that were placed while audio was disabled, or removed by Disable(), go back into Wwise.
 	m_roomManager->ResendAll();
 
 	BeOS->RegisterForTicks( this, (void*)"Audio::Tick" );
@@ -1131,7 +1123,6 @@ const std::wstring AudManager::GetEventName( AkGameObjectID emitterID, AkPlaying
 	AudGameObjResource* emitter = GetAudioEmitter( emitterID );
 	if( emitter == nullptr )
 	{
-		// Not one of ours, e.g. a room game object playing a room tone.
 		return L"";
 	}
 	std::map<AkPlayingID, std::wstring> playingEvents = emitter->GetPlayingEvents();

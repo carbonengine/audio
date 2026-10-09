@@ -37,7 +37,7 @@ void AudListener::RegisterWwiseObject()
 			AK::SoundEngine::RegisterGameObj(m_ID, m_name.c_str());
 			AK::SoundEngine::AddDefaultListener(m_ID);
 
-			// Register listener for Spatial Audio (geometry and rooms)
+			// Register listener for Spatial Audio
 			if( g_audioManager != nullptr && g_audioManager->IsSpatialAudioInitialized() )
 			{
 				AK::SpatialAudio::RegisterListener( m_ID );
@@ -70,8 +70,6 @@ int AudListener::SetPlacementFromParent( const Vector3& front, const Vector3& to
 			RH2LH::convertListener( &soundPosLH, &tmp );
 
 			AK::SoundEngine::SetPosition( m_ID, soundPosLH );
-
-			// The listener's room decides what is heard as "inside"; assign it explicitly like every emitter.
 			g_audioManager->GetRoomManager().UpdateGameObjectPosition( m_ID, position );
 		}
 	}

@@ -21,8 +21,7 @@ static CcpLogChannel_t s_ch = CCP_LOG_DEFINE_CHANNEL( "AudRoomManager" );
 
 namespace
 {
-	// Unit cube [-0.5, 0.5]^3. Defined directly in Wwise space: the cube is symmetric under the
-	// right- to left-handed Z flip, and Wwise triangles are double-sided so winding does not matter.
+	/// Unit cube [-0.5, 0.5]^3, the same in right- and left-handed space.
 	const AkVertex CUBE_VERTICES[8] =
 	{
 		AkVertex( -0.5f, -0.5f, -0.5f ),
@@ -37,12 +36,12 @@ namespace
 
 	const AkTriangle CUBE_TRIANGLES[12] =
 	{
-		AkTriangle( 0, 1, 2, 0 ), AkTriangle( 0, 2, 3, 0 ), // -Z
-		AkTriangle( 4, 6, 5, 0 ), AkTriangle( 4, 7, 6, 0 ), // +Z
-		AkTriangle( 0, 5, 1, 0 ), AkTriangle( 0, 4, 5, 0 ), // -Y
-		AkTriangle( 3, 2, 6, 0 ), AkTriangle( 3, 6, 7, 0 ), // +Y
-		AkTriangle( 0, 3, 7, 0 ), AkTriangle( 0, 7, 4, 0 ), // -X
-		AkTriangle( 1, 5, 6, 0 ), AkTriangle( 1, 6, 2, 0 ), // +X
+		AkTriangle( 0, 1, 2, 0 ), AkTriangle( 0, 2, 3, 0 ),
+		AkTriangle( 4, 6, 5, 0 ), AkTriangle( 4, 7, 6, 0 ),
+		AkTriangle( 0, 5, 1, 0 ), AkTriangle( 0, 4, 5, 0 ),
+		AkTriangle( 3, 2, 6, 0 ), AkTriangle( 3, 6, 7, 0 ),
+		AkTriangle( 0, 3, 7, 0 ), AkTriangle( 0, 7, 4, 0 ),
+		AkTriangle( 1, 5, 6, 0 ), AkTriangle( 1, 6, 2, 0 ),
 	};
 }
 
@@ -50,14 +49,14 @@ namespace
 {
 	const AkUInt64 OUTDOOR_ROOM_ID = static_cast<AkUInt64>( AK::SpatialAudio::kOutdoorRoomID );
 
-	/// Room orientation is rebuilt from a rotation matrix on every move; ignore float noise (same tolerance as trinity's EveVolumeObject).
+	/// Compares orientations with a small tolerance for float errors.
 	bool OrientationsNearlyEqual( const AkVector& a, const AkVector& b )
 	{
 		constexpr float epsilon = 1e-4f;
 		return std::fabs( a.X - b.X ) <= epsilon && std::fabs( a.Y - b.Y ) <= epsilon && std::fabs( a.Z - b.Z ) <= epsilon;
 	}
 
-	/// Field-wise comparison of everything SetRoom consumes, so an unchanged room is not re-sent on every move.
+	/// Compares every parameter SetRoom uses.
 	bool RoomParamsEqual( const AkRoomParams& a, const AkRoomParams& b )
 	{
 		return OrientationsNearlyEqual( a.Front, b.Front )
@@ -120,14 +119,12 @@ size_t AudRoomManager::GetTrackedGameObjectCount() const
 
 void AudRoomManager::UpdateGameObjectPosition( AkGameObjectID gameObjectID, const Vector3& position )
 {
-	// Every emitter position send lands here; skip the lock entirely while no room is in Wwise.
 	if( m_roomsInWwise.load( std::memory_order_acquire ) == 0 )
 	{
 		return;
 	}
 
 	CcpAutoMutex lock( m_mutex );
-	// The last room may have left while this thread waited for the lock.
 	if( m_roomsInWwise.load( std::memory_order_relaxed ) == 0 )
 	{
 		return;
@@ -149,13 +146,11 @@ void AudRoomManager::Update()
 	CcpAutoMutex lock( m_mutex );
 	if( m_audioManager == nullptr || !m_audioManager->AreRoomsReady() )
 	{
-		// Keep the flags; the next tick after rooms come back will catch up.
 		return;
 	}
 
 	if( m_pendingRoomTones > 0 )
 	{
-		// Room tones whose SoundBanks were still loading when the room was sent.
 		for( auto& entry : m_rooms )
 		{
 			AudRoom& room = *entry.second;
@@ -190,8 +185,6 @@ AkUInt64 AudRoomManager::ResolveRoomLocked( const Vector3& position ) const
 			continue;
 		}
 
-		// Same rule as Wwise's own containment: highest priority, and the inner room on a tie. The priority
-		// is the one Wwise holds, so both containments agree while an edited priority is not sent yet.
 		const float priority = room->m_sentRoomParams.RoomPriority;
 		const float bestPriority = best != nullptr ? best->m_sentRoomParams.RoomPriority : 0.0f;
 		if( best == nullptr
@@ -221,7 +214,6 @@ void AudRoomManager::AssignLocked( AkGameObjectID gameObjectID, TrackedGameObjec
 
 	if( !tracked.assigned && roomID == OUTDOOR_ROOM_ID )
 	{
-		// Never placed in a room by us and not in one now: leave Wwise's own containment in charge.
 		return;
 	}
 
@@ -243,9 +235,6 @@ bool AudRoomManager::EnsureSharedCubeGeometry()
 		return true;
 	}
 
-	// One placeholder surface for the whole cube until rooms get acoustic materials. Containment-only geometry
-	// is not ray traced, so the room's own TransmissionLoss applies to direct paths; Wwise still uses room
-	// geometry surfaces for the transmission of reverb and room tones through the walls.
 	AkAcousticSurface surface;
 	surface.strName = "AudRoomCube";
 	surface.textureID = AK_INVALID_UNIQUE_ID;
@@ -290,8 +279,6 @@ bool AudRoomManager::EnsureOutdoorRoomConfigured()
 		return true;
 	}
 
-	// Wwise applies room transmission loss from both the emitter's and the listener's room. Give the
-	// outdoor room (space, station exteriors) none, so an interior's own TransmissionLoss is what is heard.
 	AkRoomParams params;
 	params.TransmissionLoss = 0.0f;
 	params.ReverbAuxBus = AK_INVALID_AUX_ID;
@@ -329,7 +316,6 @@ void AudRoomManager::PushLocked( AudRoom& room )
 
 	const AkUInt64 instanceID = GeometryInstanceIDForRoom( room );
 
-	// The room shape: the shared unit cube placed and scaled by the unit box transform.
 	AkTransform transform;
 	RH2LH::convertTransform( room.GetUnitBoxToWorld(), transform );
 
@@ -337,7 +323,7 @@ void AudRoomManager::PushLocked( AudRoom& room )
 	instanceParams.PositionAndOrientation = transform;
 	instanceParams.Scale = RH2LH::extractScale( room.GetUnitBoxToWorld() );
 	instanceParams.GeometrySetID = SHARED_CUBE_GEOMETRY_SET_ID;
-	instanceParams.UseForReflectionAndDiffraction = false; // containment only, keeps it out of the ray tracer
+	instanceParams.UseForReflectionAndDiffraction = false;
 	instanceParams.BypassPortalSubtraction = false;
 	instanceParams.IsSolid = false;
 
@@ -349,8 +335,6 @@ void AudRoomManager::PushLocked( AudRoom& room )
 		return;
 	}
 
-	// The room tone plays on the room game object. A changed tone stops the old one first, while SetRoom
-	// below has not yet released the game object; a plain move never touches the tone.
 	const std::wstring roomTone = StringUtils::trim( room.GetRoomToneEvent() );
 	if( room.m_postedRoomTone != roomTone )
 	{
@@ -363,16 +347,13 @@ void AudRoomManager::PushLocked( AudRoom& room )
 	roomParams.ReverbAuxBus = room.GetReverbAuxBus().empty()
 		? AK_INVALID_AUX_ID
 		: AK::SoundEngine::GetIDFromString( room.GetReverbAuxBus().c_str() );
-	// Wwise documents these three as valid in [0, 1].
 	roomParams.ReverbLevel = std::clamp( room.GetReverbLevel(), 0.0f, 1.0f );
 	roomParams.TransmissionLoss = std::clamp( room.GetTransmissionLoss(), 0.0f, 1.0f );
 	roomParams.RoomGameObj_AuxSendLevelToSelf = std::clamp( room.GetAuxSendLevelToSelf(), 0.0f, 1.0f );
-	// Events can only be posted on the room game object while it stays registered.
 	roomParams.RoomGameObj_KeepRegistered = room.GetKeepRegistered() || !roomTone.empty();
 	roomParams.GeometryInstanceID = instanceID;
 	roomParams.RoomPriority = room.GetPriority();
 
-	// Only Front/Up depend on the transform, so a pure move or resize only needs the geometry instance above.
 	const bool firstSend = !room.m_sentToWwise;
 	const bool roomChanged = firstSend
 		|| !RoomParamsEqual( roomParams, room.m_sentRoomParams )
@@ -380,7 +361,6 @@ void AudRoomManager::PushLocked( AudRoom& room )
 
 	if( roomChanged )
 	{
-		// Calling SetRoom again with the same ID updates the room.
 		result = AK::SpatialAudio::SetRoom( room.GetRoomID(), roomParams, room.GetName().c_str() );
 		if( result != AK_Success )
 		{
@@ -401,7 +381,6 @@ void AudRoomManager::PushLocked( AudRoom& room )
 	{
 		m_roomsInWwise.fetch_add( 1, std::memory_order_release );
 
-		// GetIDFromString hashes any name, so a mistyped bus is silent. Log what was resolved for the Profiler.
 		if( room.GetReverbAuxBus().empty() )
 		{
 			CCP_LOG_CH( s_ch, "Room '%s' (%llu) sent to Wwise without a reverb aux bus.", room.GetName().c_str(), room.GetRoomID() );
@@ -419,7 +398,6 @@ void AudRoomManager::PushLocked( AudRoom& room )
 	}
 
 	room.m_sentToWwise = true;
-	// The room appeared or moved; objects may have entered or left it.
 	m_assignmentsDirty = true;
 }
 
@@ -430,7 +408,6 @@ void AudRoomManager::RemoveLocked( AudRoom& room )
 		return;
 	}
 
-	// The tone goes before the room releases its game object; it is posted again on the next send.
 	StopRoomToneLocked( room );
 
 	room.m_sentToWwise = false;
@@ -440,8 +417,6 @@ void AudRoomManager::RemoveLocked( AudRoom& room )
 
 	if( soundEngineUp )
 	{
-		// Objects we placed in this room go back to Wwise's own containment before the room disappears,
-		// so none is left on a stale override; the next Update() places them again if another room holds them.
 		for( auto& entry : m_trackedObjects )
 		{
 			TrackedGameObject& tracked = entry.second;
@@ -452,15 +427,12 @@ void AudRoomManager::RemoveLocked( AudRoom& room )
 			}
 		}
 
-		// Remove the room before its geometry so nothing in Wwise references the instance. The shared cube stays.
 		AK::SpatialAudio::RemoveRoom( room.GetRoomID() );
 		AK::SpatialAudio::RemoveGeometryInstance( GeometryInstanceIDForRoom( room ) );
 	}
 
 	if( lastRoom )
 	{
-		// No room left: the remaining overrides (explicit outdoor) go back to Wwise too, and nothing is tracked
-		// until a room returns. Objects then fall back to Wwise's containment until their next position report.
 		if( soundEngineUp )
 		{
 			for( const auto& entry : m_trackedObjects )
@@ -493,7 +465,6 @@ void AudRoomManager::StopRoomToneLocked( AudRoom& room )
 
 void AudRoomManager::PostRoomToneLocked( AudRoom& room, const std::wstring& eventName )
 {
-	// From here on the tone counts as handled: playing, waiting for SoundBanks, or failed until its name changes.
 	room.m_postedRoomTone = eventName;
 
 	if( g_staticDataRepository == nullptr )
@@ -503,7 +474,6 @@ void AudRoomManager::PostRoomToneLocked( AudRoom& room, const std::wstring& even
 		return;
 	}
 
-	// Same checks as AudGameObjResource::PostEvent, without the emitter machinery.
 	const std::vector<std::wstring>& soundBanks = g_staticDataRepository->SoundBanksRequiredForEvent( eventName );
 	if( soundBanks.empty() )
 	{
@@ -537,7 +507,6 @@ void AudRoomManager::PostRoomToneLocked( AudRoom& room, const std::wstring& even
 		--m_pendingRoomTones;
 	}
 
-	// The room ID doubles as the room game object, kept registered while a tone is set (see PushLocked).
 	const AkGameObjectID roomGameObjectID = AkRoomID( room.GetRoomID() ).AsGameObjectID();
 	const AkUniqueID eventID = g_staticDataRepository->GetEventID( eventName );
 	room.m_roomTonePlayingID = AK::SoundEngine::PostEvent( eventID, roomGameObjectID );
@@ -566,7 +535,6 @@ void AudRoomManager::SetTransform( AudRoom& room, const Matrix& unitBoxToWorld )
 {
 	CcpAutoMutex lock( m_mutex );
 	room.ApplyTransform( unitBoxToWorld );
-	// Sends the room, or removes it when the new box is degenerate.
 	PushLocked( room );
 }
 
@@ -590,8 +558,6 @@ void AudRoomManager::RemoveAllFromWwise()
 		ReleaseSharedCubeGeometry();
 	}
 	m_cubeSent = false;
-	// The outdoor room is Wwise's own, always-present room, so it is only parameterized here, never removed.
-	// Its parameters survive until the sound engine terminates, see ForgetWwiseState().
 }
 
 void AudRoomManager::ResendAll()
@@ -610,7 +576,6 @@ void AudRoomManager::ForgetWwiseState()
 	{
 		AudRoom& room = *entry.second;
 		room.m_sentToWwise = false;
-		// Room tones died with the sound engine; nothing to stop.
 		room.m_roomTonePlayingID = AK_INVALID_PLAYING_ID;
 		room.m_roomTonePending = false;
 		room.m_postedRoomTone.clear();
@@ -619,7 +584,6 @@ void AudRoomManager::ForgetWwiseState()
 	m_roomsInWwise.store( 0, std::memory_order_release );
 	m_cubeSent = false;
 	m_outdoorConfigured = false;
-	// Game objects are gone with the sound engine; they re-report their position when re-registered.
 	m_trackedObjects.clear();
 	m_assignmentsDirty = false;
 }

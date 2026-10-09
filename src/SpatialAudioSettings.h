@@ -25,7 +25,7 @@ public:
 	void SetSpatialAudioGeometryEnabled( bool value );
 
 	/**
-	 * @brief Controls whether Spatial Audio rooms are sent to Wwise. Independent of geometry.
+	 * @brief Controls whether Spatial Audio rooms are sent to Wwise.
 	 */
 	bool GetSpatialAudioRoomsEnabled() const;
 	void SetSpatialAudioRoomsEnabled( bool value );

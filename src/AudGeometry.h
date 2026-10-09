@@ -87,7 +87,7 @@ private:
 		uint64_t geometrySetId, const Matrix& worldTransform );
 
 	/// Tracks how many active instances reference each geometry set.
-	/// Guarded by s_mutex: trinity registers meshes on its main thread but pushes transforms from worker threads.
+	/// Guarded by s_mutex, trinity sends transforms from worker threads.
 	inline static std::unordered_map<uint64_t, uint32_t> s_geometrySetRefCounts;
 	inline static CcpMutex s_mutex{ "AudGeometry", "s_mutex" };
 };

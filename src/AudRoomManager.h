@@ -20,25 +20,9 @@ class AudManager;
 class AudRoom;
 
 /**
- * @brief Owns the Wwise side of every AudRoom: the shared room geometry, room registration, containment and lifecycle.
+ * @brief Sends every AudRoom to Wwise and assigns game objects to rooms.
  *
- * Every room is a scaled instance of one shared unit cube geometry set. The instance is marked as
- * containment-only (not used for reflection or diffraction) so it costs nothing in the ray tracer;
- * it gives Wwise the room's bounding box, shows the room in the Game Object 3D Viewer, and lets
- * Wwise place game objects we have not assigned ourselves.
- *
- * Containment is also done explicitly, the way the Wwise UE integration does it: every emitter and
- * the listener report their position here, the manager tests them against the room boxes and calls
- * AK::SpatialAudio::SetGameObjectInRoom when the room changes. Wwise never tells the game which room
- * an object is in, so doing the test ourselves is what lets other systems (obstruction, portals later)
- * know the room too.
- *
- * The manager mirrors the audio engine lifecycle: rooms are removed from Wwise when audio is disabled
- * or the rooms switch is turned off, and re-sent when it comes back. A room's tone plays on the room
- * game object while the room is in Wwise and is posted again whenever the room is re-sent.
- *
- * Lock order: m_mutex may be held while AudManager's SoundBank and action-log locks are taken (room
- * tones), never the other way round.
+ * Lock order: m_mutex can be held while taking AudManager's SoundBank and action-log locks, never the other way round.
  */
 class AudRoomManager
 {
@@ -50,30 +34,27 @@ public:
 	void RegisterRoom( AudRoom* room );
 	void UnregisterRoom( AudRoom* room );
 
-	/// Creates or updates the room in Wwise from the room's current state.
+	/// Creates or updates the room in Wwise.
 	void Push( AudRoom& room );
-	/// Removes the room from Wwise. The room stays known to the manager.
+	/// Removes the room from Wwise.
 	void Remove( AudRoom& room );
-	/// Stores the room's box under the lock and sends the room. The box is read for containment by emitter
-	/// position reports, which also arrive from trinity worker threads.
+	/// Stores the room's box under the lock and sends the room.
 	void SetTransform( AudRoom& room, const Matrix& unitBoxToWorld );
-	/// Forgets the room's box under the lock and removes the room from Wwise. Pairs with ITr2VolumeObject::Remove.
+	/// Clears the room's box and removes the room from Wwise.
 	void RemoveShape( AudRoom& room );
 
-	/// Removes every room from Wwise but keeps them known so they can be re-sent. For Disable() and the rooms switch turning off.
+	/// Removes every room from Wwise, for Disable() and the rooms switch.
 	void RemoveAllFromWwise();
-	/// Re-sends every enabled, placed room. For Enable() and the rooms switch turning on.
+	/// Sends every enabled room to Wwise, for Enable() and the rooms switch.
 	void ResendAll();
-	/// Forgets what Wwise knows without talking to it. For after the sound engine has been terminated.
+	/// Resets the Wwise state after the sound engine is terminated.
 	void ForgetWwiseState();
 
-	/// Called whenever a registered game object (emitter or listener) sends a position to Wwise.
-	/// Position is right-handed world space, the same space rooms are placed in. Assigns the object
-	/// to the room containing it if that changed.
+	/// Assigns the game object to the room it is in. Position is in right-handed world space.
 	void UpdateGameObjectPosition( AkGameObjectID gameObjectID, const Vector3& position );
-	/// Called when a game object is unregistered from Wwise; Wwise drops its room assignment with it.
+	/// Removes a game object that was unregistered from Wwise.
 	void ForgetGameObject( AkGameObjectID gameObjectID );
-	/// Once per audio tick: re-evaluates every tracked object when rooms were added, moved or removed.
+	/// Assigns game objects again when rooms changed and retries room tones waiting for SoundBanks.
 	void Update();
 
 	size_t GetRoomCount() const;
@@ -83,9 +64,9 @@ private:
 	struct TrackedGameObject
 	{
 		Vector3 position;
-		/// Room last sent with SetGameObjectInRoom. Only meaningful when assigned is true.
+		/// Room last sent with SetGameObjectInRoom.
 		AkUInt64 roomID;
-		/// Whether our SetGameObjectInRoom override is in place for this object. While false, Wwise's own containment applies.
+		/// Whether SetGameObjectInRoom was called for this object.
 		bool assigned;
 
 		TrackedGameObject() : position( 0.0f, 0.0f, 0.0f ), roomID( 0 ), assigned( false ) {}
@@ -94,27 +75,27 @@ private:
 	static constexpr AkUInt64 ROOM_SPATIAL_ID_TAG = 1ull << 62;
 	static constexpr AkUInt64 SHARED_CUBE_GEOMETRY_SET_ID = ROOM_SPATIAL_ID_TAG | 1ull;
 
-	/// Geometry instance ID of a room, tagged so it can never collide with trinity's geometry IDs.
+	/// Geometry instance ID of the room, tagged so it can't collide with trinity's geometry IDs.
 	static AkUInt64 GeometryInstanceIDForRoom( const AudRoom& room );
 
-	/// Uploads the shared unit cube once. Caller holds m_mutex.
+	/// Sends the shared unit cube once. Caller holds m_mutex.
 	bool EnsureSharedCubeGeometry();
-	/// Releases the shared unit cube. Only when all rooms leave Wwise, so toggling one room does not re-upload it. Caller holds m_mutex.
+	/// Removes the shared unit cube. Caller holds m_mutex.
 	void ReleaseSharedCubeGeometry();
-	/// Parameterizes Wwise's built-in outdoor room once: no transmission loss (as in the Wwise SDK samples) and no reverb. Caller holds m_mutex.
+	/// Sets the outdoor room to no transmission loss and no reverb. Caller holds m_mutex.
 	bool EnsureOutdoorRoomConfigured();
 	/// Sends one room. Caller holds m_mutex.
 	void PushLocked( AudRoom& room );
-	/// Removes one room. Caller holds m_mutex.
+	/// Removes one room with its room tone and game object assignments. Caller holds m_mutex.
 	void RemoveLocked( AudRoom& room );
-	/// Stops the room tone and forgets it, so the next send posts it again. Caller holds m_mutex.
+	/// Stops the room tone. Caller holds m_mutex.
 	void StopRoomToneLocked( AudRoom& room );
-	/// Plays the room tone on the room game object, or waits for its SoundBanks to load. Caller holds m_mutex.
+	/// Plays the room tone, or waits for its SoundBanks. Caller holds m_mutex.
 	void PostRoomToneLocked( AudRoom& room, const std::wstring& eventName );
 
-	/// Room containing the position, or the outdoor room. Highest priority wins, then the smallest box. Caller holds m_mutex.
+	/// Returns the room containing the position, or the outdoor room. Caller holds m_mutex.
 	AkUInt64 ResolveRoomLocked( const Vector3& position ) const;
-	/// Sends SetGameObjectInRoom for one object if its room changed. Caller holds m_mutex.
+	/// Calls SetGameObjectInRoom when the object's room changed. Caller holds m_mutex.
 	void AssignLocked( AkGameObjectID gameObjectID, TrackedGameObject& tracked );
 
 	AudManager* m_audioManager;
@@ -122,11 +103,11 @@ private:
 	std::unordered_map<AkGameObjectID, TrackedGameObject> m_trackedObjects;
 	bool m_cubeSent;
 	bool m_outdoorConfigured;
-	/// Set when rooms changed in Wwise, so Update() re-evaluates every tracked object.
+	/// Set when rooms changed, so Update() assigns game objects again.
 	bool m_assignmentsDirty;
-	/// Rooms currently in Wwise. Written under m_mutex, read without it so position reports skip all work while there are none.
+	/// Number of rooms in Wwise, read without the lock.
 	std::atomic<size_t> m_roomsInWwise;
-	/// Rooms whose tone waits for its SoundBanks; Update() retries them.
+	/// Room tones waiting for SoundBanks.
 	size_t m_pendingRoomTones;
 	mutable CcpMutex m_mutex;
 };

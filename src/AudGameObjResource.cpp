@@ -10,9 +10,7 @@
 #include "SoundPrioritization.h"
 
 //-----------------------------------------------------------------------------
-// Helper function to distribute ID's. Shared with AudRoom so room IDs never
-// collide with game object IDs. Atomic because Blue objects can be created on
-// loading threads.
+// Helper function to distribute ID's, shared with AudRoom
 //-----------------------------------------------------------------------------
 AkGameObjectID AllocateGameObjectID()
 {
@@ -466,8 +464,6 @@ int AudGameObjResource::ApplyEffectivePlacement( const Vector3& front, const Vec
 		RH2LH::convertEmitter( &soundPosLH, &tmp );
 
 		AK::SoundEngine::SetPosition( m_ID, soundPosLH );
-
-		// Explicit room containment, in the right-handed space rooms are placed in.
 		g_audioManager->GetRoomManager().UpdateGameObjectPosition( m_ID, position );
 	}
 	return AK_Success;

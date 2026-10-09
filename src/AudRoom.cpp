@@ -82,12 +82,10 @@ void AudRoom::SetTransform( const Matrix& unitBoxToWorld )
 {
 	if( EnsureRegistered() )
 	{
-		// Emitter position reports, some from trinity worker threads, test against the box; the manager stores it under its lock.
 		g_audioManager->GetRoomManager().SetTransform( *this, unitBoxToWorld );
 	}
 	else
 	{
-		// No audio manager yet: nothing reads the box, so store it for when the manager appears.
 		ApplyTransform( unitBoxToWorld );
 	}
 }
@@ -95,13 +93,11 @@ void AudRoom::SetTransform( const Matrix& unitBoxToWorld )
 void AudRoom::ApplyTransform( const Matrix& unitBoxToWorld )
 {
 	m_unitBoxToWorld = unitBoxToWorld;
-	// The determinant of the affine part is the volume scale of the unit cube.
 	m_volume = std::fabs( Determinant( m_unitBoxToWorld ) );
 	m_hasTransform = true;
 
-	// A box with a zero-length axis (e.g. a freshly placed, unscaled volume) must not become a 1 m cube in Wwise.
 	const Matrix& m = m_unitBoxToWorld;
-	constexpr float minAxisLengthSq = 1e-6f; // 1 mm
+	constexpr float minAxisLengthSq = 1e-6f;
 	m_shapeValid = LengthSq( Vector3( m._11, m._12, m._13 ) ) > minAxisLengthSq
 		&& LengthSq( Vector3( m._21, m._22, m._23 ) ) > minAxisLengthSq
 		&& LengthSq( Vector3( m._31, m._32, m._33 ) ) > minAxisLengthSq;
@@ -119,8 +115,6 @@ bool AudRoom::ContainsPoint( const Vector3& worldPosition ) const
 		return false;
 	}
 
-	// Row-vector convention: rows 1..3 are the box axes in world space (scaled), row 4 is the centre.
-	// A point is inside when its offset from the centre projects within half of each axis; no inverse needed.
 	const Matrix& m = m_unitBoxToWorld;
 	const Vector3 axes[3] =
 	{
@@ -135,7 +129,7 @@ bool AudRoom::ContainsPoint( const Vector3& worldPosition ) const
 		const float lengthSq = LengthSq( axis );
 		if( lengthSq <= 1e-12f )
 		{
-			return false; // degenerate box, contains nothing
+			return false;
 		}
 		if( std::fabs( Dot( offset, axis ) ) > 0.5f * lengthSq )
 		{
@@ -160,7 +154,6 @@ void AudRoom::Remove()
 {
 	if( EnsureRegistered() )
 	{
-		// Clears the box under the manager's lock, then removes the room from Wwise.
 		g_audioManager->GetRoomManager().RemoveShape( *this );
 	}
 	else
@@ -171,7 +164,6 @@ void AudRoom::Remove()
 
 bool AudRoom::OnModified( Be::Var* value )
 {
-	// Any authored attribute changed (e.g. edited in Graphite); re-send the room with the new parameters.
 	Sync();
 	return true;
 }

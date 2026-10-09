@@ -36,7 +36,7 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 
 		// Spatial audio geometry settings
 		MAP_PROPERTY( "spatialAudioGeometryEnabled", GetSpatialAudioGeometryEnabled, SetSpatialAudioGeometryEnabled, "Enable or disable spatial audio geometry.")
-		MAP_PROPERTY( "spatialAudioRoomsEnabled", GetSpatialAudioRoomsEnabled, SetSpatialAudioRoomsEnabled, "Enable or disable Spatial Audio rooms (reverb, room transmission loss, room tones). Independent of geometry.")
+		MAP_PROPERTY( "spatialAudioRoomsEnabled", GetSpatialAudioRoomsEnabled, SetSpatialAudioRoomsEnabled, "Enable or disable Spatial Audio rooms.")
 		MAP_PROPERTY( "movementThreshold", GetMovementThreshold, SetMovementThreshold, "Distance an emitter or listener must move to trigger a re-validation of reflections/diffraction.")
 		MAP_PROPERTY( "numberOfPrimaryRays", GetNumberOfPrimaryRays, SetNumberOfPrimaryRays, "Number of primary rays used in the ray tracing engine. More rays = better quality but higher CPU.")
 		MAP_PROPERTY( "maxReflectionOrder", GetMaxReflectionOrder, SetMaxReflectionOrder, "Maximum reflection order [1-4] - number of bounces in a reflection path.")
