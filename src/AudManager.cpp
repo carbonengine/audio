@@ -97,6 +97,7 @@ AudManager::~AudManager()
 		Terminate();
 	}
 
+	// Clean up sound prioritization system
 	delete m_soundPrioritization;
 	delete m_spatialAudioSettings;
 }

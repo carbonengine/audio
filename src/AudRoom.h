@@ -35,14 +35,18 @@ public:
 	// INotify
 	bool OnModified( Be::Var* value ) override;
 
+	/// Room ID, from the same ID space as game objects.
 	AkUInt64 GetRoomID() const { return m_roomID; }
+	/// Name shown in the Wwise profiler.
 	const std::string& GetName() const { return m_name; }
+	/// Reverb aux bus name. Empty means no reverb.
 	const std::string& GetReverbAuxBus() const { return m_reverbAuxBus; }
 	float GetReverbLevel() const { return m_reverbLevel; }
 	float GetTransmissionLoss() const { return m_transmissionLoss; }
 	float GetPriority() const { return m_priority; }
 	float GetAuxSendLevelToSelf() const { return m_auxSendLevelToSelf; }
 	bool GetKeepRegistered() const { return m_keepRegistered; }
+	/// Room tone event. Empty means no room tone.
 	const std::wstring& GetRoomToneEvent() const { return m_roomToneEvent; }
 	/// True when the room and its volume object are both enabled.
 	bool IsEnabled() const { return m_enabled && m_shapeEnabled; }
@@ -78,6 +82,7 @@ private:
 	float m_auxSendLevelToSelf;
 	bool m_keepRegistered;
 	std::wstring m_roomToneEvent;
+	/// Enabled attribute of the room.
 	bool m_enabled;
 	/// Set through ITr2VolumeObject::SetEnabled.
 	bool m_shapeEnabled;
@@ -95,8 +100,10 @@ private:
 	std::string m_sentName;
 
 	/// Room tone state, owned by AudRoomManager.
+	/// Room tone event last posted. Empty when none.
 	std::wstring m_postedRoomTone;
 	AkPlayingID m_roomTonePlayingID;
+	/// Room tone waiting for its SoundBanks.
 	bool m_roomTonePending;
 };
 
