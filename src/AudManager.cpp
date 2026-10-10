@@ -68,7 +68,7 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_asyncOpen( true ),
 	m_log(),
 	m_spatialAudioEnabled( true ),
-	m_spatialAudioGeometryInitialized( false ),
+	m_spatialAudioInitialized( false ),
 	m_moniteredParametersMapMutex( "AudManager", "m_monitoredParametersMapMutex" ),
 	m_soundBankMutex( "AudManager", "m_soundBankMutex" ),
 	m_callbackGameObjectsMutex( "AudManager", "m_callbackGameObjectsMutex" ),
@@ -82,14 +82,11 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_soundPrioritization = new SoundPrioritization();
 	m_spatialAudioSettings = new SpatialAudioSettings();
 	m_obstructionOcclusion = std::make_unique<AudObstructionOcclusion>( this );
+	m_roomManager = std::make_unique<AudRoomManager>( this );
 }
 
 AudManager::~AudManager()
 {
-	// Clean up sound prioritization system
-	delete m_soundPrioritization;
-	delete m_spatialAudioSettings;
-
 	if( GetState() == AudioState::Enabled )
 	{
 		Disable();
@@ -102,6 +99,7 @@ AudManager::~AudManager()
 
 	// Clean up sound prioritization system
 	delete m_soundPrioritization;
+	delete m_spatialAudioSettings;
 }
 
 void AudManager::Process()
@@ -120,6 +118,7 @@ void AudManager::Process()
 		}
 
 		m_obstructionOcclusion->Update();
+		m_roomManager->Update();
 
 		// Process bank requests, events, positions, RTPC, etc.
 		AK::SoundEngine::RenderAudio();
@@ -150,7 +149,7 @@ AkBankID AudManager::ComputeWwiseHashForSoundBank( const std::wstring& soundBank
 
 bool AudManager::Init()
 {
-	m_spatialAudioGeometryInitialized = false;
+	m_spatialAudioInitialized = false;
 
 	if( g_staticDataRepository == nullptr || !g_staticDataRepository->IsInitialized() )
 	{
@@ -172,7 +171,7 @@ bool AudManager::Init()
 
 	if( m_spatialAudioSettings->GetSpatialAudioGeometryEnabled() )
 	{
-		if( !InitSpatialAudioGeometry() )
+		if( !InitSpatialAudio() )
 		{
 			CCP_LOGERR( "Failed to initialize Spatial Audio Geometry" );
 			return false;
@@ -221,8 +220,9 @@ void AudManager::Terminate()
 	// Terminate the Memory Manager
 	AK::MemoryMgr::Term();
 
+	m_roomManager->ForgetWwiseState();
 
-	m_spatialAudioGeometryInitialized = false;
+	m_spatialAudioInitialized = false;
 	SetAudioState( AudioState::Uninitialized );
 }
 
@@ -446,9 +446,9 @@ bool AudManager::InitSound()
 	return true;
 }
 
-bool AudManager::InitSpatialAudioGeometry()
+bool AudManager::InitSpatialAudio()
 {
-	if( m_spatialAudioGeometryInitialized )
+	if( m_spatialAudioInitialized )
 	{
 		return true;
 	}
@@ -458,12 +458,26 @@ bool AudManager::InitSpatialAudioGeometry()
 
 	if( AK::SpatialAudio::Init( spatialSettings ) != AK_Success )
 	{
-		CCP_LOGERR( "Failed to initialize Wwise Spatial Audio for geometry processing" );
+		CCP_LOGERR( "Failed to initialize Wwise Spatial Audio" );
 		return false;
 	}
 
-	m_spatialAudioGeometryInitialized = true;
-	CCP_LOG_CH( s_ch, "Wwise Spatial Audio Geometry initialized" );
+	m_spatialAudioInitialized = true;
+	CCP_LOG_CH( s_ch, "Wwise Spatial Audio initialized" );
+	return true;
+}
+
+bool AudManager::EnsureSpatialAudio()
+{
+	if( !InitSpatialAudio() )
+	{
+		return false;
+	}
+
+	if( AudListenerPtr listener = GetListener() )
+	{
+		AK::SpatialAudio::RegisterListener( listener->GetID() );
+	}
 	return true;
 }
 
@@ -501,6 +515,24 @@ bool AudManager::GetSpatialAudioGeometryEnabled() const
 	return m_spatialAudioSettings->GetSpatialAudioGeometryEnabled();
 }
 
+bool AudManager::GetSpatialAudioRoomsEnabled() const
+{
+	return m_spatialAudioSettings->GetSpatialAudioRoomsEnabled();
+}
+
+bool AudManager::UsesSpatialAudio() const
+{
+	return GetSpatialAudioGeometryEnabled() || GetSpatialAudioRoomsEnabled();
+}
+
+bool AudManager::AreRoomsReady() const
+{
+	return GetState() == AudioState::Enabled
+		&& m_spatialAudioInitialized
+		&& GetSpatialAudioRoomsEnabled()
+		&& !g_shuttingDown;
+}
+
 void AudManager::SetSpatialAudioGeometryEnabled( bool enabled )
 {
 	const bool wasEnabled = GetSpatialAudioGeometryEnabled();
@@ -523,7 +555,7 @@ void AudManager::SetSpatialAudioGeometryEnabled( bool enabled )
 	}
 	else
 	{
-		if( !InitSpatialAudioGeometry() )
+		if( !EnsureSpatialAudio() )
 		{
 			CCP_LOGERR_CH( s_ch, "Spatial audio geometry failed to initialize." );
 			return;
@@ -531,6 +563,39 @@ void AudManager::SetSpatialAudioGeometryEnabled( bool enabled )
 
 		m_spatialAudioSettings->SetSpatialAudioGeometryEnabled( true );
 		CCP_LOG_CH( s_ch, "Spatial audio geometry enabled." );
+	}
+}
+
+void AudManager::SetSpatialAudioRoomsEnabled( bool enabled )
+{
+	if( GetSpatialAudioRoomsEnabled() == enabled )
+	{
+		return;
+	}
+
+	if( GetState() != AudioState::Enabled )
+	{
+		m_spatialAudioSettings->SetSpatialAudioRoomsEnabled( enabled );
+		return;
+	}
+
+	if( !enabled )
+	{
+		m_spatialAudioSettings->SetSpatialAudioRoomsEnabled( false );
+		m_roomManager->RemoveAllFromWwise();
+		CCP_LOG_CH( s_ch, "Spatial audio rooms disabled." );
+	}
+	else
+	{
+		if( !EnsureSpatialAudio() )
+		{
+			CCP_LOGERR_CH( s_ch, "Spatial audio rooms failed to initialize." );
+			return;
+		}
+
+		m_spatialAudioSettings->SetSpatialAudioRoomsEnabled( true );
+		m_roomManager->ResendAll();
+		CCP_LOG_CH( s_ch, "Spatial audio rooms enabled." );
 	}
 }
 
@@ -837,7 +902,8 @@ void AudManager::Disable()
 	ClearBanks();
 	m_obstructionQuery = nullptr;
 	m_obstructionOcclusion->Reset();
-  AudGeometry::ClearAllGeometry();
+	m_roomManager->RemoveAllFromWwise();
+	AudGeometry::ClearAllGeometry();
 #ifndef AK_OPTIMIZED
 	AK::SoundEngine::UnregisterResourceMonitorCallback(ResourceMonitorCallback);
 #endif
@@ -923,6 +989,12 @@ void AudManager::Enable( BankVector soundBanksToLoad )
 	}
 
 	SetAudioState( AudioState::Enabled );
+
+	if( UsesSpatialAudio() && !EnsureSpatialAudio() )
+	{
+		CCP_LOGERR_CH( s_ch, "Spatial audio failed to initialize; geometry and rooms are inactive." );
+	}
+
 	LoadBank( L"Init.bnk" );
 
 	BankVector::iterator bankEnd = soundBanksToLoad.end();
@@ -936,6 +1008,8 @@ void AudManager::Enable( BankVector soundBanksToLoad )
 	{
 		obj->Wake();
 	}
+
+	m_roomManager->ResendAll();
 
 	BeOS->RegisterForTicks( this, (void*)"Audio::Tick" );
 	return;
@@ -1048,6 +1122,10 @@ AudGameObjResource* AudManager::GetAudioEmitter( AkGameObjectID emitterID )
 const std::wstring AudManager::GetEventName( AkGameObjectID emitterID, AkPlayingID playingID )
 {
 	AudGameObjResource* emitter = GetAudioEmitter( emitterID );
+	if( emitter == nullptr )
+	{
+		return L"";
+	}
 	std::map<AkPlayingID, std::wstring> playingEvents = emitter->GetPlayingEvents();
 	auto it = playingEvents.find( playingID );
 	if( it != playingEvents.end() )

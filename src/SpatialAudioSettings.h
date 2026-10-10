@@ -25,6 +25,12 @@ public:
 	void SetSpatialAudioGeometryEnabled( bool value );
 
 	/**
+	 * @brief Controls whether Spatial Audio rooms are sent to Wwise.
+	 */
+	bool GetSpatialAudioRoomsEnabled() const;
+	void SetSpatialAudioRoomsEnabled( bool value );
+
+	/**
 	 * @brief Amount that an emitter or listener has to move to trigger a validation of reflections/diffraction.
 	 *
 	 * Larger values can reduce the CPU load at the cost of reduced accuracy.
@@ -194,6 +200,7 @@ public:
 
 private:
 	bool m_spatialAudioGeometryEnabled;
+	bool m_spatialAudioRoomsEnabled;
 	float m_movementThreshold;
 	int m_numberOfPrimaryRays;
 	int m_maxReflectionOrder;

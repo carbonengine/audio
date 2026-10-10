@@ -13,6 +13,8 @@
 
 #include <unordered_map>
 
+#include <CcpMutex.h>
+
 
 /**
  * @brief Registers meshes from Trinity as Spatial Audio geometry sets and manages their lifecycle.
@@ -85,7 +87,9 @@ private:
 		uint64_t geometrySetId, const Matrix& worldTransform );
 
 	/// Tracks how many active instances reference each geometry set.
+	/// Guarded by s_mutex, trinity sends transforms from worker threads.
 	inline static std::unordered_map<uint64_t, uint32_t> s_geometrySetRefCounts;
+	inline static CcpMutex s_mutex{ "AudGeometry", "s_mutex" };
 };
 
 TYPEDEF_BLUECLASS( AudGeometry );

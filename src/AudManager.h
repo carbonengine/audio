@@ -10,6 +10,7 @@
 #include "SoundPrioritization.h"
 #include "SpatialAudioSettings.h"
 #include "AudObstructionOcclusion.h"
+#include "AudRoomManager.h"
 #include "LowLevelIO/LowLevelIOHook.h"
 #include <atomic>
 #include <memory>
@@ -124,6 +125,18 @@ public:
 	bool GetSpatialAudioGeometryEnabled() const;
 	// Enables or disables spatial audio geometry.
 	void SetSpatialAudioGeometryEnabled( bool enabled );
+	// Returns whether Spatial Audio rooms are enabled.
+	bool GetSpatialAudioRoomsEnabled() const;
+	// Enables or disables Spatial Audio rooms.
+	void SetSpatialAudioRoomsEnabled( bool enabled );
+	// Returns whether geometry or rooms need Wwise Spatial Audio.
+	bool UsesSpatialAudio() const;
+	// Returns whether Wwise Spatial Audio is initialized.
+	bool IsSpatialAudioInitialized() const { return m_spatialAudioInitialized; }
+	// Returns whether rooms can be sent to Wwise.
+	bool AreRoomsReady() const;
+	// Returns the room manager.
+	AudRoomManager& GetRoomManager() { return *m_roomManager; }
 	// Set a single line-of-sight blockage ratio for an emitter [0.0, 1.0]. 0 = clear line of sight.
 	bool SetEmitterLineOfSightBlockage( AkGameObjectID emitterID, float blockage );
 	// Current, mid-fade occlusion value for an emitter. 0.0 if the emitter is clear or not tracked.
@@ -225,8 +238,10 @@ private:
 	bool InitMusic();
 	// Initializes Wwise's sound engine.
 	bool InitSound();
-	// Initializes Wwise's Spatial Audio for geometry-based occlusion and diffraction.
-	bool InitSpatialAudioGeometry();
+	// Initializes Wwise Spatial Audio.
+	bool InitSpatialAudio();
+	// Initializes Spatial Audio if needed and registers the listener with it.
+	bool EnsureSpatialAudio();
 	// Tick handler
 	void Process();
 	// Registers audio2 for the tick handler.
@@ -256,8 +271,8 @@ private:
 	bool m_asyncOpen;
 	// Signals whether Carbon Audio's spatial audio features are enabled. If the user currently doesn't have an active spatial audio endpoint then output will still be in stereo.
 	bool m_spatialAudioEnabled;
-	// Tracks whether Wwise Spatial Audio geometry has been initialized in the current audio-engine lifetime.
-	bool m_spatialAudioGeometryInitialized;
+	// Whether Wwise Spatial Audio is initialized.
+	bool m_spatialAudioInitialized;
 	mutable bool m_audioCullingEnabled;
 
 	std::map<AkBankID, SoundBankInfo> m_soundBankInfoMap;
@@ -274,6 +289,7 @@ private:
 	SoundPrioritization* m_soundPrioritization;
 	SpatialAudioSettings* m_spatialAudioSettings;
 	std::unique_ptr<AudObstructionOcclusion> m_obstructionOcclusion;
+	std::unique_ptr<AudRoomManager> m_roomManager;
 
 	//  Map of game objects, used to guard Wwise callbacks
 	std::unordered_map<AkGameObjectID, AudGameObjResource*> m_callbackGameObjects;

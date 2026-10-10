@@ -26,6 +26,9 @@ inline bool IsReservedGameObjectID( AkGameObjectID id )
 	return id < START_GAME_OBJ_COUNT;
 }
 
+// Returns the next game object ID, also used for rooms.
+AkGameObjectID AllocateGameObjectID();
+
 // Makes sure objects are initialized far away so you don't hear them when they spawn.
 // Game objects are culled by default so this value will never hit Wwise.
 const Vector3 WWISE_INIT_POSITION = Vector3(FLT_MAX, FLT_MAX, FLT_MAX);
