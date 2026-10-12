@@ -9,12 +9,12 @@
 #include "AudRoom.h"
 
 BLUE_DEFINE( AudRoom );
-BLUE_DEFINE_INTERFACE( ITr2VolumeObject );
+BLUE_DEFINE_INTERFACE( ITr2BoxVolume );
 
 const Be::ClassInfo* AudRoom::ExposeToBlue()
 {
-	EXPOSURE_BEGIN( AudRoom, "A Wwise Spatial Audio room, placed as a unit box through ITr2VolumeObject" )
-		MAP_INTERFACE( ITr2VolumeObject )
+	EXPOSURE_BEGIN( AudRoom, "A Wwise Spatial Audio room, placed as a unit box through ITr2BoxVolume" )
+		MAP_INTERFACE( ITr2BoxVolume )
 		MAP_INTERFACE( INotify )
 
 		MAP_ATTRIBUTE( "name", m_name, "Name of the room, shown in the Wwise profiler.", Be::READWRITE | Be::PERSIST | Be::NOTIFY )

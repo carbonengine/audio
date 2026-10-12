@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <ITr2VolumeObject.h>
+#include <ITr2BoxVolume.h>
 
 #include <AK/SoundEngine/Common/AkTypes.h>
 #include <AK/SpatialAudio/Common/AkSpatialAudioTypes.h>
@@ -15,10 +15,10 @@
 #include <string>
 
 /**
- * @brief A Wwise Spatial Audio room, placed as a unit box through ITr2VolumeObject.
+ * @brief A Wwise Spatial Audio room, placed as a unit box through ITr2BoxVolume.
  */
 BLUE_CLASS( AudRoom ) :
-	public ITr2VolumeObject,
+	public ITr2BoxVolume,
 	public INotify
 {
 public:
@@ -27,7 +27,7 @@ public:
 
 	EXPOSE_TO_BLUE();
 
-	// ITr2VolumeObject
+	// ITr2BoxVolume
 	void SetTransform( const Matrix& unitBoxToWorld ) override;
 	void SetEnabled( bool enabled ) override;
 	void Remove() override;
@@ -84,7 +84,7 @@ private:
 	std::wstring m_roomToneEvent;
 	/// Enabled attribute of the room.
 	bool m_enabled;
-	/// Set through ITr2VolumeObject::SetEnabled.
+	/// Set through ITr2BoxVolume::SetEnabled.
 	bool m_shapeEnabled;
 
 	Matrix m_unitBoxToWorld;
