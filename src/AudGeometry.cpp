@@ -45,6 +45,8 @@ AudGeometry::~AudGeometry()
 
 void AudGeometry::ClearAllGeometry()
 {
+	CcpAutoMutex lock( s_mutex );
+
 	if( s_geometrySetRefCounts.empty() )
 	{
 		return;
@@ -88,6 +90,8 @@ void AudGeometry::SetGeometry(
 	{
 		return;
 	}
+
+	CcpAutoMutex lock( s_mutex );
 
 	auto it = s_geometrySetRefCounts.find( geometrySetId );
 	if( it == s_geometrySetRefCounts.end() )
@@ -143,6 +147,8 @@ void AudGeometry::SetGeometryTransform(
 		return;
 	}
 
+	CcpAutoMutex lock( s_mutex );
+
 	if( s_geometrySetRefCounts.find( geometrySetId ) == s_geometrySetRefCounts.end() )
 	{
 		return;
@@ -161,6 +167,8 @@ void AudGeometry::RemoveGeometry(
 	uint64_t geometrySetId,
 	uint64_t instanceId )
 {
+	CcpAutoMutex lock( s_mutex );
+
 	auto it = s_geometrySetRefCounts.find( geometrySetId );
 	if( it == s_geometrySetRefCounts.end() )
 	{

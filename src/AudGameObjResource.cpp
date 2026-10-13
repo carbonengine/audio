@@ -10,12 +10,12 @@
 #include "SoundPrioritization.h"
 
 //-----------------------------------------------------------------------------
-// Helper function to distribute ID's
+// Helper function to distribute ID's, shared with AudRoom
 //-----------------------------------------------------------------------------
-static AkGameObjectID GenerateEntityID()
+AkGameObjectID AllocateGameObjectID()
 {
-	static AkGameObjectID s_currentID = START_GAME_OBJ_COUNT;
-	return s_currentID++;
+	static std::atomic<AkGameObjectID> s_currentID{ START_GAME_OBJ_COUNT };
+	return s_currentID.fetch_add( 1, std::memory_order_relaxed );
 }
 
 AudGameObjResource::Orientation::Orientation( const Vector3& front_, const Vector3& top_ ) :
@@ -49,7 +49,7 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 														 m_waitingOneShotInRange( std::pair( std::chrono::steady_clock::now(), L"" ) ),
 														 m_eventName(L"")
 {
-	m_ID = GenerateEntityID();
+	m_ID = AllocateGameObjectID();
 
 	if (g_audioManager != nullptr)
 	{
@@ -142,6 +142,7 @@ void AudGameObjResource::UnregisterWwiseObject()
 			return;
 		}
 		m_gameObjRegistered = false;
+		g_audioManager->GetRoomManager().ForgetGameObject( m_ID );
 	}
 }
 
@@ -463,6 +464,7 @@ int AudGameObjResource::ApplyEffectivePlacement( const Vector3& front, const Vec
 		RH2LH::convertEmitter( &soundPosLH, &tmp );
 
 		AK::SoundEngine::SetPosition( m_ID, soundPosLH );
+		g_audioManager->GetRoomManager().UpdateGameObjectPosition( m_ID, position );
 	}
 	return AK_Success;
 }

@@ -25,6 +25,9 @@ public:
 
 	void RegisterWwiseObject() override;
 	int SetPlacementFromParent( const Vector3& front, const Vector3& top, const Vector3& position ) override;
+
+	/// Registers the listener with Wwise Spatial Audio if both are initialized.
+	void RegisterWithSpatialAudio();
 };
 
 TYPEDEF_BLUECLASS( AudListener );

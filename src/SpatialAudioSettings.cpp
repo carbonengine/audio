@@ -4,6 +4,7 @@
 
 SpatialAudioSettings::SpatialAudioSettings()
 	: m_spatialAudioGeometryEnabled( false )
+	, m_spatialAudioRoomsEnabled( false )
 	, m_movementThreshold( 100.0f )
 	, m_numberOfPrimaryRays( 35 )
 	, m_maxReflectionOrder( 0 )
@@ -23,6 +24,9 @@ SpatialAudioSettings::SpatialAudioSettings()
 
 bool SpatialAudioSettings::GetSpatialAudioGeometryEnabled() const { return m_spatialAudioGeometryEnabled; }
 void SpatialAudioSettings::SetSpatialAudioGeometryEnabled( bool value ) { m_spatialAudioGeometryEnabled = value; }
+
+bool SpatialAudioSettings::GetSpatialAudioRoomsEnabled() const { return m_spatialAudioRoomsEnabled; }
+void SpatialAudioSettings::SetSpatialAudioRoomsEnabled( bool value ) { m_spatialAudioRoomsEnabled = value; }
 
 float SpatialAudioSettings::GetMovementThreshold() const { return m_movementThreshold; }
 void SpatialAudioSettings::SetMovementThreshold( float value ) { m_movementThreshold = value; }

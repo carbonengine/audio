@@ -16,12 +16,16 @@ AudListener::AudListener( IRoot* lockobj ) : AudGameObjResource( LISTENER_GAME_O
 
 AudListener::~AudListener()
 {
-	if( g_audioManager != nullptr && g_audioManager->GetSpatialAudioGeometryEnabled() )
+	if( g_audioManager != nullptr && g_audioManager->IsSpatialAudioInitialized() )
 	{
 		AK::SpatialAudio::UnregisterListener( m_ID );
 	}
 	AK::SoundEngine::RemoveDefaultListener( m_ID );
 	AK::SoundEngine::UnregisterGameObj( m_ID );
+	if( g_audioManager != nullptr )
+	{
+		g_audioManager->GetRoomManager().ForgetGameObject( m_ID );
+	}
 }
 
 void AudListener::RegisterWwiseObject()
@@ -33,19 +37,22 @@ void AudListener::RegisterWwiseObject()
 			AK::SoundEngine::RegisterGameObj(m_ID, m_name.c_str());
 			AK::SoundEngine::AddDefaultListener(m_ID);
 
-			// Register listener for occlusion/diffraction processing
-			if( g_audioManager != nullptr && g_audioManager->GetSpatialAudioGeometryEnabled() )
-			{
-				AK::SpatialAudio::RegisterListener( m_ID );
-			}
-
 			m_gameObjRegistered = true;
+			RegisterWithSpatialAudio();
 		}
 	}
 	else
 	{
 		CCP_LOGERR( "Audio listener was requested to be created before audio was enabled! Audio will be silent because of this. "
 					"Try to change where audio is enabled or create the listener again." );
+	}
+}
+
+void AudListener::RegisterWithSpatialAudio()
+{
+	if( m_gameObjRegistered && g_audioManager != nullptr && g_audioManager->IsSpatialAudioInitialized() )
+	{
+		AK::SpatialAudio::RegisterListener( m_ID );
 	}
 }
 
@@ -66,6 +73,7 @@ int AudListener::SetPlacementFromParent( const Vector3& front, const Vector3& to
 			RH2LH::convertListener( &soundPosLH, &tmp );
 
 			AK::SoundEngine::SetPosition( m_ID, soundPosLH );
+			g_audioManager->GetRoomManager().UpdateGameObjectPosition( m_ID, position );
 		}
 	}
 	return AK_Success;
