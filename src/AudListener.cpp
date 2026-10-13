@@ -37,19 +37,22 @@ void AudListener::RegisterWwiseObject()
 			AK::SoundEngine::RegisterGameObj(m_ID, m_name.c_str());
 			AK::SoundEngine::AddDefaultListener(m_ID);
 
-			// Register listener for Spatial Audio
-			if( g_audioManager != nullptr && g_audioManager->IsSpatialAudioInitialized() )
-			{
-				AK::SpatialAudio::RegisterListener( m_ID );
-			}
-
 			m_gameObjRegistered = true;
+			RegisterWithSpatialAudio();
 		}
 	}
 	else
 	{
 		CCP_LOGERR( "Audio listener was requested to be created before audio was enabled! Audio will be silent because of this. "
 					"Try to change where audio is enabled or create the listener again." );
+	}
+}
+
+void AudListener::RegisterWithSpatialAudio()
+{
+	if( m_gameObjRegistered && g_audioManager != nullptr && g_audioManager->IsSpatialAudioInitialized() )
+	{
+		AK::SpatialAudio::RegisterListener( m_ID );
 	}
 }
 

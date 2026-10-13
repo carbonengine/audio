@@ -169,15 +169,6 @@ bool AudManager::Init()
 		return false;
 	}
 
-	if( m_spatialAudioSettings->GetSpatialAudioGeometryEnabled() )
-	{
-		if( !InitSpatialAudio() )
-		{
-			CCP_LOGERR( "Failed to initialize Spatial Audio Geometry" );
-			return false;
-		}
-	}
-
 #ifndef AK_OPTIMIZED
 	if( !InitCommunication() )
 	{
@@ -476,7 +467,7 @@ bool AudManager::EnsureSpatialAudio()
 
 	if( AudListenerPtr listener = GetListener() )
 	{
-		AK::SpatialAudio::RegisterListener( listener->GetID() );
+		listener->RegisterWithSpatialAudio();
 	}
 	return true;
 }
@@ -1003,13 +994,13 @@ void AudManager::Enable( BankVector soundBanksToLoad )
 		LoadBank( *it );
 	}
 
+	m_roomManager->ResendAll();
+
 	auto objects = m_soundPrioritization->GetPrioritizedAudioObjects();
 	for( auto obj : objects )
 	{
 		obj->Wake();
 	}
-
-	m_roomManager->ResendAll();
 
 	BeOS->RegisterForTicks( this, (void*)"Audio::Tick" );
 	return;
