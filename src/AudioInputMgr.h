@@ -31,7 +31,7 @@ public:
 	const std::wstring VOLUME_RTPC = L"volume_video";
 	
 	// IAudioInputMgr //
-	void StartInput( uint32_t channels, uint32_t bps, uint32_t rate ) override;
+	bool StartInput( uint32_t channels, uint32_t bps, uint32_t rate ) override;
 	void StopInput() override;
 	void SetVolume( float volume ) override;
 

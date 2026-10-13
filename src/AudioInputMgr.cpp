@@ -32,11 +32,14 @@ AudioInputMgr::~AudioInputMgr()
 }
 
 // Start the Wwise Audio Input plugin and set callbacks Wwise will call.
-void AudioInputMgr::StartInput( uint32_t channels, uint32_t bps, uint32_t rate )
+bool AudioInputMgr::StartInput( uint32_t channels, uint32_t bps, uint32_t rate )
 {
+	// Tear down any input already running so its playing ID and map entry are not leaked.
+	StopInput();
+
 	if( g_audioManager == nullptr || g_audioManager->GetState() != AudioState::Enabled )
 	{
-		return;
+		return false;
 	}
 
 	m_channels = channels;
@@ -49,12 +52,13 @@ void AudioInputMgr::StartInput( uint32_t channels, uint32_t bps, uint32_t rate )
 	if( m_playingID == AK_INVALID_PLAYING_ID )
 	{
 		CCP_LOGERR( "Failed to post %S to audio emitter %d. Video playback will fail.", INPUT_PLUGIN_EVENT.c_str(), UI_GAME_OBJ_ID );
-		return;
+		return false;
 	}
 
 	CcpAutoMutex lock( g_inputMgrMapMutex );
 	g_audioInputMgrMap.insert( std::make_pair( m_playingID, this ) );
 	SetAudioInputCallbacks( Execute, GetFormatCallback );
+	return true;
 }
 
 // Stop the audio input plugin which will stop Wwise callbacks.
