@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WwiseDocument Type="WorkUnit" ID="{C3703968-666D-47C8-9715-ABD3DA334A25}" SchemaVersion="133">
+	<Containers>
+		<WorkUnit Name="Default Work Unit" ID="{C3703968-666D-47C8-9715-ABD3DA334A25}" PersistMode="Standalone">
+			<ChildrenList>
+				<PropertyContainer Name="AudioLab" ID="{FC958549-9B20-438A-8A86-1D11D5C1698F}" ShortID="26888531">
+					<PropertyList>
+						<Property Name="3DSpatialization" Type="int16" Value="2"/>
+						<Property Name="EnableDiffraction" Type="bool" Value="True"/>
+						<Property Name="OverrideConversion" Type="bool" Value="True"/>
+						<Property Name="UseGameAuxSends" Type="bool" Value="True"/>
+					</PropertyList>
+					<ReferenceList>
+						<Reference Name="Attenuation">
+							<ObjectRef Name="AudioLab_Attenuation" ID="{BB2BC366-1314-4AC4-9F35-F9405DD670F5}" WorkUnitID="{8E2CB78E-5F82-4CE4-90DB-2757FA795FC6}"/>
+						</Reference>
+						<Reference Name="Conversion">
+							<ObjectRef Name="Vorbis Quality Medium" ID="{01D20CF3-9A4C-4EEE-AE3E-2942B47543E9}" WorkUnitID="{F6B2880C-85E5-47FA-A126-645B5DFD9ACC}"/>
+						</Reference>
+						<Reference Name="OutputBus">
+							<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{6BF5E114-60A4-4E30-8AD9-FD2431628A04}"/>
+						</Reference>
+					</ReferenceList>
+					<ChildrenList>
+						<Sound Name="AudioLab_Speech" ID="{18086332-F01A-475B-966D-7B286B125F3F}" ShortID="2626764519">
+							<PropertyList>
+								<Property Name="IsLoopingEnabled" Type="bool" Value="True"/>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{9C20F434-C2E0-4332-91CA-4EA3F4523348}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{6BF5E114-60A4-4E30-8AD9-FD2431628A04}"/>
+								</Reference>
+							</ReferenceList>
+							<ChildrenList>
+								<AudioFileSource Name="AudioLab_Speech" ID="{92FC10E6-7E87-45F1-A8FE-0EB7EE33F253}">
+									<Language>SFX</Language>
+									<AudioFile>AudioLab_Speech.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="283233130"/>
+									</MediaIDList>
+								</AudioFileSource>
+							</ChildrenList>
+							<ActiveSourceList>
+								<ActiveSource Name="AudioLab_Speech" ID="{92FC10E6-7E87-45F1-A8FE-0EB7EE33F253}" Platform="Linked"/>
+							</ActiveSourceList>
+						</Sound>
+						<Sound Name="AudioLab_SpeechPhrase" ID="{7623C82B-80C3-4158-A0AC-072CA9295FA4}" ShortID="1767819511">
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{9C20F434-C2E0-4332-91CA-4EA3F4523348}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{6BF5E114-60A4-4E30-8AD9-FD2431628A04}"/>
+								</Reference>
+							</ReferenceList>
+							<ChildrenList>
+								<AudioFileSource Name="AudioLab_SpeechPhrase" ID="{331921B4-9A31-4353-8CA8-C43588F38CCC}">
+									<Language>SFX</Language>
+									<AudioFile>AudioLab_SpeechPhrase.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="2721284939"/>
+									</MediaIDList>
+								</AudioFileSource>
+							</ChildrenList>
+							<ActiveSourceList>
+								<ActiveSource Name="AudioLab_SpeechPhrase" ID="{331921B4-9A31-4353-8CA8-C43588F38CCC}" Platform="Linked"/>
+							</ActiveSourceList>
+						</Sound>
+						<Sound Name="AudioLab_Loop" ID="{96E62DAF-CE27-4062-92BC-70A3E1E58A18}" ShortID="1057165241">
+							<PropertyList>
+								<Property Name="IsLoopingEnabled" Type="bool" Value="True"/>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{9C20F434-C2E0-4332-91CA-4EA3F4523348}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{6BF5E114-60A4-4E30-8AD9-FD2431628A04}"/>
+								</Reference>
+							</ReferenceList>
+							<ChildrenList>
+								<AudioFileSource Name="commerce_bleeps_02" ID="{E8E2035F-29FD-432E-A537-536BF6268DD0}">
+									<Language>SFX</Language>
+									<AudioFile>commerce_bleeps_02.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="902193572"/>
+									</MediaIDList>
+								</AudioFileSource>
+							</ChildrenList>
+							<ActiveSourceList>
+								<ActiveSource Name="commerce_bleeps_02" ID="{E8E2035F-29FD-432E-A537-536BF6268DD0}" Platform="Linked"/>
+							</ActiveSourceList>
+						</Sound>
+						<Sound Name="AudioLab_RoomTone" ID="{9B823EE2-1D69-4770-977A-A53526DD0392}" ShortID="401727626">
+							<PropertyList>
+								<Property Name="IsLoopingEnabled" Type="bool" Value="True"/>
+							</PropertyList>
+							<ReferenceList>
+								<Reference Name="Conversion">
+									<ObjectRef Name="Default Conversion Settings" ID="{6D1B890C-9826-4384-BF07-C15223E9FB56}" WorkUnitID="{9C20F434-C2E0-4332-91CA-4EA3F4523348}"/>
+								</Reference>
+								<Reference Name="OutputBus">
+									<ObjectRef Name="Master Audio Bus" ID="{1514A4D8-1DA6-412A-A17E-75CA0C2149F3}" WorkUnitID="{6BF5E114-60A4-4E30-8AD9-FD2431628A04}"/>
+								</Reference>
+							</ReferenceList>
+							<ChildrenList>
+								<AudioFileSource Name="static1" ID="{BE5CFFD6-7E99-4393-BF06-58BF2AA43F18}">
+									<Language>SFX</Language>
+									<AudioFile>static1.wav</AudioFile>
+									<MediaIDList>
+										<MediaID ID="855694354"/>
+									</MediaIDList>
+								</AudioFileSource>
+							</ChildrenList>
+							<ActiveSourceList>
+								<ActiveSource Name="static1" ID="{BE5CFFD6-7E99-4393-BF06-58BF2AA43F18}" Platform="Linked"/>
+							</ActiveSourceList>
+						</Sound>
+					</ChildrenList>
+				</PropertyContainer>
+			</ChildrenList>
+		</WorkUnit>
+	</Containers>
+</WwiseDocument>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WwiseDocument Type="WorkUnit" ID="{4B764402-C2B1-488E-A768-588CB657A0CD}" SchemaVersion="133">
+	<SoundBanks>
+		<WorkUnit Name="Default Work Unit" ID="{4B764402-C2B1-488E-A768-588CB657A0CD}" PersistMode="Standalone">
+			<ChildrenList>
+				<SoundBank Name="AudioLab" ID="{35EBFD4E-F4AA-4DE5-8392-A3764824CF11}">
+					<ObjectInclusionList>
+						<ObjectRef Name="Play_AudioLab_Speech" ID="{97BB164A-B965-453A-8196-DBBB8855E95B}" WorkUnitID="{A32F963C-3D0E-4C57-A24B-D9C0DABC7E98}" Origin="Manual" Filter="7"/>
+						<ObjectRef Name="Play_AudioLab_SpeechPhrase" ID="{4CDB18BB-4FE3-488B-A9D6-E916ECFD92A2}" WorkUnitID="{A32F963C-3D0E-4C57-A24B-D9C0DABC7E98}" Origin="Manual" Filter="7"/>
+						<ObjectRef Name="Play_AudioLab_RoomTone" ID="{BA40050A-FA75-4308-8F2A-49F94C7C9BFE}" WorkUnitID="{A32F963C-3D0E-4C57-A24B-D9C0DABC7E98}" Origin="Manual" Filter="7"/>
+						<ObjectRef Name="Play_AudioLab_Loop" ID="{1A3EFB3F-A6FB-456B-85E7-3336FE5460CC}" WorkUnitID="{A32F963C-3D0E-4C57-A24B-D9C0DABC7E98}" Origin="Manual" Filter="7"/>
+					</ObjectInclusionList>
+					<ObjectExclusionList/>
+					<GameSyncExclusionList/>
+				</SoundBank>
+			</ChildrenList>
+		</WorkUnit>
+	</SoundBanks>
+</WwiseDocument>

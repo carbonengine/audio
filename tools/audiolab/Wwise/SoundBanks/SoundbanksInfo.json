@@ -1,0 +1,200 @@
+{
+ "SoundBanksInfo": {
+  "Platform": "Windows",
+  "BasePlatform": "Windows",
+  "SchemaVersion": "16",
+  "SoundBankVersion": "172",
+  "RootPaths": {
+   "ProjectRoot": "../AudioLab",
+   "SourceFilesRoot": "../AudioLab/.cache",
+   "SoundBanksRoot": ".",
+   "ExternalSourcesInputFile": "",
+   "ExternalSourcesOutputRoot": "../AudioLab/GeneratedSoundBanks/Windows"
+  },
+  "DialogueEvents": [],
+  "SoundBanks": [
+   {
+    "Id": "1355168291",
+    "Type": "User",
+    "Language": "SFX",
+    "Hash": "{B7FFB1E5-1019-D8BD-8EA7-667D0465AC17}",
+    "ShortName": "Init",
+    "Path": "Init.bnk",
+    "Plugins": {
+     "ShareSets": [
+      {
+       "Id": "1990128658",
+       "Name": "Room_Medium",
+       "LibName": "Wwise RoomVerb",
+       "LibId": "7733251"
+      },
+      {
+       "Id": "2513915904",
+       "Name": "Hall_Large",
+       "LibName": "Wwise RoomVerb",
+       "LibId": "7733251"
+      },
+      {
+       "Id": "3900114836",
+       "Name": "Metal_Hangar",
+       "LibName": "Wwise RoomVerb",
+       "LibId": "7733251"
+      }
+     ],
+     "AudioDevices": [
+      {
+       "Id": "562365349",
+       "Name": "System_Stereo",
+       "LibName": "System",
+       "LibId": "11403271"
+      },
+      {
+       "Id": "2317455096",
+       "Name": "No_Output",
+       "LibName": "No Output",
+       "LibId": "11862023"
+      },
+      {
+       "Id": "3859886410",
+       "Name": "System",
+       "LibName": "System",
+       "LibId": "11403271"
+      }
+     ]
+    },
+    "Busses": [
+     {
+      "Id": "3803692087",
+      "Name": "Master Audio Bus"
+     }
+    ],
+    "AuxBusses": [
+     {
+      "Id": "499001064",
+      "Name": "AudioLab_Room",
+      "PluginRefs": {
+       "ShareSets": [
+        {
+         "Id": "1990128658"
+        }
+       ]
+      }
+     },
+     {
+      "Id": "2055164412",
+      "Name": "AudioLab_Hall",
+      "PluginRefs": {
+       "ShareSets": [
+        {
+         "Id": "2513915904"
+        }
+       ]
+      }
+     },
+     {
+      "Id": "3444046132",
+      "Name": "AudioLab_Hangar",
+      "PluginRefs": {
+       "ShareSets": [
+        {
+         "Id": "3900114836"
+        }
+       ]
+      }
+     }
+    ]
+   },
+   {
+    "Id": "1444837054",
+    "Type": "User",
+    "Language": "SFX",
+    "Hash": "{3115EDC6-3FE6-40D2-CED8-88A4A56F737D}",
+    "ShortName": "AudioLab",
+    "Path": "AudioLab.bnk",
+    "Media": [
+     {
+      "Id": "283233130",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "AudioLab_Speech.wav",
+      "CachePath": "8A/{8AADEC36-BA65-A2F2-89D4-940B09775504}.wem"
+     },
+     {
+      "Id": "855694354",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "static1.wav",
+      "CachePath": "98/{98307CEC-1C1A-2937-6B3C-15B995A63CD7}.wem"
+     },
+     {
+      "Id": "902193572",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "commerce_bleeps_02.wav",
+      "CachePath": "76/{767D6BDB-E747-0CD8-7F48-3E80BE664E56}.wem"
+     },
+     {
+      "Id": "2721284939",
+      "Language": "SFX",
+      "Streaming": "false",
+      "Location": "Memory",
+      "ShortName": "AudioLab_SpeechPhrase.wav",
+      "CachePath": "65/{652A611C-3E67-CEE4-FF47-20B8DFC79FF5}.wem"
+     }
+    ],
+    "Events": [
+     {
+      "Id": "39504162",
+      "Name": "Play_AudioLab_Loop",
+      "MaxAttenuation": "60",
+      "DurationType": "Infinite",
+      "MediaRefs": [
+       {
+        "Id": "902193572"
+       }
+      ]
+     },
+     {
+      "Id": "1441982749",
+      "Name": "Play_AudioLab_RoomTone",
+      "MaxAttenuation": "60",
+      "DurationType": "Infinite",
+      "MediaRefs": [
+       {
+        "Id": "855694354"
+       }
+      ]
+     },
+     {
+      "Id": "4046249690",
+      "Name": "Play_AudioLab_Speech",
+      "MaxAttenuation": "60",
+      "DurationType": "Infinite",
+      "MediaRefs": [
+       {
+        "Id": "283233130"
+       }
+      ]
+     },
+     {
+      "Id": "3450979689",
+      "Name": "Play_AudioLab_SpeechPhrase",
+      "MaxAttenuation": "60",
+      "DurationType": "OneShot",
+      "DurationMin": "8.85",
+      "DurationMax": "8.85",
+      "MediaRefs": [
+       {
+        "Id": "2721284939"
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "FileHash": "{B61EDB11-5EA8-E37E-D17E-4762557EA3E9}"
+ }
+}

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WwiseDocument Type="WorkUnit" ID="{A32F963C-3D0E-4C57-A24B-D9C0DABC7E98}" SchemaVersion="133">
+	<Events>
+		<WorkUnit Name="Default Work Unit" ID="{A32F963C-3D0E-4C57-A24B-D9C0DABC7E98}" PersistMode="Standalone">
+			<ChildrenList>
+				<Event Name="Play_AudioLab_Speech" ID="{97BB164A-B965-453A-8196-DBBB8855E95B}">
+					<ChildrenList>
+						<Action Name="" ID="{5214BD4B-D737-4C34-A60C-A31055B18A63}" ShortID="3980168720">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="AudioLab_Speech" ID="{18086332-F01A-475B-966D-7B286B125F3F}" WorkUnitID="{C3703968-666D-47C8-9715-ABD3DA334A25}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="Play_AudioLab_SpeechPhrase" ID="{4CDB18BB-4FE3-488B-A9D6-E916ECFD92A2}">
+					<ChildrenList>
+						<Action Name="" ID="{0C33AF61-CBEC-4B0E-8367-C588407E20C3}" ShortID="2946530818">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="AudioLab_SpeechPhrase" ID="{7623C82B-80C3-4158-A0AC-072CA9295FA4}" WorkUnitID="{C3703968-666D-47C8-9715-ABD3DA334A25}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="Play_AudioLab_Loop" ID="{1A3EFB3F-A6FB-456B-85E7-3336FE5460CC}">
+					<ChildrenList>
+						<Action Name="" ID="{374ECB6B-B40B-401C-B1D8-D30864A8C670}" ShortID="753108001">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="AudioLab_Loop" ID="{96E62DAF-CE27-4062-92BC-70A3E1E58A18}" WorkUnitID="{C3703968-666D-47C8-9715-ABD3DA334A25}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+				<Event Name="Play_AudioLab_RoomTone" ID="{BA40050A-FA75-4308-8F2A-49F94C7C9BFE}">
+					<ChildrenList>
+						<Action Name="" ID="{9C77734E-47DC-49B1-81C1-C7EA55DE4955}" ShortID="487456053">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="AudioLab_RoomTone" ID="{9B823EE2-1D69-4770-977A-A53526DD0392}" WorkUnitID="{C3703968-666D-47C8-9715-ABD3DA334A25}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
+			</ChildrenList>
+		</WorkUnit>
+	</Events>
+</WwiseDocument>

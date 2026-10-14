@@ -1,0 +1,38 @@
+{
+ "PlatformInfo": {
+  "Platform": {
+   "Name": "Windows",
+   "BasePlatform": "Windows",
+   "Generator": "2025.1.10.9233"
+  },
+  "RootPaths": {
+   "ProjectRoot": "../AudioLab",
+   "SourceFilesRoot": "../AudioLab/.cache",
+   "SoundBanksRoot": ".",
+   "ExternalSourcesInputFile": "",
+   "ExternalSourcesOutputRoot": "../AudioLab/GeneratedSoundBanks/Windows"
+  },
+  "DefaultAlign": "16",
+  "Settings": {
+   "AutoSoundBankDefinition": "false",
+   "CopyLooseStreamedMediaFiles": "true",
+   "SubFoldersForGeneratedFiles": "false",
+   "RemoveUnusedGeneratedFiles": "false",
+   "SourceControlGeneratedFiles": "false",
+   "GenerateHeaderFile": "false",
+   "GenerateContentTxtFile": "false",
+   "GenerateMetadataXML": "true",
+   "GenerateMetadataJSON": "true",
+   "GenerateAllBanksMetadata": "true",
+   "GeneratePerBankMetadata": "false",
+   "UseSoundBankNames": "true",
+   "AllowExceedingMaxSize": "false",
+   "MaxAttenuationInfo": "true",
+   "EstimatedDurationInfo": "true",
+   "PrintObjectGuid": "false",
+   "PrintObjectPath": "false",
+   "PrintObjectColor": "true"
+  },
+  "FileHash": "{634C8F72-7237-6CDB-AB33-3E3D4355449C}"
+ }
+}
