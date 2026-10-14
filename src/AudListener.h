@@ -32,4 +32,7 @@ public:
 
 TYPEDEF_BLUECLASS( AudListener );
 
+// Creates the listener on first use, otherwise registers it with Wwise again. Shared by the Python GetListener and native hosts.
+AudListener* GetOrCreateListener();
+
 #endif

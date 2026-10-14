@@ -33,4 +33,7 @@ protected:
 
 TYPEDEF_BLUECLASS( AudUIPlayer );
 
+// Creates the UI player on first use. Shared by the Python GetUIPlayer and native hosts.
+AudUIPlayer* GetOrCreateUIPlayer();
+
 #endif

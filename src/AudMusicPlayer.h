@@ -17,3 +17,6 @@ public:
 };
 
 TYPEDEF_BLUECLASS( AudMusicPlayer );
+
+// Creates the music player on first use. Shared by the Python GetMusicPlayer and native hosts.
+AudMusicPlayer* GetOrCreateMusicPlayer();

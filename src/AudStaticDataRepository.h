@@ -16,8 +16,26 @@ public:
 
     EXPOSE_TO_BLUE();
 
+    // Metadata for one Wwise event, as read from SoundPrioritizationMetadata.json.
+    struct EventData
+    {
+        std::wstring eventName;
+        unsigned int eventID;
+        double maxAttenuationRadius;
+        bool isLoop;
+        bool is2D;
+        bool isVital;
+        std::vector<std::wstring> eventsStoppedBy;
+        std::vector<std::wstring> soundbanks;
+    };
+
     // Initialize the repository with the wwise event data from EVE. Returns true if the passed in data was as expected.
     void Initialize(PyObject* audioMetadata);
+    // Merge already parsed metadata into the repository and mark it initialized; used by Initialize and by hosts without Python.
+    // soundBanks maps a SoundBank file name (e.g. L"Init.bnk") to whether it is essential, sources map a media ID (as text) to the same.
+    void InitializeFromData(const std::vector<EventData>& events,
+                            const std::vector<std::pair<std::wstring, bool>>& soundBanks,
+                            const std::vector<std::pair<std::wstring, bool>>& sources);
     // Whether or not this was successfully initialized with static data.
     bool IsInitialized() const;
     // Get an event ID given an events name
@@ -39,18 +57,6 @@ public:
     // Return a list of the SoundBanks the given event needs to be able to be played
     const std::vector<std::wstring>& SoundBanksRequiredForEvent(const std::wstring& eventName) const;
 protected:
-    struct EventData
-    {
-        std::wstring eventName;
-        unsigned int eventID;
-        double maxAttenuationRadius;
-        bool isLoop;
-        bool is2D;
-        bool isVital;
-        std::vector<std::wstring> eventsStoppedBy;
-        std::vector<std::wstring> soundbanks;
-    };
-
     struct SoundBankData
     {
         bool isEssentialSoundBank;
@@ -103,3 +109,6 @@ protected:
 TYPEDEF_BLUECLASS(AudStaticDataRepository);
 
 extern AudStaticDataRepository* g_staticDataRepository;
+
+// Creates g_staticDataRepository on first use. Shared by the Python GetStaticDataRepository and native hosts.
+AudStaticDataRepository* GetOrCreateStaticDataRepository();

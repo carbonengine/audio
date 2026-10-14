@@ -26,7 +26,8 @@ const Be::ClassInfo* AudListener::ExposeToBlue()
 }
 
 static AudListenerPtr s_listener = nullptr;
-static PyObject* PyGetAudListener( PyObject* self, PyObject* args )
+
+AudListener* GetOrCreateListener()
 {
 	if( s_listener == nullptr )
 	{
@@ -37,6 +38,11 @@ static PyObject* PyGetAudListener( PyObject* self, PyObject* args )
 	{
 		s_listener->RegisterWwiseObject();
 	}
-	return PyOS->WrapBlueObject( s_listener->GetRawRoot() );
+	return s_listener.p;
+}
+
+static PyObject* PyGetAudListener( PyObject* self, PyObject* args )
+{
+	return PyOS->WrapBlueObject( GetOrCreateListener()->GetRawRoot() );
 }
 MAP_FUNCTION( "GetListener", PyGetAudListener, "Return a specific Wwise listener." );

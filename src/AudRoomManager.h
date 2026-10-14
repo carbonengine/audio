@@ -74,6 +74,12 @@ public:
 	size_t GetRoomCount() const;
 	size_t GetTrackedGameObjectCount() const;
 
+	/// Room our SetGameObjectInRoom override placed the game object in (kOutdoorRoomID after it left all rooms).
+	/// False when there is no override, i.e. Wwise's own containment decides.
+	bool GetAssignedRoom( AkGameObjectID gameObjectID, AkUInt64& roomID ) const;
+	/// Whether the room tone is posted (a playing ID exists) or waiting for its SoundBanks.
+	void GetRoomToneState( const AudRoom& room, bool& posted, bool& pending ) const;
+
 private:
 	struct TrackedGameObject
 	{

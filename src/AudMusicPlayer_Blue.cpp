@@ -14,13 +14,19 @@ const Be::ClassInfo* AudMusicPlayer::ExposeToBlue()
 }
 
 static AudMusicPlayerPtr s_audMusicPlayer = nullptr;
-static PyObject* PyGetMusicPlayer( PyObject* self, PyObject* args )
+
+AudMusicPlayer* GetOrCreateMusicPlayer()
 {
 	if ( s_audMusicPlayer == nullptr )
 	{
 		s_audMusicPlayer = new OAudMusicPlayer;
 	}
-	return PyOS->WrapBlueObject( s_audMusicPlayer->GetRawRoot() );
+	return s_audMusicPlayer.p;
+}
+
+static PyObject* PyGetMusicPlayer( PyObject* self, PyObject* args )
+{
+	return PyOS->WrapBlueObject( GetOrCreateMusicPlayer()->GetRawRoot() );
 }
 MAP_FUNCTION
 ( 

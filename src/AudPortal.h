@@ -65,6 +65,8 @@ public:
 
 private:
 	friend class AudRoomManager;
+	// CarbonAudioHost::Get/SetPortalSettings and GetPortalStatus: reads the authored attributes and the Wwise state, and writes the attributes.
+	friend struct CarbonAudioHostAccess;
 
 	/// Registers with the room manager once it exists.
 	bool EnsureRegistered();

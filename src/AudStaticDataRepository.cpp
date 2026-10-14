@@ -194,6 +194,7 @@ void AudStaticDataRepository::Initialize(PyObject* audioMetadata)
 	PyObject* eventsDict = GetPyObjectFromDictionary(audioMetadata, eventDictNameC, eventDictName);
 
 	CcpAutoMutex mutex(m_staticDataMutex);
+	std::vector<EventData> events;
 	if (eventsDict != nullptr && PyDict_Check(eventsDict))
 	{
 		while (PyDict_Next(eventsDict, &pos, &key, &value))
@@ -221,7 +222,7 @@ void AudStaticDataRepository::Initialize(PyObject* audioMetadata)
 				eventsStoppedBy,
 				soundbanks
 			};
-			m_events[eventName] = eventData;
+			events.push_back(eventData);
 		}
 	}
 	else
@@ -236,20 +237,16 @@ void AudStaticDataRepository::Initialize(PyObject* audioMetadata)
 	std::wstring soundbankDictName = static_cast<const wchar_t*>(CA2W(soundbankDictNameC));
 	PyObject* soundbanksDict = GetPyObjectFromDictionary(audioMetadata, soundbankDictNameC, soundbankDictName);
 
+	std::vector<std::pair<std::wstring, bool>> soundBanks;
 	if (soundbanksDict != nullptr && PyDict_Check(soundbanksDict))
 	{
-		CcpAutoMutex src_mutex(m_staticDataMutex);
 		while (PyDict_Next(soundbanksDict, &pos, &key, &value))
 		{
 			std::string soundBankNameC = PyUnicode_AsUTF8(key);
 			std::wstring soundBankName = static_cast<const wchar_t*>(CA2W(soundBankNameC.c_str()));
 
 			bool IsEssentialSoundbank = GetBoolFromDict(value, "EssentialSoundBank", soundBankName);
-
-			SoundBankData soundBankData = {
-				IsEssentialSoundbank
-			};
-			m_soundBanks[soundBankName] = soundBankData;
+			soundBanks.emplace_back(soundBankName, IsEssentialSoundbank);
 		}
 	}
 	else
@@ -264,25 +261,47 @@ void AudStaticDataRepository::Initialize(PyObject* audioMetadata)
 	std::wstring sourceDictName = static_cast<const wchar_t*>(CA2W(sourceDictNameC));
 	PyObject* sourceDict = GetPyObjectFromDictionary(audioMetadata, sourceDictNameC, sourceDictName);
 
+	std::vector<std::pair<std::wstring, bool>> sources;
 	if (sourceDict != nullptr && PyDict_Check(sourceDict))
 	{
-		CcpAutoMutex soundBankMutex(m_staticDataMutex);
 		while (PyDict_Next(sourceDict, &pos, &key, &value))
 		{
 			std::string sourceNameC = PyUnicode_AsUTF8(key);
 			std::wstring sourceName = static_cast<const wchar_t*>(CA2W(sourceNameC.c_str()));
 
 			bool IsEssential = GetBoolFromDict(value, "IsEssential", sourceName);
-
-			SourceData sourceData = {
-				IsEssential,
-			};
-			m_sources[sourceName] = sourceData;
+			sources.emplace_back(sourceName, IsEssential);
 		}
 	}
 	else
 	{
 		CCP_LOGERR("Initializing audio static data for Audio Sources failed, make sure the data provided to AudStaticDataRepository is in the correct format.");
+	}
+
+	InitializeFromData(events, soundBanks, sources);
+}
+
+//-----------------------------------------------------------------------------
+// Description:
+//   Merge already parsed metadata into the lookup tables and set the m_initialized flag. Entries with a name
+//   that is already known are replaced; nothing is removed. Held under the mutex because Wwise's IO thread reads it.
+//-----------------------------------------------------------------------------
+void AudStaticDataRepository::InitializeFromData(const std::vector<EventData>& events,
+                                                 const std::vector<std::pair<std::wstring, bool>>& soundBanks,
+                                                 const std::vector<std::pair<std::wstring, bool>>& sources)
+{
+	CcpAutoMutex mutex(m_staticDataMutex);
+	for (const EventData& eventData : events)
+	{
+		m_events[eventData.eventName] = eventData;
+	}
+	for (const auto& soundBank : soundBanks)
+	{
+		m_soundBanks[soundBank.first] = SoundBankData{ soundBank.second };
+	}
+	for (const auto& source : sources)
+	{
+		m_sources[source.first] = SourceData{ source.second };
 	}
 	m_initialized = true;
 }

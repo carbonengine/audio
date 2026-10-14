@@ -148,6 +148,25 @@ size_t AudRoomManager::GetTrackedGameObjectCount() const
 	return m_trackedObjects.size();
 }
 
+bool AudRoomManager::GetAssignedRoom( AkGameObjectID gameObjectID, AkUInt64& roomID ) const
+{
+	CcpAutoMutex lock( m_mutex );
+	const auto it = m_trackedObjects.find( gameObjectID );
+	if( it == m_trackedObjects.end() || !it->second.assigned )
+	{
+		return false;
+	}
+	roomID = it->second.roomID;
+	return true;
+}
+
+void AudRoomManager::GetRoomToneState( const AudRoom& room, bool& posted, bool& pending ) const
+{
+	CcpAutoMutex lock( m_mutex );
+	posted = room.m_roomTonePlayingID != AK_INVALID_PLAYING_ID;
+	pending = room.m_roomTonePending;
+}
+
 void AudRoomManager::UpdateGameObjectPosition( AkGameObjectID gameObjectID, const Vector3& position )
 {
 	if( m_roomsInWwise.load( std::memory_order_acquire ) == 0 )

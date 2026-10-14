@@ -50,35 +50,47 @@ static PyObject* PyGetWwiseVersion( PyObject* self, PyObject* args )
 }
 MAP_FUNCTION( "GetWwiseVersion", PyGetWwiseVersion, "The version of Wwise being used by audio2." );
 
-static PyObject* PyGetManager( PyObject* self, PyObject* args)
+AudManager* GetOrCreateAudioManager()
 {
 	if ( !g_audioManager )
 	{
 		g_audioManager = new OAudManager;
-		if ( !g_audioManager )
-		{
-			PyOS->PyError();
-			return 0;
-		}
+	}
+	return g_audioManager;
+}
+
+AudStaticDataRepository* GetOrCreateStaticDataRepository()
+{
+	if ( !g_staticDataRepository )
+	{
+		g_staticDataRepository = new OAudStaticDataRepository;
+	}
+	return g_staticDataRepository;
+}
+
+static PyObject* PyGetManager( PyObject* self, PyObject* args)
+{
+	AudManager* manager = GetOrCreateAudioManager();
+	if ( !manager )
+	{
+		PyOS->PyError();
+		return 0;
 	}
 
-	return PyOS->WrapBlueObject( g_audioManager );
+	return PyOS->WrapBlueObject( manager );
 }
 MAP_FUNCTION( "GetOrCreateManager", PyGetManager, "Create a global audio manager instance if needed, otherwise return the existing one." );
 
 static PyObject* PyGetStaticDataRepository( PyObject* self, PyObject* args)
 {
-	if ( !g_staticDataRepository )
+	AudStaticDataRepository* repository = GetOrCreateStaticDataRepository();
+	if ( !repository )
 	{
-		g_staticDataRepository = new OAudStaticDataRepository;
-		if ( !g_staticDataRepository)
-		{
-			PyOS->PyError();
-			return 0;
-		}
+		PyOS->PyError();
+		return 0;
 	}
 
-	return PyOS->WrapBlueObject( g_staticDataRepository );
+	return PyOS->WrapBlueObject( repository );
 }
 MAP_FUNCTION( "GetStaticDataRepository", PyGetStaticDataRepository, "Create a global static data repository." );
 
@@ -152,11 +164,21 @@ static struct PyModuleDef ModuleDef =
 	NULL
 };
 
+bool RegisterModule()
+{
+	static bool s_registered = false;
+	if( !s_registered )
+	{
+		s_registered = true;
+		BeClasses->CreateInstanceFromName( "BlueCallbackMan", BlueInterfaceIID<IBlueCallbackMan>(), (void**)&g_mainThreadQueue );
+		BeClasses->RegisterClasses( BlueRegistration::GetClassRegs() );
+	}
+	return g_mainThreadQueue != nullptr;
+}
+
 PyObject* StartDLL( /*HINSTANCE instance*/ )
 {
-	BeClasses->CreateInstanceFromName( "BlueCallbackMan", BlueInterfaceIID<IBlueCallbackMan>(), (void**)&g_mainThreadQueue );
-
-	BeClasses->RegisterClasses( BlueRegistration::GetClassRegs() );
+	RegisterModule();
 
 	PyObject* module = PyModule_Create(&ModuleDef);
 

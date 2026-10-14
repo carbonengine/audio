@@ -29,6 +29,10 @@ inline bool IsReservedGameObjectID( AkGameObjectID id )
 // Returns the next game object ID, also used for rooms.
 AkGameObjectID AllocateGameObjectID();
 
+// Registers CarbonAudio's Blue classes and creates the main thread queue. Called by the Python module init and by
+// native hosts (CarbonAudioHost::Start); only the first call does anything. Returns false without a main thread queue.
+bool RegisterModule();
+
 // Makes sure objects are initialized far away so you don't hear them when they spawn.
 // Game objects are culled by default so this value will never hit Wwise.
 const Vector3 WWISE_INIT_POSITION = Vector3(FLT_MAX, FLT_MAX, FLT_MAX);

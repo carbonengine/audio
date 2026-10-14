@@ -43,13 +43,19 @@ const Be::ClassInfo* AudUIPlayer::ExposeToBlue()
 }
 
 static AudUIPlayerPtr s_audUIPlayer = nullptr;
-static PyObject* PyGetUIPlayer( PyObject* self, PyObject* args )
+
+AudUIPlayer* GetOrCreateUIPlayer()
 {
 	if ( s_audUIPlayer == nullptr )
 	{
 		s_audUIPlayer = new OAudUIPlayer;
 	}
-	return PyOS->WrapBlueObject( s_audUIPlayer->GetRawRoot() );
+	return s_audUIPlayer.p;
+}
+
+static PyObject* PyGetUIPlayer( PyObject* self, PyObject* args )
+{
+	return PyOS->WrapBlueObject( GetOrCreateUIPlayer()->GetRawRoot() );
 }
 MAP_FUNCTION
 ( 

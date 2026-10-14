@@ -156,6 +156,8 @@ public:
 	void SetObstructionQuery( IEveObstructionQuery* query );
 	// Can be called to see if the current platform supports spatial audio.
 	const bool SpatialAudioIsSupported();
+	// Whether the spatial audio device is the main output.
+	bool GetSpatialAudioEnabled() const { return m_spatialAudioEnabled; }
 	// Stop all currently playing sounds on all game objects.
 	void StopAll();
 	// Update audio engine settings, must be called before the audio engine is initialized in SetEnabled.
@@ -423,5 +425,8 @@ TYPEDEF_BLUECLASS( AudManager );
 
 extern AudManager* g_audioManager;
 extern BluePythonObject* g_audioManagerWrapper;
+
+// Creates g_audioManager on first use. Shared by the Python GetOrCreateManager and native hosts.
+AudManager* GetOrCreateAudioManager();
 
 #endif

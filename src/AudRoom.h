@@ -61,6 +61,8 @@ public:
 
 private:
 	friend class AudRoomManager;
+	// CarbonAudioHost::Get/SetRoomSettings: reads and writes the authored attributes, then Sync() like an attribute edit.
+	friend struct CarbonAudioHostAccess;
 
 	/// Registers with the room manager once it exists.
 	bool EnsureRegistered();
