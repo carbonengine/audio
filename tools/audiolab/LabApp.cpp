@@ -60,6 +60,7 @@ namespace AudioLab
 
 		m_pages = CreatePages();
 		m_checks.SetPages( m_pages );
+		m_demoHeld = !options.headless;
 		OpenPage( 0 );
 		return true;
 	}
@@ -133,12 +134,28 @@ namespace AudioLab
 		ResetSwitches();
 		m_page = index;
 		GetPage().Enter( *this );
-		if( demo )
+		m_demoPending = demo && m_demoHeld;
+		if( demo && !m_demoHeld )
 		{
 			GetPage().BuildDemo( *this );
 		}
 		m_pageEntered = true;
 		++m_pageGeneration;
+	}
+
+	void LabApp::ReleaseDemo()
+	{
+		if( !m_demoHeld )
+		{
+			return;
+		}
+		m_demoHeld = false;
+		if( m_demoPending )
+		{
+			m_demoPending = false;
+			GetPage().BuildDemo( *this );
+			++m_pageGeneration;
+		}
 	}
 
 	void LabApp::ResetSwitches()

@@ -29,6 +29,8 @@ ccp_add_executable(AudioLab
 	LabSelection.h
 	LabSelectionPanel.cpp
 	LabSelectionPanel.h
+	LabSplash.cpp
+	LabSplash.h
 	LabSightlines.cpp
 	LabSightlines.h
 	LabUi.cpp

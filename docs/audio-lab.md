@@ -29,6 +29,8 @@ open.
   some of its SoundBanks. A `SoundPrioritizationMetadata.json` in that folder, as the CCP post-generation step
   writes, adds what Wwise does not export, such as stopped-by events.
 - When Wwise generates the SoundBanks again, the lab reloads them and keeps its scene.
+- It starts with its logo for four seconds, and the page's demo scene starts playing after it; Space skips it, and so
+  does any other key or a click.
 - WASD walks the listener relative to where it faces (Shift: faster), Q/E turn it. The scene's tools (1 to 5) select
   and move things, draw rooms, place emitters, draw walls and place portals on a room's wall. Delete removes and the
   wheel zooms. Objects are coloured by the room CarbonAudio placed them in.

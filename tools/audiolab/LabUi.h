@@ -8,6 +8,7 @@
 #include "LabSceneCanvas.h"
 #include "LabSelection.h"
 #include "LabSelectionPanel.h"
+#include "LabSplash.h"
 
 #include <imgui.h>
 
@@ -15,9 +16,10 @@
 
 namespace AudioLab
 {
-	/// The lab's user interface: a toolbar and a status bar around the top-down scene, a sidebar with the open page,
-	/// the selection and the engine's settings, and a log under the scene. LabUi is the frame and the page tab; the
-	/// scene is SceneCanvas, the other tabs SelectionPanel and EnginePanel, the log LogPanel.
+	/// The lab's user interface: a toolbar and a status bar around the scene, a sidebar with the open page, the
+	/// selection and the engine's settings, and a log under the scene, with the Splash over it all at first. LabUi is
+	/// the frame and the page tab; the scene is SceneCanvas, the other tabs SelectionPanel and EnginePanel, the log
+	/// LogPanel.
 	class LabUi
 	{
 	public:
@@ -61,6 +63,7 @@ namespace AudioLab
 		SelectionPanel m_selectionPanel;
 		EnginePanel m_enginePanel;
 		LogPanel m_log;
+		Splash m_splash;
 
 		int m_pageGeneration = -1;
 		/// The sidebar tab to bring to the front on the next frame.

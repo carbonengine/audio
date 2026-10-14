@@ -60,6 +60,9 @@ namespace AudioLab
 		void OpenPage( int index );
 		/// Changes whenever a page opens, so the UI can drop its selection.
 		int GetPageGeneration() const { return m_pageGeneration; }
+		/// With a window, pages wait to build their demo scene until the UI calls this after its splash, so nothing
+		/// plays under it.
+		void ReleaseDemo();
 
 		/// While checks run, nothing but the checks may change the page, the scene or the SoundBanks.
 		CheckRunner& GetChecks() { return m_checks; }
@@ -89,6 +92,9 @@ namespace AudioLab
 		int m_page = 0;
 		int m_pageGeneration = 0;
 		bool m_pageEntered = false;
+		/// Until ReleaseDemo, with a window; meanwhile the open page's demo scene may be waiting.
+		bool m_demoHeld = false;
+		bool m_demoPending = false;
 		CheckRunner m_checks;
 		/// Set while a check run goes on, with the page it started from.
 		bool m_inCheckRun = false;

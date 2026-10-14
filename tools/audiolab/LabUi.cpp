@@ -110,6 +110,11 @@ namespace AudioLab
 		DrawToolbar();
 		DrawStatusBar();
 		DrawMain();
+		m_splash.Draw( m_uiScale );
+		if( m_splash.IsOver() )
+		{
+			m_app.ReleaseDemo();
+		}
 	}
 
 	bool LabUi::ToggleButton( const char* label, bool on, const char* tooltip )
