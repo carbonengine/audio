@@ -108,7 +108,7 @@
     "Id": "1444837054",
     "Type": "User",
     "Language": "SFX",
-    "Hash": "{3115EDC6-3FE6-40D2-CED8-88A4A56F737D}",
+    "Hash": "{667B3E04-832F-994C-BEB8-EFD51186C77A}",
     "ShortName": "AudioLab",
     "Path": "AudioLab.bnk",
     "Media": [
@@ -118,7 +118,7 @@
       "Streaming": "false",
       "Location": "Memory",
       "ShortName": "AudioLab_Speech.wav",
-      "CachePath": "8A/{8AADEC36-BA65-A2F2-89D4-940B09775504}.wem"
+      "CachePath": "CD/{CDC53421-BB34-618D-9FD9-4E2532C66D3C}.wem"
      },
      {
       "Id": "855694354",
@@ -195,6 +195,6 @@
     ]
    }
   ],
-  "FileHash": "{B61EDB11-5EA8-E37E-D17E-4762557EA3E9}"
+  "FileHash": "{742AA2A3-F65D-D8B8-6A76-87FF7F35FAF6}"
  }
 }
