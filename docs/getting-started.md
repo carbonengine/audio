@@ -2,6 +2,8 @@
 
 Carbon Audio is initialized and enabled from Python. You can either use the `AudioManager` class in [`python/audio2/audiomanager.py`](../python/audio2/audiomanager.py), which handles setup and SoundBank state for you, or call the exposed Carbon Audio APIs directly.
 
+Native C++ hosts that do not run Python can use `CarbonAudioHost` instead; see [Audio Lab](audio-lab.md).
+
 ## Before you start
 
 You need:

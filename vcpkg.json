@@ -33,6 +33,23 @@
       "version>=": "3.0.1"
     }
   ],
+  "features": {
+    "tools": {
+      "description": "Developer tools, such as the Audio Lab (CARBON_AUDIO_BUILD_TOOLS=ON)",
+      "dependencies": [
+        {
+          "name": "imgui",
+          "features": [
+            { "name": "dx11-binding", "platform": "windows" },
+            { "name": "win32-binding", "platform": "windows" },
+            { "name": "metal-binding", "platform": "osx" },
+            { "name": "osx-binding", "platform": "osx" }
+          ]
+        },
+        "nlohmann-json"
+      ]
+    }
+  },
   "overrides": [
     {
       "name": "openssl",

@@ -1,6 +1,13 @@
 # Copyright © 2021 CCP ehf.
 
 cmake_minimum_required(VERSION 3.16)
+
+# Developer tools (the Audio Lab). Their vcpkg dependencies are a manifest feature, installed by project() below.
+option(CARBON_AUDIO_BUILD_TOOLS "Build the Audio Lab, a native app for trying CarbonAudio without the game (Windows and macOS)." OFF)
+if(CARBON_AUDIO_BUILD_TOOLS)
+	list(APPEND VCPKG_MANIFEST_FEATURES tools)
+endif()
+
 project(CarbonAudio VERSION 1.0.0)
 
 include(cmake/CcpTargetConfigurations.cmake)
@@ -317,5 +324,9 @@ if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
                     "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/tests/python:$<TARGET_FILE_DIR:CarbonAudio>:${CMAKE_CURRENT_SOURCE_DIR}/python:${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin:${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib:${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/lib/python3.12/lib-dynload:${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/bin/python:${Python3_STDLIB};BUILDFLAVOR=$<LOWER_CASE:$<CONFIG>>")
             endif()
         endforeach()
+    endif()
+
+    if(CARBON_AUDIO_BUILD_TOOLS AND (WIN32 OR APPLE))
+        add_subdirectory(tools/audiolab)
     endif()
 endif()

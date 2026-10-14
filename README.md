@@ -59,6 +59,7 @@ macOS presets, the internal monolith workflow and debugging are covered in [Buil
 - [Sound prioritization](docs/sound-prioritization.md): the audio metadata file and the Wwise custom properties.
 - [Spatial audio](docs/spatial-audio.md): output device setup for 3D audio and stereo.
 - [Building and testing](docs/development.md): presets, local development, tests and the Wwise test project.
+- [Audio Lab](docs/audio-lab.md): a 2D app for trying Carbon Audio without the game.
 
 ## 🤝 Contributing
 

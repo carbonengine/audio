@@ -192,6 +192,66 @@
                 "panel": "shared"
             },
             "problemMatcher": []
+        },
+        {
+            "label": "Build Audio Lab",
+            "type": "process",
+            "command": "powershell",
+            "args": [
+                "-NoProfile",
+                "-Command",
+                "$cmake = (Get-Command cmake -ErrorAction SilentlyContinue).Source; if (-not $cmake) { $vswhere = Join-Path ([Environment]::GetFolderPath('ProgramFilesX86')) 'Microsoft Visual Studio\\Installer\\vswhere.exe'; $cmake = & $vswhere -latest -products * -find 'Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe' | Select-Object -First 1 }; $build = '${workspaceFolder}\\.cmake-build-x64-windows-internal'; $cache = Join-Path $build 'CMakeCache.txt'; if (-not ((Test-Path $cache) -and (Select-String -Path $cache -Pattern '^CARBON_AUDIO_BUILD_TOOLS:BOOL=ON' -Quiet))) { & $cmake --preset x64-windows-internal -DCARBON_AUDIO_BUILD_TOOLS=ON; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE } }; & $cmake --build $build --config Internal --target AudioLab --parallel; exit $LASTEXITCODE"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "Launch Audio Lab",
+            "type": "process",
+            "command": "${workspaceFolder}/.cmake-build-x64-windows-internal/Internal/audiolab_internal.exe",
+            "args": [
+                "--page",
+                "${input:audioLabPage}"
+            ],
+            "dependsOn": "Build Audio Lab",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run Audio Lab checks",
+            "type": "process",
+            "command": "${workspaceFolder}/.cmake-build-x64-windows-internal/Internal/audiolab_internal.exe",
+            "args": [
+                "--check",
+                "all"
+            ],
+            "dependsOn": "Build Audio Lab",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated"
+            },
+            "problemMatcher": []
         }
     ],
     "inputs": [
@@ -212,6 +272,18 @@
             "type": "promptString",
             "description": "Perforce branch root to install CarbonAudio into",
             "default": "${config:carbonAudio.monolithBranchRoot}"
+        },
+        {
+            "id": "audioLabPage",
+            "type": "pickString",
+            "description": "Which page the Audio Lab opens at start",
+            "options": [
+                { "label": "(first page)", "value": "" },
+                "sandbox",
+                "occlusion",
+                "portals"
+            ],
+            "default": ""
         }
     ]
 }
