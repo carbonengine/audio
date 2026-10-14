@@ -15,8 +15,8 @@ namespace AudioLab
 	class LabApp;
 	struct SoundBankFolder;
 
-	/// The top-down scene: its tool bar, the view, the drawing, and the mouse and keys that select, move, place and
-	/// draw things.
+	/// The scene, from above or in 3D: its tool bar, the view, the drawing, and the mouse and keys that select, move,
+	/// place and draw things.
 	class SceneCanvas
 	{
 	public:
@@ -63,11 +63,12 @@ namespace AudioLab
 		void DrawMenu();
 		void DrawTooltip( int hovered );
 		void DrawScaleBar( ImDrawList* draw );
-		/// The ID of what is under the point: the listener, then an emitter, then a portal, then a wall, then the
+		/// The ID of what is under the screen point: the listener, then an emitter, then a portal, then a wall, then the
 		/// smallest room; LabScene::NO_ID for nothing.
-		int Pick( float x, float z ) const;
-		/// Selects the emitters inside the box and the rooms, portals and walls wholly inside it; the listener is left out.
-		void SelectInBox( float x0, float z0, float x1, float z1, bool add );
+		int Pick( const ImVec2& screen ) const;
+		/// Selects the emitters inside the box on screen and the rooms, portals and walls whose outlines on the ground
+		/// plane are wholly inside it; the listener is left out.
+		void SelectInBox( const ImVec2& a, const ImVec2& b, bool add );
 		void DeleteSelection();
 		/// Fits the view around the listener, the emitters, the rooms, the portals and the walls.
 		void FrameAll();
@@ -85,6 +86,8 @@ namespace AudioLab
 		bool m_focused = false;
 		bool m_frameAll = true;
 		bool m_followListener = false;
+		/// The listener's facing last frame, for turning the 3D view with it.
+		float m_lastListenerYaw = 0.0f;
 		Tool m_tool = Tool::Select;
 		std::string m_newEmitterEvent;
 		float m_walkSpeed = 15.0f;
@@ -93,10 +96,11 @@ namespace AudioLab
 		float m_menuZ = 0.0f;
 
 		Gesture m_gesture = Gesture::None;
-		/// What the left button went down on, and where.
+		/// What the left button went down on, and where, on the ground plane and on screen.
 		int m_pressed = LabScene::NO_ID;
 		float m_pressX = 0.0f;
 		float m_pressZ = 0.0f;
+		ImVec2 m_pressScreen = ImVec2( 0.0f, 0.0f );
 		/// Where the mouse was on the ground plane last frame, for moving the selection with it.
 		float m_lastMouseX = 0.0f;
 		float m_lastMouseZ = 0.0f;

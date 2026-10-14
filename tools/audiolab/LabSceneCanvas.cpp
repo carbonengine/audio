@@ -10,6 +10,7 @@
 #include <cmath>
 #include <cstdio>
 #include <iterator>
+#include <limits>
 #include <map>
 
 namespace
@@ -23,6 +24,10 @@ namespace
 	constexpr float PORTAL_SNAP_PIXELS = 20.0f;
 	/// Metres; FrameAll never zooms in closer than this.
 	constexpr float MIN_FRAMED_SIZE = 30.0f;
+	/// In 3D, how tall walls are drawn; they block sightlines at any height.
+	constexpr float WALL_HEIGHT = 3.0f;
+	/// How far dragging turns the 3D view.
+	constexpr float TURN_DEGREES_PER_PIXEL = 0.3f;
 
 	const ImU32 ROOM_PALETTE[] = {
 		IM_COL32( 86, 180, 233, 255 ),
@@ -62,14 +67,55 @@ namespace
 		}
 	}
 
-	bool BoxContains( float boxX, float boxZ, float width, float depth, float yawDegrees, float x, float z )
+	/// Whether the line of sight goes through a box, centred on the ground plane like rooms and portals; from above,
+	/// whether the point is inside its outline.
+	bool RayHitsBox( const AudioLab::ScenePoint& from, const AudioLab::ScenePoint& direction, float boxX, float boxZ, float width, float height, float depth, float yawDegrees )
 	{
+		// Along the box's own axes: across, up and through.
 		const float yaw = yawDegrees * DEGREES_TO_RADIANS;
-		const float dx = x - boxX;
-		const float dz = z - boxZ;
-		const float u = dx * std::cos( yaw ) - dz * std::sin( yaw );
-		const float v = dx * std::sin( yaw ) + dz * std::cos( yaw );
-		return std::fabs( u ) <= width * 0.5f && std::fabs( v ) <= depth * 0.5f;
+		const float c = std::cos( yaw ), s = std::sin( yaw );
+		const float dx = from.x - boxX, dz = from.z - boxZ;
+		const float start[3] = { dx * c - dz * s, from.y, dx * s + dz * c };
+		const float step[3] = { direction.x * c - direction.z * s, direction.y, direction.x * s + direction.z * c };
+		const float half[3] = { width * 0.5f, height * 0.5f, depth * 0.5f };
+		float enter = 0.0f;
+		float leave = std::numeric_limits<float>::max();
+		for( int axis = 0; axis < 3; ++axis )
+		{
+			if( std::fabs( step[axis] ) < 1e-6f )
+			{
+				if( std::fabs( start[axis] ) > half[axis] )
+				{
+					return false;
+				}
+				continue;
+			}
+			const float t0 = ( -half[axis] - start[axis] ) / step[axis];
+			const float t1 = ( half[axis] - start[axis] ) / step[axis];
+			enter = std::max( enter, std::min( t0, t1 ) );
+			leave = std::min( leave, std::max( t0, t1 ) );
+			if( enter > leave )
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/// In 3D, the edges of a box centred on the ground plane, like rooms and portals.
+	void DrawBoxEdges( const AudioLab::SceneView& view, float boxX, float boxZ, float width, float height, float depth, float yawDegrees, ImU32 colour, float thickness )
+	{
+		float cx[4], cz[4];
+		BoxCorners( boxX, boxZ, width, depth, yawDegrees, cx, cz );
+		const float bottom = -height * 0.5f;
+		const float top = height * 0.5f;
+		for( int i = 0; i < 4; ++i )
+		{
+			const int next = ( i + 1 ) % 4;
+			view.Line( { cx[i], bottom, cz[i] }, { cx[next], bottom, cz[next] }, colour, thickness );
+			view.Line( { cx[i], top, cz[i] }, { cx[next], top, cz[next] }, colour, thickness );
+			view.Line( { cx[i], bottom, cz[i] }, { cx[i], top, cz[i] }, colour, thickness );
+		}
 	}
 
 	void RoomCorners( const AudioLab::LabRoom& room, float outX[4], float outZ[4] )
@@ -77,19 +123,18 @@ namespace
 		BoxCorners( room.x, room.z, room.width, room.depth, room.yawDegrees, outX, outZ );
 	}
 
-	bool RoomContains( const AudioLab::LabRoom& room, float x, float z )
-	{
-		return BoxContains( room.x, room.z, room.width, room.depth, room.yawDegrees, x, z );
-	}
-
 	void PortalCorners( const AudioLab::LabPortal& portal, float outX[4], float outZ[4] )
 	{
 		BoxCorners( portal.x, portal.z, portal.width, portal.depth, portal.yawDegrees, outX, outZ );
 	}
 
-	bool PortalContains( const AudioLab::LabPortal& portal, float x, float z )
+	/// The four corners on the ground plane.
+	void GroundCorners( const float cx[4], const float cz[4], AudioLab::ScenePoint out[4] )
 	{
-		return BoxContains( portal.x, portal.z, portal.width, portal.depth, portal.yawDegrees, x, z );
+		for( int i = 0; i < 4; ++i )
+		{
+			out[i] = { cx[i], 0.0f, cz[i] };
+		}
 	}
 
 	float DistanceToSegment( float x, float z, float x0, float z0, float x1, float z1 )
@@ -217,15 +262,25 @@ namespace AudioLab
 		ImGui::EndDisabled();
 
 		// Right: the view.
-		AlignRight( ButtonWidth( "Frame all" ) + ImGui::GetStyle().ItemSpacing.x + CheckboxWidth( "Follow listener" ) );
+		AlignRight( CheckboxWidth( "3D" ) + ButtonWidth( "Frame all" ) + CheckboxWidth( "Follow listener" ) + ImGui::GetStyle().ItemSpacing.x * 2.0f );
+		bool is3D = m_view.is3D;
+		if( ImGui::Checkbox( "3D", &is3D ) )
+		{
+			m_view.Set3D( is3D );
+		}
+		ImGui::SetItemTooltip( "The scene in 3D: right-drag turns the view, Shift-right-drag pans. Off: from above, in 2D" );
+		ImGui::SameLine();
 		if( ImGui::Button( "Frame all" ) )
 		{
 			m_frameAll = true;
 		}
 		ImGui::SetItemTooltip( "Fit the view around everything (F)" );
 		ImGui::SameLine();
-		ImGui::Checkbox( "Follow listener", &m_followListener );
-		ImGui::SetItemTooltip( "Keep the listener in the middle of the view" );
+		if( ImGui::Checkbox( "Follow listener", &m_followListener ) && m_followListener )
+		{
+			m_view.yawDegrees = m_scene.listener.yawDegrees;
+		}
+		ImGui::SetItemTooltip( "Keep the listener in the middle of the view; in 3D, look the way it faces" );
 	}
 
 	void SceneCanvas::Draw()
@@ -244,26 +299,50 @@ namespace AudioLab
 		{
 			m_view.viewX = m_scene.listener.x;
 			m_view.viewZ = m_scene.listener.z;
+			// In 3D the view turns with the listener, so its left and right are the listener's.
+			m_view.yawDegrees = std::remainder( m_view.yawDegrees + m_scene.listener.yawDegrees - m_lastListenerYaw, 360.0f );
 		}
+		m_lastListenerYaw = m_scene.listener.yawDegrees;
+
+		ImDrawList* draw = ImGui::GetWindowDrawList();
+		m_view.draw = draw;
+		m_view.uiScale = m_uiScale;
 
 		ImGui::InvisibleButton( "canvasInput", m_view.size, ImGuiButtonFlags_MouseButtonLeft | ImGuiButtonFlags_MouseButtonRight | ImGuiButtonFlags_MouseButtonMiddle );
 		const bool canvasHovered = ImGui::IsItemHovered();
 		HandleInput();
 
+		const ImVec2 mouse = ImGui::GetIO().MousePos;
 		float mouseX, mouseZ;
-		m_view.ToWorld( ImGui::GetIO().MousePos, mouseX, mouseZ );
-		const int hovered = canvasHovered ? Pick( mouseX, mouseZ ) : LabScene::NO_ID;
+		m_view.ToWorld( mouse, mouseX, mouseZ );
+		const int hovered = canvasHovered ? Pick( mouse ) : LabScene::NO_ID;
 
-		ImDrawList* draw = ImGui::GetWindowDrawList();
 		const ImVec2 canvasEnd( m_view.origin.x + m_view.size.x, m_view.origin.y + m_view.size.y );
 		draw->PushClipRect( m_view.origin, canvasEnd, true );
 		draw->AddRectFilled( m_view.origin, canvasEnd, IM_COL32( 24, 26, 30, 255 ) );
 
-		// Grid: a line per metre when zoomed in, a stronger one every 10 m.
+		// Grid: a line per metre when zoomed in, a stronger one every 10 m. In 3D it reaches a few times as far as the
+		// camera is, with a line every 10 or 100 m further out.
 		float left, top, right, bottom;
-		m_view.ToWorld( m_view.origin, left, top );
-		m_view.ToWorld( canvasEnd, right, bottom );
-		const int step = m_view.pixelsPerMetre >= 8.0f ? 1 : 10;
+		int step = 1;
+		if( m_view.is3D )
+		{
+			const float reach = std::clamp( m_view.distance * 3.0f, 30.0f, 3000.0f );
+			while( reach / static_cast<float>( step ) > 100.0f )
+			{
+				step *= 10;
+			}
+			left = m_view.viewX - reach;
+			right = m_view.viewX + reach;
+			top = m_view.viewZ - reach;
+			bottom = m_view.viewZ + reach;
+		}
+		else
+		{
+			m_view.ToWorld( m_view.origin, left, top );
+			m_view.ToWorld( canvasEnd, right, bottom );
+			step = m_view.pixelsPerMetre >= 8.0f ? 1 : 10;
+		}
 		for( int gx = static_cast<int>( std::floor( left ) ); gx <= static_cast<int>( std::ceil( right ) ); ++gx )
 		{
 			if( gx % step != 0 )
@@ -271,7 +350,7 @@ namespace AudioLab
 				continue;
 			}
 			const ImU32 colour = gx == 0 ? IM_COL32( 90, 90, 100, 255 ) : gx % 10 == 0 ? IM_COL32( 55, 58, 66, 255 ) : IM_COL32( 36, 38, 44, 255 );
-			draw->AddLine( m_view.ToScreen( static_cast<float>( gx ), top ), m_view.ToScreen( static_cast<float>( gx ), bottom ), colour );
+			m_view.Line( { static_cast<float>( gx ), 0.0f, top }, { static_cast<float>( gx ), 0.0f, bottom }, colour, 1.0f );
 		}
 		for( int gz = static_cast<int>( std::floor( top ) ); gz <= static_cast<int>( std::ceil( bottom ) ); ++gz )
 		{
@@ -280,12 +359,19 @@ namespace AudioLab
 				continue;
 			}
 			const ImU32 colour = gz == 0 ? IM_COL32( 90, 90, 100, 255 ) : gz % 10 == 0 ? IM_COL32( 55, 58, 66, 255 ) : IM_COL32( 36, 38, 44, 255 );
-			draw->AddLine( m_view.ToScreen( left, static_cast<float>( gz ) ), m_view.ToScreen( right, static_cast<float>( gz ) ), colour );
+			m_view.Line( { left, 0.0f, static_cast<float>( gz ) }, { right, 0.0f, static_cast<float>( gz ) }, colour, 1.0f );
 		}
 
-		// Labels skip spots another label already took; room names and the selected emitter's name always show.
+		// Labels skip spots another label already took; room names and the selected emitter's name always show. In 3D,
+		// none for what is behind the camera.
 		std::vector<LabelBox> labels;
-		const auto label = [&labels, draw]( const ImVec2& position, ImU32 colour, const char* text, bool always ) {
+		const auto label = [this, &labels, draw]( const ScenePoint& at, const ImVec2& offset, ImU32 colour, const char* text, bool always ) {
+			ImVec2 position;
+			if( !m_view.ToScreen( at, position ) )
+			{
+				return;
+			}
+			position = ImVec2( position.x + offset.x, position.y + offset.y );
 			const ImVec2 size = ImGui::CalcTextSize( text );
 			const LabelBox box = { position, ImVec2( position.x + size.x, position.y + size.y ) };
 			if( !always && std::any_of( labels.begin(), labels.end(), [&box]( const LabelBox& other ) { return Overlaps( box, other ); } ) )
@@ -296,18 +382,24 @@ namespace AudioLab
 			draw->AddText( position, colour, text );
 		};
 
+		// Rooms and portals show their outlines on the ground plane, where the listener and the emitters are; in 3D also
+		// the boxes around them.
 		for( const LabRoom& room : m_scene.rooms )
 		{
 			float cx[4], cz[4];
 			RoomCorners( room, cx, cz );
-			const ImVec2 p0 = m_view.ToScreen( cx[0], cz[0] ), p1 = m_view.ToScreen( cx[1], cz[1] ), p2 = m_view.ToScreen( cx[2], cz[2] ), p3 = m_view.ToScreen( cx[3], cz[3] );
+			ScenePoint corners[4];
+			GroundCorners( cx, cz, corners );
 			const bool selected = m_selection.Contains( room.id );
 			CarbonAudioHost::RoomStatus status;
 			CarbonAudioHost::GetRoomStatus( room.object.p, status );
-			draw->AddQuadFilled( p0, p1, p2, p3, RoomColour( room, status.inWwise ? 40 : 15 ) );
-			draw->AddQuad( p0, p1, p2, p3, selected ? IM_COL32( 255, 255, 255, 255 ) : RoomColour( room, status.inWwise ? 220 : 90 ), ( selected ? 3.0f : 1.5f ) * m_uiScale );
+			m_view.Polygon( corners, 4, RoomColour( room, status.inWwise ? 40 : 15 ), selected ? IM_COL32( 255, 255, 255, 255 ) : RoomColour( room, status.inWwise ? 220 : 90 ), ( selected ? 3.0f : 1.5f ) * m_uiScale );
+			if( m_view.is3D )
+			{
+				DrawBoxEdges( m_view, room.x, room.z, room.width, room.height, room.depth, room.yawDegrees, selected ? IM_COL32( 255, 255, 255, 160 ) : RoomColour( room, status.inWwise ? 110 : 45 ), 1.0f * m_uiScale );
+			}
 			const std::string name = room.settings.name + ( status.inWwise ? "" : " (not in Wwise)" );
-			label( m_view.ToScreen( room.x, room.z ), RoomColour( room, 255 ), name.c_str(), true );
+			label( { room.x, 0.0f, room.z }, ImVec2( 0.0f, 0.0f ), RoomColour( room, 255 ), name.c_str(), true );
 		}
 
 		// Portals: an arrow to the front room, lines to the rooms Wwise has on each side, crossed when closed.
@@ -315,54 +407,68 @@ namespace AudioLab
 		{
 			float cx[4], cz[4];
 			PortalCorners( portal, cx, cz );
-			const ImVec2 p0 = m_view.ToScreen( cx[0], cz[0] ), p1 = m_view.ToScreen( cx[1], cz[1] ), p2 = m_view.ToScreen( cx[2], cz[2] ), p3 = m_view.ToScreen( cx[3], cz[3] );
+			ScenePoint corners[4];
+			GroundCorners( cx, cz, corners );
 			const bool selected = m_selection.Contains( portal.id );
 			CarbonAudioHost::PortalStatus status;
 			CarbonAudioHost::GetPortalStatus( portal.object.p, status );
 			const ImU32 colour = status.inWwise ? PORTAL_COLOUR : PORTAL_NOT_IN_WWISE_COLOUR;
-			draw->AddQuadFilled( p0, p1, p2, p3, WithAlpha( colour, 50 ) );
-			draw->AddQuad( p0, p1, p2, p3, selected ? IM_COL32( 255, 255, 255, 255 ) : colour, ( selected ? 3.0f : 1.5f ) * m_uiScale );
+			m_view.Polygon( corners, 4, WithAlpha( colour, 50 ), selected ? IM_COL32( 255, 255, 255, 255 ) : colour, ( selected ? 3.0f : 1.5f ) * m_uiScale );
+			if( m_view.is3D )
+			{
+				DrawBoxEdges( m_view, portal.x, portal.z, portal.width, portal.height, portal.depth, portal.yawDegrees, selected ? IM_COL32( 255, 255, 255, 160 ) : WithAlpha( colour, 140 ), 1.0f * m_uiScale );
+			}
 			if( !portal.settings.open )
 			{
-				draw->AddLine( p0, p2, colour, 1.5f * m_uiScale );
-				draw->AddLine( p1, p3, colour, 1.5f * m_uiScale );
+				m_view.Line( corners[0], corners[2], colour, 1.5f * m_uiScale );
+				m_view.Line( corners[1], corners[3], colour, 1.5f * m_uiScale );
 			}
 
 			const float yaw = portal.yawDegrees * DEGREES_TO_RADIANS;
 			const float fx = -std::sin( yaw ), fz = -std::cos( yaw );
 			const float half = portal.depth * 0.5f;
-			const float head = std::max( 0.3f, 8.0f * m_uiScale / m_view.pixelsPerMetre );
-			const ImVec2 centre = m_view.ToScreen( portal.x, portal.z );
-			const ImVec2 front = m_view.ToScreen( portal.x + fx * half, portal.z + fz * half );
-			const ImVec2 back = m_view.ToScreen( portal.x - fx * half, portal.z - fz * half );
-			const ImVec2 tip = m_view.ToScreen( portal.x + fx * ( half + head ), portal.z + fz * ( half + head ) );
-			const ImVec2 left = m_view.ToScreen( portal.x + fx * half - fz * head * 0.6f, portal.z + fz * half + fx * head * 0.6f );
-			const ImVec2 right = m_view.ToScreen( portal.x + fx * half + fz * head * 0.6f, portal.z + fz * half - fx * head * 0.6f );
-			draw->AddLine( centre, front, colour, 2.0f * m_uiScale );
-			draw->AddTriangleFilled( tip, left, right, colour );
+			const ScenePoint centre = { portal.x, 0.0f, portal.z };
+			const float head = std::max( 0.3f, 8.0f * m_uiScale / m_view.PixelsPerMetreAt( centre ) );
+			const ScenePoint front = { portal.x + fx * half, 0.0f, portal.z + fz * half };
+			const ScenePoint back = { portal.x - fx * half, 0.0f, portal.z - fz * half };
+			const ScenePoint arrowHead[3] = {
+				{ portal.x + fx * ( half + head ), 0.0f, portal.z + fz * ( half + head ) },
+				{ portal.x + fx * half - fz * head * 0.6f, 0.0f, portal.z + fz * half + fx * head * 0.6f },
+				{ portal.x + fx * half + fz * head * 0.6f, 0.0f, portal.z + fz * half - fx * head * 0.6f },
+			};
+			m_view.Line( centre, front, colour, 2.0f * m_uiScale );
+			m_view.Polygon( arrowHead, 3, colour, 0, 0.0f );
 
 			if( status.inWwise )
 			{
 				if( const LabRoom* room = m_scene.FindRoomByWwiseID( status.frontRoomID ) )
 				{
-					draw->AddLine( front, m_view.ToScreen( room->x, room->z ), RoomColour( *room, 140 ), 1.0f * m_uiScale );
+					m_view.Line( front, { room->x, 0.0f, room->z }, RoomColour( *room, 140 ), 1.0f * m_uiScale );
 				}
 				if( const LabRoom* room = m_scene.FindRoomByWwiseID( status.backRoomID ) )
 				{
-					draw->AddLine( back, m_view.ToScreen( room->x, room->z ), RoomColour( *room, 140 ), 1.0f * m_uiScale );
+					m_view.Line( back, { room->x, 0.0f, room->z }, RoomColour( *room, 140 ), 1.0f * m_uiScale );
 				}
 			}
 			const std::string name = portal.settings.name + ( status.inWwise ? "" : " (not in Wwise)" );
-			label( ImVec2( centre.x + 8.0f * m_uiScale, centre.y + 4.0f * m_uiScale ), colour, name.c_str(), selected );
+			label( centre, ImVec2( 8.0f * m_uiScale, 4.0f * m_uiScale ), colour, name.c_str(), selected );
 		}
 
 		for( const LabWall& wall : m_scene.walls )
 		{
 			const bool selected = m_selection.Contains( wall.id );
-			draw->AddLine( m_view.ToScreen( wall.x0, wall.z0 ), m_view.ToScreen( wall.x1, wall.z1 ), selected ? IM_COL32( 255, 255, 255, 255 ) : WALL_COLOUR, ( selected ? 5.0f : 4.0f ) * m_uiScale );
+			const ImU32 colour = selected ? IM_COL32( 255, 255, 255, 255 ) : WALL_COLOUR;
+			if( m_view.is3D )
+			{
+				const float half = WALL_HEIGHT * 0.5f;
+				const ScenePoint panel[4] = { { wall.x0, -half, wall.z0 }, { wall.x1, -half, wall.z1 }, { wall.x1, half, wall.z1 }, { wall.x0, half, wall.z0 } };
+				m_view.Polygon( panel, 4, WithAlpha( WALL_COLOUR, 60 ), WithAlpha( colour, 180 ), 1.0f * m_uiScale );
+			}
+			m_view.Line( { wall.x0, 0.0f, wall.z0 }, { wall.x1, 0.0f, wall.z1 }, colour, ( selected ? 5.0f : 4.0f ) * m_uiScale );
 		}
 
 		// The sightlines CarbonAudio checked in its last pass: red where a wall blocks them.
+		const ScenePoint listenerAt = { m_scene.listener.x, 0.0f, m_scene.listener.z };
 		if( CarbonAudioHost::GetObstructionOcclusionEnabled() )
 		{
 			std::map<uint64_t, bool> blocked;
@@ -370,30 +476,31 @@ namespace AudioLab
 			{
 				blocked[result.gameObjectID] = result.blocked;
 			}
-			const ImVec2 listenerAt = m_view.ToScreen( m_scene.listener.x, m_scene.listener.z );
 			for( const LabEmitter& emitter : m_scene.emitters )
 			{
 				const auto sightline = blocked.find( emitter.gameObjectID );
 				if( sightline != blocked.end() )
 				{
-					draw->AddLine( listenerAt, m_view.ToScreen( emitter.x, emitter.z ), sightline->second ? SIGHTLINE_BLOCKED : SIGHTLINE_CLEAR, 1.5f * m_uiScale );
+					m_view.Line( listenerAt, { emitter.x, 0.0f, emitter.z }, sightline->second ? SIGHTLINE_BLOCKED : SIGHTLINE_CLEAR, 1.5f * m_uiScale );
 				}
 			}
 		}
 
 		const float emitterSize = 7.0f * m_uiScale;
-		const auto nameAt = [this]( const LabEmitter& emitter ) {
-			const ImVec2 centre = m_view.ToScreen( emitter.x, emitter.z );
-			return ImVec2( centre.x + 9.0f * m_uiScale, centre.y - 7.0f * m_uiScale );
-		};
+		const ImVec2 nameOffset( 9.0f * m_uiScale, -7.0f * m_uiScale );
 		const ImU32 nameColour = IM_COL32( 220, 220, 220, 255 );
 		for( const LabEmitter& emitter : m_scene.emitters )
 		{
-			const ImVec2 centre = m_view.ToScreen( emitter.x, emitter.z );
+			const ScenePoint at = { emitter.x, 0.0f, emitter.z };
 			const float radius = GetEventRadius( m_folder, emitter.eventName );
 			if( radius > 0.0f )
 			{
-				draw->AddCircle( centre, radius * m_view.pixelsPerMetre, IM_COL32( 120, 120, 140, 70 ), 64 );
+				m_view.Circle( at, radius, IM_COL32( 120, 120, 140, 70 ), 1.0f );
+			}
+			ImVec2 centre;
+			if( !m_view.ToScreen( at, centre ) )
+			{
+				continue;
 			}
 			const bool selected = m_selection.Contains( emitter.id );
 			draw->AddCircleFilled( centre, emitterSize, AssignedColour( emitter.gameObjectID, 255 ) );
@@ -404,16 +511,16 @@ namespace AudioLab
 		{
 			if( const LabEmitter* emitter = m_scene.FindEmitter( id ) )
 			{
-				label( nameAt( *emitter ), nameColour, emitter->name.c_str(), m_selection.GetIDs().size() == 1 );
+				label( { emitter->x, 0.0f, emitter->z }, nameOffset, nameColour, emitter->name.c_str(), m_selection.GetIDs().size() == 1 );
 			}
 		}
 		if( const LabEmitter* emitter = m_scene.FindEmitter( hovered ) )
 		{
-			label( nameAt( *emitter ), nameColour, emitter->name.c_str(), false );
+			label( { emitter->x, 0.0f, emitter->z }, nameOffset, nameColour, emitter->name.c_str(), false );
 		}
 		for( const LabEmitter& emitter : m_scene.emitters )
 		{
-			label( nameAt( emitter ), nameColour, emitter.name.c_str(), false );
+			label( { emitter.x, 0.0f, emitter.z }, nameOffset, nameColour, emitter.name.c_str(), false );
 		}
 
 		{
@@ -422,31 +529,31 @@ namespace AudioLab
 			const float yaw = listener.yawDegrees * DEGREES_TO_RADIANS;
 			const float fx = std::sin( yaw ), fz = -std::cos( yaw );
 			const float sx = -fz, sz = fx;
-			const float size = 0.9f * std::max( 1.0f, 14.0f * m_uiScale / m_view.pixelsPerMetre );
-			const ImVec2 tip = m_view.ToScreen( listener.x + fx * size, listener.z + fz * size );
-			const ImVec2 backLeft = m_view.ToScreen( listener.x - fx * size * 0.6f + sx * size * 0.6f, listener.z - fz * size * 0.6f + sz * size * 0.6f );
-			const ImVec2 backRight = m_view.ToScreen( listener.x - fx * size * 0.6f - sx * size * 0.6f, listener.z - fz * size * 0.6f - sz * size * 0.6f );
+			const float size = 0.9f * std::max( 1.0f, 14.0f * m_uiScale / m_view.PixelsPerMetreAt( listenerAt ) );
+			const ScenePoint triangle[3] = {
+				{ listener.x + fx * size, 0.0f, listener.z + fz * size },
+				{ listener.x - fx * size * 0.6f + sx * size * 0.6f, 0.0f, listener.z - fz * size * 0.6f + sz * size * 0.6f },
+				{ listener.x - fx * size * 0.6f - sx * size * 0.6f, 0.0f, listener.z - fz * size * 0.6f - sz * size * 0.6f },
+			};
 			const bool selected = m_selection.Contains( LabScene::LISTENER_ID );
-			draw->AddTriangleFilled( tip, backLeft, backRight, AssignedColour( CarbonAudioHost::GetListenerID(), 255 ) );
-			draw->AddTriangle( tip, backLeft, backRight, selected ? IM_COL32( 255, 255, 255, 255 ) : IM_COL32( 20, 20, 20, 255 ), ( selected ? 3.0f : 1.5f ) * m_uiScale );
+			m_view.Polygon( triangle, 3, AssignedColour( CarbonAudioHost::GetListenerID(), 255 ), selected ? IM_COL32( 255, 255, 255, 255 ) : IM_COL32( 20, 20, 20, 255 ), ( selected ? 3.0f : 1.5f ) * m_uiScale );
 		}
 
-		m_view.draw = draw;
-		m_view.uiScale = m_uiScale;
 		m_app.GetPage().DrawOverlay( m_app, m_view );
 
 		if( m_gesture == Gesture::DrawRoom )
 		{
-			draw->AddRect( m_view.ToScreen( std::min( mouseX, m_pressX ), std::min( mouseZ, m_pressZ ) ), m_view.ToScreen( std::max( mouseX, m_pressX ), std::max( mouseZ, m_pressZ ) ), IM_COL32( 255, 255, 255, 160 ), 0.0f, 0, 1.5f * m_uiScale );
+			const ScenePoint outline[4] = { { m_pressX, 0.0f, m_pressZ }, { mouseX, 0.0f, m_pressZ }, { mouseX, 0.0f, mouseZ }, { m_pressX, 0.0f, mouseZ } };
+			m_view.Polygon( outline, 4, 0, IM_COL32( 255, 255, 255, 160 ), 1.5f * m_uiScale );
 		}
 		else if( m_gesture == Gesture::DrawWall )
 		{
-			draw->AddLine( m_view.ToScreen( m_pressX, m_pressZ ), m_view.ToScreen( mouseX, mouseZ ), WithAlpha( WALL_COLOUR, 160 ), 4.0f * m_uiScale );
+			m_view.Line( { m_pressX, 0.0f, m_pressZ }, { mouseX, 0.0f, mouseZ }, WithAlpha( WALL_COLOUR, 160 ), 4.0f * m_uiScale );
 		}
 		else if( m_gesture == Gesture::BoxSelect )
 		{
-			const ImVec2 min = m_view.ToScreen( std::min( mouseX, m_pressX ), std::min( mouseZ, m_pressZ ) );
-			const ImVec2 max = m_view.ToScreen( std::max( mouseX, m_pressX ), std::max( mouseZ, m_pressZ ) );
+			const ImVec2 min( std::min( mouse.x, m_pressScreen.x ), std::min( mouse.y, m_pressScreen.y ) );
+			const ImVec2 max( std::max( mouse.x, m_pressScreen.x ), std::max( mouse.y, m_pressScreen.y ) );
 			draw->AddRectFilled( min, max, IM_COL32( 90, 150, 240, 40 ) );
 			draw->AddRect( min, max, IM_COL32( 90, 150, 240, 200 ), 0.0f, 0, 1.0f * m_uiScale );
 		}
@@ -468,7 +575,11 @@ namespace AudioLab
 			}
 		}
 
-		DrawScaleBar( draw );
+		// In 3D a metre is not the same length everywhere.
+		if( !m_view.is3D )
+		{
+			DrawScaleBar( draw );
+		}
 		draw->PopClipRect();
 
 		DrawMenu();
@@ -609,21 +720,32 @@ namespace AudioLab
 		ImGuiIO& io = ImGui::GetIO();
 		const bool hovered = ImGui::IsItemHovered();
 		float mouseX, mouseZ;
-		m_view.ToWorld( io.MousePos, mouseX, mouseZ );
+		const bool mouseOnGround = m_view.ToWorld( io.MousePos, mouseX, mouseZ );
 
-		// Pan with the right or middle mouse button, zoom around the cursor with the wheel.
-		if( ImGui::IsItemActive() && ( ImGui::IsMouseDragging( ImGuiMouseButton_Right ) || ImGui::IsMouseDragging( ImGuiMouseButton_Middle ) ) )
+		// The right or middle mouse button pans, keeping the ground under the cursor; in 3D the right one turns the view
+		// unless Shift is down. The wheel zooms around the cursor.
+		if( ImGui::IsItemActive() && m_view.is3D && ImGui::IsMouseDragging( ImGuiMouseButton_Right ) && !io.KeyShift )
 		{
-			m_view.viewX -= io.MouseDelta.x / m_view.pixelsPerMetre;
-			m_view.viewZ -= io.MouseDelta.y / m_view.pixelsPerMetre;
+			m_view.Turn( io.MouseDelta.x * TURN_DEGREES_PER_PIXEL, io.MouseDelta.y * TURN_DEGREES_PER_PIXEL );
+		}
+		else if( ImGui::IsItemActive() && ( ImGui::IsMouseDragging( ImGuiMouseButton_Right ) || ImGui::IsMouseDragging( ImGuiMouseButton_Middle ) ) )
+		{
+			float fromX, fromZ;
+			if( m_view.ToWorld( ImVec2( io.MousePos.x - io.MouseDelta.x, io.MousePos.y - io.MouseDelta.y ), fromX, fromZ ) && mouseOnGround )
+			{
+				m_view.viewX += fromX - mouseX;
+				m_view.viewZ += fromZ - mouseZ;
+			}
 		}
 		if( hovered && io.MouseWheel != 0.0f )
 		{
-			m_view.pixelsPerMetre = std::clamp( m_view.pixelsPerMetre * std::pow( 1.15f, io.MouseWheel ), 1.0f, 200.0f );
+			m_view.Zoom( io.MouseWheel );
 			float afterX, afterZ;
-			m_view.ToWorld( io.MousePos, afterX, afterZ );
-			m_view.viewX += mouseX - afterX;
-			m_view.viewZ += mouseZ - afterZ;
+			if( m_view.ToWorld( io.MousePos, afterX, afterZ ) && mouseOnGround )
+			{
+				m_view.viewX += mouseX - afterX;
+				m_view.viewZ += mouseZ - afterZ;
+			}
 		}
 
 		// Running checks own the scene: it can be looked at, not changed.
@@ -638,6 +760,7 @@ namespace AudioLab
 		{
 			m_pressX = mouseX;
 			m_pressZ = mouseZ;
+			m_pressScreen = io.MousePos;
 			if( m_tool == Tool::AddEmitter )
 			{
 				if( LabEmitter* emitter = m_scene.AddEmitter( mouseX, mouseZ, m_newEmitterEvent ) )
@@ -656,7 +779,7 @@ namespace AudioLab
 			}
 			else if( m_tool == Tool::AddPortal )
 			{
-				const float reach = std::max( PORTAL_SNAP_METRES, PORTAL_SNAP_PIXELS * m_uiScale / m_view.pixelsPerMetre );
+				const float reach = std::max( PORTAL_SNAP_METRES, PORTAL_SNAP_PIXELS * m_uiScale / m_view.PixelsPerMetreAt( { mouseX, 0.0f, mouseZ } ) );
 				if( LabPortal* portal = m_scene.AddPortalOnWall( mouseX, mouseZ, reach ) )
 				{
 					m_selection.Select( portal->id );
@@ -667,7 +790,7 @@ namespace AudioLab
 			{
 				// The listener, emitters and portals move as soon as they are pressed; a room only once it is selected, so a
 				// drag that starts inside a room can still draw a selection box.
-				m_pressed = Pick( mouseX, mouseZ );
+				m_pressed = Pick( io.MousePos );
 				const LabKind kind = m_scene.KindOf( m_pressed );
 				const bool grabbed = kind == LabKind::Listener || kind == LabKind::Emitter || kind == LabKind::Portal || ( kind == LabKind::Room && m_selection.Contains( m_pressed ) );
 				if( grabbed && !additive )
@@ -712,7 +835,7 @@ namespace AudioLab
 				additive ? m_selection.Toggle( m_pressed ) : m_selection.Select( m_pressed );
 				break;
 			case Gesture::BoxSelect:
-				SelectInBox( m_pressX, m_pressZ, mouseX, mouseZ, additive );
+				SelectInBox( m_pressScreen, io.MousePos, additive );
 				break;
 			case Gesture::Move:
 				// A click on one of several selected things, without moving them, selects only it.
@@ -757,7 +880,7 @@ namespace AudioLab
 		// part of it.
 		if( hovered && ImGui::IsMouseReleased( ImGuiMouseButton_Right ) && io.MouseDragMaxDistanceSqr[ImGuiMouseButton_Right] < dragThreshold )
 		{
-			const int picked = Pick( mouseX, mouseZ );
+			const int picked = Pick( io.MousePos );
 			if( picked != LabScene::LISTENER_ID )
 			{
 				if( !m_selection.Contains( picked ) )
@@ -853,35 +976,46 @@ namespace AudioLab
 		listener.z += ( facingZ * forward + rightZ * right ) * step;
 	}
 
-	int SceneCanvas::Pick( float x, float z ) const
+	int SceneCanvas::Pick( const ImVec2& screen ) const
 	{
-		const float pickRadius = PICK_RADIUS_PIXELS * m_uiScale / m_view.pixelsPerMetre;
-		const auto isClose = [pickRadius]( float ax, float az, float bx, float bz ) {
-			return ( ax - bx ) * ( ax - bx ) + ( az - bz ) * ( az - bz ) <= pickRadius * pickRadius;
+		const float pickRadius = PICK_RADIUS_PIXELS * m_uiScale;
+		const auto isClose = [this, &screen, pickRadius]( float x, float z ) {
+			ImVec2 at;
+			return m_view.ToScreen( { x, 0.0f, z }, at ) && std::hypot( at.x - screen.x, at.y - screen.y ) <= pickRadius;
 		};
+		ScenePoint from, direction;
+		m_view.Ray( screen, from, direction );
 
-		if( isClose( x, z, m_scene.listener.x, m_scene.listener.z ) )
+		if( isClose( m_scene.listener.x, m_scene.listener.z ) )
 		{
 			return LabScene::LISTENER_ID;
 		}
 		// The last emitter is drawn on top, so it is the one picked.
 		for( auto emitter = m_scene.emitters.rbegin(); emitter != m_scene.emitters.rend(); ++emitter )
 		{
-			if( isClose( x, z, emitter->x, emitter->z ) )
+			if( isClose( emitter->x, emitter->z ) )
 			{
 				return emitter->id;
 			}
 		}
 		for( auto portal = m_scene.portals.rbegin(); portal != m_scene.portals.rend(); ++portal )
 		{
-			if( PortalContains( *portal, x, z ) )
+			if( RayHitsBox( from, direction, portal->x, portal->z, portal->width, portal->height, portal->depth, portal->yawDegrees ) )
 			{
 				return portal->id;
 			}
 		}
+		// Near its line on the ground plane, or in 3D anywhere on its panel.
 		for( auto wall = m_scene.walls.rbegin(); wall != m_scene.walls.rend(); ++wall )
 		{
-			if( DistanceToSegment( x, z, wall->x0, wall->z0, wall->x1, wall->z1 ) <= pickRadius )
+			ImVec2 start, end;
+			if( m_view.ToScreen( { wall->x0, 0.0f, wall->z0 }, { wall->x1, 0.0f, wall->z1 }, start, end ) && DistanceToSegment( screen.x, screen.y, start.x, start.y, end.x, end.y ) <= pickRadius )
+			{
+				return wall->id;
+			}
+			const float dx = wall->x1 - wall->x0;
+			const float dz = wall->z1 - wall->z0;
+			if( m_view.is3D && RayHitsBox( from, direction, ( wall->x0 + wall->x1 ) * 0.5f, ( wall->z0 + wall->z1 ) * 0.5f, std::hypot( dx, dz ), WALL_HEIGHT, 0.0f, std::atan2( -dz, dx ) / DEGREES_TO_RADIANS ) )
 			{
 				return wall->id;
 			}
@@ -890,7 +1024,7 @@ namespace AudioLab
 		const LabRoom* best = nullptr;
 		for( const LabRoom& room : m_scene.rooms )
 		{
-			if( RoomContains( room, x, z ) && ( best == nullptr || room.width * room.depth < best->width * best->depth ) )
+			if( RayHitsBox( from, direction, room.x, room.z, room.width, room.height, room.depth, room.yawDegrees ) && ( best == nullptr || room.width * room.depth < best->width * best->depth ) )
 			{
 				best = &room;
 			}
@@ -898,13 +1032,14 @@ namespace AudioLab
 		return best != nullptr ? best->id : LabScene::NO_ID;
 	}
 
-	void SceneCanvas::SelectInBox( float x0, float z0, float x1, float z1, bool add )
+	void SceneCanvas::SelectInBox( const ImVec2& a, const ImVec2& b, bool add )
 	{
-		const float minX = std::min( x0, x1 );
-		const float maxX = std::max( x0, x1 );
-		const float minZ = std::min( z0, z1 );
-		const float maxZ = std::max( z0, z1 );
-		const auto inside = [=]( float x, float z ) { return x >= minX && x <= maxX && z >= minZ && z <= maxZ; };
+		const ImVec2 min( std::min( a.x, b.x ), std::min( a.y, b.y ) );
+		const ImVec2 max( std::max( a.x, b.x ), std::max( a.y, b.y ) );
+		const auto inside = [this, min, max]( float x, float z ) {
+			ImVec2 at;
+			return m_view.ToScreen( { x, 0.0f, z }, at ) && at.x >= min.x && at.x <= max.x && at.y >= min.y && at.y <= max.y;
+		};
 
 		if( !add )
 		{
@@ -993,10 +1128,6 @@ namespace AudioLab
 			include( wall.x0, wall.z0 );
 			include( wall.x1, wall.z1 );
 		}
-		const float width = std::max( maxX - minX, MIN_FRAMED_SIZE );
-		const float depth = std::max( maxZ - minZ, MIN_FRAMED_SIZE );
-		m_view.viewX = ( minX + maxX ) * 0.5f;
-		m_view.viewZ = ( minZ + maxZ ) * 0.5f;
-		m_view.pixelsPerMetre = std::clamp( 0.85f * std::min( m_view.size.x / width, m_view.size.y / depth ), 1.0f, 200.0f );
+		m_view.Fit( ( minX + maxX ) * 0.5f, ( minZ + maxZ ) * 0.5f, std::max( maxX - minX, MIN_FRAMED_SIZE ), std::max( maxZ - minZ, MIN_FRAMED_SIZE ) );
 	}
 }

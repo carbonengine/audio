@@ -23,6 +23,8 @@ ccp_add_executable(AudioLab
 	LabScene.h
 	LabSceneCanvas.cpp
 	LabSceneCanvas.h
+	LabSceneView.cpp
+	LabSceneView.h
 	LabSelection.cpp
 	LabSelection.h
 	LabSelectionPanel.cpp

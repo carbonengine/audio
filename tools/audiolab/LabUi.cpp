@@ -377,7 +377,7 @@ namespace AudioLab
 				{ "1 2 3 4 5", "Select, draw a room, place an emitter, draw a wall, place a portal" },
 				{ "Drag", "Select everything in a box; drag a selected thing to move them all" },
 				{ "Ctrl-click", "Add to the selection or take out of it; Shift works too" },
-				{ "Right-drag", "Pan" },
+				{ "Right-drag", "Turn the view; Shift-right-drag pans, as right-drag does in 2D" },
 				{ "Wheel", "Zoom" },
 				{ "F", "Frame everything" },
 				{ "Right-click", "What can be done there" },

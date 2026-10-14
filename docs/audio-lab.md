@@ -1,8 +1,8 @@
 # Audio Lab
 The Audio Lab (`tools/audiolab`) is a small app for Windows and macOS for trying CarbonAudio changes without a game.
-It shows a top-down 2D canvas where you place the listener, emitters playing events, Spatial Audio rooms and portals,
-and walls that block sightlines, and edit each room's reverb aux bus, transmission loss, priority and room tone while
-the Wwise Profiler is connected.
+It shows a 3D scene, or the same scene from above in 2D, where you place the listener, emitters playing events, Spatial
+Audio rooms and portals, and walls that block sightlines, and edit each room's reverb aux bus, transmission loss,
+priority and room tone while the Wwise Profiler is connected.
 
 It runs CarbonAudio natively, without Python or exefile, through the C++ host API in
 [`include/CarbonAudioHost.h`](../include/CarbonAudioHost.h): it boots Blue itself, starts CarbonAudio with
@@ -30,8 +30,12 @@ open.
   writes, adds what Wwise does not export, such as stopped-by events.
 - When Wwise generates the SoundBanks again, the lab reloads them and keeps its scene.
 - WASD walks the listener relative to where it faces (Shift: faster), Q/E turn it. The scene's tools (1 to 5) select
-  and move things, draw rooms, place emitters, draw walls and place portals on a room's wall. Delete removes, right-drag
-  pans and the wheel zooms. Objects are coloured by the room CarbonAudio placed them in.
+  and move things, draw rooms, place emitters, draw walls and place portals on a room's wall. Delete removes and the
+  wheel zooms. Objects are coloured by the room CarbonAudio placed them in.
+- The scene opens in 3D, with the rooms', portals' and walls' boxes around the ground plane that the listener and the
+  emitters are on; the tools work on that plane. Right-drag turns the view and Shift-right-drag pans. With Follow
+  listener, the view also turns with the listener, so its left and right are the listener's. The toolbar's 3D switch
+  turns it off for the 2D view from above, where right-drag pans.
 - Pages (the toolbar's first combo, or `--page <page>`) each set up one feature with its own scene, controls and
   checks; the Sandbox is the free scene. `audiolab_internal --check all|<page>|<page>/<check>` runs checks without
   a window, and each page's checks are registered as the `audiolab_<page>` test.

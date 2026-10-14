@@ -242,7 +242,7 @@ namespace AudioLab
 				// The paths Wwise found from each emitter to the listener; a dot where one goes through a portal.
 				LabScene& scene = app.GetScene();
 				const ImU32 colour = IM_COL32( 240, 220, 90, 200 );
-				const ImVec2 listener = view.ToScreen( scene.listener.x, scene.listener.z );
+				const float thickness = 1.5f * view.uiScale;
 				for( const LabEmitter& emitter : scene.emitters )
 				{
 					for( const CarbonAudioHost::DiffractionPath& path : CarbonAudioHost::GetDiffractionPaths( emitter.gameObjectID ) )
@@ -251,21 +251,25 @@ namespace AudioLab
 						{
 							continue;
 						}
-						ImVec2 from = listener;
+						ScenePoint from = { scene.listener.x, 0.0f, scene.listener.z };
+						ImVec2 screen;
 						for( size_t i = 0; i < path.nodes.size(); ++i )
 						{
-							const ImVec2 to = view.ToScreen( path.nodes[i].x, path.nodes[i].z );
-							view.draw->AddLine( from, to, colour, 1.5f * view.uiScale );
-							if( path.portals[i] != 0 )
+							const ScenePoint to = { path.nodes[i].x, path.nodes[i].y, path.nodes[i].z };
+							view.Line( from, to, colour, thickness );
+							if( path.portals[i] != 0 && view.ToScreen( to, screen ) )
 							{
-								view.draw->AddCircleFilled( to, 3.5f * view.uiScale, colour );
+								view.draw->AddCircleFilled( screen, 3.5f * view.uiScale, colour );
 							}
 							from = to;
 						}
-						view.draw->AddLine( from, view.ToScreen( emitter.x, emitter.z ), colour, 1.5f * view.uiScale );
-						char text[32];
-						std::snprintf( text, sizeof( text ), "%.0f%%", path.diffraction * 100.0f );
-						view.draw->AddText( ImVec2( from.x + 4.0f * view.uiScale, from.y ), colour, text );
+						view.Line( from, { emitter.x, 0.0f, emitter.z }, colour, thickness );
+						if( view.ToScreen( from, screen ) )
+						{
+							char text[32];
+							std::snprintf( text, sizeof( text ), "%.0f%%", path.diffraction * 100.0f );
+							view.draw->AddText( ImVec2( screen.x + 4.0f * view.uiScale, screen.y ), colour, text );
+						}
 					}
 				}
 			}
