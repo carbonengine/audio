@@ -120,6 +120,8 @@ private:
 	void RemovePortalLocked( AudPortal& portal );
 	/// Removes every portal from Wwise. Caller holds m_mutex.
 	void RemoveAllPortalsLocked();
+	/// Removes the portals connected to the room before the room leaves Wwise. Caller holds m_mutex.
+	void RemovePortalsConnectedToLocked( AkUInt64 roomID );
 
 	AudManager* m_audioManager;
 	std::unordered_map<AkUInt64, AudRoom*> m_rooms;

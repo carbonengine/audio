@@ -153,3 +153,15 @@ void AudRoomManager::RemoveAllPortalsLocked()
 		RemovePortalLocked( *entry.second );
 	}
 }
+
+void AudRoomManager::RemovePortalsConnectedToLocked( AkUInt64 roomID )
+{
+	for( auto& entry : m_portals )
+	{
+		AudPortal& portal = *entry.second;
+		if( portal.m_frontRoomID == roomID || portal.m_backRoomID == roomID )
+		{
+			RemovePortalLocked( portal );
+		}
+	}
+}

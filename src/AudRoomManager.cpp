@@ -412,6 +412,7 @@ void AudRoomManager::RemoveLocked( AudRoom& room )
 
 	room.m_sentToWwise = false;
 	m_assignmentsDirty = true;
+	RemovePortalsConnectedToLocked( room.GetRoomID() );
 	const bool lastRoom = m_roomsInWwise.fetch_sub( 1, std::memory_order_acq_rel ) == 1;
 	const bool soundEngineUp = AK::SoundEngine::IsInitialized();
 
