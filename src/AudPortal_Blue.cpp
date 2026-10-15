@@ -1,9 +1,9 @@
-/**
- * @file AudPortal_Blue.cpp
- * @author Phevos Rinis
- * @date Oct 2026
- * @copyright © 2026 Fenris Creations ehf.
- */
+////////////////////////////////////////////////////////////
+//
+// Creator: Phevos Rinis
+// Creation Date: Oct 2026
+// Copyright (c) 2026 Fenris Creations
+//
 
 #include "stdafx.h"
 #include "AudPortal.h"

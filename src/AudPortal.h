@@ -1,9 +1,9 @@
-/**
- * @file AudPortal.h
- * @author Phevos Rinis
- * @date Oct 2026
- * @copyright © 2026 Fenris Creations ehf.
- */
+////////////////////////////////////////////////////////////
+//
+// Creator: Phevos Rinis
+// Creation Date: Oct 2026
+// Copyright (c) 2026 Fenris Creations
+//
 
 #pragma once
 
@@ -29,46 +29,109 @@ public:
 
 	EXPOSE_TO_BLUE();
 
-	/// Stores the portal's box. The portal is sent to Wwise on the next update.
+	/**
+	 * @brief Stores the portal's box. The portal is sent to Wwise on the next update.
+	 *
+	 * @param unitBoxToWorld Maps the unit box to world space.
+	 */
 	void SetTransform( const Matrix& unitBoxToWorld ) override;
-	/// Called when the volume object is enabled or disabled.
+
+	/**
+	 * @brief Called when the volume object is enabled or disabled.
+	 *
+	 * @param enabled Whether the volume object is enabled.
+	 */
 	void SetEnabled( bool enabled ) override;
-	/// Clears the box and removes the portal from Wwise.
+
+	/**
+	 * @brief Clears the box and removes the portal from Wwise.
+	 */
 	void Remove() override;
 
-	/// Called by Blue when an attribute changes.
+	/**
+	 * @brief Called by Blue when an attribute changes.
+	 *
+	 * @param value The attribute that changed.
+	 *
+	 * @return Always true.
+	 */
 	bool OnModified( Be::Var* value ) override;
 
-	/// Portal ID, from the same ID space as game objects.
+	/**
+	 * @brief Portal ID, from the same ID space as game objects.
+	 */
 	AkUInt64 GetPortalID() const { return m_portalID; }
-	/// Name shown in the Wwise profiler.
+
+	/**
+	 * @brief Name shown in the Wwise profiler.
+	 */
 	const std::string& GetName() const { return m_name; }
-	/// Whether sound passes through the portal, e.g. an open door.
+
+	/**
+	 * @brief Whether sound passes through the portal, e.g. an open door.
+	 */
 	bool IsOpen() const { return m_open; }
+
+	/**
+	 * @brief Scales how much reverb of the room on the other side is heard through the portal.
+	 */
 	float GetAdjacentRoomBleed() const { return m_adjacentRoomBleed; }
-	/// Obstruction of the direct sound through the portal.
+
+	/**
+	 * @brief Obstruction of the direct sound through the portal.
+	 */
 	float GetObstruction() const { return m_obstruction; }
-	/// Occlusion of all sound through the portal, e.g. a door that is partly closed.
+
+	/**
+	 * @brief Occlusion of all sound through the portal, e.g. a door that is partly closed.
+	 */
 	float GetOcclusion() const { return m_occlusion; }
-	/// Whether obstruction and occlusion fade over the depth of the portal.
+
+	/**
+	 * @brief Whether obstruction and occlusion fade over the depth of the portal.
+	 */
 	bool GetObstructionOcclusionTransition() const { return m_obstructionOcclusionTransition; }
-	/// True when the portal and its volume object are both enabled.
+
+	/**
+	 * @brief True when the portal and its volume object are both enabled.
+	 */
 	bool IsEnabled() const { return m_enabled && m_shapeEnabled; }
-	/// Box of the portal, set through ITr2BoxVolume.
+
+	/**
+	 * @brief Box of the portal, set through ITr2BoxVolume.
+	 */
 	const AudUnitBox& GetBox() const { return m_box; }
-	/// Whether the portal is in Wwise.
+
+	/**
+	 * @brief Whether the portal is in Wwise.
+	 */
 	bool IsRegistered() const { return m_sentToWwise; }
-	/// Room on the front side, as sent to Wwise.
+
+	/**
+	 * @brief Room on the front side, as sent to Wwise.
+	 */
 	AkUInt64 GetFrontRoomID() const { return m_frontRoomID; }
-	/// Room on the back side, as sent to Wwise.
+
+	/**
+	 * @brief Room on the back side, as sent to Wwise.
+	 */
 	AkUInt64 GetBackRoomID() const { return m_backRoomID; }
 
 private:
 	friend class AudRoomManager;
 
-	/// Registers with the room manager once it exists.
+	/**
+	 * @brief Registers with the room manager once it exists.
+	 *
+	 * @return True when the portal is registered.
+	 */
 	bool EnsureRegistered();
-	/// Stores the box. Called by AudRoomManager under its lock.
+
+	/**
+	 * @brief Stores the box. Called by AudRoomManager under its lock.
+	 *
+	 * @param unitBoxToWorld Maps the unit box to world space.
+	 */
 	void ApplyTransform( const Matrix& unitBoxToWorld );
 
 	AkUInt64 m_portalID;

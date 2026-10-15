@@ -1,9 +1,9 @@
-/**
- * @file AudRoomManager.cpp
- * @author Phevos Rinis
- * @date Sep 2026
- * @copyright © 2026 Fenris Creations ehf.
- */
+////////////////////////////////////////////////////////////
+//
+// Creator: Phevos Rinis
+// Creation Date: Sep 2026
+// Copyright (c) 2026 Fenris Creations
+//
 
 #include "stdafx.h"
 #include "AudRoomManager.h"
@@ -58,21 +58,33 @@ namespace
 	/// Unit box Z where a portal looks up its rooms, a quarter of its depth past each face.
 	constexpr float PORTAL_ROOM_LOOKUP_Z = 0.75f;
 
-	/// Compares positions with a 1 mm tolerance.
+	/**
+	 * @brief Compares positions with a 1 mm tolerance.
+	 *
+	 * @return True when every axis is within the tolerance.
+	 */
 	bool PositionsNearlyEqual( const AkVector64& a, const AkVector64& b )
 	{
 		constexpr AkReal64 epsilon = 1e-3;
 		return std::fabs( a.X - b.X ) <= epsilon && std::fabs( a.Y - b.Y ) <= epsilon && std::fabs( a.Z - b.Z ) <= epsilon;
 	}
 
-	/// Compares orientations with a small tolerance for float errors.
+	/**
+	 * @brief Compares orientations with a small tolerance for float errors.
+	 *
+	 * @return True when every axis is within the tolerance.
+	 */
 	bool OrientationsNearlyEqual( const AkVector& a, const AkVector& b )
 	{
 		constexpr float epsilon = 1e-4f;
 		return std::fabs( a.X - b.X ) <= epsilon && std::fabs( a.Y - b.Y ) <= epsilon && std::fabs( a.Z - b.Z ) <= epsilon;
 	}
 
-	/// Compares every parameter SetRoom uses.
+	/**
+	 * @brief Compares every parameter SetRoom uses.
+	 *
+	 * @return True when SetRoom would not change anything.
+	 */
 	bool RoomParamsEqual( const AkRoomParams& a, const AkRoomParams& b )
 	{
 		return OrientationsNearlyEqual( a.Front, b.Front )
@@ -87,7 +99,11 @@ namespace
 			&& a.RoomGameObj_KeepRegistered == b.RoomGameObj_KeepRegistered;
 	}
 
-	/// Compares every parameter SetPortal uses.
+	/**
+	 * @brief Compares every parameter SetPortal uses.
+	 *
+	 * @return True when SetPortal would not change anything.
+	 */
 	bool PortalParamsEqual( const AkPortalParams& a, const AkPortalParams& b )
 	{
 		return PositionsNearlyEqual( a.Transform.Position(), b.Transform.Position() )

@@ -1,9 +1,9 @@
-/**
- * @file AudUnitBox.h
- * @author Phevos Rinis
- * @date Oct 2026
- * @copyright © 2026 Fenris Creations ehf.
- */
+////////////////////////////////////////////////////////////
+//
+// Creator: Phevos Rinis
+// Creation Date: Oct 2026
+// Copyright (c) 2026 Fenris Creations
+//
 
 #pragma once
 
@@ -18,20 +18,51 @@ class AudUnitBox
 public:
 	AudUnitBox();
 
-	/// Stores the transform. Returns false when the box has a zero-length axis.
+	/**
+	 * @brief Stores the transform.
+	 *
+	 * @param unitBoxToWorld Maps the unit box to world space.
+	 *
+	 * @return False when the box has a zero-length axis.
+	 */
 	bool SetTransform( const Matrix& unitBoxToWorld );
-	/// Forgets the transform.
+
+	/**
+	 * @brief Forgets the transform.
+	 */
 	void ClearTransform();
 
-	/// True when the box has a transform with no zero-length axis.
+	/**
+	 * @brief True when the box has a transform with no zero-length axis.
+	 */
 	bool IsUsable() const { return m_usable; }
+
+	/**
+	 * @brief The transform from the unit box to world space.
+	 */
 	const Matrix& GetUnitBoxToWorld() const { return m_unitBoxToWorld; }
-	/// Volume of the box.
+
+	/**
+	 * @brief Volume of the box.
+	 */
 	float GetVolume() const { return m_volume; }
 
-	/// Returns whether the point is inside the box, in right-handed world space.
+	/**
+	 * @brief Returns whether the point is inside the box.
+	 *
+	 * @param worldPosition Position in right-handed world space.
+	 *
+	 * @return True when the point is inside the box or on its surface.
+	 */
 	bool ContainsPoint( const Vector3& worldPosition ) const;
-	/// Returns the world position of a point in unit box space.
+
+	/**
+	 * @brief Returns the world position of a point in unit box space.
+	 *
+	 * @param unitBoxPosition Position in unit box space, where [-0.5, 0.5] on every axis is inside the box.
+	 *
+	 * @return The position in right-handed world space.
+	 */
 	Vector3 ToWorld( const Vector3& unitBoxPosition ) const;
 
 private:

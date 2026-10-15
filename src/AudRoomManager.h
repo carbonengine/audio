@@ -1,9 +1,9 @@
-/**
- * @file AudRoomManager.h
- * @author Phevos Rinis
- * @date Sep 2026
- * @copyright © 2026 Fenris Creations ehf.
- */
+////////////////////////////////////////////////////////////
+//
+// Creator: Phevos Rinis
+// Creation Date: Sep 2026
+// Copyright (c) 2026 Fenris Creations
+//
 
 #pragma once
 
@@ -35,43 +35,109 @@ public:
 	explicit AudRoomManager( AudManager* audioManager );
 	~AudRoomManager();
 
-	/// Called by AudRoom on construction and destruction.
+	/**
+	 * @brief Called by AudRoom on construction and destruction.
+	 *
+	 * @param room The room to add or remove.
+	 */
 	void RegisterRoom( AudRoom* room );
 	void UnregisterRoom( AudRoom* room );
 
-	/// Creates or updates the room in Wwise.
+	/**
+	 * @brief Creates or updates the room in Wwise.
+	 *
+	 * @param room The room to send.
+	 */
 	void Push( AudRoom& room );
-	/// Removes the room from Wwise.
+
+	/**
+	 * @brief Removes the room from Wwise.
+	 *
+	 * @param room The room to remove.
+	 */
 	void Remove( AudRoom& room );
-	/// Stores the room's box under the lock and sends the room.
+
+	/**
+	 * @brief Stores the room's box under the lock and sends the room.
+	 *
+	 * @param room           The room that moved.
+	 * @param unitBoxToWorld Maps the unit box to world space.
+	 */
 	void SetTransform( AudRoom& room, const Matrix& unitBoxToWorld );
-	/// Clears the room's box and removes the room from Wwise.
+
+	/**
+	 * @brief Clears the room's box and removes the room from Wwise.
+	 *
+	 * @param room The room whose box is removed.
+	 */
 	void RemoveShape( AudRoom& room );
 
-	/// Called by AudPortal on construction and destruction.
+	/**
+	 * @brief Called by AudPortal on construction and destruction.
+	 *
+	 * @param portal The portal to add or remove.
+	 */
 	void RegisterPortal( AudPortal* portal );
 	void UnregisterPortal( AudPortal* portal );
 
-	/// Stores the portal's box under the lock. The portal is sent on the next Update().
+	/**
+	 * @brief Stores the portal's box under the lock. The portal is sent on the next Update().
+	 *
+	 * @param portal         The portal that moved.
+	 * @param unitBoxToWorld Maps the unit box to world space.
+	 */
 	void SetPortalTransform( AudPortal& portal, const Matrix& unitBoxToWorld );
-	/// Clears the portal's box and removes the portal from Wwise.
+
+	/**
+	 * @brief Clears the portal's box and removes the portal from Wwise.
+	 *
+	 * @param portal The portal whose box is removed.
+	 */
 	void RemovePortalShape( AudPortal& portal );
 
-	/// Removes every portal and room from Wwise, for Disable() and the rooms switch.
+	/**
+	 * @brief Removes every portal and room from Wwise, for Disable() and the rooms switch.
+	 */
 	void RemoveAllFromWwise();
-	/// Sends every enabled room to Wwise, for Enable() and the rooms switch.
+
+	/**
+	 * @brief Sends every enabled room to Wwise, for Enable() and the rooms switch.
+	 */
 	void ResendAll();
-	/// Resets the Wwise state after the sound engine is terminated.
+
+	/**
+	 * @brief Resets the Wwise state after the sound engine is terminated.
+	 */
 	void ForgetWwiseState();
 
-	/// Assigns the game object to the room it is in. Position is in right-handed world space.
+	/**
+	 * @brief Assigns the game object to the room it is in.
+	 *
+	 * @param gameObjectID The game object that moved.
+	 * @param position     Its position in right-handed world space.
+	 */
 	void UpdateGameObjectPosition( AkGameObjectID gameObjectID, const Vector3& position );
-	/// Removes a game object that was unregistered from Wwise.
+
+	/**
+	 * @brief Removes a game object that was unregistered from Wwise.
+	 *
+	 * @param gameObjectID The game object to forget.
+	 */
 	void ForgetGameObject( AkGameObjectID gameObjectID );
-	/// Sends portals, assigns game objects again when rooms changed and retries room tones waiting for SoundBanks.
+
+	/**
+	 * @brief Sends portals, assigns game objects again when rooms changed and retries room tones waiting for SoundBanks.
+	 */
 	void Update();
 
+	/**
+	 * @brief Number of rooms registered with the manager.
+	 */
 	size_t GetRoomCount() const;
+
+	/**
+	 * @brief Number of game objects whose room is tracked.
+	 */
 	size_t GetTrackedGameObjectCount() const;
 
 private:
@@ -89,40 +155,120 @@ private:
 	static constexpr AkUInt64 ROOM_SPATIAL_ID_TAG = 1ull << 62;
 	static constexpr AkUInt64 SHARED_CUBE_GEOMETRY_SET_ID = ROOM_SPATIAL_ID_TAG | 1ull;
 
-	/// Geometry instance ID of the room, tagged so it can't collide with trinity's geometry IDs.
+	/**
+	 * @brief Geometry instance ID of the room, tagged so it can't collide with trinity's geometry IDs.
+	 *
+	 * @param room The room.
+	 *
+	 * @return The tagged geometry instance ID.
+	 */
 	static AkUInt64 GeometryInstanceIDForRoom( const AudRoom& room );
 
-	/// Sends the shared unit cube once. Caller holds m_mutex.
+	/**
+	 * @brief Sends the shared unit cube once. Caller holds m_mutex.
+	 *
+	 * @return True when the cube is in Wwise.
+	 */
 	bool EnsureSharedCubeGeometry();
-	/// Removes the shared unit cube. Caller holds m_mutex.
+
+	/**
+	 * @brief Removes the shared unit cube. Caller holds m_mutex.
+	 */
 	void ReleaseSharedCubeGeometry();
-	/// Sets the outdoor room to no transmission loss and no reverb. Caller holds m_mutex.
+
+	/**
+	 * @brief Sets the outdoor room to no transmission loss and no reverb. Caller holds m_mutex.
+	 *
+	 * @return True when the outdoor room is set.
+	 */
 	bool EnsureOutdoorRoomConfigured();
-	/// Sends one room. Caller holds m_mutex.
+
+	/**
+	 * @brief Sends one room. Caller holds m_mutex.
+	 *
+	 * @param room The room to send.
+	 */
 	void PushLocked( AudRoom& room );
-	/// Removes one room with its room tone and game object assignments. Caller holds m_mutex.
+
+	/**
+	 * @brief Removes one room with its room tone and game object assignments. Caller holds m_mutex.
+	 *
+	 * @param room The room to remove.
+	 */
 	void RemoveLocked( AudRoom& room );
-	/// Stops the room tone. Caller holds m_mutex.
+
+	/**
+	 * @brief Stops the room tone. Caller holds m_mutex.
+	 *
+	 * @param room The room whose tone stops.
+	 */
 	void StopRoomToneLocked( AudRoom& room );
-	/// Plays the room tone, or waits for its SoundBanks. Caller holds m_mutex.
+
+	/**
+	 * @brief Plays the room tone, or waits for its SoundBanks. Caller holds m_mutex.
+	 *
+	 * @param room      The room that plays the tone.
+	 * @param eventName The room tone event.
+	 */
 	void PostRoomToneLocked( AudRoom& room, const std::wstring& eventName );
 
-	/// Returns the room containing the position, or the outdoor room. The smaller room wins when priorities are equal. Caller holds m_mutex.
+	/**
+	 * @brief Returns the room containing the position, or the outdoor room. Caller holds m_mutex.
+	 *
+	 * The smaller room wins when priorities are equal.
+	 *
+	 * @param position Position in right-handed world space.
+	 *
+	 * @return The room ID.
+	 */
 	AkUInt64 ResolveRoomLocked( const Vector3& position ) const;
-	/// Calls SetGameObjectInRoom when the object's room changed. Caller holds m_mutex.
+
+	/**
+	 * @brief Calls SetGameObjectInRoom when the object's room changed. Caller holds m_mutex.
+	 *
+	 * @param gameObjectID The game object to assign.
+	 * @param tracked      Its tracked position and room.
+	 */
 	void AssignLocked( AkGameObjectID gameObjectID, TrackedGameObject& tracked );
 
-	/// Updates every portal in Wwise. Caller holds m_mutex.
+	/**
+	 * @brief Updates every portal in Wwise. Caller holds m_mutex.
+	 */
 	void SyncPortalsLocked();
-	/// Sends one portal between the rooms on its two sides, or removes it. Caller holds m_mutex.
+
+	/**
+	 * @brief Sends one portal between the rooms on its two sides, or removes it. Caller holds m_mutex.
+	 *
+	 * @param portal The portal to send.
+	 */
 	void SyncPortalLocked( AudPortal& portal );
-	/// Sends the portal's obstruction and occlusion when they changed. Returns false when Wwise refused them. Caller holds m_mutex.
+
+	/**
+	 * @brief Sends the portal's obstruction and occlusion when they changed. Caller holds m_mutex.
+	 *
+	 * @param portal The portal to send them for.
+	 *
+	 * @return False when Wwise refused them.
+	 */
 	bool SendPortalObstructionOcclusionLocked( AudPortal& portal );
-	/// Removes one portal from Wwise. Caller holds m_mutex.
+
+	/**
+	 * @brief Removes one portal from Wwise. Caller holds m_mutex.
+	 *
+	 * @param portal The portal to remove.
+	 */
 	void RemovePortalLocked( AudPortal& portal );
-	/// Removes every portal from Wwise. Caller holds m_mutex.
+
+	/**
+	 * @brief Removes every portal from Wwise. Caller holds m_mutex.
+	 */
 	void RemoveAllPortalsLocked();
-	/// Removes the portals connected to the room before the room leaves Wwise. Caller holds m_mutex.
+
+	/**
+	 * @brief Removes the portals connected to the room before the room leaves Wwise. Caller holds m_mutex.
+	 *
+	 * @param roomID The room that leaves Wwise.
+	 */
 	void RemovePortalsConnectedToLocked( AkUInt64 roomID );
 
 	AudManager* m_audioManager;

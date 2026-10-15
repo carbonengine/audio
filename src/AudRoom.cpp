@@ -1,9 +1,9 @@
-/**
- * @file AudRoom.cpp
- * @author Phevos Rinis
- * @date Sep 2026
- * @copyright © 2026 Fenris Creations ehf.
- */
+////////////////////////////////////////////////////////////
+//
+// Creator: Phevos Rinis
+// Creation Date: Sep 2026
+// Copyright (c) 2026 Fenris Creations
+//
 
 #include "stdafx.h"
 #include "AudRoom.h"
