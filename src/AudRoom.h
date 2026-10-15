@@ -9,6 +9,8 @@
 
 #include <ITr2BoxVolume.h>
 
+#include "AudUnitBox.h"
+
 #include <AK/SoundEngine/Common/AkTypes.h>
 #include <AK/SpatialAudio/Common/AkSpatialAudioTypes.h>
 
@@ -50,17 +52,10 @@ public:
 	const std::wstring& GetRoomToneEvent() const { return m_roomToneEvent; }
 	/// True when the room and its volume object are both enabled.
 	bool IsEnabled() const { return m_enabled && m_shapeEnabled; }
-	bool HasTransform() const { return m_hasTransform; }
-	/// False when the box has a zero-length axis.
-	bool HasUsableShape() const { return m_shapeValid; }
-	const Matrix& GetUnitBoxToWorld() const { return m_unitBoxToWorld; }
+	/// Box of the room, set through ITr2BoxVolume.
+	const AudUnitBox& GetBox() const { return m_box; }
 	/// Whether the room is in Wwise.
 	bool IsRegistered() const { return m_sentToWwise; }
-
-	/// Returns whether the point is inside the room, in right-handed world space.
-	bool ContainsPoint( const Vector3& worldPosition ) const;
-	/// Volume of the box, the smaller room wins when priorities are equal.
-	float GetVolume() const { return m_volume; }
 
 private:
 	friend class AudRoomManager;
@@ -87,11 +82,8 @@ private:
 	/// Set through ITr2BoxVolume::SetEnabled.
 	bool m_shapeEnabled;
 
-	Matrix m_unitBoxToWorld;
-	float m_volume;
-	bool m_shapeValid;
+	AudUnitBox m_box;
 	bool m_warnedDegenerate;
-	bool m_hasTransform;
 	bool m_sentToWwise;
 	bool m_registeredWithManager;
 

@@ -180,7 +180,7 @@ AkUInt64 AudRoomManager::ResolveRoomLocked( const Vector3& position ) const
 	for( const auto& entry : m_rooms )
 	{
 		const AudRoom* room = entry.second;
-		if( !room->m_sentToWwise || !room->ContainsPoint( position ) )
+		if( !room->m_sentToWwise || !room->GetBox().ContainsPoint( position ) )
 		{
 			continue;
 		}
@@ -189,7 +189,7 @@ AkUInt64 AudRoomManager::ResolveRoomLocked( const Vector3& position ) const
 		const float bestPriority = best != nullptr ? best->m_sentRoomParams.RoomPriority : 0.0f;
 		if( best == nullptr
 			|| priority > bestPriority
-			|| ( priority == bestPriority && room->GetVolume() < best->GetVolume() ) )
+			|| ( priority == bestPriority && room->GetBox().GetVolume() < best->GetBox().GetVolume() ) )
 		{
 			best = room;
 		}
@@ -298,7 +298,7 @@ bool AudRoomManager::EnsureOutdoorRoomConfigured()
 
 void AudRoomManager::PushLocked( AudRoom& room )
 {
-	if( !room.IsEnabled() || !room.HasTransform() || !room.HasUsableShape() )
+	if( !room.IsEnabled() || !room.GetBox().IsUsable() )
 	{
 		RemoveLocked( room );
 		return;
@@ -317,11 +317,11 @@ void AudRoomManager::PushLocked( AudRoom& room )
 	const AkUInt64 instanceID = GeometryInstanceIDForRoom( room );
 
 	AkTransform transform;
-	RH2LH::convertTransform( room.GetUnitBoxToWorld(), transform );
+	RH2LH::convertTransform( room.GetBox().GetUnitBoxToWorld(), transform );
 
 	AkGeometryInstanceParams instanceParams;
 	instanceParams.PositionAndOrientation = transform;
-	instanceParams.Scale = RH2LH::extractScale( room.GetUnitBoxToWorld() );
+	instanceParams.Scale = RH2LH::extractScale( room.GetBox().GetUnitBoxToWorld() );
 	instanceParams.GeometrySetID = SHARED_CUBE_GEOMETRY_SET_ID;
 	instanceParams.UseForReflectionAndDiffraction = false;
 	instanceParams.BypassPortalSubtraction = false;
@@ -541,7 +541,7 @@ void AudRoomManager::SetTransform( AudRoom& room, const Matrix& unitBoxToWorld )
 void AudRoomManager::RemoveShape( AudRoom& room )
 {
 	CcpAutoMutex lock( m_mutex );
-	room.m_hasTransform = false;
+	room.m_box.ClearTransform();
 	RemoveLocked( room );
 }
 

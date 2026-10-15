@@ -17,10 +17,11 @@
 #include <unordered_map>
 
 class AudManager;
+class AudPortal;
 class AudRoom;
 
 /**
- * @brief Sends every AudRoom to Wwise and assigns game objects to rooms.
+ * @brief Sends every AudRoom and AudPortal to Wwise and assigns game objects to rooms.
  *
  * Lock order: m_mutex can be held while taking AudManager's SoundBank and action-log locks, never the other way round.
  */
@@ -42,6 +43,15 @@ public:
 	void SetTransform( AudRoom& room, const Matrix& unitBoxToWorld );
 	/// Clears the room's box and removes the room from Wwise.
 	void RemoveShape( AudRoom& room );
+
+	/// Called by AudPortal on construction and destruction.
+	void RegisterPortal( AudPortal* portal );
+	void UnregisterPortal( AudPortal* portal );
+
+	/// Stores the portal's box under the lock.
+	void SetPortalTransform( AudPortal& portal, const Matrix& unitBoxToWorld );
+	/// Clears the portal's box.
+	void RemovePortalShape( AudPortal& portal );
 
 	/// Removes every room from Wwise, for Disable() and the rooms switch.
 	void RemoveAllFromWwise();
@@ -93,13 +103,14 @@ private:
 	/// Plays the room tone, or waits for its SoundBanks. Caller holds m_mutex.
 	void PostRoomToneLocked( AudRoom& room, const std::wstring& eventName );
 
-	/// Returns the room containing the position, or the outdoor room. Caller holds m_mutex.
+	/// Returns the room containing the position, or the outdoor room. The smaller room wins when priorities are equal. Caller holds m_mutex.
 	AkUInt64 ResolveRoomLocked( const Vector3& position ) const;
 	/// Calls SetGameObjectInRoom when the object's room changed. Caller holds m_mutex.
 	void AssignLocked( AkGameObjectID gameObjectID, TrackedGameObject& tracked );
 
 	AudManager* m_audioManager;
 	std::unordered_map<AkUInt64, AudRoom*> m_rooms;
+	std::unordered_map<AkUInt64, AudPortal*> m_portals;
 	std::unordered_map<AkGameObjectID, TrackedGameObject> m_trackedObjects;
 	bool m_cubeSent;
 	bool m_outdoorConfigured;
