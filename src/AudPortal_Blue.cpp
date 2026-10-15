@@ -22,5 +22,8 @@ const Be::ClassInfo* AudPortal::ExposeToBlue()
 		MAP_ATTRIBUTE( "enabled", m_enabled, "Whether the portal is active. It is only sent to Wwise when its volume object is enabled too.", Be::READWRITE | Be::PERSIST | Be::NOTIFY )
 
 		MAP_ATTRIBUTE( "portalID", m_portalID, "Wwise portal identifier.\n:jessica-hidden: True", Be::READ )
+		MAP_ATTRIBUTE( "isRegistered", m_sentToWwise, "Whether the portal is in Wwise.\n:jessica-hidden: True", Be::READ )
+		MAP_ATTRIBUTE( "frontRoomID", m_frontRoomID, "Room on the front side of the portal in Wwise.\n:jessica-hidden: True", Be::READ )
+		MAP_ATTRIBUTE( "backRoomID", m_backRoomID, "Room on the back side of the portal in Wwise.\n:jessica-hidden: True", Be::READ )
 	EXPOSURE_END()
 }

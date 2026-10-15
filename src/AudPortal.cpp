@@ -18,7 +18,14 @@ AudPortal::AudPortal( IRoot* lockobj ) :
 	m_enabled( true ),
 	m_shapeEnabled( true ),
 	m_warnedDegenerate( false ),
-	m_registeredWithManager( false )
+	m_sentToWwise( false ),
+	m_registeredWithManager( false ),
+	m_frontRoomID( AudRoomManager::OUTDOOR_ROOM_ID ),
+	m_backRoomID( AudRoomManager::OUTDOOR_ROOM_ID ),
+	m_foundFrontRoomID( AudRoomManager::OUTDOOR_ROOM_ID ),
+	m_foundBackRoomID( AudRoomManager::OUTDOOR_ROOM_ID ),
+	m_foundTicks( 0 ),
+	m_failureLogged( false )
 {
 	EnsureRegistered();
 }

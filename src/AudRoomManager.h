@@ -8,6 +8,7 @@
 #pragma once
 
 #include <AK/SoundEngine/Common/AkTypes.h>
+#include <AK/SpatialAudio/Common/AkSpatialAudioTypes.h>
 
 #include <CcpMutex.h>
 #include "Matrix.h"
@@ -28,6 +29,9 @@ class AudRoom;
 class AudRoomManager
 {
 public:
+	/// Room ID of the Wwise outdoor room.
+	static constexpr AkUInt64 OUTDOOR_ROOM_ID = AK_OUTDOORS_ROOM_ID;
+
 	explicit AudRoomManager( AudManager* audioManager );
 	~AudRoomManager();
 
@@ -48,12 +52,12 @@ public:
 	void RegisterPortal( AudPortal* portal );
 	void UnregisterPortal( AudPortal* portal );
 
-	/// Stores the portal's box under the lock.
+	/// Stores the portal's box under the lock. The portal is sent on the next Update().
 	void SetPortalTransform( AudPortal& portal, const Matrix& unitBoxToWorld );
-	/// Clears the portal's box.
+	/// Clears the portal's box and removes the portal from Wwise.
 	void RemovePortalShape( AudPortal& portal );
 
-	/// Removes every room from Wwise, for Disable() and the rooms switch.
+	/// Removes every portal and room from Wwise, for Disable() and the rooms switch.
 	void RemoveAllFromWwise();
 	/// Sends every enabled room to Wwise, for Enable() and the rooms switch.
 	void ResendAll();
@@ -64,7 +68,7 @@ public:
 	void UpdateGameObjectPosition( AkGameObjectID gameObjectID, const Vector3& position );
 	/// Removes a game object that was unregistered from Wwise.
 	void ForgetGameObject( AkGameObjectID gameObjectID );
-	/// Assigns game objects again when rooms changed and retries room tones waiting for SoundBanks.
+	/// Sends portals, assigns game objects again when rooms changed and retries room tones waiting for SoundBanks.
 	void Update();
 
 	size_t GetRoomCount() const;
@@ -107,6 +111,15 @@ private:
 	AkUInt64 ResolveRoomLocked( const Vector3& position ) const;
 	/// Calls SetGameObjectInRoom when the object's room changed. Caller holds m_mutex.
 	void AssignLocked( AkGameObjectID gameObjectID, TrackedGameObject& tracked );
+
+	/// Updates every portal in Wwise. Caller holds m_mutex.
+	void SyncPortalsLocked();
+	/// Sends one portal between the rooms at its two faces, or removes it. Caller holds m_mutex.
+	void SyncPortalLocked( AudPortal& portal );
+	/// Removes one portal from Wwise. Caller holds m_mutex.
+	void RemovePortalLocked( AudPortal& portal );
+	/// Removes every portal from Wwise. Caller holds m_mutex.
+	void RemoveAllPortalsLocked();
 
 	AudManager* m_audioManager;
 	std::unordered_map<AkUInt64, AudRoom*> m_rooms;

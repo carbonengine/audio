@@ -47,6 +47,12 @@ public:
 	bool IsEnabled() const { return m_enabled && m_shapeEnabled; }
 	/// Box of the portal, set through ITr2BoxVolume.
 	const AudUnitBox& GetBox() const { return m_box; }
+	/// Whether the portal is in Wwise.
+	bool IsRegistered() const { return m_sentToWwise; }
+	/// Room on the front side, as sent to Wwise.
+	AkUInt64 GetFrontRoomID() const { return m_frontRoomID; }
+	/// Room on the back side, as sent to Wwise.
+	AkUInt64 GetBackRoomID() const { return m_backRoomID; }
 
 private:
 	friend class AudRoomManager;
@@ -68,7 +74,18 @@ private:
 
 	AudUnitBox m_box;
 	bool m_warnedDegenerate;
+	bool m_sentToWwise;
 	bool m_registeredWithManager;
+
+	AkUInt64 m_frontRoomID;
+	AkUInt64 m_backRoomID;
+	/// Rooms found at the faces on the last update.
+	AkUInt64 m_foundFrontRoomID;
+	AkUInt64 m_foundBackRoomID;
+	/// Updates in a row the same rooms were found.
+	int m_foundTicks;
+	/// Set after a failed Wwise call is logged, so it is not logged again every update.
+	bool m_failureLogged;
 };
 
 TYPEDEF_BLUECLASS( AudPortal );

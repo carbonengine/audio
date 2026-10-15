@@ -47,8 +47,6 @@ namespace
 
 namespace
 {
-	const AkUInt64 OUTDOOR_ROOM_ID = static_cast<AkUInt64>( AK::SpatialAudio::kOutdoorRoomID );
-
 	/// Compares orientations with a small tolerance for float errors.
 	bool OrientationsNearlyEqual( const AkVector& a, const AkVector& b )
 	{
@@ -161,6 +159,8 @@ void AudRoomManager::Update()
 			}
 		}
 	}
+
+	SyncPortalsLocked();
 
 	if( !m_assignmentsDirty )
 	{
@@ -285,7 +285,7 @@ bool AudRoomManager::EnsureOutdoorRoomConfigured()
 	params.RoomGameObj_KeepRegistered = false;
 	params.GeometryInstanceID = AkGeometryInstanceID();
 
-	AKRESULT result = AK::SpatialAudio::SetRoom( AK::SpatialAudio::kOutdoorRoomID, params, "Outdoors" );
+	AKRESULT result = AK::SpatialAudio::SetRoom( AkRoomID( OUTDOOR_ROOM_ID ), params, "Outdoors" );
 	if( result != AK_Success )
 	{
 		CCP_LOGERR_CH( s_ch, "Failed to configure the outdoor room, AKRESULT: %d", result );
@@ -548,6 +548,8 @@ void AudRoomManager::RemoveShape( AudRoom& room )
 void AudRoomManager::RemoveAllFromWwise()
 {
 	CcpAutoMutex lock( m_mutex );
+	RemoveAllPortalsLocked();
+
 	for( auto& entry : m_rooms )
 	{
 		RemoveLocked( *entry.second );
@@ -580,6 +582,7 @@ void AudRoomManager::ForgetWwiseState()
 		room.m_roomTonePending = false;
 		room.m_postedRoomTone.clear();
 	}
+	RemoveAllPortalsLocked();
 	m_pendingRoomTones = 0;
 	m_roomsInWwise.store( 0, std::memory_order_release );
 	m_cubeSent = false;
