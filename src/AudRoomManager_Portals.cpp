@@ -13,6 +13,7 @@
 #include "Utilities.h"
 
 #include <algorithm>
+#include <cmath>
 #include <string>
 
 static CcpLogChannel_t s_ch = CCP_LOG_DEFINE_CHANNEL( "AudRoomManager" );
@@ -23,6 +24,35 @@ namespace
 	constexpr int PORTAL_SAME_ROOM_WARNING_TICKS = 30;
 	/// Smallest adjacent room bleed sent to Wwise, which needs it above zero.
 	constexpr float MIN_ADJACENT_ROOM_BLEED = 1e-3f;
+
+	/// Compares positions with a 1 mm tolerance.
+	bool PositionsNearlyEqual( const AkVector64& a, const AkVector64& b )
+	{
+		constexpr AkReal64 epsilon = 1e-3;
+		return std::fabs( a.X - b.X ) <= epsilon && std::fabs( a.Y - b.Y ) <= epsilon && std::fabs( a.Z - b.Z ) <= epsilon;
+	}
+
+	/// Compares orientations with a small tolerance for float errors.
+	bool OrientationsNearlyEqual( const AkVector& a, const AkVector& b )
+	{
+		constexpr float epsilon = 1e-4f;
+		return std::fabs( a.X - b.X ) <= epsilon && std::fabs( a.Y - b.Y ) <= epsilon && std::fabs( a.Z - b.Z ) <= epsilon;
+	}
+
+	/// Compares every parameter SetPortal uses.
+	bool PortalParamsEqual( const AkPortalParams& a, const AkPortalParams& b )
+	{
+		return PositionsNearlyEqual( a.Transform.Position(), b.Transform.Position() )
+			&& OrientationsNearlyEqual( a.Transform.OrientationFront(), b.Transform.OrientationFront() )
+			&& OrientationsNearlyEqual( a.Transform.OrientationTop(), b.Transform.OrientationTop() )
+			&& a.Extent.halfWidth == b.Extent.halfWidth
+			&& a.Extent.halfHeight == b.Extent.halfHeight
+			&& a.Extent.halfDepth == b.Extent.halfDepth
+			&& a.FrontRoom == b.FrontRoom
+			&& a.BackRoom == b.BackRoom
+			&& a.AdjacentRoomBleed == b.AdjacentRoomBleed
+			&& a.bEnabled == b.bEnabled;
+	}
 }
 
 void AudRoomManager::RegisterPortal( AudPortal* portal )
@@ -106,15 +136,25 @@ void AudRoomManager::SyncPortalLocked( AudPortal& portal )
 	params.bEnabled = portal.IsOpen();
 
 	const std::string name = portal.GetName().empty() ? "Portal " + std::to_string( portal.GetPortalID() ) : portal.GetName();
-	const AKRESULT result = AK::SpatialAudio::SetPortal( portal.GetPortalID(), params, name.c_str() );
-	if( result != AK_Success )
+	const bool portalChanged = !portal.m_sentToWwise
+		|| !PortalParamsEqual( params, portal.m_sentPortalParams )
+		|| name != portal.m_sentName;
+
+	if( portalChanged )
 	{
-		if( !portal.m_failureLogged )
+		const AKRESULT result = AK::SpatialAudio::SetPortal( portal.GetPortalID(), params, name.c_str() );
+		if( result != AK_Success )
 		{
-			CCP_LOGERR_CH( s_ch, "Failed to set portal '%s' (%llu), AKRESULT: %d", name.c_str(), portal.GetPortalID(), result );
-			portal.m_failureLogged = true;
+			if( !portal.m_failureLogged )
+			{
+				CCP_LOGERR_CH( s_ch, "Failed to set portal '%s' (%llu), AKRESULT: %d", name.c_str(), portal.GetPortalID(), result );
+				portal.m_failureLogged = true;
+			}
+			return;
 		}
-		return;
+
+		portal.m_sentPortalParams = params;
+		portal.m_sentName = name;
 	}
 
 	if( !portal.m_sentToWwise || portal.m_frontRoomID != frontRoomID || portal.m_backRoomID != backRoomID )

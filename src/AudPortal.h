@@ -12,6 +12,7 @@
 #include "AudUnitBox.h"
 
 #include <AK/SoundEngine/Common/AkTypes.h>
+#include <AK/SpatialAudio/Common/AkSpatialAudioTypes.h>
 
 #include <string>
 
@@ -77,6 +78,9 @@ private:
 	bool m_sentToWwise;
 	bool m_registeredWithManager;
 
+	/// Last parameters sent to Wwise.
+	AkPortalParams m_sentPortalParams;
+	std::string m_sentName;
 	AkUInt64 m_frontRoomID;
 	AkUInt64 m_backRoomID;
 	/// Rooms found at the faces on the last update.
