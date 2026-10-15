@@ -2,13 +2,14 @@
 //
 // Creator: Phevos Rinis
 // Creation Date: Sep 2026
-// Copyright (c) 2026 CCP Games
+// Copyright (c) 2026 Fenris Creations
 //
 
 #include "stdafx.h"
 #include "AudRoomManager.h"
 
 #include "AudManager.h"
+#include "AudPortal.h"
 #include "AudRoom.h"
 #include "AudStaticDataRepository.h"
 #include "Utilities.h"
@@ -16,6 +17,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iterator>
+#include <string>
 
 static CcpLogChannel_t s_ch = CCP_LOG_DEFINE_CHANNEL( "AudRoomManager" );
 
@@ -47,16 +49,42 @@ namespace
 
 namespace
 {
-	const AkUInt64 OUTDOOR_ROOM_ID = static_cast<AkUInt64>( AK::SpatialAudio::kOutdoorRoomID );
+	/// Updates in a row a portal can have the same room on both sides before it is reported.
+	constexpr int PORTAL_SAME_ROOM_WARNING_TICKS = 30;
+	/// Updates in a row new rooms must be found at a portal's faces before they replace the rooms in Wwise.
+	constexpr int PORTAL_ROOM_CHANGE_TICKS = 3;
+	/// Smallest adjacent room bleed sent to Wwise, which needs it above zero.
+	constexpr float MIN_ADJACENT_ROOM_BLEED = 1e-3f;
+	/// Unit box Z where a portal looks up its rooms, a quarter of its depth past each face.
+	constexpr float PORTAL_ROOM_LOOKUP_Z = 0.75f;
 
-	/// Compares orientations with a small tolerance for float errors.
+	/**
+	 * @brief Compares positions with a 1 mm tolerance.
+	 *
+	 * @return True when every axis is within the tolerance.
+	 */
+	bool PositionsNearlyEqual( const AkVector64& a, const AkVector64& b )
+	{
+		constexpr AkReal64 epsilon = 1e-3;
+		return std::fabs( a.X - b.X ) <= epsilon && std::fabs( a.Y - b.Y ) <= epsilon && std::fabs( a.Z - b.Z ) <= epsilon;
+	}
+
+	/**
+	 * @brief Compares orientations with a small tolerance for float errors.
+	 *
+	 * @return True when every axis is within the tolerance.
+	 */
 	bool OrientationsNearlyEqual( const AkVector& a, const AkVector& b )
 	{
 		constexpr float epsilon = 1e-4f;
 		return std::fabs( a.X - b.X ) <= epsilon && std::fabs( a.Y - b.Y ) <= epsilon && std::fabs( a.Z - b.Z ) <= epsilon;
 	}
 
-	/// Compares every parameter SetRoom uses.
+	/**
+	 * @brief Compares every parameter SetRoom uses.
+	 *
+	 * @return True when SetRoom would not change anything.
+	 */
 	bool RoomParamsEqual( const AkRoomParams& a, const AkRoomParams& b )
 	{
 		return OrientationsNearlyEqual( a.Front, b.Front )
@@ -69,6 +97,25 @@ namespace
 			&& a.RoomPriority == b.RoomPriority
 			&& a.DistanceBehavior == b.DistanceBehavior
 			&& a.RoomGameObj_KeepRegistered == b.RoomGameObj_KeepRegistered;
+	}
+
+	/**
+	 * @brief Compares every parameter SetPortal uses.
+	 *
+	 * @return True when SetPortal would not change anything.
+	 */
+	bool PortalParamsEqual( const AkPortalParams& a, const AkPortalParams& b )
+	{
+		return PositionsNearlyEqual( a.Transform.Position(), b.Transform.Position() )
+			&& OrientationsNearlyEqual( a.Transform.OrientationFront(), b.Transform.OrientationFront() )
+			&& OrientationsNearlyEqual( a.Transform.OrientationTop(), b.Transform.OrientationTop() )
+			&& a.Extent.halfWidth == b.Extent.halfWidth
+			&& a.Extent.halfHeight == b.Extent.halfHeight
+			&& a.Extent.halfDepth == b.Extent.halfDepth
+			&& a.FrontRoom == b.FrontRoom
+			&& a.BackRoom == b.BackRoom
+			&& a.AdjacentRoomBleed == b.AdjacentRoomBleed
+			&& a.bEnabled == b.bEnabled;
 	}
 }
 
@@ -162,6 +209,8 @@ void AudRoomManager::Update()
 		}
 	}
 
+	SyncPortalsLocked();
+
 	if( !m_assignmentsDirty )
 	{
 		return;
@@ -180,7 +229,7 @@ AkUInt64 AudRoomManager::ResolveRoomLocked( const Vector3& position ) const
 	for( const auto& entry : m_rooms )
 	{
 		const AudRoom* room = entry.second;
-		if( !room->m_sentToWwise || !room->ContainsPoint( position ) )
+		if( !room->m_sentToWwise || !room->GetBox().ContainsPoint( position ) )
 		{
 			continue;
 		}
@@ -189,7 +238,7 @@ AkUInt64 AudRoomManager::ResolveRoomLocked( const Vector3& position ) const
 		const float bestPriority = best != nullptr ? best->m_sentRoomParams.RoomPriority : 0.0f;
 		if( best == nullptr
 			|| priority > bestPriority
-			|| ( priority == bestPriority && room->GetVolume() < best->GetVolume() ) )
+			|| ( priority == bestPriority && room->GetBox().GetVolume() < best->GetBox().GetVolume() ) )
 		{
 			best = room;
 		}
@@ -285,7 +334,7 @@ bool AudRoomManager::EnsureOutdoorRoomConfigured()
 	params.RoomGameObj_KeepRegistered = false;
 	params.GeometryInstanceID = AkGeometryInstanceID();
 
-	AKRESULT result = AK::SpatialAudio::SetRoom( AK::SpatialAudio::kOutdoorRoomID, params, "Outdoors" );
+	AKRESULT result = AK::SpatialAudio::SetRoom( AkRoomID( OUTDOOR_ROOM_ID ), params, "Outdoors" );
 	if( result != AK_Success )
 	{
 		CCP_LOGERR_CH( s_ch, "Failed to configure the outdoor room, AKRESULT: %d", result );
@@ -298,7 +347,7 @@ bool AudRoomManager::EnsureOutdoorRoomConfigured()
 
 void AudRoomManager::PushLocked( AudRoom& room )
 {
-	if( !room.IsEnabled() || !room.HasTransform() || !room.HasUsableShape() )
+	if( !room.IsEnabled() || !room.GetBox().IsUsable() )
 	{
 		RemoveLocked( room );
 		return;
@@ -317,11 +366,11 @@ void AudRoomManager::PushLocked( AudRoom& room )
 	const AkUInt64 instanceID = GeometryInstanceIDForRoom( room );
 
 	AkTransform transform;
-	RH2LH::convertTransform( room.GetUnitBoxToWorld(), transform );
+	RH2LH::convertTransform( room.GetBox().GetUnitBoxToWorld(), transform );
 
 	AkGeometryInstanceParams instanceParams;
 	instanceParams.PositionAndOrientation = transform;
-	instanceParams.Scale = RH2LH::extractScale( room.GetUnitBoxToWorld() );
+	instanceParams.Scale = RH2LH::extractScale( room.GetBox().GetUnitBoxToWorld() );
 	instanceParams.GeometrySetID = SHARED_CUBE_GEOMETRY_SET_ID;
 	instanceParams.UseForReflectionAndDiffraction = false;
 	instanceParams.BypassPortalSubtraction = false;
@@ -412,6 +461,7 @@ void AudRoomManager::RemoveLocked( AudRoom& room )
 
 	room.m_sentToWwise = false;
 	m_assignmentsDirty = true;
+	RemovePortalsConnectedToLocked( room.GetRoomID() );
 	const bool lastRoom = m_roomsInWwise.fetch_sub( 1, std::memory_order_acq_rel ) == 1;
 	const bool soundEngineUp = AK::SoundEngine::IsInitialized();
 
@@ -541,13 +591,15 @@ void AudRoomManager::SetTransform( AudRoom& room, const Matrix& unitBoxToWorld )
 void AudRoomManager::RemoveShape( AudRoom& room )
 {
 	CcpAutoMutex lock( m_mutex );
-	room.m_hasTransform = false;
+	room.m_box.ClearTransform();
 	RemoveLocked( room );
 }
 
 void AudRoomManager::RemoveAllFromWwise()
 {
 	CcpAutoMutex lock( m_mutex );
+	RemoveAllPortalsLocked();
+
 	for( auto& entry : m_rooms )
 	{
 		RemoveLocked( *entry.second );
@@ -580,10 +632,204 @@ void AudRoomManager::ForgetWwiseState()
 		room.m_roomTonePending = false;
 		room.m_postedRoomTone.clear();
 	}
+	RemoveAllPortalsLocked();
 	m_pendingRoomTones = 0;
 	m_roomsInWwise.store( 0, std::memory_order_release );
 	m_cubeSent = false;
 	m_outdoorConfigured = false;
 	m_trackedObjects.clear();
 	m_assignmentsDirty = false;
+}
+
+void AudRoomManager::RegisterPortal( AudPortal* portal )
+{
+	CcpAutoMutex lock( m_mutex );
+	m_portals[portal->GetPortalID()] = portal;
+}
+
+void AudRoomManager::UnregisterPortal( AudPortal* portal )
+{
+	CcpAutoMutex lock( m_mutex );
+	RemovePortalLocked( *portal );
+	m_portals.erase( portal->GetPortalID() );
+}
+
+void AudRoomManager::SetPortalTransform( AudPortal& portal, const Matrix& unitBoxToWorld )
+{
+	CcpAutoMutex lock( m_mutex );
+	portal.ApplyTransform( unitBoxToWorld );
+}
+
+void AudRoomManager::RemovePortalShape( AudPortal& portal )
+{
+	CcpAutoMutex lock( m_mutex );
+	portal.m_box.ClearTransform();
+	RemovePortalLocked( portal );
+}
+
+void AudRoomManager::SyncPortalsLocked()
+{
+	for( auto& entry : m_portals )
+	{
+		SyncPortalLocked( *entry.second );
+	}
+}
+
+void AudRoomManager::SyncPortalLocked( AudPortal& portal )
+{
+	const AudUnitBox& box = portal.GetBox();
+	if( !portal.IsEnabled() || !box.IsUsable() )
+	{
+		portal.m_foundTicks = 0;
+		RemovePortalLocked( portal );
+		return;
+	}
+
+	const AkUInt64 foundFrontRoomID = ResolveRoomLocked( box.ToWorld( Vector3( 0.0f, 0.0f, -PORTAL_ROOM_LOOKUP_Z ) ) );
+	const AkUInt64 foundBackRoomID = ResolveRoomLocked( box.ToWorld( Vector3( 0.0f, 0.0f, PORTAL_ROOM_LOOKUP_Z ) ) );
+	if( foundFrontRoomID == portal.m_foundFrontRoomID && foundBackRoomID == portal.m_foundBackRoomID )
+	{
+		portal.m_foundTicks = std::min( portal.m_foundTicks + 1, PORTAL_SAME_ROOM_WARNING_TICKS + 1 );
+	}
+	else
+	{
+		portal.m_foundFrontRoomID = foundFrontRoomID;
+		portal.m_foundBackRoomID = foundBackRoomID;
+		portal.m_foundTicks = 1;
+	}
+
+	const bool keepSentRooms = portal.m_sentToWwise && portal.m_foundTicks < PORTAL_ROOM_CHANGE_TICKS;
+	const AkUInt64 frontRoomID = keepSentRooms ? portal.m_frontRoomID : foundFrontRoomID;
+	const AkUInt64 backRoomID = keepSentRooms ? portal.m_backRoomID : foundBackRoomID;
+
+	if( frontRoomID == backRoomID )
+	{
+		RemovePortalLocked( portal );
+		if( portal.m_foundTicks == PORTAL_SAME_ROOM_WARNING_TICKS )
+		{
+			CCP_LOGWARN_CH( s_ch, "Portal '%s' (%llu) has room %llu on both sides; it is not sent to Wwise until it crosses a room wall.",
+				portal.GetName().c_str(), portal.GetPortalID(), frontRoomID );
+		}
+		return;
+	}
+
+	AkTransform transform;
+	RH2LH::convertTransform( box.GetUnitBoxToWorld(), transform );
+	const AkVector scale = RH2LH::extractScale( box.GetUnitBoxToWorld() );
+
+	AkPortalParams params;
+	params.Transform = AK::ConvertAkTransformToAkWorldTransform( transform );
+	params.Extent = AkExtent( 0.5f * scale.X, 0.5f * scale.Y, 0.5f * scale.Z );
+	params.FrontRoom = AkRoomID( frontRoomID );
+	params.BackRoom = AkRoomID( backRoomID );
+	params.AdjacentRoomBleed = std::max( portal.GetAdjacentRoomBleed(), MIN_ADJACENT_ROOM_BLEED );
+	params.bEnabled = portal.IsOpen();
+
+	const std::string name = portal.GetName().empty() ? "Portal " + std::to_string( portal.GetPortalID() ) : portal.GetName();
+	const bool portalChanged = !portal.m_sentToWwise
+		|| !PortalParamsEqual( params, portal.m_sentPortalParams )
+		|| name != portal.m_sentName;
+
+	if( portalChanged )
+	{
+		const AKRESULT result = AK::SpatialAudio::SetPortal( portal.GetPortalID(), params, name.c_str() );
+		if( result != AK_Success )
+		{
+			if( !portal.m_failureLogged )
+			{
+				CCP_LOGERR_CH( s_ch, "Failed to set portal '%s' (%llu), AKRESULT: %d", name.c_str(), portal.GetPortalID(), result );
+				portal.m_failureLogged = true;
+			}
+			return;
+		}
+
+		portal.m_sentPortalParams = params;
+		portal.m_sentName = name;
+	}
+
+	if( !portal.m_sentToWwise || portal.m_frontRoomID != frontRoomID || portal.m_backRoomID != backRoomID )
+	{
+		CCP_LOG_CH( s_ch, "Portal '%s' (%llu) sent to Wwise with front room %llu and back room %llu.",
+			name.c_str(), portal.GetPortalID(), frontRoomID, backRoomID );
+	}
+
+	portal.m_sentToWwise = true;
+	portal.m_frontRoomID = frontRoomID;
+	portal.m_backRoomID = backRoomID;
+
+	if( SendPortalObstructionOcclusionLocked( portal ) )
+	{
+		portal.m_failureLogged = false;
+	}
+}
+
+bool AudRoomManager::SendPortalObstructionOcclusionLocked( AudPortal& portal )
+{
+	const float obstruction = std::clamp( portal.GetObstruction(), 0.0f, 1.0f );
+	const float occlusion = std::clamp( portal.GetOcclusion(), 0.0f, 1.0f );
+	const bool transition = portal.GetObstructionOcclusionTransition();
+
+	if( portal.m_obstructionOcclusionSent
+		&& obstruction == portal.m_sentObstruction
+		&& occlusion == portal.m_sentOcclusion
+		&& transition == portal.m_sentTransition )
+	{
+		return true;
+	}
+
+	const AKRESULT result = AK::SpatialAudio::SetPortalObstructionAndOcclusion( portal.GetPortalID(), obstruction, occlusion, transition );
+	if( result != AK_Success )
+	{
+		if( !portal.m_failureLogged )
+		{
+			CCP_LOGWARN_CH( s_ch, "Failed to set obstruction and occlusion on portal '%s' (%llu), AKRESULT: %d",
+				portal.GetName().c_str(), portal.GetPortalID(), result );
+			portal.m_failureLogged = true;
+		}
+		return false;
+	}
+
+	portal.m_obstructionOcclusionSent = true;
+	portal.m_sentObstruction = obstruction;
+	portal.m_sentOcclusion = occlusion;
+	portal.m_sentTransition = transition;
+	return true;
+}
+
+void AudRoomManager::RemovePortalLocked( AudPortal& portal )
+{
+	if( !portal.m_sentToWwise )
+	{
+		return;
+	}
+
+	portal.m_sentToWwise = false;
+	portal.m_frontRoomID = OUTDOOR_ROOM_ID;
+	portal.m_backRoomID = OUTDOOR_ROOM_ID;
+	portal.m_obstructionOcclusionSent = false;
+
+	if( AK::SoundEngine::IsInitialized() )
+	{
+		AK::SpatialAudio::RemovePortal( portal.GetPortalID() );
+	}
+}
+
+void AudRoomManager::RemoveAllPortalsLocked()
+{
+	for( auto& entry : m_portals )
+	{
+		RemovePortalLocked( *entry.second );
+	}
+}
+
+void AudRoomManager::RemovePortalsConnectedToLocked( AkUInt64 roomID )
+{
+	for( auto& entry : m_portals )
+	{
+		AudPortal& portal = *entry.second;
+		if( portal.m_frontRoomID == roomID || portal.m_backRoomID == roomID )
+		{
+			RemovePortalLocked( portal );
+		}
+	}
 }

@@ -1,0 +1,174 @@
+////////////////////////////////////////////////////////////
+//
+// Creator: Phevos Rinis
+// Creation Date: Oct 2026
+// Copyright (c) 2026 Fenris Creations
+//
+
+#pragma once
+
+#include <ITr2BoxVolume.h>
+
+#include "AudUnitBox.h"
+
+#include <AK/SoundEngine/Common/AkTypes.h>
+#include <AK/SpatialAudio/Common/AkSpatialAudioTypes.h>
+
+#include <string>
+
+/**
+ * @brief A Wwise Spatial Audio portal, placed as a unit box through ITr2BoxVolume, with the front room on the box's local -Z side.
+ */
+BLUE_CLASS( AudPortal ) :
+	public ITr2BoxVolume,
+	public INotify
+{
+public:
+	AudPortal( IRoot* lockobj = NULL );
+	virtual ~AudPortal();
+
+	EXPOSE_TO_BLUE();
+
+	/**
+	 * @brief Stores the portal's box. The portal is sent to Wwise on the next update.
+	 *
+	 * @param unitBoxToWorld Maps the unit box to world space.
+	 */
+	void SetTransform( const Matrix& unitBoxToWorld ) override;
+
+	/**
+	 * @brief Called when the volume object is enabled or disabled.
+	 *
+	 * @param enabled Whether the volume object is enabled.
+	 */
+	void SetEnabled( bool enabled ) override;
+
+	/**
+	 * @brief Clears the box and removes the portal from Wwise.
+	 */
+	void Remove() override;
+
+	/**
+	 * @brief Called by Blue when an attribute changes.
+	 *
+	 * @param value The attribute that changed.
+	 *
+	 * @return Always true.
+	 */
+	bool OnModified( Be::Var* value ) override;
+
+	/**
+	 * @brief Portal ID, from the same ID space as game objects.
+	 */
+	AkUInt64 GetPortalID() const { return m_portalID; }
+
+	/**
+	 * @brief Name shown in the Wwise profiler.
+	 */
+	const std::string& GetName() const { return m_name; }
+
+	/**
+	 * @brief Whether sound passes through the portal, e.g. an open door.
+	 */
+	bool IsOpen() const { return m_open; }
+
+	/**
+	 * @brief Scales how much reverb of the room on the other side is heard through the portal.
+	 */
+	float GetAdjacentRoomBleed() const { return m_adjacentRoomBleed; }
+
+	/**
+	 * @brief Obstruction of the direct sound through the portal.
+	 */
+	float GetObstruction() const { return m_obstruction; }
+
+	/**
+	 * @brief Occlusion of all sound through the portal, e.g. a door that is partly closed.
+	 */
+	float GetOcclusion() const { return m_occlusion; }
+
+	/**
+	 * @brief Whether obstruction and occlusion fade over the depth of the portal.
+	 */
+	bool GetObstructionOcclusionTransition() const { return m_obstructionOcclusionTransition; }
+
+	/**
+	 * @brief True when the portal and its volume object are both enabled.
+	 */
+	bool IsEnabled() const { return m_enabled && m_shapeEnabled; }
+
+	/**
+	 * @brief Box of the portal, set through ITr2BoxVolume.
+	 */
+	const AudUnitBox& GetBox() const { return m_box; }
+
+	/**
+	 * @brief Whether the portal is in Wwise.
+	 */
+	bool IsRegistered() const { return m_sentToWwise; }
+
+	/**
+	 * @brief Room on the front side, as sent to Wwise.
+	 */
+	AkUInt64 GetFrontRoomID() const { return m_frontRoomID; }
+
+	/**
+	 * @brief Room on the back side, as sent to Wwise.
+	 */
+	AkUInt64 GetBackRoomID() const { return m_backRoomID; }
+
+private:
+	friend class AudRoomManager;
+
+	/**
+	 * @brief Registers with the room manager once it exists.
+	 *
+	 * @return True when the portal is registered.
+	 */
+	bool EnsureRegistered();
+
+	/**
+	 * @brief Stores the box. Called by AudRoomManager under its lock.
+	 *
+	 * @param unitBoxToWorld Maps the unit box to world space.
+	 */
+	void ApplyTransform( const Matrix& unitBoxToWorld );
+
+	AkUInt64 m_portalID;
+
+	std::string m_name;
+	bool m_open;
+	float m_adjacentRoomBleed;
+	float m_obstruction;
+	float m_occlusion;
+	bool m_obstructionOcclusionTransition;
+	/// Enabled attribute of the portal.
+	bool m_enabled;
+	/// Set through ITr2BoxVolume::SetEnabled.
+	bool m_shapeEnabled;
+
+	AudUnitBox m_box;
+	bool m_warnedDegenerate;
+	bool m_sentToWwise;
+	bool m_registeredWithManager;
+
+	/// Last parameters sent to Wwise.
+	AkPortalParams m_sentPortalParams;
+	std::string m_sentName;
+	AkUInt64 m_frontRoomID;
+	AkUInt64 m_backRoomID;
+	/// Rooms found at the faces on the last update.
+	AkUInt64 m_foundFrontRoomID;
+	AkUInt64 m_foundBackRoomID;
+	/// Updates in a row the same rooms were found.
+	int m_foundTicks;
+	/// Obstruction and occlusion last sent to Wwise.
+	bool m_obstructionOcclusionSent;
+	float m_sentObstruction;
+	float m_sentOcclusion;
+	bool m_sentTransition;
+	/// Set after a failed Wwise call is logged, so it is not logged again every update.
+	bool m_failureLogged;
+};
+
+TYPEDEF_BLUECLASS( AudPortal );
