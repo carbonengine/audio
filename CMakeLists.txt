@@ -50,7 +50,6 @@ ccp_add_library(CarbonAudio SHARED
 	src/AudRoom.cpp
 	src/AudRoom_Blue.cpp
 	src/AudRoomManager.cpp
-	src/AudRoomManager_Portals.cpp
 	src/AudUnitBox.cpp
 	src/SpatialAudioSettings.cpp
 	src/audio2.cpp
