@@ -44,6 +44,12 @@ public:
 	/// Whether sound passes through the portal, e.g. an open door.
 	bool IsOpen() const { return m_open; }
 	float GetAdjacentRoomBleed() const { return m_adjacentRoomBleed; }
+	/// Obstruction of the direct sound through the portal.
+	float GetObstruction() const { return m_obstruction; }
+	/// Occlusion of all sound through the portal, e.g. a door that is partly closed.
+	float GetOcclusion() const { return m_occlusion; }
+	/// Whether obstruction and occlusion fade over the depth of the portal.
+	bool GetObstructionOcclusionTransition() const { return m_obstructionOcclusionTransition; }
 	/// True when the portal and its volume object are both enabled.
 	bool IsEnabled() const { return m_enabled && m_shapeEnabled; }
 	/// Box of the portal, set through ITr2BoxVolume.
@@ -68,6 +74,9 @@ private:
 	std::string m_name;
 	bool m_open;
 	float m_adjacentRoomBleed;
+	float m_obstruction;
+	float m_occlusion;
+	bool m_obstructionOcclusionTransition;
 	/// Enabled attribute of the portal.
 	bool m_enabled;
 	/// Set through ITr2BoxVolume::SetEnabled.
@@ -88,6 +97,11 @@ private:
 	AkUInt64 m_foundBackRoomID;
 	/// Updates in a row the same rooms were found.
 	int m_foundTicks;
+	/// Obstruction and occlusion last sent to Wwise.
+	bool m_obstructionOcclusionSent;
+	float m_sentObstruction;
+	float m_sentOcclusion;
+	bool m_sentTransition;
 	/// Set after a failed Wwise call is logged, so it is not logged again every update.
 	bool m_failureLogged;
 };

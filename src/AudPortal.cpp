@@ -15,6 +15,9 @@ AudPortal::AudPortal( IRoot* lockobj ) :
 	m_portalID( AllocateGameObjectID() ),
 	m_open( true ),
 	m_adjacentRoomBleed( 1.0f ),
+	m_obstruction( 0.0f ),
+	m_occlusion( 0.0f ),
+	m_obstructionOcclusionTransition( false ),
 	m_enabled( true ),
 	m_shapeEnabled( true ),
 	m_warnedDegenerate( false ),
@@ -25,6 +28,10 @@ AudPortal::AudPortal( IRoot* lockobj ) :
 	m_foundFrontRoomID( AudRoomManager::OUTDOOR_ROOM_ID ),
 	m_foundBackRoomID( AudRoomManager::OUTDOOR_ROOM_ID ),
 	m_foundTicks( 0 ),
+	m_obstructionOcclusionSent( false ),
+	m_sentObstruction( 0.0f ),
+	m_sentOcclusion( 0.0f ),
+	m_sentTransition( false ),
 	m_failureLogged( false )
 {
 	EnsureRegistered();

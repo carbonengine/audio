@@ -116,6 +116,8 @@ private:
 	void SyncPortalsLocked();
 	/// Sends one portal between the rooms at its two faces, or removes it. Caller holds m_mutex.
 	void SyncPortalLocked( AudPortal& portal );
+	/// Sends the portal's obstruction and occlusion when they changed. Returns false when Wwise refused them. Caller holds m_mutex.
+	bool SendPortalObstructionOcclusionLocked( AudPortal& portal );
 	/// Removes one portal from Wwise. Caller holds m_mutex.
 	void RemovePortalLocked( AudPortal& portal );
 	/// Removes every portal from Wwise. Caller holds m_mutex.

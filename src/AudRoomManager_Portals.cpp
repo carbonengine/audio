@@ -166,7 +166,44 @@ void AudRoomManager::SyncPortalLocked( AudPortal& portal )
 	portal.m_sentToWwise = true;
 	portal.m_frontRoomID = frontRoomID;
 	portal.m_backRoomID = backRoomID;
-	portal.m_failureLogged = false;
+
+	if( SendPortalObstructionOcclusionLocked( portal ) )
+	{
+		portal.m_failureLogged = false;
+	}
+}
+
+bool AudRoomManager::SendPortalObstructionOcclusionLocked( AudPortal& portal )
+{
+	const float obstruction = std::clamp( portal.GetObstruction(), 0.0f, 1.0f );
+	const float occlusion = std::clamp( portal.GetOcclusion(), 0.0f, 1.0f );
+	const bool transition = portal.GetObstructionOcclusionTransition();
+
+	if( portal.m_obstructionOcclusionSent
+		&& obstruction == portal.m_sentObstruction
+		&& occlusion == portal.m_sentOcclusion
+		&& transition == portal.m_sentTransition )
+	{
+		return true;
+	}
+
+	const AKRESULT result = AK::SpatialAudio::SetPortalObstructionAndOcclusion( portal.GetPortalID(), obstruction, occlusion, transition );
+	if( result != AK_Success )
+	{
+		if( !portal.m_failureLogged )
+		{
+			CCP_LOGWARN_CH( s_ch, "Failed to set obstruction and occlusion on portal '%s' (%llu), AKRESULT: %d",
+				portal.GetName().c_str(), portal.GetPortalID(), result );
+			portal.m_failureLogged = true;
+		}
+		return false;
+	}
+
+	portal.m_obstructionOcclusionSent = true;
+	portal.m_sentObstruction = obstruction;
+	portal.m_sentOcclusion = occlusion;
+	portal.m_sentTransition = transition;
+	return true;
 }
 
 void AudRoomManager::RemovePortalLocked( AudPortal& portal )
@@ -179,6 +216,7 @@ void AudRoomManager::RemovePortalLocked( AudPortal& portal )
 	portal.m_sentToWwise = false;
 	portal.m_frontRoomID = OUTDOOR_ROOM_ID;
 	portal.m_backRoomID = OUTDOOR_ROOM_ID;
+	portal.m_obstructionOcclusionSent = false;
 
 	if( AK::SoundEngine::IsInitialized() )
 	{
