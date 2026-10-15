@@ -22,6 +22,8 @@ namespace
 {
 	/// Updates in a row a portal can have the same room on both sides before it is reported.
 	constexpr int PORTAL_SAME_ROOM_WARNING_TICKS = 30;
+	/// Updates in a row new rooms must be found at a portal's faces before they replace the rooms in Wwise.
+	constexpr int PORTAL_ROOM_CHANGE_TICKS = 3;
 	/// Smallest adjacent room bleed sent to Wwise, which needs it above zero.
 	constexpr float MIN_ADJACENT_ROOM_BLEED = 1e-3f;
 
@@ -99,18 +101,22 @@ void AudRoomManager::SyncPortalLocked( AudPortal& portal )
 		return;
 	}
 
-	const AkUInt64 frontRoomID = ResolveRoomLocked( box.ToWorld( Vector3( 0.0f, 0.0f, -0.5f ) ) );
-	const AkUInt64 backRoomID = ResolveRoomLocked( box.ToWorld( Vector3( 0.0f, 0.0f, 0.5f ) ) );
-	if( frontRoomID == portal.m_foundFrontRoomID && backRoomID == portal.m_foundBackRoomID )
+	const AkUInt64 foundFrontRoomID = ResolveRoomLocked( box.ToWorld( Vector3( 0.0f, 0.0f, -0.5f ) ) );
+	const AkUInt64 foundBackRoomID = ResolveRoomLocked( box.ToWorld( Vector3( 0.0f, 0.0f, 0.5f ) ) );
+	if( foundFrontRoomID == portal.m_foundFrontRoomID && foundBackRoomID == portal.m_foundBackRoomID )
 	{
 		portal.m_foundTicks = std::min( portal.m_foundTicks + 1, PORTAL_SAME_ROOM_WARNING_TICKS + 1 );
 	}
 	else
 	{
-		portal.m_foundFrontRoomID = frontRoomID;
-		portal.m_foundBackRoomID = backRoomID;
+		portal.m_foundFrontRoomID = foundFrontRoomID;
+		portal.m_foundBackRoomID = foundBackRoomID;
 		portal.m_foundTicks = 1;
 	}
+
+	const bool keepSentRooms = portal.m_sentToWwise && portal.m_foundTicks < PORTAL_ROOM_CHANGE_TICKS;
+	const AkUInt64 frontRoomID = keepSentRooms ? portal.m_frontRoomID : foundFrontRoomID;
+	const AkUInt64 backRoomID = keepSentRooms ? portal.m_backRoomID : foundBackRoomID;
 
 	if( frontRoomID == backRoomID )
 	{
