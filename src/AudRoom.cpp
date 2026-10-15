@@ -1,9 +1,9 @@
-////////////////////////////////////////////////////////////
-//
-// Creator: Phevos Rinis
-// Creation Date: Sep 2026
-// Copyright (c) 2026 CCP Games
-//
+/**
+ * @file AudRoom.cpp
+ * @author Phevos Rinis
+ * @date Sep 2026
+ * @copyright © 2026 Fenris Creations ehf.
+ */
 
 #include "stdafx.h"
 #include "AudRoom.h"

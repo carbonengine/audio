@@ -1,9 +1,9 @@
-////////////////////////////////////////////////////////////
-//
-// Creator: Phevos Rinis
-// Creation Date: Oct 2026
-// Copyright (c) 2026 CCP Games
-//
+/**
+ * @file AudPortal.h
+ * @author Phevos Rinis
+ * @date Oct 2026
+ * @copyright © 2026 Fenris Creations ehf.
+ */
 
 #pragma once
 
@@ -29,12 +29,14 @@ public:
 
 	EXPOSE_TO_BLUE();
 
-	// ITr2BoxVolume
+	/// Stores the portal's box. The portal is sent to Wwise on the next update.
 	void SetTransform( const Matrix& unitBoxToWorld ) override;
+	/// Called when the volume object is enabled or disabled.
 	void SetEnabled( bool enabled ) override;
+	/// Clears the box and removes the portal from Wwise.
 	void Remove() override;
 
-	// INotify
+	/// Called by Blue when an attribute changes.
 	bool OnModified( Be::Var* value ) override;
 
 	/// Portal ID, from the same ID space as game objects.

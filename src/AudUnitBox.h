@@ -1,9 +1,9 @@
-////////////////////////////////////////////////////////////
-//
-// Creator: Phevos Rinis
-// Creation Date: Oct 2026
-// Copyright (c) 2026 CCP Games
-//
+/**
+ * @file AudUnitBox.h
+ * @author Phevos Rinis
+ * @date Oct 2026
+ * @copyright © 2026 Fenris Creations ehf.
+ */
 
 #pragma once
 
