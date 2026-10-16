@@ -382,6 +382,9 @@ bool AudManager::InitSound()
 		CCP_LOG( "Carbon audio will be initialized with spatial audio enabled by using the Wwise audio "
 				 "device named %S.", m_settings->m_spatialAudioDeviceName.c_str() );
 		m_spatialAudioEnabled = true;
+#ifdef AK_MAC_OS_X
+		initSettings.settingsMainOutput.ePanningRule = AkPanningRule_Headphones;
+#endif
 	}
 	else
 	{
@@ -1033,6 +1036,9 @@ bool AudManager::EnableSpatialAudio()
 	const AkOutputDeviceID defaultOutputDeviceId = 0;
 	AkOutputSettings settings = AkOutputSettings();
 	settings.audioDeviceShareset = AK::SoundEngine::GetIDFromString( m_settings->m_spatialAudioDeviceName.c_str() );
+#ifdef AK_MAC_OS_X
+	settings.ePanningRule = AkPanningRule_Headphones;
+#endif
 	AKRESULT result = AK::SoundEngine::ReplaceOutput( settings, defaultOutputDeviceId );
 
 	if( result != AK_Success )
