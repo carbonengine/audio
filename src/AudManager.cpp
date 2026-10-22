@@ -23,6 +23,7 @@
 #include <AK/Plugin/MasteringSuiteFXFactory.h>
 #include <AK/Plugin/Ak3DAudioBedMixerFXFactory.h>
 #include <AK/Plugin/AkSidechainFXFactory.h>
+#include <AK/Plugin/AkConvolutionReverbFXFactory.h>
 
 #include "tbb/parallel_for.h"
 
