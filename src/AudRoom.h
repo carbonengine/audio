@@ -2,12 +2,14 @@
 //
 // Creator: Phevos Rinis
 // Creation Date: Sep 2026
-// Copyright (c) 2026 CCP Games
+// Copyright (c) 2026 Fenris Creations
 //
 
 #pragma once
 
 #include <ITr2BoxVolume.h>
+
+#include "AudUnitBox.h"
 
 #include <AK/SoundEngine/Common/AkTypes.h>
 #include <AK/SpatialAudio/Common/AkSpatialAudioTypes.h>
@@ -27,49 +29,114 @@ public:
 
 	EXPOSE_TO_BLUE();
 
-	// ITr2BoxVolume
+	/**
+	 * @brief Stores the room's box and sends the room to Wwise.
+	 *
+	 * @param unitBoxToWorld Maps the unit box to world space.
+	 */
 	void SetTransform( const Matrix& unitBoxToWorld ) override;
+
+	/**
+	 * @brief Called when the volume object is enabled or disabled.
+	 *
+	 * @param enabled Whether the volume object is enabled.
+	 */
 	void SetEnabled( bool enabled ) override;
+
+	/**
+	 * @brief Clears the box and removes the room from Wwise.
+	 */
 	void Remove() override;
 
-	// INotify
+	/**
+	 * @brief Called by Blue when an attribute changes.
+	 *
+	 * @param value The attribute that changed.
+	 *
+	 * @return Always true.
+	 */
 	bool OnModified( Be::Var* value ) override;
 
-	/// Room ID, from the same ID space as game objects.
+	/**
+	 * @brief Room ID, from the same ID space as game objects.
+	 */
 	AkUInt64 GetRoomID() const { return m_roomID; }
-	/// Name shown in the Wwise profiler.
-	const std::string& GetName() const { return m_name; }
-	/// Reverb aux bus name. Empty means no reverb.
-	const std::string& GetReverbAuxBus() const { return m_reverbAuxBus; }
-	float GetReverbLevel() const { return m_reverbLevel; }
-	float GetTransmissionLoss() const { return m_transmissionLoss; }
-	float GetPriority() const { return m_priority; }
-	float GetAuxSendLevelToSelf() const { return m_auxSendLevelToSelf; }
-	bool GetKeepRegistered() const { return m_keepRegistered; }
-	/// Room tone event. Empty means no room tone.
-	const std::wstring& GetRoomToneEvent() const { return m_roomToneEvent; }
-	/// True when the room and its volume object are both enabled.
-	bool IsEnabled() const { return m_enabled && m_shapeEnabled; }
-	bool HasTransform() const { return m_hasTransform; }
-	/// False when the box has a zero-length axis.
-	bool HasUsableShape() const { return m_shapeValid; }
-	const Matrix& GetUnitBoxToWorld() const { return m_unitBoxToWorld; }
-	/// Whether the room is in Wwise.
-	bool IsRegistered() const { return m_sentToWwise; }
 
-	/// Returns whether the point is inside the room, in right-handed world space.
-	bool ContainsPoint( const Vector3& worldPosition ) const;
-	/// Volume of the box, the smaller room wins when priorities are equal.
-	float GetVolume() const { return m_volume; }
+	/**
+	 * @brief Name shown in the Wwise profiler.
+	 */
+	const std::string& GetName() const { return m_name; }
+
+	/**
+	 * @brief Reverb aux bus name. Empty means no reverb.
+	 */
+	const std::string& GetReverbAuxBus() const { return m_reverbAuxBus; }
+
+	/**
+	 * @brief Send level [0, 1] from emitters in the room to the reverb bus.
+	 */
+	float GetReverbLevel() const { return m_reverbLevel; }
+
+	/**
+	 * @brief Transmission loss [0, 1] through the walls of the room.
+	 */
+	float GetTransmissionLoss() const { return m_transmissionLoss; }
+
+	/**
+	 * @brief The room with the highest priority wins when rooms overlap.
+	 */
+	float GetPriority() const { return m_priority; }
+
+	/**
+	 * @brief Send level [0, 1] from the room tone to the reverb bus.
+	 */
+	float GetAuxSendLevelToSelf() const { return m_auxSendLevelToSelf; }
+
+	/**
+	 * @brief Whether the room game object stays registered in Wwise.
+	 */
+	bool GetKeepRegistered() const { return m_keepRegistered; }
+
+	/**
+	 * @brief Room tone event. Empty means no room tone.
+	 */
+	const std::wstring& GetRoomToneEvent() const { return m_roomToneEvent; }
+
+	/**
+	 * @brief True when the room and its volume object are both enabled.
+	 */
+	bool IsEnabled() const { return m_enabled && m_shapeEnabled; }
+
+	/**
+	 * @brief Box of the room, set through ITr2BoxVolume.
+	 */
+	const AudUnitBox& GetBox() const { return m_box; }
+
+	/**
+	 * @brief Whether the room is in Wwise.
+	 */
+	bool IsRegistered() const { return m_sentToWwise; }
 
 private:
 	friend class AudRoomManager;
 
-	/// Registers with the room manager once it exists.
+	/**
+	 * @brief Registers with the room manager once it exists.
+	 *
+	 * @return True when the room is registered.
+	 */
 	bool EnsureRegistered();
-	/// Sends the room to Wwise, or removes it when disabled.
+
+	/**
+	 * @brief Sends the room to Wwise, or removes it when disabled.
+	 */
 	void Sync();
-	/// Stores the box. Called by AudRoomManager under its lock.
+
+	/**
+	 * @brief Stores the box. Called by AudRoomManager under its lock.
+	 *
+	 * @param unitBoxToWorld Maps the unit box to world space.
+	 */
 	void ApplyTransform( const Matrix& unitBoxToWorld );
 
 	AkUInt64 m_roomID;
@@ -87,11 +154,8 @@ private:
 	/// Set through ITr2BoxVolume::SetEnabled.
 	bool m_shapeEnabled;
 
-	Matrix m_unitBoxToWorld;
-	float m_volume;
-	bool m_shapeValid;
+	AudUnitBox m_box;
 	bool m_warnedDegenerate;
-	bool m_hasTransform;
 	bool m_sentToWwise;
 	bool m_registeredWithManager;
 
