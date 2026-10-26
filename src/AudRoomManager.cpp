@@ -677,14 +677,34 @@ void AudRoomManager::SyncPortalsLocked()
 
 void AudRoomManager::SyncPortalLocked( AudPortal& portal )
 {
-	const AudUnitBox& box = portal.GetBox();
-	if( !portal.IsEnabled() || !box.IsUsable() )
+	if( !portal.IsEnabled() || !portal.GetBox().IsUsable() )
 	{
 		portal.m_foundTicks = 0;
 		RemovePortalLocked( portal );
 		return;
 	}
 
+	AkUInt64 frontRoomID;
+	AkUInt64 backRoomID;
+	ChoosePortalRoomsLocked( portal, frontRoomID, backRoomID );
+
+	if( frontRoomID == backRoomID )
+	{
+		RemovePortalLocked( portal );
+		if( portal.m_foundTicks == PORTAL_SAME_ROOM_WARNING_TICKS )
+		{
+			CCP_LOGWARN_CH( s_ch, "Portal '%s' (%llu) has room %llu on both sides; it is not sent to Wwise until it crosses a room wall.",
+				portal.GetName().c_str(), portal.GetPortalID(), frontRoomID );
+		}
+		return;
+	}
+
+	SendPortalLocked( portal, frontRoomID, backRoomID );
+}
+
+void AudRoomManager::ChoosePortalRoomsLocked( AudPortal& portal, AkUInt64& frontRoomID, AkUInt64& backRoomID )
+{
+	const AudUnitBox& box = portal.GetBox();
 	const AkUInt64 foundFrontRoomID = ResolveRoomLocked( box.ToWorld( Vector3( 0.0f, 0.0f, -PORTAL_ROOM_LOOKUP_Z ) ) );
 	const AkUInt64 foundBackRoomID = ResolveRoomLocked( box.ToWorld( Vector3( 0.0f, 0.0f, PORTAL_ROOM_LOOKUP_Z ) ) );
 	if( foundFrontRoomID == portal.m_foundFrontRoomID && foundBackRoomID == portal.m_foundBackRoomID )
@@ -698,21 +718,15 @@ void AudRoomManager::SyncPortalLocked( AudPortal& portal )
 		portal.m_foundTicks = 1;
 	}
 
+	// New rooms must hold for a few updates, so a lookup point close to a room wall cannot make the portal flicker between rooms.
 	const bool keepSentRooms = portal.m_sentToWwise && portal.m_foundTicks < PORTAL_ROOM_CHANGE_TICKS;
-	const AkUInt64 frontRoomID = keepSentRooms ? portal.m_frontRoomID : foundFrontRoomID;
-	const AkUInt64 backRoomID = keepSentRooms ? portal.m_backRoomID : foundBackRoomID;
+	frontRoomID = keepSentRooms ? portal.m_frontRoomID : foundFrontRoomID;
+	backRoomID = keepSentRooms ? portal.m_backRoomID : foundBackRoomID;
+}
 
-	if( frontRoomID == backRoomID )
-	{
-		RemovePortalLocked( portal );
-		if( portal.m_foundTicks == PORTAL_SAME_ROOM_WARNING_TICKS )
-		{
-			CCP_LOGWARN_CH( s_ch, "Portal '%s' (%llu) has room %llu on both sides; it is not sent to Wwise until it crosses a room wall.",
-				portal.GetName().c_str(), portal.GetPortalID(), frontRoomID );
-		}
-		return;
-	}
-
+void AudRoomManager::SendPortalLocked( AudPortal& portal, AkUInt64 frontRoomID, AkUInt64 backRoomID )
+{
+	const AudUnitBox& box = portal.GetBox();
 	AkTransform transform;
 	RH2LH::convertTransform( box.GetUnitBoxToWorld(), transform );
 	const AkVector scale = RH2LH::extractScale( box.GetUnitBoxToWorld() );
@@ -735,14 +749,15 @@ void AudRoomManager::SyncPortalLocked( AudPortal& portal )
 		const AKRESULT result = AK::SpatialAudio::SetPortal( portal.GetPortalID(), params, name.c_str() );
 		if( result != AK_Success )
 		{
-			if( !portal.m_failureLogged )
+			if( !portal.m_setPortalFailureLogged )
 			{
 				CCP_LOGERR_CH( s_ch, "Failed to set portal '%s' (%llu), AKRESULT: %d", name.c_str(), portal.GetPortalID(), result );
-				portal.m_failureLogged = true;
+				portal.m_setPortalFailureLogged = true;
 			}
 			return;
 		}
 
+		portal.m_setPortalFailureLogged = false;
 		portal.m_sentPortalParams = params;
 		portal.m_sentName = name;
 	}
@@ -757,13 +772,10 @@ void AudRoomManager::SyncPortalLocked( AudPortal& portal )
 	portal.m_frontRoomID = frontRoomID;
 	portal.m_backRoomID = backRoomID;
 
-	if( SendPortalObstructionOcclusionLocked( portal ) )
-	{
-		portal.m_failureLogged = false;
-	}
+	SendPortalObstructionOcclusionLocked( portal );
 }
 
-bool AudRoomManager::SendPortalObstructionOcclusionLocked( AudPortal& portal )
+void AudRoomManager::SendPortalObstructionOcclusionLocked( AudPortal& portal )
 {
 	const float obstruction = std::clamp( portal.GetObstruction(), 0.0f, 1.0f );
 	const float occlusion = std::clamp( portal.GetOcclusion(), 0.0f, 1.0f );
@@ -774,26 +786,26 @@ bool AudRoomManager::SendPortalObstructionOcclusionLocked( AudPortal& portal )
 		&& occlusion == portal.m_sentOcclusion
 		&& transition == portal.m_sentTransition )
 	{
-		return true;
+		return;
 	}
 
 	const AKRESULT result = AK::SpatialAudio::SetPortalObstructionAndOcclusion( portal.GetPortalID(), obstruction, occlusion, transition );
 	if( result != AK_Success )
 	{
-		if( !portal.m_failureLogged )
+		if( !portal.m_obstructionOcclusionFailureLogged )
 		{
 			CCP_LOGWARN_CH( s_ch, "Failed to set obstruction and occlusion on portal '%s' (%llu), AKRESULT: %d",
 				portal.GetName().c_str(), portal.GetPortalID(), result );
-			portal.m_failureLogged = true;
+			portal.m_obstructionOcclusionFailureLogged = true;
 		}
-		return false;
+		return;
 	}
 
+	portal.m_obstructionOcclusionFailureLogged = false;
 	portal.m_obstructionOcclusionSent = true;
 	portal.m_sentObstruction = obstruction;
 	portal.m_sentOcclusion = occlusion;
 	portal.m_sentTransition = transition;
-	return true;
 }
 
 void AudRoomManager::RemovePortalLocked( AudPortal& portal )

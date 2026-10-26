@@ -167,8 +167,10 @@ private:
 	float m_sentObstruction;
 	float m_sentOcclusion;
 	bool m_sentTransition;
-	/// Set after a failed Wwise call is logged, so it is not logged again every update.
-	bool m_failureLogged;
+	/// Set after a failed SetPortal is logged, so it is not logged again every update.
+	bool m_setPortalFailureLogged;
+	/// Set after a failed SetPortalObstructionAndOcclusion is logged, so it is not logged again every update.
+	bool m_obstructionOcclusionFailureLogged;
 };
 
 TYPEDEF_BLUECLASS( AudPortal );

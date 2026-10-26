@@ -32,7 +32,8 @@ AudPortal::AudPortal( IRoot* lockobj ) :
 	m_sentObstruction( 0.0f ),
 	m_sentOcclusion( 0.0f ),
 	m_sentTransition( false ),
-	m_failureLogged( false )
+	m_setPortalFailureLogged( false ),
+	m_obstructionOcclusionFailureLogged( false )
 {
 	EnsureRegistered();
 }

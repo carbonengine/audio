@@ -3,6 +3,7 @@
 # Test-only Blue module for the Python tests. Built with the tests, never installed.
 ccp_add_library(CarbonAudioTests SHARED
 	FakeObstructionQuery.cpp
+	FakeVolumeObject.cpp
 )
 
 target_link_libraries(CarbonAudioTests PRIVATE Blue)

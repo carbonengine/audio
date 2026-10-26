@@ -244,13 +244,29 @@ private:
 	void SyncPortalLocked( AudPortal& portal );
 
 	/**
+	 * @brief Finds the rooms past the portal's front and back faces. Caller holds m_mutex.
+	 *
+	 * @param portal      The portal.
+	 * @param frontRoomID Set to the room on the front side.
+	 * @param backRoomID  Set to the room on the back side.
+	 */
+	void ChoosePortalRoomsLocked( AudPortal& portal, AkUInt64& frontRoomID, AkUInt64& backRoomID );
+
+	/**
+	 * @brief Sends the portal between two different rooms when anything changed. Caller holds m_mutex.
+	 *
+	 * @param portal      The portal to send.
+	 * @param frontRoomID Room on the front side.
+	 * @param backRoomID  Room on the back side.
+	 */
+	void SendPortalLocked( AudPortal& portal, AkUInt64 frontRoomID, AkUInt64 backRoomID );
+
+	/**
 	 * @brief Sends the portal's obstruction and occlusion when they changed. Caller holds m_mutex.
 	 *
 	 * @param portal The portal to send them for.
-	 *
-	 * @return False when Wwise refused them.
 	 */
-	bool SendPortalObstructionOcclusionLocked( AudPortal& portal );
+	void SendPortalObstructionOcclusionLocked( AudPortal& portal );
 
 	/**
 	 * @brief Removes one portal from Wwise. Caller holds m_mutex.
