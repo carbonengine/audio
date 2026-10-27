@@ -19,7 +19,7 @@
 BLUE_DECLARE( AudConfig );
 BLUE_DECLARE( AudGameObjResource );
 BLUE_DECLARE_INTERFACE( IAudActionLog );
-BLUE_DECLARE_INTERFACE( IEveObstructionQuery );
+BLUE_DECLARE_INTERFACE( IEveObstructionQuery2 );
 
 typedef std::vector<std::wstring> BankVector;
 typedef std::vector<AkGameObjectID> GameObjIDVector;
@@ -151,9 +151,9 @@ public:
 	// How fast obstruction/occlusion values fade towards their targets, in units per second.
 	float GetObstructionOcclusionFadeRate() const;
 	void SetObstructionOcclusionFadeRate( float value );
-	// The game's sightline query, or null if the game feeds blockage values itself. See IEveObstructionQuery.h.
-	IEveObstructionQuery* GetObstructionQuery() const;
-	void SetObstructionQuery( IEveObstructionQuery* query );
+	// The game's sightline query, or null if the game feeds blockage values itself. See IEveObstructionQuery2.h.
+	IEveObstructionQuery2* GetObstructionQuery() const;
+	void SetObstructionQuery( IEveObstructionQuery2* query );
 	// Can be called to see if the current platform supports spatial audio.
 	const bool SpatialAudioIsSupported();
 	// Stop all currently playing sounds on all game objects.
@@ -311,9 +311,9 @@ private:
 	//Debug
 	IAudActionLogPtr m_log;
 
-	// Set from script once per session, exposed as "obstructionQuery". See IEveObstructionQuery.h.
+	// Set from script once per session, exposed as "obstructionQuery". See IEveObstructionQuery2.h.
 	// Weak so audio never keeps the ballpark alive after the game lets go of it.
-	BlueWeakRef<IEveObstructionQuery> m_obstructionQuery;
+	BlueWeakRef<IEveObstructionQuery2> m_obstructionQuery;
 
 
 

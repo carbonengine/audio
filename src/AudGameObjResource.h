@@ -106,6 +106,10 @@ public:
 	bool TakeOcclusionOnsetPending();
 	// Sets the onset flag again, for when the check could not run this tick.
 	void MarkOcclusionOnsetPending();
+	// Set the ball this game object is mounted on. The sightline query skips that ball's geometry for it.
+	void SetParentBall( IRoot* ball );
+	// The ball this game object is mounted on, or null when it is free or the ball has gone away.
+	IRoot* GetParentBall() const;
 
 
 	// Callbacks
@@ -167,6 +171,8 @@ protected:
 	std::wstring m_eventName;
 	PAudParameterVector m_parameters;
 	Vector3 m_position;
+	// The ball this game object is mounted on, held weakly so audio never keeps a ball alive. Main thread only.
+	BlueWeakRef<IRoot> m_parentBall;
 	Orientation m_parentOrientation;
 	Orientation m_effectiveOrientation;
 	Quaternion m_authoredRotation;

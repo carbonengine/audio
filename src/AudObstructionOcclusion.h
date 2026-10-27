@@ -24,7 +24,7 @@ struct Vector3;
  * @brief Owns the obstruction and occlusion of every emitter and feeds those values to Wwise.
  *
  * Blockage comes from destiny when a sightline query is set on AudManager (see
- * IEveObstructionQuery.h), otherwise from the game through SetEmitterLineOfSightBlockage. Either
+ * IEveObstructionQuery2.h), otherwise from the game through SetEmitterLineOfSightBlockage. Either
  * way it fades while the emitter is playing so sounds do not pop, and snaps when it is silent.
  */
 class AudObstructionOcclusion
@@ -174,8 +174,12 @@ private:
 
 	// Reused by the sightline pass so it does not allocate every tick. Audio tick only.
 	// m_blocked is a plain array because std::vector<bool> can't give out a bool*.
+	// m_parentRefs keeps each emitter's parent ball alive for the query, m_parents is the same balls as the
+	// raw array the query takes. Both are emptied right after it.
 	std::vector<Candidate> m_candidates;
 	std::vector<Vector3> m_targets;
+	std::vector<IRootPtr> m_parentRefs;
+	std::vector<IRoot*> m_parents;
 	std::unique_ptr<bool[]> m_blocked;
 	size_t m_blockedCapacity;
 

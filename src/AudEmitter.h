@@ -7,6 +7,7 @@
 #include <IBlueEventListener.h>
 #include <ITr2DebugRenderer2.h>
 #include <ITr2AudEmitter.h>
+#include <ITr2AudParentBall.h>
 
 #include "AudGameObjResource.h"
 #include "AudPosition.h"
@@ -25,7 +26,8 @@ BLUE_CLASS( AudEmitter ) :
 	public IBluePlacementObserver,
 	public AudGameObjResource,
 	public ITr2DebugRenderable,
-	public ITr2AudEmitter
+	public ITr2AudEmitter,
+	public ITr2AudParentBall
 {
 public:
 	AudEmitter( IRoot* lockobj = NULL );
@@ -57,6 +59,8 @@ public:
 	void SetVisibility( bool isVisible ) override;
 	std::string GetName() override;
 	void Unmute() override;
+	//ITr2AudParentBall
+	void SetParentBall( IRoot* ball ) override;
 	// Debug
 	virtual	void GetDebugOptions( Tr2DebugRendererOptions& options ) override;
 	virtual	void RenderDebugInfo( ITr2DebugRenderer2& renderer ) override;
