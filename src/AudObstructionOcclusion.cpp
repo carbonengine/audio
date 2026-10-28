@@ -8,7 +8,7 @@
 #include "AudObstructionOcclusion.h"
 #include "AudGameObjResource.h"
 #include "AudManager.h"
-#include "IEveObstructionQuery.h"
+#include "IEveObstructionQuery2.h"
 
 #include <algorithm>
 
@@ -148,7 +148,7 @@ void AudObstructionOcclusion::RunSightlinePass(std::chrono::steady_clock::time_p
 	}
 
 	// Keep our own reference, script can reassign the query at any time.
-	IEveObstructionQueryPtr query = m_audioManager->GetObstructionQuery();
+	IEveObstructionQuery2Ptr query = m_audioManager->GetObstructionQuery();
 	if (query == nullptr)
 	{
 		return;
@@ -169,7 +169,7 @@ void AudObstructionOcclusion::RunSightlinePass(std::chrono::steady_clock::time_p
 		m_hasRefreshed = true;
 	}
 
-	// Copy out ids and positions under the prioritization lock so no emitter pointer is kept after it.
+	// Copy out ids, positions and parent balls under the prioritization lock so no emitter pointer is kept after it.
 	m_candidates.clear();
 	m_targets.clear();
 	m_audioManager->ForEachAwakeAudioEmitter([&](AudGameObjResource* emitter)
@@ -202,6 +202,7 @@ void AudObstructionOcclusion::RunSightlinePass(std::chrono::steady_clock::time_p
 		}
 		m_candidates.push_back({ emitter->GetID(), onset });
 		m_targets.push_back(emitter->GetPosition());
+		m_parentRefs.emplace_back(emitter->GetParentBall());
 	});
 
 	const size_t count = m_candidates.size();
@@ -221,8 +222,18 @@ void AudObstructionOcclusion::RunSightlinePass(std::chrono::steady_clock::time_p
 		m_blockedCapacity = count;
 	}
 
+	for (const IRootPtr& parent : m_parentRefs)
+	{
+		m_parents.push_back(parent);
+	}
+
 	// No audio lock is held while the game runs its ray tests.
-	const bool answered = query->QuerySightlines(source, m_targets.data(), static_cast<unsigned int>(count), m_blocked.get());
+	const bool answered = query->QuerySightlines(source, m_targets.data(), m_parents.data(), static_cast<unsigned int>(count), m_blocked.get());
+
+	// Audio must not keep balls alive past the query.
+	m_parents.clear();
+	m_parentRefs.clear();
+
 	if (!answered)
 	{
 		// Keep the last results and flag the onsets again so they get checked next tick.

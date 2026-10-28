@@ -361,6 +361,20 @@ void AudGameObjResource::MarkOcclusionOnsetPending()
 	m_occlusionOnsetPending.store( true, std::memory_order_release );
 }
 
+void AudGameObjResource::SetParentBall( IRoot* ball )
+{
+	// Trinity calls this every frame, skip the weak ref bookkeeping when nothing changed.
+	if( static_cast<IRoot*>( m_parentBall ) != ball )
+	{
+		m_parentBall = ball;
+	}
+}
+
+IRoot* AudGameObjResource::GetParentBall() const
+{
+	return m_parentBall;
+}
+
 bool AudGameObjResource::StopEvent( const std::wstring& eventName, uint32_t fadeOutDuration )
 {
 	bool stopped = false;
