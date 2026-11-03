@@ -18,7 +18,7 @@
 #include <CcpMutex.h>
 
 class AudManager;
-struct Vector3;
+struct EveSightlineTarget;
 
 /**
  * @brief Owns the obstruction and occlusion of every emitter and feeds those values to Wwise.
@@ -174,12 +174,10 @@ private:
 
 	// Reused by the sightline pass so it does not allocate every tick. Audio tick only.
 	// m_blocked is a plain array because std::vector<bool> can't give out a bool*.
-	// m_parentRefs keeps each emitter's parent ball alive for the query, m_parents is the same balls as the
-	// raw array the query takes. Both are emptied right after it.
+	// m_parentRefs keeps the parent balls in m_targets alive for the query and is emptied right after it.
 	std::vector<Candidate> m_candidates;
-	std::vector<Vector3> m_targets;
+	std::vector<EveSightlineTarget> m_targets;
 	std::vector<IRootPtr> m_parentRefs;
-	std::vector<IRoot*> m_parents;
 	std::unique_ptr<bool[]> m_blocked;
 	size_t m_blockedCapacity;
 

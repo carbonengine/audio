@@ -20,7 +20,7 @@ public:
 
 	EXPOSE_TO_BLUE();
 
-	bool QuerySightlines( const Vector3& source, const Vector3* targets, IRoot* const* targetParents, unsigned int targetCount, bool* outBlocked ) override
+	bool QuerySightlines( const Vector3& source, const EveSightlineTarget* targets, unsigned int targetCount, bool* outBlocked ) override
 	{
 		if( !m_hasAnswer )
 		{
@@ -28,7 +28,7 @@ public:
 		}
 		for( unsigned int i = 0; i < targetCount; ++i )
 		{
-			const bool onClearParent = m_clearParent != nullptr && targetParents[i] == m_clearParent;
+			const bool onClearParent = m_clearParent != nullptr && targets[i].parent == m_clearParent;
 			outBlocked[i] = m_blocked && !onClearParent;
 		}
 		return true;
