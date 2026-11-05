@@ -7,6 +7,7 @@
 
 BLUE_DEFINE( AudEmitter );
 BLUE_DEFINE_INTERFACE( ITr2AudEmitter );
+BLUE_DEFINE_INTERFACE( ITr2AudParentBall );
 
 void AudEmitter::Py__init__( const std::string& name )
 {
@@ -20,6 +21,7 @@ const Be::ClassInfo* AudEmitter::ExposeToBlue()
 		MAP_INTERFACE( IBlueEventListener )
 		MAP_INTERFACE( IBluePlacementObserver )
 		MAP_INTERFACE( ITr2AudEmitter )
+		MAP_INTERFACE( ITr2AudParentBall )
 		MAP_INTERFACE( ITr2DebugRenderable )
 
 		MAP_ATTRIBUTE( "rotation", m_authoredRotation, "Authored local audio rotation used by placement providers.\n:jessica-group: Audio Placement", Be::READWRITE | Be::PERSIST | Be::NOTIFY )

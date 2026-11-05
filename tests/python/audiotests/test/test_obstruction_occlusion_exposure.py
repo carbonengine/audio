@@ -67,6 +67,11 @@ class TestObstructionOcclusionExposure(BaseAudio2TestClass):
         """True or False from the last sightline pass, or None if the emitter was not checked."""
         return self.manager.GetLastSightlineResults().get(self.emitter.ID)
 
+    def MakeStandInBall(self):
+        """Any Blue object can stand in for a destiny ball, audio passes it through without looking inside."""
+        import blue
+        return blue.LoadExtension("_audiotests").FakeObstructionQuery()
+
     def test_a_silent_emitter_snaps_to_new_values(self):
         """Nothing is playing so there is nothing to pop, every value applies at once even at a slow fade rate."""
         self.manager.obstructionOcclusionFadeRate = SLOW_FADE_RATE
@@ -246,3 +251,54 @@ class TestObstructionOcclusionExposure(BaseAudio2TestClass):
         self.Pump(times=1)
         self.assertIs(self.GetSightlineResult(), True, "The woken emitter was not checked.")
         self.assertEqual(self.GetOcclusion(), 1.0, "The woken emitter did not start blocked.")
+
+    def test_an_emitter_is_not_blocked_by_the_ball_it_is_mounted_on(self):
+        """The parent ball reaches the query with its emitter, so the query can skip that ball's geometry."""
+        query = self.UseFakeQuery(blocked=True)
+        ball = self.MakeStandInBall()
+        query.clearParent = ball
+        self.emitter.parentBall = ball
+
+        self.MakeAudible()
+        self.Pump()
+        self.assertIs(self.GetSightlineResult(), False, "The emitter was blocked by the ball it is mounted on.")
+
+        self.emitter.parentBall = None
+        self.Pump()
+        self.assertIs(self.GetSightlineResult(), True, "An emitter with no parent ball was not blocked.")
+
+    def test_each_emitter_is_checked_with_its_own_parent_ball(self):
+        """Two emitters on different balls in one pass, each parent ball stays paired with its own emitter."""
+        import audio2
+        query = self.UseFakeQuery(blocked=True)
+        ball = self.MakeStandInBall()
+        otherBall = self.MakeStandInBall()
+        query.clearParent = ball
+        self.emitter.parentBall = ball
+
+        other = audio2.AudEmitter("occlusionTestOtherEmitter")
+        other.SetPlacement((0, 0, 0), (0, 0, 0), (0, 0, 0))
+        other.parentBall = otherBall
+        self.addCleanup(other.StopAll)
+
+        # Both loops start before the next tick, so one pass checks both emitters.
+        audio2.GetListener().SetPosition((0, 0, 0), (0, 0, 0), (0, 0, 0))
+        self.assertTrue(WaitForSoundBanksToLoad([LOOP_EVENT]), "Timed out waiting for the test SoundBank to load.")
+        for emitter in (self.emitter, other):
+            self.assertTrue(WaitForEmitterToWake(emitter), "Timed out waiting for an emitter to be woken up.")
+        for emitter in (self.emitter, other):
+            self.assertGreater(emitter.SendEvent(LOOP_EVENT), 0, "A loop did not start playing.")
+        self.Pump()
+
+        results = self.manager.GetLastSightlineResults()
+        self.assertIs(results.get(self.emitter.ID), False, "The emitter was blocked by the ball it is mounted on.")
+        self.assertIs(results.get(other.ID), True, "The emitter on another ball was not blocked.")
+
+    def test_the_parent_ball_is_held_weakly(self):
+        """Audio must not keep a ball alive, the emitter forgets it once it goes away."""
+        ball = self.MakeStandInBall()
+        self.emitter.parentBall = ball
+        self.assertIsNotNone(self.emitter.parentBall, "The emitter did not keep its parent ball.")
+
+        ball = None
+        self.assertIsNone(self.emitter.parentBall, "The emitter kept its parent ball alive.")

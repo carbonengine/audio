@@ -32,6 +32,7 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 		MAP_ATTRIBUTE( "forceCullingState", m_forceCullingState, "Whether this game object's culling state is currently forced and not automatically\n:jessica-hidden: True", Be::READ )
 		MAP_ATTRIBUTE( "eventName", m_eventName, "The audio event that you want played on this audio object when it is initially created", Be::READWRITE | Be::PERSIST | Be::NOTIFY )
 		MAP_ATTRIBUTE( "position", m_position, "The position of this game object as audio sees it.\n:jessica-hidden: True", Be::READ )
+		MAP_PROPERTY( "parentBall", GetParentBall, SetParentBall, "The ball this game object is mounted on, normally set by trinity. Held weakly. The sightline query skips this ball's geometry so the object it sits on doesn't occlude it.\n:jessica-hidden: True" )
 
 		MAP_PROPERTY_READONLY
 		( 

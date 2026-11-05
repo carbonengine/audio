@@ -122,6 +122,11 @@ void AudEmitter::SetVisibility( bool isVisible )
 	m_isVisible = isVisible;
 }
 
+void AudEmitter::SetParentBall( IRoot* ball )
+{
+	AudGameObjResource::SetParentBall( ball );
+}
+
 void AudEmitter::GetDebugOptions( Tr2DebugRendererOptions& options )
 {
 	options.insert( AUDIO_ATTENUATION_SPHERE_DEBUG_OPTION );

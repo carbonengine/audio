@@ -4,9 +4,10 @@
 class OcclusionManager(object):
     """Wrapper for Carbon Audio's line-of-sight obstruction/occlusion API.
 
-    Set ``query`` to the destiny ballpark and Carbon Audio checks line of sight itself. Otherwise
-    feed blockage per emitter through SetEmitterLineOfSightBlockage; those values never time out,
-    so keeping them fresh is the caller's job.
+    Set ``query`` to the destiny ballpark and Carbon Audio checks line of sight itself. Each emitter
+    passes along the ball it is mounted on (``AudEmitter.parentBall``, set by trinity), and that ball
+    never occludes its own emitters. Otherwise feed blockage per emitter through
+    SetEmitterLineOfSightBlockage; those values never time out, so keeping them fresh is the caller's job.
 
     Reached through AudioManager as audioManager.occlusion rather than constructed directly.
     """

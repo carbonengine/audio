@@ -24,7 +24,7 @@ Carbon Audio builds as `_audio2`, a Blue module that Python imports. The [`audio
 |---|---|
 | Blue (`carbon-blue`) | Object model, Python exposure and resource paths. Every Carbon Audio class is a Blue class. |
 | Trinity audio API (`carbon-trinityaudioapi`) | Interfaces such as `ITr2AudEmitter` and `ITr2AudGeometry` that let Trinity own emitters and push geometry without linking Wwise. |
-| Destiny | The game's ballpark implements [`IEveObstructionQuery`](include/IEveObstructionQuery.h) to answer line-of-sight queries for occlusion. |
+| Destiny | The game's ballpark implements [`IEveObstructionQuery2`](include/IEveObstructionQuery2.h) to answer line-of-sight queries for occlusion. Each emitter's parent ball goes with it so the ball it is mounted on never occludes it. |
 | Math (`carbon-math`) | Vector and matrix types. |
 | exefile (`carbon-exefile`) | Hosts the Python test suite. |
 | Wwise | The sound engine and its effect plugins. |
