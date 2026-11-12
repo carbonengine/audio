@@ -44,6 +44,7 @@ ccp_add_library(CarbonAudio SHARED
 	src/AudGameObjResource.cpp
 	src/AudGeometry.cpp
 	src/AudGeometry_Blue.cpp
+	src/AudJobWorkerPool.cpp
     src/AudObstructionOcclusion.cpp
 	src/AudPortal.cpp
 	src/AudPortal_Blue.cpp
@@ -91,6 +92,7 @@ target_sources(CarbonAudio PRIVATE
 	src/AudUIPlayer.h
 	src/AudMusicPlayer.h
 	src/AudGeometry.h
+	src/AudJobWorkerPool.h
     src/AudObstructionOcclusion.h
 	src/AudPortal.h
 	src/AudRoom.h

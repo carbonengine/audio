@@ -12,7 +12,7 @@ AUDIO_STATE_ENABLED = 2
 
 class AudioManager(object):
     """Wrapper for Carbon Audio's AudManager class. Provides an easier entry point into CarbonAudio and gives some additional helper methods for loading/unloading SoundBanks.""" 
-    def __init__(self, baseSoundbankPath, languageDirectory, applicationName, stereoAudioDeviceName="", spatialAudioDeviceName="", spatialAudioEnabled=True):
+    def __init__(self, baseSoundbankPath, languageDirectory, applicationName, stereoAudioDeviceName="", spatialAudioDeviceName="", spatialAudioEnabled=True, jobWorkerThreads=0):
         """
         :param baseSoundbankPath: The base SoundBank blue path where all SoundBanks are kept. This path must have been  registered 
                                   as a path using blue.SetSearchPath() and this must follow the blue path convention 
@@ -34,6 +34,10 @@ class AudioManager(object):
                                     Note: even if this is set to True, spatial audio will still not work if the user's current output device is not
                                     configured to leverage a spatial audio endpoint (e.g. Dolby Atmos or Windows Sonic for Headphones).
         :type spatialAudioDeviceName: bool 
+        :param jobWorkerThreads: An optional parameter for how many threads run Wwise's audio jobs next to its audio thread, which spreads a busy
+                                 audio frame over several cores. Defaults to 0, where all audio is processed on the audio thread. Capped at 8
+                                 and at one less than the machine's logical cores.
+        :type jobWorkerThreads: int
         """
         self.defaultSoundBanks = []
         self.manager = audio2.GetOrCreateManager()
@@ -47,7 +51,8 @@ class AudioManager(object):
             applicationName, 
             stereoAudioDeviceName=stereoAudioDeviceName, 
             spatialAudioDeviceName=spatialAudioDeviceName,
-            spatialAudioEnabled=spatialAudioEnabled
+            spatialAudioEnabled=spatialAudioEnabled,
+            jobWorkerThreads=jobWorkerThreads
         )
         self.manager.UpdateSettings(self.settings)
 
@@ -248,7 +253,7 @@ class AudioManager(object):
         """Returns the current state of the profiling capture."""
         return self.manager.IsProfilerCapturing()
 
-    def _CreateAudioSettings(self, baseSoundbankPath, language, applicationName, stereoAudioDeviceName="", spatialAudioDeviceName="", spatialAudioEnabled=True):
+    def _CreateAudioSettings(self, baseSoundbankPath, language, applicationName, stereoAudioDeviceName="", spatialAudioDeviceName="", spatialAudioEnabled=True, jobWorkerThreads=0):
         """Create audio settings to be used by CarbonAudio.
 
         :param baseSoundbankPath: The base SoundBank blue path where all SoundBanks are kept. This path must have been  registered 
@@ -271,6 +276,10 @@ class AudioManager(object):
                                     Note: even if this is set to True, spatial audio will still not work if the user's current output device is not
                                     configured to leverage a spatial audio endpoint (e.g. Dolby Atmos or Windows Sonic for Headphones).
         :type spatialAudioDeviceName: bool 
+        :param jobWorkerThreads: An optional parameter for how many threads run Wwise's audio jobs next to its audio thread, which spreads a busy
+                                 audio frame over several cores. Defaults to 0, where all audio is processed on the audio thread. Capped at 8
+                                 and at one less than the machine's logical cores.
+        :type jobWorkerThreads: int
         :return: An audio2.AudSettings instance with the given values.
         """
         settings = audio2.AudSettings()
@@ -278,6 +287,10 @@ class AudioManager(object):
         settings.baseSoundbankPath = baseSoundbankPath
         settings.soundbankLanguage = language 
         settings.spatialAudioEnabled = spatialAudioEnabled
+
+        # Left alone when off, so this wrapper keeps working with a Carbon Audio binary from before the setting existed.
+        if jobWorkerThreads:
+            settings.jobWorkerThreads = jobWorkerThreads
 
         if stereoAudioDeviceName:
             settings.stereoAudioDeviceName = stereoAudioDeviceName
