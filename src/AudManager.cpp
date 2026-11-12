@@ -27,6 +27,9 @@
 
 #include "tbb/parallel_for.h"
 
+#include <algorithm>
+#include <thread>
+
 #include "AudActionLog.h"
 #include "AudEmitter.h"
 #include "AudGeometryManager.h"
@@ -209,6 +212,14 @@ void AudManager::Terminate()
 		// Terminate the sound engine
 		AK::SoundEngine::Term();
 	}
+
+	// Wwise needs its job workers until Term returns, and they need the memory manager to shut down.
+	if( m_jobWorkers.GetThreadCount() > 0 )
+	{
+		m_jobWorkers.Stop();
+		CCP_LOG_CH( s_ch, "Wwise job worker threads stopped." );
+	}
+	m_jobWorkersActive = 0;
 
 	// Terminate the streaming manager
 	m_lowLevelIO.Term();
@@ -405,10 +416,29 @@ bool AudManager::InitSound()
 
 	if( !AK::SoundEngine::IsInitialized() )
 	{
+		const uint32_t jobWorkerThreads = AudJobWorkerPool::ClampThreadCount( m_settings->m_jobWorkerThreads, std::thread::hardware_concurrency() );
+		if( jobWorkerThreads > 0 )
+		{
+			if( m_jobWorkers.Start( jobWorkerThreads ) )
+			{
+				m_jobWorkers.FillSettings( initSettings.settingsJobManager );
+			}
+			else
+			{
+				CCP_LOGWARN_CH( s_ch, "Wwise job worker threads failed to start, audio is processed on the audio thread only." );
+			}
+		}
+
 		if( AK::SoundEngine::Init( &initSettings, &platformInitSettings ) != AK_Success )
 		{
+			m_jobWorkers.Stop();
 			CCP_LOGERR( "Failed to initialize Wwise Sound Engine" );
 			return false;
+		}
+		m_jobWorkersActive = GetJobWorkerThreadCount();
+		if( m_jobWorkersActive > 0 )
+		{
+			CCP_LOG_CH( s_ch, "Wwise audio jobs run on %d worker threads next to the audio thread.", m_jobWorkersActive );
 		}
 
 		if( AK::SoundEngine::RegisterGlobalCallback( GlobalCallbackEndRender, AkGlobalCallbackLocation_EndRender, this ) != AK_Success )
@@ -1549,6 +1579,41 @@ AKRESULT AudManager::StopProfilerCapture()
 bool AudManager::IsProfilerCapturing() const
 {
 	return m_isProfilerCapturing;
+}
+
+int AudManager::GetJobWorkerThreadCount() const
+{
+	return static_cast<int>( m_jobWorkers.GetThreadCount() );
+}
+
+int AudManager::GetJobWorkersActive() const
+{
+	return m_jobWorkersActive;
+}
+
+long long AudManager::GetJobWorkerRequestsServed() const
+{
+	return static_cast<long long>( m_jobWorkers.GetServedRequestCount() );
+}
+
+void AudManager::SetJobWorkersActive( int value )
+{
+	const int threadCount = GetJobWorkerThreadCount();
+	if( threadCount == 0 || !AK::SoundEngine::IsInitialized() )
+	{
+		return;
+	}
+
+	const int active = std::clamp( value, 1, threadCount );
+	for( AkJobType jobType = 0; jobType < AK_NUM_JOB_TYPES; ++jobType )
+	{
+		if( AK::SoundEngine::SetJobMgrMaxActiveWorkers( jobType, static_cast<AkUInt32>( active ) ) != AK_Success )
+		{
+			CCP_LOGERR_CH( s_ch, "Failed to set the active Wwise job workers to %d.", active );
+			return;
+		}
+	}
+	m_jobWorkersActive = active;
 }
 
 #ifndef AK_OPTIMIZED

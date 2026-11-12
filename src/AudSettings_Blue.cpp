@@ -55,5 +55,13 @@ const Be::ClassInfo* AudSettings::ExposeToBlue()
 			Be::READWRITE 
 		)
 		MAP_ATTRIBUTE("essentialPath", m_essentialPath, "The path for essential media.", Be::READWRITE )
+		MAP_ATTRIBUTE(
+			"jobWorkerThreads",
+			m_jobWorkerThreads,
+			"Threads that run Wwise's audio jobs next to its audio thread, so a busy audio frame is spread over several cores. "
+			"0, the default, processes all audio on the audio thread. Capped at 8 and at one less than the machine's logical cores. "
+			"Read when Carbon Audio initializes.",
+			Be::READWRITE
+		)
 	EXPOSURE_END()
 }

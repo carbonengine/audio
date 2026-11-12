@@ -51,7 +51,36 @@ def check_audio2_import():
               "Original error: {2}".format(buildflavor, pythonpath, error_msg), file=sys.stderr)
         sys.exit(1)
 
+def apply_job_worker_override():
+    """Run every test with Wwise job worker threads when AUDIOTESTS_JOB_WORKER_THREADS is set."""
+    threads = int(os.environ.get("AUDIOTESTS_JOB_WORKER_THREADS", "0"))
+    if threads <= 0:
+        return
+
+    import audio2
+    from audio2.audiomanager import AudioManager
+
+    # Tests build their settings either straight from audio2.AudSettings or through the AudioManager wrapper.
+    create_settings = audio2.AudSettings
+
+    def create_settings_with_job_workers():
+        settings = create_settings()
+        settings.jobWorkerThreads = threads
+        return settings
+
+    audio2.AudSettings = create_settings_with_job_workers
+
+    create_audio_settings = AudioManager._CreateAudioSettings
+
+    def create_audio_settings_with_job_workers(self, *args, **kwargs):
+        settings = create_audio_settings(self, *args, **kwargs)
+        settings.jobWorkerThreads = threads
+        return settings
+
+    AudioManager._CreateAudioSettings = create_audio_settings_with_job_workers
+
 if __name__ == "__main__":
     check_audio2_import()
+    apply_job_worker_override()
     unittest.main(module=None, testRunner=TaskletTestRunner())
     main()
