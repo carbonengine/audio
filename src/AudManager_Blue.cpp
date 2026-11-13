@@ -48,9 +48,18 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		MAP_PROPERTY( "loadBalancingSpread", GetLoadBalancingSpread, SetLoadBalancingSpread, "Spread path computation over N frames [1..]. 1 = no load balancing.")
 		MAP_PROPERTY( "enableDiffractionAndTransmission", GetEnableDiffractionAndTransmission, SetEnableDiffractionAndTransmission, "Enable geometric diffraction and transmission path computation.")
 		MAP_PROPERTY( "calcEmitterVirtualPosition", GetCalcEmitterVirtualPosition, SetCalcEmitterVirtualPosition, "Calculate virtual position for emitters diffracted through portals or around geometry.")
-		MAP_PROPERTY( "transmissionLoss", GetTransmissionLoss, SetTransmissionLoss, "Per-mesh setting: transmission loss [0.0-1.0] applied to geometry surfaces when meshes are registered.")
-		MAP_PROPERTY( "enableDiffraction", GetEnableDiffraction, SetEnableDiffraction, "Per-mesh setting: enable or disable geometric diffraction on mesh geometry.")
-		MAP_PROPERTY( "enableDiffractionOnBoundaryEdges", GetEnableDiffractionOnBoundaryEdges, SetEnableDiffractionOnBoundaryEdges, "Per-mesh setting: switch to enable or disable geometric diffraction on boundary edges for this mesh.")
+		MAP_PROPERTY( "transmissionLoss", GetTransmissionLoss, SetTransmissionLoss, "Transmission loss [0.0-1.0] of mesh surfaces. 0 makes Wwise ignore the mesh.")
+		MAP_PROPERTY( "enableDiffraction", GetEnableDiffraction, SetEnableDiffraction, "Whether sound diffracts around mesh edges.")
+		MAP_PROPERTY( "enableDiffractionOnBoundaryEdges", GetEnableDiffractionOnBoundaryEdges, SetEnableDiffractionOnBoundaryEdges, "Whether sound diffracts around mesh edges that belong to one triangle only.")
+		MAP_PROPERTY( "geometrySolid", GetGeometrySolid, SetGeometrySolid, "Whether a mesh is a closed volume that applies transmission loss once per pass through it. Has no effect while the Wwise transmission operation is max, its default.")
+
+		MAP_PROPERTY( "geometryMaxDistance", GetGeometryMaxDistance, SetGeometryMaxDistance, "Furthest a mesh can be from the listener and still be in Wwise, in game units. 0 for no limit.")
+		MAP_PROPERTY( "geometryMaxTriangles", GetGeometryMaxTriangles, SetGeometryMaxTriangles, "Most mesh triangles in Wwise at once; the meshes nearest the listener go first. 0 for no limit.")
+
+		MAP_PROPERTY_READONLY( "geometryInstancesRegistered", GetGeometryInstancesRegistered, "Geometry instances trinity registered, in Wwise or not, as of the last tick." )
+		MAP_PROPERTY_READONLY( "geometrySetsInWwise", GetGeometrySetsInWwise, "Geometry sets in Wwise as of the last tick." )
+		MAP_PROPERTY_READONLY( "geometryInstancesInWwise", GetGeometryInstancesInWwise, "Geometry instances in Wwise as of the last tick." )
+		MAP_PROPERTY_READONLY( "geometryTrianglesInWwise", GetGeometryTrianglesInWwise, "Triangles of every geometry instance in Wwise as of the last tick." )
 
 		// Obstruction / occlusion
 		MAP_PROPERTY( "obstructionOcclusionEnabled", GetObstructionOcclusionEnabled, SetObstructionOcclusionEnabled, "Enable or disable game-driven obstruction/occlusion processing. Disabling fades all values back to clear.")

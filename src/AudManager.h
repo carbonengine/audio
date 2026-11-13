@@ -129,6 +129,12 @@ public:
 	bool GetSpatialAudioRoomsEnabled() const;
 	// Enables or disables Spatial Audio rooms.
 	void SetSpatialAudioRoomsEnabled( bool enabled );
+
+	int GetGeometrySetsInWwise() const;
+	int GetGeometryInstancesInWwise() const;
+	int GetGeometryTrianglesInWwise() const;
+	int GetGeometryInstancesRegistered() const;
+
 	// Returns whether geometry or rooms need Wwise Spatial Audio.
 	bool UsesSpatialAudio() const;
 	// Returns whether Wwise Spatial Audio is initialized.
@@ -398,6 +404,9 @@ public:
 	DELEGATE_SA_GETTER( float, GetTransmissionLoss )
 	DELEGATE_SA_GETTER( bool, GetEnableDiffraction )
 	DELEGATE_SA_GETTER( bool, GetEnableDiffractionOnBoundaryEdges )
+	DELEGATE_SA_GETTER( bool, GetGeometrySolid )
+	DELEGATE_SA_GETTER( float, GetGeometryMaxDistance )
+	DELEGATE_SA_GETTER( int, GetGeometryMaxTriangles )
 
 	// Setters
 	DELEGATE_SA_SETTER( float, SetMovementThreshold )
@@ -414,6 +423,9 @@ public:
 	DELEGATE_SA_SETTER( float, SetTransmissionLoss )
 	DELEGATE_SA_SETTER( bool, SetEnableDiffraction )
 	DELEGATE_SA_SETTER( bool, SetEnableDiffractionOnBoundaryEdges )
+	DELEGATE_SA_SETTER( bool, SetGeometrySolid )
+	DELEGATE_SA_SETTER( float, SetGeometryMaxDistance )
+	DELEGATE_SA_SETTER( int, SetGeometryMaxTriangles )
 
 #undef DELEGATE_SA_GETTER
 #undef DELEGATE_SA_SETTER
