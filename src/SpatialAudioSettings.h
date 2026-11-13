@@ -174,24 +174,30 @@ public:
 	bool GetCalcEmitterVirtualPosition() const;
 	void SetCalcEmitterVirtualPosition( bool value );
 
-	/**
-	 * @brief Transmission loss [0.0-1.0] applied to geometry surfaces when meshes are registered.
-	 */
+	/// Live. Transmission loss [0, 1] of mesh surfaces. 0 makes Wwise ignore the mesh.
 	float GetTransmissionLoss() const;
 	void SetTransmissionLoss( float value );
 
-	/**
-	 * @brief Switch to enable or disable geometric diffraction for this Geometry.
-	 */
+	/// Live. Whether sound diffracts around mesh edges.
 	bool GetEnableDiffraction() const;
 	void SetEnableDiffraction( bool value );
 
-	/**
-	 * @brief Switch to enable or disable geometric diffraction on boundary edges for this mesh.
-	 *        Boundary edges are edges that are connected to only one triangle.
-	 */
+	/// Live. Whether sound diffracts around edges that belong to one triangle only.
 	bool GetEnableDiffractionOnBoundaryEdges() const;
 	void SetEnableDiffractionOnBoundaryEdges( bool value );
+
+	/// Live. Whether a mesh is a closed volume that applies transmission loss once per pass through it.
+	/// Has no effect while the transmission operation is max.
+	bool GetGeometrySolid() const;
+	void SetGeometrySolid( bool value );
+
+	/// Live. Furthest a mesh can be from the listener and still be in Wwise, in game units. 0 for no limit.
+	float GetGeometryMaxDistance() const;
+	void SetGeometryMaxDistance( float value );
+
+	/// Live. Most triangles in Wwise at once; the meshes nearest the listener go first. 0 for no limit.
+	int GetGeometryMaxTriangles() const;
+	void SetGeometryMaxTriangles( int value );
 
 	/**
 	 * @brief Populates an AkSpatialAudioInitSettings struct from the current settings.
@@ -215,4 +221,7 @@ private:
 	float m_transmissionLoss;
 	bool m_enableDiffraction;
 	bool m_enableDiffractionOnBoundaryEdges;
+	bool m_geometrySolid;
+	float m_geometryMaxDistance;
+	int m_geometryMaxTriangles;
 };
