@@ -43,6 +43,9 @@ public:
 	unsigned int PostEvent( const std::wstring& name, bool bypassPrefix = false, AkUInt32 additionalFlags = 0x0000 );
 	// Register a game object in Wwise.
 	virtual void RegisterWwiseObject();
+	// Send the last placement to Wwise again, for when the scene-to-Wwise offset moved. A game object that was
+	// never placed is put at the scene origin, where Wwise kept it while the scene origin was Wwise's origin.
+	void ResendPlacement();
 	// Unregister a game object in Wwise.
 	void UnregisterWwiseObject();
 	// Seek on an event by using a percentage of its duration.
@@ -147,6 +150,12 @@ protected:
 	AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj = NULL );
 	// Records a new parent orientation, resolves it against any authored rotation, and applies the result.
 	virtual int SetPlacementFromParent( const Vector3& front, const Vector3& top, const Vector3& position );
+	// Sends a scene-relative placement to Wwise, moved into Wwise's frame. front and top must be orthonormal.
+	void SendPlacementToWwise( const Vector3& front, const Vector3& top, const Vector3& position ) const;
+	// Converts a right-handed placement to Wwise's left-handed one.
+	virtual void ConvertPlacementToWwise( AkSoundPosition& lh, const AkSoundPosition& rh ) const;
+	// After registering: Wwise puts a new game object at its origin, which is the scene origin only while they match.
+	void PlaceNewWwiseObject();
 	// Prepend an event prefix if one exists on the given event.
 	std::wstring PrepareEvent( const std::wstring& event, bool bypassPrefix );
 	// Propagate any wwise callbacks received for this game object.

@@ -5,6 +5,7 @@
 
 #include "AudManager.h"
 #include "AudStaticDataRepository.h"
+#include "AudWorldFrame.h"
 #include "Vector3.h"
 #include "Utilities.h"
 #include "SoundPrioritization.h"
@@ -128,7 +129,45 @@ void AudGameObjResource::RegisterWwiseObject()
 			CCP_LOGERR( "Failed to register game object %d with Wwise result code %d", m_ID, result );
 		}
 		m_gameObjRegistered = true;
+		PlaceNewWwiseObject();
 	}
+}
+
+void AudGameObjResource::PlaceNewWwiseObject()
+{
+	const AkVector64 offset = AudWorldFrame::Get().GetSceneToWwise();
+	if( offset.X != 0.0 || offset.Y != 0.0 || offset.Z != 0.0 )
+	{
+		ResendPlacement();
+	}
+}
+
+void AudGameObjResource::ResendPlacement()
+{
+	if( g_audioManager == nullptr || g_audioManager->GetState() != AudioState::Enabled || !m_gameObjRegistered )
+	{
+		return;
+	}
+
+	const Vector3 position = m_position == WWISE_INIT_POSITION ? Vector3( 0.0f, 0.0f, 0.0f ) : m_position;
+	SendPlacementToWwise( m_effectiveOrientation.front, m_effectiveOrientation.top, position );
+}
+
+void AudGameObjResource::SendPlacementToWwise( const Vector3& front, const Vector3& top, const Vector3& position ) const
+{
+	AkSoundPosition rh;
+	rh.Set( AudWorldFrame::Get().ToWwise( position ), MakeAkVector( front ), MakeAkVector( top ) );
+
+	// all vectors come in RH, but WWISE is LH, so convert
+	AkSoundPosition lh;
+	ConvertPlacementToWwise( lh, rh );
+
+	AK::SoundEngine::SetPosition( m_ID, lh );
+}
+
+void AudGameObjResource::ConvertPlacementToWwise( AkSoundPosition& lh, const AkSoundPosition& rh ) const
+{
+	RH2LH::convertEmitter( &lh, &rh );
 }
 
 void AudGameObjResource::UnregisterWwiseObject()
@@ -494,14 +533,7 @@ int AudGameObjResource::ApplyEffectivePlacement( const Vector3& front, const Vec
 
 	if( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled && m_gameObjRegistered )
 	{
-		AkSoundPosition tmp;
-		tmp.Set( MakeAkVector( position ), MakeAkVector( corrected.front ), MakeAkVector( corrected.top ) );
-
-		// all vectors come in RH, but WWISE is LH, so convert
-		AkSoundPosition soundPosLH;
-		RH2LH::convertEmitter( &soundPosLH, &tmp );
-
-		AK::SoundEngine::SetPosition( m_ID, soundPosLH );
+		SendPlacementToWwise( corrected.front, corrected.top, position );
 		g_audioManager->GetRoomManager().UpdateGameObjectPosition( m_ID, position );
 	}
 	return AK_Success;

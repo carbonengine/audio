@@ -52,6 +52,9 @@ ccp_add_library(CarbonAudio SHARED
 	src/AudRoom_Blue.cpp
 	src/AudRoomManager.cpp
 	src/AudUnitBox.cpp
+	src/AudWorld.cpp
+	src/AudWorld_Blue.cpp
+	src/AudWorldFrame.cpp
 	src/SpatialAudioSettings.cpp
 	src/audio2.cpp
 	src/AudGameObjResource_Blue.cpp
@@ -98,6 +101,8 @@ target_sources(CarbonAudio PRIVATE
 	src/AudRoom.h
 	src/AudRoomManager.h
 	src/AudUnitBox.h
+	src/AudWorld.h
+	src/AudWorldFrame.h
 	src/SpatialAudioSettings.h
 	src/autoversion.h
 	src/DebugUtilities.h

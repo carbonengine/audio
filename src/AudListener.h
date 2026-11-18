@@ -25,6 +25,7 @@ public:
 
 	void RegisterWwiseObject() override;
 	int SetPlacementFromParent( const Vector3& front, const Vector3& top, const Vector3& position ) override;
+	void ConvertPlacementToWwise( AkSoundPosition& lh, const AkSoundPosition& rh ) const override;
 
 	/// Registers the listener with Wwise Spatial Audio if both are initialized.
 	void RegisterWithSpatialAudio();

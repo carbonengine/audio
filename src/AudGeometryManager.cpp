@@ -12,8 +12,11 @@
 #include "Utilities.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <cmath>
+#include <cstdio>
 #include <cstring>
+#include <string>
 
 static CcpLogChannel_t s_ch = CCP_LOG_DEFINE_CHANNEL( "AudGeometry" );
 
@@ -35,6 +38,36 @@ namespace
 	/// instances at the edge of the limits don't flip in and out.
 	constexpr float KEEP_DISTANCE = 1.1f;
 	constexpr float KEEP_RANK = 0.9f;
+	/// A mesh within this of where Wwise has it is where Wwise has it, in game units.
+	constexpr double STILL_IN_WWISE = 1.0e-3;
+	AkVector64 Translation( const Matrix& m )
+	{
+		AkVector64 v;
+		v.X = m._41;
+		v.Y = m._42;
+		v.Z = m._43;
+		return v;
+	}
+
+	bool SameVector64( const AkVector64& a, const AkVector64& b )
+	{
+		return a.X == b.X && a.Y == b.Y && a.Z == b.Z;
+	}
+
+	bool SameRotationAndScale( const Matrix& a, const Matrix& b )
+	{
+		return a._11 == b._11 && a._12 == b._12 && a._13 == b._13
+			&& a._21 == b._21 && a._22 == b._22 && a._23 == b._23
+			&& a._31 == b._31 && a._32 == b._32 && a._33 == b._33;
+	}
+
+	/// Whether an instance handed over at sceneRelative went from before to after, beyond float noise.
+	bool MovedInWorld( const AkVector64& before, const AkVector64& after, const Matrix& sceneRelative )
+	{
+		const double still = AudWorldFrame::StillDistance( sceneRelative );
+		const AkVector64 d = after - before;
+		return d.X * d.X + d.Y * d.Y + d.Z * d.Z > still * still;
+	}
 
 	struct PositionHash
 	{
@@ -82,14 +115,21 @@ namespace
 		return true;
 	}
 
-	/// Distance from a point to the instance's bounding sphere, zero inside it.
-	float DistanceToBounds( const Matrix& m, const AudGeometryManager::Mesh& mesh, float largestScale, const Vector3& point )
+	/// Distance from a point to the centre of the instance's bounding sphere.
+	float DistanceToCenter( const Matrix& m, const AudGeometryManager::Mesh& mesh, const Vector3& point )
 	{
 		const float* c = mesh.center;
 		const float x = c[0] * m._11 + c[1] * m._21 + c[2] * m._31 + m._41 - point.x;
 		const float y = c[0] * m._12 + c[1] * m._22 + c[2] * m._32 + m._42 - point.y;
 		const float z = c[0] * m._13 + c[1] * m._23 + c[2] * m._33 + m._43 - point.z;
-		return std::max( 0.0f, std::sqrt( x * x + y * y + z * z ) - mesh.radius * largestScale );
+		return std::sqrt( x * x + y * y + z * z );
+	}
+
+	/// Furthest the mesh reaches from the instance's origin, so how far a point on it moves when the instance turns by one radian.
+	float Extent( const AudGeometryManager::Mesh& mesh, float largestScale )
+	{
+		const float* c = mesh.center;
+		return ( std::sqrt( c[0] * c[0] + c[1] * c[1] + c[2] * c[2] ) + mesh.radius ) * largestScale;
 	}
 
 	AkGeometryInstanceParams MakeInstanceParams( uint64_t geometrySetId, const Matrix& worldTransform, bool solid, bool portalSubtraction )
@@ -137,6 +177,38 @@ namespace
 			&& NearlyEqual( a.PositionAndOrientation.OrientationTop(), b.PositionAndOrientation.OrientationTop(), orientationEpsilon )
 			&& NearlyEqual( a.Scale, b.Scale, scaleTolerance );
 	}
+
+	float Chord( const AkVector& a, const AkVector& b )
+	{
+		const float x = a.X - b.X;
+		const float y = a.Y - b.Y;
+		const float z = a.Z - b.Z;
+		return std::sqrt( x * x + y * y + z * z );
+	}
+
+	/**
+	 * @brief Whether an instance at a is near enough to where Wwise has it, at b, that sending it makes no audible difference.
+	 *
+	 * @param extent Furthest the mesh reaches from the instance's origin, to turn rotation into distance.
+	 * @param tolerance Furthest any point of the mesh may be from where Wwise has it.
+	 */
+	bool CloseEnough( const AkGeometryInstanceParams& a, const AkGeometryInstanceParams& b, float extent, double tolerance )
+	{
+		if( a.GeometrySetID != b.GeometrySetID || a.IsSolid != b.IsSolid || a.BypassPortalSubtraction != b.BypassPortalSubtraction
+			|| ( a.Scale.X < 0.0f ) != ( b.Scale.X < 0.0f ) )
+		{
+			return false;
+		}
+
+		const AkVector64 d = a.PositionAndOrientation.Position() - b.PositionAndOrientation.Position();
+		const double moved = std::sqrt( d.X * d.X + d.Y * d.Y + d.Z * d.Z );
+		// For a small turn the chord between the axes is the angle.
+		const double turned = std::max( Chord( a.PositionAndOrientation.OrientationFront(), b.PositionAndOrientation.OrientationFront() ),
+			Chord( a.PositionAndOrientation.OrientationTop(), b.PositionAndOrientation.OrientationTop() ) );
+		const auto relative = []( float x, float y ) { return std::fabs( x - y ) / std::max( std::fabs( y ), 1.0e-6f ); };
+		const double scaled = std::max( { relative( a.Scale.X, b.Scale.X ), relative( a.Scale.Y, b.Scale.Y ), relative( a.Scale.Z, b.Scale.Z ) } );
+		return moved + ( turned + scaled ) * extent <= tolerance;
+	}
 }
 
 AudGeometryManager::AudGeometryManager() :
@@ -145,7 +217,9 @@ AudGeometryManager::AudGeometryManager() :
 	m_enableDiffractionOnBoundaryEdges( false ),
 	m_solid( false ),
 	m_portalSubtraction( false ),
+	m_wwiseOrigin(),
 	m_statsDirty( false ),
+	m_instanceSends( 0 ),
 	m_setsInWwise( 0 ),
 	m_instancesInWwise( 0 ),
 	m_trianglesInWwise( 0 ),
@@ -296,13 +370,18 @@ void AudGeometryManager::SetGeometry( uint64_t geometrySetId, uint64_t instanceI
 		ReleaseSetLocked( instance.geometrySetId );
 	}
 
+	const AudWorldFrame::State frame = AudWorldFrame::Get().GetState();
 	instance.geometrySetId = geometrySetId;
 	instance.transform = worldTransform;
+	instance.position = frame.sceneOrigin + Translation( worldTransform );
+	instance.positionBeforeOrigin = !frame.hasSceneOrigin;
 	instance.dirty = true;
 }
 
 void AudGeometryManager::SetGeometryTransform( uint64_t instanceId, const Matrix& worldTransform )
 {
+	const AudWorldFrame::State frame = AudWorldFrame::Get().GetState();
+
 	CcpAutoMutex lock( m_mutex );
 
 	const auto it = m_instances.find( instanceId );
@@ -312,11 +391,41 @@ void AudGeometryManager::SetGeometryTransform( uint64_t instanceId, const Matrix
 	}
 
 	Instance& instance = it->second;
-	if( instance.transform != worldTransform )
+	ResolvePosition( instance, frame );
+
+	// The scene origin follows the player, so the transform changes whenever the player moves. Only a move in the world counts.
+	const AkVector64 position = frame.sceneOrigin + Translation( worldTransform );
+	const bool moved = !SameRotationAndScale( instance.transform, worldTransform )
+		|| MovedInWorld( instance.position, position, worldTransform );
+
+	// Kept either way, it says whether trinity parked the instance.
+	instance.transform = worldTransform;
+	if( moved )
 	{
-		instance.transform = worldTransform;
+		instance.position = position;
+		instance.positionBeforeOrigin = !frame.hasSceneOrigin;
 		instance.dirty = true;
 	}
+}
+
+void AudGeometryManager::ResolvePosition( Instance& instance, const AudWorldFrame::State& frame )
+{
+	if( instance.positionBeforeOrigin && frame.hasSceneOrigin )
+	{
+		instance.position = instance.position + frame.firstSceneOrigin;
+		instance.positionBeforeOrigin = false;
+		instance.dirty = true;
+	}
+}
+
+Matrix AudGeometryManager::InWwiseFrame( const Instance& instance, const AkVector64& wwiseOrigin )
+{
+	const AkVector64 translation = instance.position - wwiseOrigin;
+	Matrix m = instance.transform;
+	m._41 = static_cast<float>( translation.X );
+	m._42 = static_cast<float>( translation.Y );
+	m._43 = static_cast<float>( translation.Z );
+	return m;
 }
 
 void AudGeometryManager::RemoveGeometry( uint64_t instanceId )
@@ -394,7 +503,7 @@ bool AudGeometryManager::SendSetLocked( uint64_t geometrySetId, GeometrySet& set
 	return true;
 }
 
-void AudGeometryManager::SelectInstancesLocked( const SpatialAudioSettings& settings, const Vector3* listenerPosition )
+void AudGeometryManager::SelectInstancesLocked( const SpatialAudioSettings& settings, const AkVector64& wwiseOrigin, const Vector3* listenerInWwise )
 {
 	const float maxDistance = settings.GetGeometryMaxDistance();
 	const size_t maxTriangles = static_cast<size_t>( settings.GetGeometryMaxTriangles() );
@@ -423,10 +532,13 @@ void AudGeometryManager::SelectInstancesLocked( const SpatialAudioSettings& sett
 		}
 
 		const Mesh& mesh = setIt->second.mesh;
+		instance.extent = Extent( mesh, largestScale );
+		instance.listenerDistance = -1.0f;
 		float distance = 0.0f;
-		if( listenerPosition )
+		if( listenerInWwise )
 		{
-			distance = DistanceToBounds( instance.transform, mesh, largestScale, *listenerPosition );
+			instance.listenerDistance = DistanceToCenter( InWwiseFrame( instance, wwiseOrigin ), mesh, *listenerInWwise );
+			distance = std::max( 0.0f, instance.listenerDistance - mesh.radius * largestScale );
 			if( maxDistance > 0.0f && distance > maxDistance * ( instance.inWwise ? KEEP_DISTANCE : 1.0f ) )
 			{
 				continue;
@@ -515,7 +627,28 @@ void AudGeometryManager::Update( const SpatialAudioSettings& settings, const Vec
 	m_solid = settings.GetGeometrySolid();
 	m_portalSubtraction = settings.GetGeometryPortalSubtraction();
 
-	SelectInstancesLocked( settings, listenerPosition );
+	const float updateTolerance = settings.GetGeometryUpdateTolerance();
+
+	// Every instance in Wwise is placed from the Wwise origin, so they all go again when it moves.
+	const AudWorldFrame::State frame = AudWorldFrame::Get().GetState();
+	const bool wwiseOriginMoved = !SameVector64( frame.wwiseOrigin, m_wwiseOrigin );
+	m_wwiseOrigin = frame.wwiseOrigin;
+	for( auto& entry : m_instances )
+	{
+		ResolvePosition( entry.second, frame );
+	}
+
+	Vector3 listenerInWwise;
+	if( listenerPosition )
+	{
+		const AkVector64 sceneToWwise = frame.sceneOrigin - frame.wwiseOrigin;
+		listenerInWwise = Vector3(
+			static_cast<float>( listenerPosition->x + sceneToWwise.X ),
+			static_cast<float>( listenerPosition->y + sceneToWwise.Y ),
+			static_cast<float>( listenerPosition->z + sceneToWwise.Z ) );
+	}
+
+	SelectInstancesLocked( settings, frame.wwiseOrigin, listenerPosition ? &listenerInWwise : nullptr );
 
 	const auto removeFromWwise = [&]( uint64_t instanceId, Instance& instance )
 	{
@@ -537,7 +670,7 @@ void AudGeometryManager::Update( const SpatialAudioSettings& settings, const Vec
 			continue;
 		}
 
-		const bool dirty = instance.dirty || instanceSettingsChanged;
+		const bool dirty = instance.dirty || instance.heldBack || instanceSettingsChanged || wwiseOriginMoved;
 		instance.dirty = false;
 		if( instance.inWwise && !dirty )
 		{
@@ -550,13 +683,34 @@ void AudGeometryManager::Update( const SpatialAudioSettings& settings, const Vec
 			continue;
 		}
 
-		const AkGeometryInstanceParams params = MakeInstanceParams( instance.geometrySetId, instance.transform, m_solid, m_portalSubtraction );
-		if( instance.inWwise && SameInstanceParams( params, instance.sent ) )
+		const AkGeometryInstanceParams params = MakeInstanceParams( instance.geometrySetId, InWwiseFrame( instance, frame.wwiseOrigin ), m_solid, m_portalSubtraction );
+		if( instance.inWwise )
 		{
-			continue;
+			if( SameInstanceParams( params, instance.sent ) )
+			{
+				instance.heldBack = false;
+				continue;
+			}
+
+			// Moving the Wwise origin or changing a setting leaves every instance in Wwise off, near or far.
+			if( !wwiseOriginMoved && !instanceSettingsChanged )
+			{
+				const double tolerance = instance.listenerDistance < 0.0f
+					? STILL_IN_WWISE
+					: std::max( STILL_IN_WWISE, static_cast<double>( updateTolerance ) * instance.listenerDistance );
+				if( CloseEnough( params, instance.sent, instance.extent, tolerance ) )
+				{
+					// Looked at again every update, the listener may come close enough to hear the difference.
+					instance.heldBack = true;
+					continue;
+				}
+			}
 		}
 
 		const AKRESULT result = AK::SpatialAudio::SetGeometryInstance( entry.first, params );
+		++m_instanceSends;
+		++instance.sends;
+		instance.heldBack = false;
 		if( result != AK_Success )
 		{
 			if( !instance.rejected )
@@ -657,6 +811,36 @@ void AudGeometryManager::ForgetWwiseStateLocked()
 
 	m_statsDirty = true;
 	UpdateStatsLocked();
+}
+
+std::string AudGeometryManager::GetSendReport( size_t count ) const
+{
+	CcpAutoMutex lock( m_mutex );
+
+	std::vector<std::pair<uint64_t, const Instance*>> instances;
+	instances.reserve( m_instances.size() );
+	for( const auto& entry : m_instances )
+	{
+		instances.emplace_back( entry.first, &entry.second );
+	}
+	std::sort( instances.begin(), instances.end(), []( const auto& a, const auto& b )
+	{
+		return a.second->sends != b.second->sends ? a.second->sends > b.second->sends : a.first < b.first;
+	} );
+
+	std::string report;
+	char line[256];
+	for( size_t i = 0; i < std::min( count, instances.size() ); ++i )
+	{
+		const Instance& instance = *instances[i].second;
+		const auto setIt = m_sets.find( instance.geometrySetId );
+		const size_t triangles = setIt != m_sets.end() ? setIt->second.mesh.triangles.size() : 0;
+		snprintf( line, sizeof( line ), "instance %" PRIu64 " set %" PRIu64 " triangles %zu sends %" PRIu64 " listener %.0f extent %.0f%s%s\n",
+			instances[i].first, instance.geometrySetId, triangles, instance.sends, instance.listenerDistance, instance.extent,
+			instance.inWwise ? "" : " (not in Wwise)", instance.heldBack ? " (held back)" : "" );
+		report += line;
+	}
+	return report;
 }
 
 void AudGeometryManager::UpdateStatsLocked()

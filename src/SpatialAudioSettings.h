@@ -128,7 +128,8 @@ public:
 	bool GetEnableDiffraction() const;
 	void SetEnableDiffraction( bool value );
 
-	/// Live. Whether sound diffracts around edges that belong to one triangle only.
+	/// Live. Whether sound diffracts around edges that belong to one triangle only. Off by default: it adds
+	/// many edges for Wwise to search, and closed hulls don't need it.
 	bool GetEnableDiffractionOnBoundaryEdges() const;
 	void SetEnableDiffractionOnBoundaryEdges( bool value );
 
@@ -136,6 +137,12 @@ public:
 	/// Has no effect while the transmission operation is max.
 	bool GetGeometrySolid() const;
 	void SetGeometrySolid( bool value );
+
+	/// Live. How far a mesh moving on its own may get from where Wwise has it before it is sent again,
+	/// as a share of its distance from the listener. Each send makes Wwise re-index the mesh, so a far mesh
+	/// that turns a little every frame is sent once it has moved far enough to hear. 0 sends every move.
+	float GetGeometryUpdateTolerance() const;
+	void SetGeometryUpdateTolerance( float value );
 
 	/// Live. Whether portals cut openings in the meshes they overlap. Off by default: Wwise re-cuts every mesh
 	/// a portal overlaps each time it rebuilds portal visibility, which takes long with big meshes.
@@ -183,6 +190,7 @@ private:
 	bool m_enableDiffractionOnBoundaryEdges;
 	bool m_geometrySolid;
 	bool m_geometryPortalSubtraction;
+	float m_geometryUpdateTolerance;
 	float m_geometryMaxDistance;
 	int m_geometryMaxTriangles;
 };

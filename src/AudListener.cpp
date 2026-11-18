@@ -39,6 +39,7 @@ void AudListener::RegisterWwiseObject()
 
 			m_gameObjRegistered = true;
 			RegisterWithSpatialAudio();
+			PlaceNewWwiseObject();
 		}
 	}
 	else
@@ -61,20 +62,18 @@ int AudListener::SetPlacementFromParent( const Vector3& front, const Vector3& to
 	if( g_audioManager != nullptr && g_audioManager->GetState() != AudioState::Uninitialized )
 	{
 		m_position = position;
+		// Kept so the listener can be sent again when the scene-to-Wwise offset moves.
+		m_effectiveOrientation = Orthonormalize( front, top );
 		if( m_gameObjRegistered )
 		{
-			const Orientation corrected = Orthonormalize( front, top );
-
-			AkSoundPosition tmp;
-			tmp.Set( MakeAkVector( position ), MakeAkVector( corrected.front ), MakeAkVector( corrected.top ) );
-
-			// all vectors come in RH, but WWISE is LH, so convert
-			AkSoundPosition soundPosLH;
-			RH2LH::convertListener( &soundPosLH, &tmp );
-
-			AK::SoundEngine::SetPosition( m_ID, soundPosLH );
+			SendPlacementToWwise( m_effectiveOrientation.front, m_effectiveOrientation.top, position );
 			g_audioManager->GetRoomManager().UpdateGameObjectPosition( m_ID, position );
 		}
 	}
 	return AK_Success;
+}
+
+void AudListener::ConvertPlacementToWwise( AkSoundPosition& lh, const AkSoundPosition& rh ) const
+{
+	RH2LH::convertListener( &lh, &rh );
 }

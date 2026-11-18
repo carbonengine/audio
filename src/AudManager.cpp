@@ -32,6 +32,7 @@
 #include "AudGeometryManager.h"
 #include "AudSettings.h"
 #include "AudStaticDataRepository.h"
+#include "AudWorldFrame.h"
 #include "LogBridge.h"
 
 #ifndef AK_OPTIMIZED
@@ -73,6 +74,8 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_moniteredParametersMapMutex( "AudManager", "m_monitoredParametersMapMutex" ),
 	m_soundBankMutex( "AudManager", "m_soundBankMutex" ),
 	m_callbackGameObjectsMutex( "AudManager", "m_callbackGameObjectsMutex" ),
+	m_placedOffsetGeneration( AudWorldFrame::Get().GetOffsetGeneration() ),
+	m_placedRebaseCount( AudWorldFrame::Get().GetRebaseCount() ),
 	m_isProfilerCapturing( false ),
 #ifndef AK_OPTIMIZED
 	m_resourceMonitorCallbackRegistered( false ),
@@ -113,6 +116,8 @@ void AudManager::Process()
 
 	if( state == AudioState::Enabled )
 	{
+		FollowWorldFrame();
+
 		if( m_soundPrioritization->GetAudioCullingEnabled() )
 		{
 			m_soundPrioritization->CullAudio();
@@ -541,6 +546,58 @@ int AudManager::GetGeometryTrianglesInWwise() const
 int AudManager::GetGeometryInstancesRegistered() const
 {
 	return static_cast<int>( AudGeometryManager::Get().GetInstancesRegistered() );
+}
+
+uint64_t AudManager::GetGeometryInstanceSends() const
+{
+	return AudGeometryManager::Get().GetInstanceSends();
+}
+
+double AudManager::GetWorldRebaseDistance() const
+{
+	return AudWorldFrame::Get().GetRebaseDistance();
+}
+
+void AudManager::SetWorldRebaseDistance( double distance )
+{
+	AudWorldFrame::Get().SetRebaseDistance( distance );
+}
+
+uint64_t AudManager::GetWorldRebases() const
+{
+	return AudWorldFrame::Get().GetRebaseCount();
+}
+
+std::string AudManager::GetGeometrySendReport( int count ) const
+{
+	return AudGeometryManager::Get().GetSendReport( static_cast<size_t>( std::max( 0, count ) ) );
+}
+
+void AudManager::FollowWorldFrame()
+{
+	const AudWorldFrame& frame = AudWorldFrame::Get();
+
+	// Rooms only go to Wwise when they change, so they go again when the origin they were placed from moves.
+	// Portals are checked against Wwise on every room manager update.
+	const uint64_t rebaseCount = frame.GetRebaseCount();
+	if( rebaseCount != m_placedRebaseCount )
+	{
+		m_placedRebaseCount = rebaseCount;
+		m_roomManager->ResendAll();
+	}
+
+	// Game objects are placed relative to the scene origin. Trinity moves most of them every frame anyway,
+	// but one placed once stays where it was relative to the player, as it did when Wwise got scene positions.
+	const uint64_t offsetGeneration = frame.GetOffsetGeneration();
+	if( offsetGeneration != m_placedOffsetGeneration )
+	{
+		m_placedOffsetGeneration = offsetGeneration;
+		CcpAutoMutex lock( m_callbackGameObjectsMutex );
+		for( const auto& entry : m_callbackGameObjects )
+		{
+			entry.second->ResendPlacement();
+		}
+	}
 }
 
 bool AudManager::UsesSpatialAudio() const

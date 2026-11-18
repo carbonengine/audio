@@ -13,6 +13,9 @@ PARKED = (0.0, -3.4028234663852886e38, 0.0)
 SOLAR_SYSTEM_DISTANCE = (-9.4e11, 6.3e10, 8.6e11)
 FLAT_SIZE = (10.0, 0.0, 30.0)
 
+# A spot in a solar system, far enough out that positions there don't fit in a float.
+SOLAR_SYSTEM_SPOT = (1.0e11, 2.0e9, -3.0e11)
+
 HULL = 1
 OTHER_HULL = 2
 
@@ -23,7 +26,21 @@ SETTINGS = (
     "geometryPortalSubtraction",
     "geometryMaxDistance",
     "geometryMaxTriangles",
+    "geometryUpdateTolerance",
+    "worldRebaseDistance",
+    "loadBalancingSpread",
+    "numberOfPrimaryRays",
+    "maxDiffractionOrder",
+    "maxDiffractionPaths",
 )
+
+
+def Add(a, b):
+    return tuple(x + y for x, y in zip(a, b))
+
+
+def Subtract(a, b):
+    return tuple(x - y for x, y in zip(a, b))
 
 
 def SaveSettings(manager):
@@ -53,13 +70,15 @@ class TestGeometryExposure(BaseAudio2TestClass):
             self.skipTest("Spatial audio geometry is not available on this platform.")
 
         self.source = blue.LoadExtension("_audiotests").FakeGeometrySource()
-        self.assertTrue(self.source.IsConnected(), "AudGeometry could not be created the way trinity creates it.")
+        self.assertTrue(self.source.IsConnected(), "AudGeometry or AudWorld could not be created the way trinity creates them.")
         self.registered = []
+        self.ResetWorldFrame()
 
     def tearDown(self):
         for geometrySetId, instanceId in self.registered:
             self.source.Remove(geometrySetId, instanceId)
         self.Update()
+        self.ResetWorldFrame()
         self.source = None
         RestoreSettings(self.manager, self.settings)
         self.manager.spatialAudioGeometryEnabled = False
@@ -86,6 +105,36 @@ class TestGeometryExposure(BaseAudio2TestClass):
     def AssertInWwise(self, sets, instances):
         self.assertEqual(self.manager.geometrySetsInWwise, sets)
         self.assertEqual(self.manager.geometryInstancesInWwise, instances)
+
+    def ResetWorldFrame(self):
+        """Puts Wwise's origin back on a scene origin at zero."""
+        rebaseDistance = self.manager.worldRebaseDistance
+        self.manager.worldRebaseDistance = 0.0
+        self.ArriveAt(ORIGIN)
+        self.manager.worldRebaseDistance = rebaseDistance
+
+    def ArriveAt(self, origin):
+        """Jumps the scene origin to origin and holds it there for a frame, the way trinity does after a warp."""
+        self.source.SetSceneOrigin(*origin)
+        self.source.SetSceneOrigin(*origin)
+
+    def PlaceListener(self, position):
+        import audio2
+        audio2.GetListener().SetPosition((0.0, 0.0, 1.0), (0.0, 1.0, 0.0), position)
+
+    def MovePlayer(self, origin, meshes):
+        """Moves the scene origin, then hands every mesh over relative to it, the way trinity does each frame.
+
+        :param meshes: Where each (geometrySetId, instanceId) is in the world.
+        """
+        self.source.SetSceneOrigin(*origin)
+        for (geometrySetId, instanceId), position in meshes.items():
+            self.source.Move(geometrySetId, instanceId, Subtract(position, origin), BOX_SIZE)
+
+    def AddBoxInWorld(self, geometrySetId, instanceId, origin, position):
+        """Registers a box at a world position while the scene origin is at origin."""
+        self.ArriveAt(origin)
+        self.AddBox(geometrySetId, instanceId, Subtract(position, origin))
 
     def test_a_registered_mesh_reaches_wwise_on_the_next_tick(self):
         self.AddBox(HULL, 1)
@@ -292,13 +341,178 @@ class TestGeometryExposure(BaseAudio2TestClass):
         self.Update()
 
         self.manager.transmissionLoss = 0.25
-        self.manager.enableDiffractionOnBoundaryEdges = False
+        self.manager.enableDiffractionOnBoundaryEdges = not self.manager.enableDiffractionOnBoundaryEdges
         self.manager.geometrySolid = False
         self.manager.geometryPortalSubtraction = not self.manager.geometryPortalSubtraction
         self.Update()
 
         self.AssertInWwise(sets=1, instances=1)
 
+    def test_boundary_edges_do_not_diffract_by_default(self):
+        """They add many edges for Wwise to search, and closed hulls don't need them."""
+        self.assertFalse(self.manager.enableDiffractionOnBoundaryEdges)
+
     def test_portals_do_not_cut_meshes_by_default(self):
         """Wwise re-cuts every mesh a portal overlaps on each portal visibility rebuild, which stalls the audio thread with big meshes."""
         self.assertFalse(self.manager.geometryPortalSubtraction)
+
+    def test_a_still_mesh_is_not_sent_again_while_the_player_flies(self):
+        """The scene origin follows the player, so every mesh's transform changes when the player moves."""
+        mesh = Add(SOLAR_SYSTEM_SPOT, (1000.0, 0.0, 0.0))
+        self.AddBoxInWorld(HULL, 1, SOLAR_SYSTEM_SPOT, mesh)
+        self.Update()
+        sends = self.manager.geometryInstanceSends
+        rebases = self.manager.worldRebases
+
+        for step in range(1, 11):
+            self.MovePlayer(Add(SOLAR_SYSTEM_SPOT, (15.0 * step, 2.0 * step, 0.0)), {(HULL, 1): mesh})
+            self.Update()
+
+        self.assertEqual(self.manager.geometryInstanceSends, sends)
+        self.assertEqual(self.manager.worldRebases, rebases)
+        self.AssertInWwise(sets=1, instances=1)
+
+    def test_a_mesh_that_moves_in_the_world_is_sent_again(self):
+        mesh = Add(SOLAR_SYSTEM_SPOT, (1000.0, 0.0, 0.0))
+        self.AddBoxInWorld(HULL, 1, SOLAR_SYSTEM_SPOT, mesh)
+        self.Update()
+        sends = self.manager.geometryInstanceSends
+
+        for step in range(1, 4):
+            origin = Add(SOLAR_SYSTEM_SPOT, (15.0 * step, 0.0, 0.0))
+            self.MovePlayer(origin, {(HULL, 1): Add(mesh, (0.0, 10.0 * step, 0.0))})
+            self.Update()
+
+        self.assertEqual(self.manager.geometryInstanceSends, sends + 3)
+
+    def test_float_jitter_of_a_far_mesh_is_not_a_move(self):
+        """200 km out a float steps by 1.6 cm, so the mesh's scene position wobbles as the player creeps along."""
+        mesh = Add(SOLAR_SYSTEM_SPOT, (200000.0, 0.0, 0.0))
+        self.AddBoxInWorld(HULL, 1, SOLAR_SYSTEM_SPOT, mesh)
+        self.Update()
+        sends = self.manager.geometryInstanceSends
+
+        for step in range(1, 11):
+            self.MovePlayer(Add(SOLAR_SYSTEM_SPOT, (0.003 * step, 0.0, 0.0)), {(HULL, 1): mesh})
+            self.Update()
+
+        self.assertEqual(self.manager.geometryInstanceSends, sends)
+
+    def test_still_meshes_are_sent_once_when_the_player_gets_far_from_wwise_origin(self):
+        self.manager.worldRebaseDistance = 500.0
+        meshes = {
+            (HULL, 1): Add(SOLAR_SYSTEM_SPOT, (100.0, 0.0, 0.0)),
+            (HULL, 2): Add(SOLAR_SYSTEM_SPOT, (-100.0, 0.0, 0.0)),
+        }
+        for (geometrySetId, instanceId), position in meshes.items():
+            self.AddBoxInWorld(geometrySetId, instanceId, SOLAR_SYSTEM_SPOT, position)
+        self.Update()
+        sends = self.manager.geometryInstanceSends
+        rebases = self.manager.worldRebases
+
+        self.MovePlayer(Add(SOLAR_SYSTEM_SPOT, (400.0, 0.0, 0.0)), meshes)
+        self.Update()
+        self.assertEqual(self.manager.geometryInstanceSends, sends)
+
+        self.MovePlayer(Add(SOLAR_SYSTEM_SPOT, (600.0, 0.0, 0.0)), meshes)
+        self.Update()
+        self.assertEqual(self.manager.worldRebases, rebases + 1)
+        self.assertEqual(self.manager.geometryInstanceSends, sends + 2)
+
+        self.MovePlayer(Add(SOLAR_SYSTEM_SPOT, (700.0, 0.0, 0.0)), meshes)
+        self.Update()
+        self.assertEqual(self.manager.geometryInstanceSends, sends + 2)
+        self.AssertInWwise(sets=1, instances=2)
+
+    def test_the_wwise_origin_waits_for_the_player_to_arrive_after_a_warp(self):
+        """Following a warp would send every still mesh again on every frame of it."""
+        self.ArriveAt(SOLAR_SYSTEM_SPOT)
+        rebases = self.manager.worldRebases
+        destination = Add(SOLAR_SYSTEM_SPOT, (5.0e9, 0.0, 0.0))
+
+        for step in range(1, 5):
+            self.source.SetSceneOrigin(*Add(SOLAR_SYSTEM_SPOT, (1.0e9 * step, 0.0, 0.0)))
+            self.Update()
+        self.source.SetSceneOrigin(*destination)
+        self.Update()
+        self.assertEqual(self.manager.worldRebases, rebases)
+
+        self.source.SetSceneOrigin(*destination)
+        self.Update()
+        self.assertEqual(self.manager.worldRebases, rebases + 1)
+
+    def test_a_far_mesh_moving_a_little_waits_until_the_move_can_be_heard(self):
+        self.PlaceListener(ORIGIN)
+        self.manager.geometryUpdateTolerance = 0.01
+        self.AddBox(HULL, 1, center=(1000.0, 0.0, 0.0))
+        self.Update()
+        sends = self.manager.geometryInstanceSends
+
+        self.source.Move(HULL, 1, (1000.0, 5.0, 0.0), BOX_SIZE)
+        self.Update()
+        self.assertEqual(self.manager.geometryInstanceSends, sends)
+
+        self.source.Move(HULL, 1, (1000.0, 20.0, 0.0), BOX_SIZE)
+        self.Update()
+        self.assertEqual(self.manager.geometryInstanceSends, sends + 1)
+
+    def test_a_held_back_mesh_is_sent_when_the_listener_comes_close(self):
+        self.PlaceListener(ORIGIN)
+        self.manager.geometryUpdateTolerance = 0.01
+        self.AddBox(HULL, 1, center=(1000.0, 0.0, 0.0))
+        self.Update()
+        sends = self.manager.geometryInstanceSends
+
+        self.source.Move(HULL, 1, (1000.0, 5.0, 0.0), BOX_SIZE)
+        self.Update()
+        self.assertEqual(self.manager.geometryInstanceSends, sends)
+
+        self.PlaceListener((990.0, 0.0, 0.0))
+        self.Update()
+        self.assertEqual(self.manager.geometryInstanceSends, sends + 1)
+
+        self.Update(times=3)
+        self.assertEqual(self.manager.geometryInstanceSends, sends + 1)
+
+    def test_an_update_tolerance_of_zero_sends_every_move(self):
+        self.PlaceListener(ORIGIN)
+        self.manager.geometryUpdateTolerance = 0.0
+        self.AddBox(HULL, 1, center=(1000.0, 0.0, 0.0))
+        self.Update()
+        sends = self.manager.geometryInstanceSends
+
+        for step in range(1, 4):
+            self.source.Move(HULL, 1, (1000.0, 0.5 * step, 0.0), BOX_SIZE)
+            self.Update()
+
+        self.assertEqual(self.manager.geometryInstanceSends, sends + 3)
+
+    def test_spatial_audio_settings_change_while_spatial_audio_runs(self):
+        self.AddBox(HULL, 1)
+        self.Update()
+
+        self.manager.loadBalancingSpread = 4
+        self.manager.numberOfPrimaryRays = 20
+        self.manager.maxDiffractionOrder = 2
+        self.manager.maxDiffractionPaths = 4
+        self.Update()
+
+        self.assertEqual(self.manager.loadBalancingSpread, 4)
+        self.assertEqual(self.manager.numberOfPrimaryRays, 20)
+        self.assertEqual(self.manager.maxDiffractionOrder, 2)
+        self.assertEqual(self.manager.maxDiffractionPaths, 4)
+        self.AssertInWwise(sets=1, instances=1)
+
+    def test_a_rebase_distance_of_zero_sends_positions_relative_to_the_player(self):
+        """How Wwise got positions before the world frame, every still mesh goes again whenever the player moves."""
+        self.manager.worldRebaseDistance = 0.0
+        mesh = Add(SOLAR_SYSTEM_SPOT, (1000.0, 0.0, 0.0))
+        self.AddBoxInWorld(HULL, 1, SOLAR_SYSTEM_SPOT, mesh)
+        self.Update()
+        sends = self.manager.geometryInstanceSends
+
+        for step in range(1, 4):
+            self.MovePlayer(Add(SOLAR_SYSTEM_SPOT, (15.0 * step, 0.0, 0.0)), {(HULL, 1): mesh})
+            self.Update()
+
+        self.assertEqual(self.manager.geometryInstanceSends, sends + 3)

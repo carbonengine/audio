@@ -161,6 +161,8 @@ private:
 
 	/// Last parameters sent to Wwise.
 	AkRoomParams m_sentRoomParams;
+	/// The room's box as Wwise last got it, valid while m_sentToWwise.
+	AkGeometryInstanceParams m_sentInstanceParams;
 	std::string m_sentName;
 
 	/// Room tone state, owned by AudRoomManager.

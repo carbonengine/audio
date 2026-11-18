@@ -134,6 +134,15 @@ public:
 	int GetGeometryInstancesInWwise() const;
 	int GetGeometryTrianglesInWwise() const;
 	int GetGeometryInstancesRegistered() const;
+	uint64_t GetGeometryInstanceSends() const;
+
+	// How far the scene origin gets from Wwise's origin before Wwise's origin moves to it, see AudWorldFrame.
+	double GetWorldRebaseDistance() const;
+	void SetWorldRebaseDistance( double distance );
+	// Times Wwise's origin moved to the scene origin.
+	uint64_t GetWorldRebases() const;
+	// The geometry instances sent to Wwise most often, one per line, for finding meshes that move on their own.
+	std::string GetGeometrySendReport( int count ) const;
 
 	// Returns whether geometry or rooms need Wwise Spatial Audio.
 	bool UsesSpatialAudio() const;
@@ -250,6 +259,8 @@ private:
 	bool EnsureSpatialAudio();
 	// Tick handler
 	void Process();
+	// Sends what was placed relative to the scene origin again when its offset to Wwise's origin moved.
+	void FollowWorldFrame();
 	// Registers audio2 for the tick handler.
 	void RegisterForTicks();
 	// Update Carbon Audio's lifecycle state.
@@ -300,6 +311,10 @@ private:
 	//  Map of game objects, used to guard Wwise callbacks
 	std::unordered_map<AkGameObjectID, AudGameObjResource*> m_callbackGameObjects;
 	CcpMutex m_callbackGameObjectsMutex;
+
+	// The AudWorldFrame offset and rebase the game objects and rooms in Wwise were last placed with.
+	uint64_t m_placedOffsetGeneration;
+	uint64_t m_placedRebaseCount;
 
 	// A boolean for the state of the profiler capture
 	bool m_isProfilerCapturing;
@@ -416,6 +431,7 @@ public:
 	DELEGATE_SA_GETTER( bool, GetEnableDiffractionOnBoundaryEdges )
 	DELEGATE_SA_GETTER( bool, GetGeometrySolid )
 	DELEGATE_SA_GETTER( bool, GetGeometryPortalSubtraction )
+	DELEGATE_SA_GETTER( float, GetGeometryUpdateTolerance )
 	DELEGATE_SA_GETTER( float, GetGeometryMaxDistance )
 	DELEGATE_SA_GETTER( int, GetGeometryMaxTriangles )
 
@@ -446,6 +462,7 @@ public:
 	DELEGATE_SA_SETTER( bool, SetEnableDiffractionOnBoundaryEdges )
 	DELEGATE_SA_SETTER( bool, SetGeometrySolid )
 	DELEGATE_SA_SETTER( bool, SetGeometryPortalSubtraction )
+	DELEGATE_SA_SETTER( float, SetGeometryUpdateTolerance )
 	DELEGATE_SA_SETTER( float, SetGeometryMaxDistance )
 	DELEGATE_SA_SETTER( int, SetGeometryMaxTriangles )
 

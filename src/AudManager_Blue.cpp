@@ -60,7 +60,7 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		MAP_PROPERTY( "clusteringDeadZoneDistance", GetClusteringDeadZoneDistance, SetClusteringDeadZoneDistance, "Distance around the listener where emitters are not clustered. Read when Spatial Audio initializes.")
 		MAP_PROPERTY( "transmissionLoss", GetTransmissionLoss, SetTransmissionLoss, "Transmission loss [0.0-1.0] of mesh surfaces. 0 makes Wwise ignore the mesh.")
 		MAP_PROPERTY( "enableDiffraction", GetEnableDiffraction, SetEnableDiffraction, "Whether sound diffracts around mesh edges.")
-		MAP_PROPERTY( "enableDiffractionOnBoundaryEdges", GetEnableDiffractionOnBoundaryEdges, SetEnableDiffractionOnBoundaryEdges, "Whether sound diffracts around mesh edges that belong to one triangle only.")
+		MAP_PROPERTY( "enableDiffractionOnBoundaryEdges", GetEnableDiffractionOnBoundaryEdges, SetEnableDiffractionOnBoundaryEdges, "Whether sound diffracts around mesh edges that belong to one triangle only. Off by default: it adds many edges for Wwise to search, and closed hulls don't need it.")
 		MAP_PROPERTY( "geometrySolid", GetGeometrySolid, SetGeometrySolid, "Whether a mesh is a closed volume that applies transmission loss once per pass through it. Has no effect while the Wwise transmission operation is max, its default.")
 		MAP_PROPERTY( "geometryPortalSubtraction", GetGeometryPortalSubtraction, SetGeometryPortalSubtraction, "Whether portals cut openings in the meshes they overlap. Off by default because Wwise re-cuts every overlapping mesh whenever portal visibility changes, which is slow with big meshes. Turn on when a portal sits in a mesh wall.")
 
@@ -71,6 +71,18 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		MAP_PROPERTY_READONLY( "geometrySetsInWwise", GetGeometrySetsInWwise, "Geometry sets in Wwise as of the last tick." )
 		MAP_PROPERTY_READONLY( "geometryInstancesInWwise", GetGeometryInstancesInWwise, "Geometry instances in Wwise as of the last tick." )
 		MAP_PROPERTY_READONLY( "geometryTrianglesInWwise", GetGeometryTrianglesInWwise, "Triangles of every geometry instance in Wwise as of the last tick." )
+		MAP_PROPERTY_READONLY( "geometryInstanceSends", GetGeometryInstanceSends, "Geometry instance placements sent to Wwise since startup. Each one makes Wwise re-index that instance, so it should only grow when meshes move in the world." )
+
+		MAP_PROPERTY( "geometryUpdateTolerance", GetGeometryUpdateTolerance, SetGeometryUpdateTolerance, "How far a mesh moving on its own may get from where Wwise has it before it is sent again, as a share of its distance from the listener [0-1]. Each send makes Wwise re-index the mesh. 0 sends every move.")
+		MAP_METHOD_AND_WRAP
+		(
+			"GetGeometrySendReport",
+			GetGeometrySendReport,
+			"The geometry instances sent to Wwise most often since startup, one per line, for finding meshes that move on their own.\n"
+			":param count: How many instances to list."
+		)
+		MAP_PROPERTY( "worldRebaseDistance", GetWorldRebaseDistance, SetWorldRebaseDistance, "How far the player gets from Wwise's origin, in game units, before the origin moves to the player and everything still in the world is sent to Wwise again. 0 moves it with the player, so Wwise gets positions relative to the player as before. Infinity never moves it.")
+		MAP_PROPERTY_READONLY( "worldRebases", GetWorldRebases, "Times Wwise's origin moved to the player." )
 
 		// Obstruction / occlusion
 		MAP_PROPERTY( "obstructionOcclusionEnabled", GetObstructionOcclusionEnabled, SetObstructionOcclusionEnabled, "Enable or disable game-driven obstruction/occlusion processing. Disabling fades all values back to clear.")

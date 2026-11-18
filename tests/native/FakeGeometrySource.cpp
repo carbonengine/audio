@@ -5,9 +5,11 @@
 #include <BlueExposure.h>
 #include <Blue.h>
 #include <ITr2AudGeometry.h>
+#include <ITr2AudWorld.h>
 
 BLUE_DEFINE_INTERFACE( ITr2AudGeometry );
 BLUE_DECLARE_INTERFACE( ITr2AudGeometry );
+BLUE_DEFINE_INTERFACE( ITr2AudWorld );
 
 // Registers boxes with carbon-audio's AudGeometry.
 BLUE_CLASS( FakeGeometrySource ) : public IRoot
@@ -16,13 +18,23 @@ public:
 	FakeGeometrySource( IRoot* lockobj = nullptr )
 	{
 		BeClasses->CreateInstanceFromName( "AudGeometry", BlueInterfaceIID<ITr2AudGeometry>(), reinterpret_cast<void**>( &m_geometry.p ) );
+		BeClasses->CreateInstanceFromName( "AudWorld", BlueInterfaceIID<ITr2AudWorld>(), reinterpret_cast<void**>( &m_world.p ) );
 	}
 
 	EXPOSE_TO_BLUE();
 
 	bool IsConnected()
 	{
-		return m_geometry.p != nullptr;
+		return m_geometry.p != nullptr && m_world.p != nullptr;
+	}
+
+	// Where trinity's scene origin is, which follows the player. The positions handed over after it are relative to it.
+	void SetSceneOrigin( double x, double y, double z )
+	{
+		if( m_world )
+		{
+			m_world->SetSceneOrigin( x, y, z );
+		}
 	}
 
 	// Every face has its own four vertices, like a render mesh with split normals.
@@ -126,6 +138,7 @@ private:
 	}
 
 	ITr2AudGeometryPtr m_geometry;
+	ITr2AudWorldPtr m_world;
 };
 
 TYPEDEF_BLUECLASS( FakeGeometrySource );
@@ -139,7 +152,16 @@ const Be::ClassInfo* FakeGeometrySource::ExposeToBlue()
 		(
 			"IsConnected",
 			IsConnected,
-			"Whether carbon-audio's AudGeometry could be created."
+			"Whether carbon-audio's AudGeometry and AudWorld could be created."
+		)
+		MAP_METHOD_AND_WRAP
+		(
+			"SetSceneOrigin",
+			SetSceneOrigin,
+			"Tells audio where the scene origin is, the way trinity does every frame.\n"
+			":param x: Scene origin in absolute world coordinates.\n"
+			":param y: Scene origin in absolute world coordinates.\n"
+			":param z: Scene origin in absolute world coordinates."
 		)
 		MAP_METHOD_AND_WRAP
 		(
