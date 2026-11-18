@@ -121,8 +121,12 @@ public:
 	const std::map<std::wstring, std::wstring>& GetSwitches() const;
 	// Force this game object to change it's culling state from awake to culled or vice versa.  You must call ReleaseForcedCullingState to get it to return to normal.
 	void ForceCullingStateChange();
-	// Return this game object to be controlled by the sound prioritization system. 
+	// Return this game object to be controlled by the sound prioritization system.
 	void ReleaseForcedCullingState();
+	// Sends the position again if the world frame moved since it was sent. Tick thread.
+	void ResendPlacement( uint64_t frameGeneration );
+	// Where Wwise has this game object, in Wwise's space.
+	Vector3 GetWwisePosition() const;
 
 protected:
 	struct Orientation
@@ -145,6 +149,10 @@ protected:
 	AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj = NULL );
 	// Records a new parent orientation, resolves it against any authored rotation, and applies the result.
 	virtual int SetPlacementFromParent( const Vector3& front, const Vector3& top, const Vector3& position );
+	// Sends a placement to Wwise with the world frame's current offset. The listener converts it its own way.
+	virtual void SendPlacement( const Vector3& front, const Vector3& top, const Vector3& position );
+	// Builds the Wwise position: the scene position moved by the world frame's offset, still right-handed.
+	AkVector64 ToFramePosition( const Vector3& position );
 	// Prepend an event prefix if one exists on the given event.
 	std::wstring PrepareEvent( const std::wstring& event, bool bypassPrefix );
 	// Propagate any wwise callbacks received for this game object.
@@ -226,6 +234,11 @@ protected:
 
 	// A mutex to be used when working with m_playingEvents, m_pendingStoppedPlayingIDs and m_eventsOnWake as they are accessed in different threads.
 	CcpMutex m_mutex;
+	// Guards the placement sent to Wwise, which trinity's threads and the tick both send.
+	mutable CcpMutex m_placementMutex;
+	// World frame offset generation the last placement was sent with, and where it put this game object.
+	uint64_t m_sentFrameGeneration = 0;
+	Vector3 m_sentWwisePosition;
 
 private:
 	// Applies an already-resolved effective orientation to this game object and pushes it to Wwise.

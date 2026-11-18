@@ -32,6 +32,7 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 														 m_effectiveOrientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) ),
 														 m_authoredRotation( 0.0f, 0.0f, 0.0f, 1.0f ),
 														 m_mutex( "AudGameObjResource", "m_mutex" ),
+														 m_placementMutex( "AudGameObjResource", "m_placementMutex" ),
 														 m_gameObjRegistered( false ),
 														 m_culled( true ),
 														 m_isVisible(false),
@@ -71,6 +72,7 @@ AudGameObjResource::AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj
 																				   m_effectiveOrientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) ),
 																				   m_authoredRotation( 0.0f, 0.0f, 0.0f, 1.0f ),
 														 						   m_mutex( "AudGameObjResource", "m_mutex" ),
+																				   m_placementMutex( "AudGameObjResource", "m_placementMutex" ),
 																				   m_gameObjRegistered( false ),
 														 						   m_culled( true ),
 														 						   m_isVisible(false),
@@ -465,22 +467,68 @@ int AudGameObjResource::ApplyEffectivePlacement( const Vector3& front, const Vec
 {
 	const Orientation corrected = Orthonormalize( front, top );
 
-	m_position = position;
-	m_effectiveOrientation = corrected;
+	{
+		CcpAutoMutex lock( m_placementMutex );
+		m_position = position;
+		m_effectiveOrientation = corrected;
+	}
 
 	if( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled && m_gameObjRegistered )
 	{
-		AkSoundPosition tmp;
-		tmp.Set( MakeAkVector( position ), MakeAkVector( corrected.front ), MakeAkVector( corrected.top ) );
-
-		// all vectors come in RH, but WWISE is LH, so convert
-		AkSoundPosition soundPosLH;
-		RH2LH::convertEmitter( &soundPosLH, &tmp );
-
-		AK::SoundEngine::SetPosition( m_ID, soundPosLH );
+		SendPlacement( corrected.front, corrected.top, position );
 		g_audioManager->GetRoomManager().UpdateGameObjectPosition( m_ID, position );
 	}
 	return AK_Success;
+}
+
+AkVector64 AudGameObjResource::ToFramePosition( const Vector3& position )
+{
+	const AudWorldFrame::Offset offset = g_audioManager->GetWorldFrame().GetOffset();
+	m_sentFrameGeneration = offset.generation;
+	AkVector64 result;
+	result.X = position.x + offset.value[0];
+	result.Y = position.y + offset.value[1];
+	result.Z = position.z + offset.value[2];
+	return result;
+}
+
+void AudGameObjResource::SendPlacement( const Vector3& front, const Vector3& top, const Vector3& position )
+{
+	CcpAutoMutex lock( m_placementMutex );
+
+	AkSoundPosition tmp;
+	tmp.Set( ToFramePosition( position ), MakeAkVector( front ), MakeAkVector( top ) );
+
+	// all vectors come in RH, but WWISE is LH, so convert
+	AkSoundPosition soundPosLH;
+	RH2LH::convertEmitter( &soundPosLH, &tmp );
+
+	AK::SoundEngine::SetPosition( m_ID, soundPosLH );
+	const AkVector64 sent = soundPosLH.Position();
+	m_sentWwisePosition = Vector3( static_cast<float>( sent.X ), static_cast<float>( sent.Y ), static_cast<float>( sent.Z ) );
+}
+
+void AudGameObjResource::ResendPlacement( uint64_t frameGeneration )
+{
+	if( !m_gameObjRegistered || m_sentFrameGeneration == frameGeneration || !IsUsableWorldPosition( m_position ) )
+	{
+		return;
+	}
+
+	Vector3 position;
+	Orientation orientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) );
+	{
+		CcpAutoMutex lock( m_placementMutex );
+		position = m_position;
+		orientation = m_effectiveOrientation;
+	}
+	SendPlacement( orientation.front, orientation.top, position );
+}
+
+Vector3 AudGameObjResource::GetWwisePosition() const
+{
+	CcpAutoMutex lock( m_placementMutex );
+	return m_sentWwisePosition;
 }
 
 bool AudGameObjResource::HasAuthoredRotation() const

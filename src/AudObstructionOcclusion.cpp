@@ -222,8 +222,9 @@ void AudObstructionOcclusion::RunSightlinePass(std::chrono::steady_clock::time_p
 		m_blockedCapacity = count;
 	}
 
-	// Acoustics transmission replaces this occlusion, so the ray tests are skipped and every emitter is taken as clear.
-	const bool acousticsEnabled = m_audioManager->GetSpatialAudioGeometryEnabled();
+	// Wwise transmission through destiny's collision replaces this occlusion while it is active, so the ray tests are
+	// skipped and every emitter is taken as clear.
+	const bool acousticsEnabled = m_audioManager->IsAcousticGeometryActive();
 	bool answered = true;
 	if (acousticsEnabled)
 	{

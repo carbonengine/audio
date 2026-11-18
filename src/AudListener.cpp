@@ -60,21 +60,33 @@ int AudListener::SetPlacementFromParent( const Vector3& front, const Vector3& to
 {
 	if( g_audioManager != nullptr && g_audioManager->GetState() != AudioState::Uninitialized )
 	{
-		m_position = position;
+		const Orientation corrected = Orthonormalize( front, top );
+		{
+			CcpAutoMutex lock( m_placementMutex );
+			m_position = position;
+			m_effectiveOrientation = corrected;
+		}
 		if( m_gameObjRegistered )
 		{
-			const Orientation corrected = Orthonormalize( front, top );
-
-			AkSoundPosition tmp;
-			tmp.Set( MakeAkVector( position ), MakeAkVector( corrected.front ), MakeAkVector( corrected.top ) );
-
-			// all vectors come in RH, but WWISE is LH, so convert
-			AkSoundPosition soundPosLH;
-			RH2LH::convertListener( &soundPosLH, &tmp );
-
-			AK::SoundEngine::SetPosition( m_ID, soundPosLH );
+			SendPlacement( corrected.front, corrected.top, position );
 			g_audioManager->GetRoomManager().UpdateGameObjectPosition( m_ID, position );
 		}
 	}
 	return AK_Success;
+}
+
+void AudListener::SendPlacement( const Vector3& front, const Vector3& top, const Vector3& position )
+{
+	CcpAutoMutex lock( m_placementMutex );
+
+	AkSoundPosition tmp;
+	tmp.Set( ToFramePosition( position ), MakeAkVector( front ), MakeAkVector( top ) );
+
+	// all vectors come in RH, but WWISE is LH, so convert
+	AkSoundPosition soundPosLH;
+	RH2LH::convertListener( &soundPosLH, &tmp );
+
+	AK::SoundEngine::SetPosition( m_ID, soundPosLH );
+	const AkVector64 sent = soundPosLH.Position();
+	m_sentWwisePosition = Vector3( static_cast<float>( sent.X ), static_cast<float>( sent.Y ), static_cast<float>( sent.Z ) );
 }

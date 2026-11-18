@@ -15,6 +15,7 @@ find_package(TBB                    CONFIG REQUIRED)
 find_package(Python3 COMPONENTS Development Interpreter REQUIRED)
 
 set(PUBLIC_HEADER_FILES_INCLUDE
+	include/IEveAcousticGeometrySource.h
 	include/IEveObstructionQuery2.h
 )
 
@@ -42,6 +43,7 @@ ccp_add_library(CarbonAudio SHARED
 	src/AudEventKey.cpp
 	src/AudEventKey_Blue.cpp
 	src/AudGameObjResource.cpp
+	src/AudAcousticGeometry.cpp
 	src/AudGeometry.cpp
 	src/AudGeometryManager.cpp
 	src/AudGeometry_Blue.cpp
@@ -51,6 +53,7 @@ ccp_add_library(CarbonAudio SHARED
 	src/AudRoom.cpp
 	src/AudRoom_Blue.cpp
 	src/AudRoomManager.cpp
+	src/AudWorldFrame.cpp
 	src/AudUnitBox.cpp
 	src/SpatialAudioSettings.cpp
 	src/audio2.cpp
@@ -91,6 +94,7 @@ target_sources(CarbonAudio PRIVATE
 	src/AudStaticDataRepository.h
 	src/AudUIPlayer.h
 	src/AudMusicPlayer.h
+	src/AudAcousticGeometry.h
 	src/AudGeometry.h
 	src/AudGeometryManager.h
     src/AudObstructionOcclusion.h
@@ -98,6 +102,7 @@ target_sources(CarbonAudio PRIVATE
 	src/AudRoom.h
 	src/AudRoomManager.h
 	src/AudUnitBox.h
+	src/AudWorldFrame.h
 	src/SpatialAudioSettings.h
 	src/autoversion.h
 	src/DebugUtilities.h

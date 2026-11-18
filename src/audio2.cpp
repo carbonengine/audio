@@ -6,11 +6,13 @@
 #include "stdafx.h"
 #include "AudManager.h"
 #include "AudStaticDataRepository.h"
+#include "IEveAcousticGeometrySource.h"
 #include "IEveObstructionQuery2.h"
 
 BLUE_DEFINE_INTERFACE( IBluePlacementObserver );
 BLUE_DEFINE_INTERFACE( IBlueEventListener );
 BLUE_DEFINE_INTERFACE( IEveObstructionQuery2 );
+BLUE_DEFINE_INTERFACE( IEveAcousticGeometrySource );
 
 const char* g_moduleName = "audio2";
 const std::string g_wwiseVersion = std::to_string(AK_WWISESDK_VERSION_MAJOR) + "." + \

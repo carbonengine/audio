@@ -4,6 +4,7 @@
 #include "AudManager.h"
 
 #include "AudGameObjResource.h"
+#include "IEveAcousticGeometrySource.h"
 #include "IEveObstructionQuery2.h"
 
 const Be::VarChooser AudioStateChooser[] = {
@@ -70,6 +71,16 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		MAP_PROPERTY_READONLY( "geometrySetsInWwise", GetGeometrySetsInWwise, "Geometry sets in Wwise as of the last tick." )
 		MAP_PROPERTY_READONLY( "geometryInstancesInWwise", GetGeometryInstancesInWwise, "Geometry instances in Wwise as of the last tick." )
 		MAP_PROPERTY_READONLY( "geometryTrianglesInWwise", GetGeometryTrianglesInWwise, "Triangles of every geometry instance in Wwise as of the last tick." )
+		MAP_PROPERTY_READONLY( "geometrySlips", GetGeometrySlips, "Ticks where trinity's scene slipped a frame against the world frame and the slip was taken out, instead of every static mesh going to Wwise again." )
+		MAP_PROPERTY_READONLY( "geometrySetsSent", GetGeometrySetsSent, "How many times a geometry set went to Wwise, which builds its diffraction edges each time." )
+		MAP_PROPERTY_READONLY( "geometryInstancesSent", GetGeometryInstancesSent, "How many times a geometry instance went to Wwise. Flat while nothing static moves, in flight too while the world frame is active." )
+		MAP_PROPERTY_READONLY( "acousticBodies", GetAcousticBodies, "Static bodies with convex collision destiny reported at the last selection." )
+		MAP_PROPERTY_READONLY( "acousticMeshesFetched", GetAcousticMeshesFetched, "Collision meshes fetched from destiny since the source was set." )
+		MAP_PROPERTY_READONLY( "worldFrameActive", GetWorldFrameActive, "Whether positions go to Wwise in the world frame, so static geometry stays put while the ego moves." )
+		MAP_PROPERTY_READONLY( "worldFrameRebases", GetWorldFrameRebases, "How many times the world frame's origin moved to the ego." )
+		MAP_PROPERTY_READONLY( "roomInstancesSent", GetRoomInstancesSent, "How many times a room's geometry instance went to Wwise. Flat in flight while the world frame is active." )
+		MAP_PROPERTY( "acousticGeometrySource", GetAcousticGeometrySource, SetAcousticGeometrySource, "Object implementing IEveAcousticGeometrySource, normally destiny's ballpark. While set and spatialAudioGeometryEnabled is on, positions go to Wwise in the world frame. Held weakly." )
+		MAP_PROPERTY( "collisionGeometryEnabled", GetCollisionGeometryEnabled, SetCollisionGeometryEnabled, "Sends destiny's convex collision to Wwise in place of trinity's meshes, while acousticGeometrySource is set. Off by default." )
 
 		// Obstruction / occlusion
 		MAP_PROPERTY( "obstructionOcclusionEnabled", GetObstructionOcclusionEnabled, SetObstructionOcclusionEnabled, "Enable or disable game-driven obstruction/occlusion processing. Disabling fades all values back to clear.")
@@ -77,7 +88,15 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		MAP_PROPERTY( "obstructionQuery", GetObstructionQuery, SetObstructionQuery, "Object implementing IEveObstructionQuery2, normally destiny's ballpark. Held weakly, so it clears itself when the object goes away. While set, the engine checks line of sight itself when a voice starts and periodically while it plays. Set to None to turn it off. SetEmitterLineOfSightBlockage works either way.")
 
 		MAP_METHOD_AND_WRAP
-		( 
+		(
+			"GetAcousticInstanceWwisePosition",
+			GetAcousticInstanceWwisePosition,
+			"Where Wwise has the first instance of a body's collision, in Wwise's left-handed space relative to the world frame's origin. "
+			"Infinite when none of it is in Wwise.\n"
+			":param bodyId: Ball ID of the body."
+		)
+		MAP_METHOD_AND_WRAP
+		(
 			"UpdateSettings",
 			UpdateSettings,
 			"Update settings to be used when starting Wwise. Needs to be called before SetEnabled in order to apply.\n"

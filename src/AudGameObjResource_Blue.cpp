@@ -34,9 +34,10 @@ const Be::ClassInfo* AudGameObjResource::ExposeToBlue()
 		MAP_ATTRIBUTE( "position", m_position, "The position of this game object as audio sees it.\n:jessica-hidden: True", Be::READ )
 		MAP_PROPERTY( "parentBall", GetParentBall, SetParentBall, "The ball this game object is mounted on, normally set by trinity. Held weakly. The sightline query skips this ball's geometry so the object it sits on doesn't occlude it.\n:jessica-hidden: True" )
 
+		MAP_PROPERTY_READONLY( "wwisePosition", GetWwisePosition, "Where the last placement put this game object in Wwise: in Wwise's left-handed space, moved by the world frame while it is active.\n:jessica-hidden: True" )
 		MAP_PROPERTY_READONLY
-		( 
-			"maxAttenuationRadius", 
+		(
+			"maxAttenuationRadius",
 			GetMaxAttenuationRadius, 
 			"The max attenuation radius this game object has based off of Wwise metadata. The scaling factor of this game object is also taken into account.\n:jessica-group: Attenuation Scaling"
 		)

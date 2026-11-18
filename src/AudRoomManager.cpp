@@ -59,14 +59,24 @@ namespace
 	constexpr float PORTAL_ROOM_LOOKUP_Z = 0.75f;
 
 	/**
-	 * @brief Compares positions with a 1 mm tolerance.
+	 * @brief Compares positions within a tolerance.
 	 *
 	 * @return True when every axis is within the tolerance.
 	 */
-	bool PositionsNearlyEqual( const AkVector64& a, const AkVector64& b )
+	bool PositionsNearlyEqual( const AkVector64& a, const AkVector64& b, AkReal64 epsilon )
 	{
-		constexpr AkReal64 epsilon = 1e-3;
 		return std::fabs( a.X - b.X ) <= epsilon && std::fabs( a.Y - b.Y ) <= epsilon && std::fabs( a.Z - b.Z ) <= epsilon;
+	}
+
+	AkReal64 PositionTolerance( const Matrix& unitBoxToWorld )
+	{
+		return RH2LH::sceneJitterTolerance( unitBoxToWorld );
+	}
+
+	bool ScalesNearlyEqual( const AkVector& a, const AkVector& b )
+	{
+		const auto close = []( float p, float q ) { return std::fabs( p - q ) <= 1e-4f * std::max( 1.0f, std::fabs( p ) ); };
+		return close( a.X, b.X ) && close( a.Y, b.Y ) && close( a.Z, b.Z );
 	}
 
 	/**
@@ -104,9 +114,9 @@ namespace
 	 *
 	 * @return True when SetPortal would not change anything.
 	 */
-	bool PortalParamsEqual( const AkPortalParams& a, const AkPortalParams& b )
+	bool PortalParamsEqual( const AkPortalParams& a, const AkPortalParams& b, AkReal64 positionTolerance )
 	{
-		return PositionsNearlyEqual( a.Transform.Position(), b.Transform.Position() )
+		return PositionsNearlyEqual( a.Transform.Position(), b.Transform.Position(), positionTolerance )
 			&& OrientationsNearlyEqual( a.Transform.OrientationFront(), b.Transform.OrientationFront() )
 			&& OrientationsNearlyEqual( a.Transform.OrientationTop(), b.Transform.OrientationTop() )
 			&& a.Extent.halfWidth == b.Extent.halfWidth
@@ -194,6 +204,20 @@ void AudRoomManager::Update()
 	if( m_audioManager == nullptr || !m_audioManager->AreRoomsReady() )
 	{
 		return;
+	}
+
+	// A new world frame origin moves every room in Wwise, and trinity only sends the rooms that moved in the scene.
+	const uint64_t epoch = m_audioManager->GetWorldFrame().GetEpoch();
+	if( epoch != m_frameEpoch )
+	{
+		m_frameEpoch = epoch;
+		for( auto& entry : m_rooms )
+		{
+			if( entry.second->m_sentToWwise )
+			{
+				PushLocked( *entry.second );
+			}
+		}
 	}
 
 	if( m_pendingRoomTones > 0 )
@@ -364,24 +388,40 @@ void AudRoomManager::PushLocked( AudRoom& room )
 	}
 
 	const AkUInt64 instanceID = GeometryInstanceIDForRoom( room );
+	const Matrix& unitBoxToWorld = room.GetBox().GetUnitBoxToWorld();
+	const AudWorldFrame::Offset offset = m_audioManager->GetWorldFrame().GetOffset();
 
-	AkTransform transform;
-	RH2LH::convertTransform( room.GetBox().GetUnitBoxToWorld(), transform );
+	AkWorldTransform transform;
+	RH2LH::convertTransformOffset( unitBoxToWorld, offset.value, transform );
 
 	AkGeometryInstanceParams instanceParams;
 	instanceParams.PositionAndOrientation = transform;
-	instanceParams.Scale = RH2LH::extractScale( room.GetBox().GetUnitBoxToWorld() );
+	instanceParams.Scale = RH2LH::extractScale( unitBoxToWorld );
 	instanceParams.GeometrySetID = SHARED_CUBE_GEOMETRY_SET_ID;
 	instanceParams.UseForReflectionAndDiffraction = false;
 	instanceParams.BypassPortalSubtraction = false;
 	instanceParams.IsSolid = false;
 
-	AKRESULT result = AK::SpatialAudio::SetGeometryInstance( instanceID, instanceParams );
-	if( result != AK_Success )
+	// In the world frame a static room keeps its place while the ego moves, so it is only sent when it really moved.
+	const auto sent = m_sentRoomInstances.find( room.GetRoomID() );
+	const bool instanceUnchanged = room.m_sentToWwise && sent != m_sentRoomInstances.end()
+		&& PositionsNearlyEqual( sent->second.PositionAndOrientation.Position(), transform.Position(), PositionTolerance( unitBoxToWorld ) )
+		&& OrientationsNearlyEqual( sent->second.PositionAndOrientation.OrientationFront(), transform.OrientationFront() )
+		&& OrientationsNearlyEqual( sent->second.PositionAndOrientation.OrientationTop(), transform.OrientationTop() )
+		&& ScalesNearlyEqual( sent->second.Scale, instanceParams.Scale );
+
+	AKRESULT result = AK_Success;
+	if( !instanceUnchanged )
 	{
-		CCP_LOGERR_CH( s_ch, "Failed to set geometry instance for room '%s' (%llu), AKRESULT: %d",
-			room.GetName().c_str(), room.GetRoomID(), result );
-		return;
+		result = AK::SpatialAudio::SetGeometryInstance( instanceID, instanceParams );
+		if( result != AK_Success )
+		{
+			CCP_LOGERR_CH( s_ch, "Failed to set geometry instance for room '%s' (%llu), AKRESULT: %d",
+				room.GetName().c_str(), room.GetRoomID(), result );
+			return;
+		}
+		m_sentRoomInstances[room.GetRoomID()] = instanceParams;
+		++m_roomInstancesSent;
 	}
 
 	const std::wstring roomTone = StringUtils::trim( room.GetRoomToneEvent() );
@@ -418,6 +458,7 @@ void AudRoomManager::PushLocked( AudRoom& room )
 			if( firstSend )
 			{
 				AK::SpatialAudio::RemoveGeometryInstance( instanceID );
+				m_sentRoomInstances.erase( room.GetRoomID() );
 			}
 			return;
 		}
@@ -460,6 +501,7 @@ void AudRoomManager::RemoveLocked( AudRoom& room )
 	StopRoomToneLocked( room );
 
 	room.m_sentToWwise = false;
+	m_sentRoomInstances.erase( room.GetRoomID() );
 	m_assignmentsDirty = true;
 	RemovePortalsConnectedToLocked( room.GetRoomID() );
 	const bool lastRoom = m_roomsInWwise.fetch_sub( 1, std::memory_order_acq_rel ) == 1;
@@ -633,6 +675,7 @@ void AudRoomManager::ForgetWwiseState()
 		room.m_postedRoomTone.clear();
 	}
 	RemoveAllPortalsLocked();
+	m_sentRoomInstances.clear();
 	m_pendingRoomTones = 0;
 	m_roomsInWwise.store( 0, std::memory_order_release );
 	m_cubeSent = false;
@@ -727,12 +770,13 @@ void AudRoomManager::ChoosePortalRoomsLocked( AudPortal& portal, AkUInt64& front
 void AudRoomManager::SendPortalLocked( AudPortal& portal, AkUInt64 frontRoomID, AkUInt64 backRoomID )
 {
 	const AudUnitBox& box = portal.GetBox();
-	AkTransform transform;
-	RH2LH::convertTransform( box.GetUnitBoxToWorld(), transform );
+	const AudWorldFrame::Offset offset = m_audioManager->GetWorldFrame().GetOffset();
+	AkWorldTransform transform;
+	RH2LH::convertTransformOffset( box.GetUnitBoxToWorld(), offset.value, transform );
 	const AkVector scale = RH2LH::extractScale( box.GetUnitBoxToWorld() );
 
 	AkPortalParams params;
-	params.Transform = AK::ConvertAkTransformToAkWorldTransform( transform );
+	params.Transform = transform;
 	params.Extent = AkExtent( 0.5f * scale.X, 0.5f * scale.Y, 0.5f * scale.Z );
 	params.FrontRoom = AkRoomID( frontRoomID );
 	params.BackRoom = AkRoomID( backRoomID );
@@ -741,7 +785,7 @@ void AudRoomManager::SendPortalLocked( AudPortal& portal, AkUInt64 frontRoomID, 
 
 	const std::string name = portal.GetName().empty() ? "Portal " + std::to_string( portal.GetPortalID() ) : portal.GetName();
 	const bool portalChanged = !portal.m_sentToWwise
-		|| !PortalParamsEqual( params, portal.m_sentPortalParams )
+		|| !PortalParamsEqual( params, portal.m_sentPortalParams, PositionTolerance( box.GetUnitBoxToWorld() ) )
 		|| name != portal.m_sentName;
 
 	if( portalChanged )

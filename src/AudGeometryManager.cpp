@@ -8,6 +8,7 @@
 #include "stdafx.h"
 #include "AudGeometryManager.h"
 
+#include "AudManager.h"
 #include "SpatialAudioSettings.h"
 #include "Utilities.h"
 
@@ -35,6 +36,8 @@ namespace
 	/// instances at the edge of the limits don't flip in and out.
 	constexpr float KEEP_DISTANCE = 1.1f;
 	constexpr float KEEP_RANK = 0.9f;
+	/// Fewer instances moving together could be one object really moving.
+	constexpr size_t MIN_SLIP_INSTANCES = 3;
 
 	struct PositionHash
 	{
@@ -92,10 +95,10 @@ namespace
 		return std::max( 0.0f, std::sqrt( x * x + y * y + z * z ) - mesh.radius * largestScale );
 	}
 
-	AkGeometryInstanceParams MakeInstanceParams( uint64_t geometrySetId, const Matrix& worldTransform, bool solid )
+	AkGeometryInstanceParams MakeInstanceParams( uint64_t geometrySetId, const Matrix& worldTransform, const double offset[3], bool solid )
 	{
-		AkTransform transform;
-		RH2LH::convertTransform( worldTransform, transform );
+		AkWorldTransform transform;
+		RH2LH::convertTransformOffset( worldTransform, offset, transform );
 
 		AkGeometryInstanceParams params;
 		params.PositionAndOrientation = transform;
@@ -115,9 +118,15 @@ namespace
 		return std::fabs( a.X - b.X ) <= epsilon && std::fabs( a.Y - b.Y ) <= epsilon && std::fabs( a.Z - b.Z ) <= epsilon;
 	}
 
-	bool SameInstanceParams( const AkGeometryInstanceParams& a, const AkGeometryInstanceParams& b )
+	/// The offset trinity's scene has right now. Trinity sends a transform in the scene it is rendering, which is the
+	/// one the offset is for, the same way the listener and emitters take theirs.
+	AudWorldFrame::Offset CurrentFrameOffset()
 	{
-		constexpr AkReal64 positionEpsilon = 1e-3;
+		return g_audioManager != nullptr ? g_audioManager->GetWorldFrame().GetOffset() : AudWorldFrame::Offset();
+	}
+
+	bool SameInstanceParams( const AkGeometryInstanceParams& a, const AkGeometryInstanceParams& b, AkReal64 positionEpsilon )
+	{
 		constexpr float orientationEpsilon = 1e-4f;
 		constexpr float scaleEpsilon = 1e-4f;
 
@@ -142,6 +151,13 @@ AudGeometryManager::AudGeometryManager() :
 	m_enableDiffractionOnBoundaryEdges( false ),
 	m_solid( false ),
 	m_statsDirty( false ),
+	m_frameEpoch( 0 ),
+	m_frameOrigin{},
+	m_frameActive( false ),
+	m_slip{},
+	m_slips( 0 ),
+	m_setsSent( 0 ),
+	m_instancesSent( 0 ),
 	m_setsInWwise( 0 ),
 	m_instancesInWwise( 0 ),
 	m_trianglesInWwise( 0 ),
@@ -265,6 +281,7 @@ void AudGeometryManager::SetGeometry( uint64_t geometrySetId, uint64_t instanceI
 		mesh = build();
 	}
 
+	const AudWorldFrame::Offset offset = CurrentFrameOffset();
 	CcpAutoMutex lock( m_mutex );
 
 	const auto setEntry = m_sets.try_emplace( geometrySetId );
@@ -294,11 +311,13 @@ void AudGeometryManager::SetGeometry( uint64_t geometrySetId, uint64_t instanceI
 
 	instance.geometrySetId = geometrySetId;
 	instance.transform = worldTransform;
+	std::copy( offset.value, offset.value + 3, instance.offset );
 	instance.dirty = true;
 }
 
 void AudGeometryManager::SetGeometryTransform( uint64_t instanceId, const Matrix& worldTransform )
 {
+	const AudWorldFrame::Offset offset = CurrentFrameOffset();
 	CcpAutoMutex lock( m_mutex );
 
 	const auto it = m_instances.find( instanceId );
@@ -311,6 +330,7 @@ void AudGeometryManager::SetGeometryTransform( uint64_t instanceId, const Matrix
 	if( instance.transform != worldTransform )
 	{
 		instance.transform = worldTransform;
+		std::copy( offset.value, offset.value + 3, instance.offset );
 		instance.dirty = true;
 	}
 }
@@ -382,6 +402,7 @@ bool AudGeometryManager::SendSetLocked( uint64_t geometrySetId, GeometrySet& set
 		return false;
 	}
 
+	++m_setsSent;
 	if( !set.inWwise )
 	{
 		set.inWwise = true;
@@ -390,7 +411,7 @@ bool AudGeometryManager::SendSetLocked( uint64_t geometrySetId, GeometrySet& set
 	return true;
 }
 
-void AudGeometryManager::SelectInstancesLocked( const SpatialAudioSettings& settings, const Vector3* listenerPosition )
+void AudGeometryManager::SelectInstancesLocked( const SpatialAudioSettings& settings, const Vector3* listenerPosition, const double offset[3] )
 {
 	const float maxDistance = settings.GetGeometryMaxDistance();
 	const size_t maxTriangles = static_cast<size_t>( settings.GetGeometryMaxTriangles() );
@@ -422,7 +443,13 @@ void AudGeometryManager::SelectInstancesLocked( const SpatialAudioSettings& sett
 		float distance = 0.0f;
 		if( listenerPosition )
 		{
-			distance = DistanceToBounds( instance.transform, mesh, largestScale, *listenerPosition );
+			// The listener in the scene the instance's transform came from: an instance trinity hasn't updated since has
+			// not moved in the world, but the ego has.
+			const Vector3 listener(
+				listenerPosition->x + static_cast<float>( offset[0] - instance.offset[0] ),
+				listenerPosition->y + static_cast<float>( offset[1] - instance.offset[1] ),
+				listenerPosition->z + static_cast<float>( offset[2] - instance.offset[2] ) );
+			distance = DistanceToBounds( instance.transform, mesh, largestScale, listener );
 			if( maxDistance > 0.0f && distance > maxDistance * ( instance.inWwise ? KEEP_DISTANCE : 1.0f ) )
 			{
 				continue;
@@ -472,9 +499,31 @@ void AudGeometryManager::SelectInstancesLocked( const SpatialAudioSettings& sett
 	}
 }
 
-void AudGeometryManager::Update( const SpatialAudioSettings& settings, const Vector3* listenerPosition )
+void AudGeometryManager::Update( const SpatialAudioSettings& settings, const Vector3* listenerPosition, const AudWorldFrame& frame )
 {
 	CcpAutoMutex lock( m_mutex );
+
+	// A rebase keeps every instance where it is in the world, so its offset moves with the origin; turning the frame
+	// on or off leaves nothing to keep. Either way every instance goes to Wwise again.
+	const AudWorldFrame::Offset offset = frame.GetOffset();
+	const bool newEpoch = frame.GetEpoch() != m_frameEpoch;
+	if( newEpoch )
+	{
+		const double* origin = frame.GetOrigin();
+		const bool rebase = m_frameActive && frame.IsActive();
+		for( auto& entry : m_instances )
+		{
+			Instance& instance = entry.second;
+			for( int axis = 0; axis < 3; ++axis )
+			{
+				instance.offset[axis] = rebase ? instance.offset[axis] + m_frameOrigin[axis] - origin[axis] : offset.value[axis];
+			}
+			instance.dirty = true;
+		}
+		m_frameEpoch = frame.GetEpoch();
+		m_frameActive = frame.IsActive();
+		std::copy( origin, origin + 3, m_frameOrigin );
+	}
 
 	// A set takes its instances with it, so instances go first.
 	bool setsMayBeUnused = !m_instancesToRemove.empty();
@@ -509,7 +558,9 @@ void AudGeometryManager::Update( const SpatialAudioSettings& settings, const Vec
 	const bool solidChanged = m_solid != settings.GetGeometrySolid();
 	m_solid = settings.GetGeometrySolid();
 
-	SelectInstancesLocked( settings, listenerPosition );
+	SelectInstancesLocked( settings, listenerPosition, offset.value );
+	// A new epoch really moves everything in Wwise by one amount, which must not be taken for a slip.
+	const bool slipped = !newEpoch && FindSceneSlipLocked();
 
 	const auto removeFromWwise = [&]( uint64_t instanceId, Instance& instance )
 	{
@@ -544,8 +595,16 @@ void AudGeometryManager::Update( const SpatialAudioSettings& settings, const Vec
 			continue;
 		}
 
-		const AkGeometryInstanceParams params = MakeInstanceParams( instance.geometrySetId, instance.transform, m_solid );
-		if( instance.inWwise && SameInstanceParams( params, instance.sent ) )
+		AkGeometryInstanceParams params = MakeInstanceParams( instance.geometrySetId, instance.transform, instance.offset, m_solid );
+		if( slipped )
+		{
+			AkVector64 position = params.PositionAndOrientation.Position();
+			position.X += m_slip[0];
+			position.Y += m_slip[1];
+			position.Z += m_slip[2];
+			params.PositionAndOrientation.SetPosition( position );
+		}
+		if( instance.inWwise && SameInstanceParams( params, instance.sent, RH2LH::sceneJitterTolerance( instance.transform ) ) )
 		{
 			continue;
 		}
@@ -564,6 +623,7 @@ void AudGeometryManager::Update( const SpatialAudioSettings& settings, const Vec
 			continue;
 		}
 
+		++m_instancesSent;
 		instance.rejected = false;
 		instance.sent = params;
 		if( !instance.inWwise )
@@ -580,6 +640,65 @@ void AudGeometryManager::Update( const SpatialAudioSettings& settings, const Vec
 
 	m_instancesRegistered = m_instances.size();
 	UpdateStatsLocked();
+}
+
+bool AudGeometryManager::FindSceneSlipLocked()
+{
+	// Now and then trinity renders with a reference the offset doesn't have, and every static instance it sent seems to
+	// move by the same amount while nothing in the world did. Wwise would have to take all of them again.
+	m_slipSamples.clear();
+	size_t inWwise = 0;
+	for( const auto& entry : m_instances )
+	{
+		const Instance& instance = entry.second;
+		if( !instance.inWwise || !instance.wanted )
+		{
+			continue;
+		}
+		++inWwise;
+		if( !instance.dirty )
+		{
+			continue;
+		}
+		const AkVector64 now = MakeInstanceParams( instance.geometrySetId, instance.transform, instance.offset, m_solid ).PositionAndOrientation.Position();
+		const AkVector64 sent = instance.sent.PositionAndOrientation.Position();
+		m_slipSamples.push_back( { { sent.X - now.X, sent.Y - now.Y, sent.Z - now.Z }, RH2LH::sceneJitterTolerance( instance.transform ) } );
+	}
+
+	// Most of what is in Wwise has to agree, so a few meshes moving together are never taken for a slip.
+	const auto isMost = [inWwise]( size_t count ) { return count * 3 > inWwise * 2; };
+	if( !isMost( m_slipSamples.size() ) )
+	{
+		return false;
+	}
+
+	for( int axis = 0; axis < 3; ++axis )
+	{
+		m_slipAxis.clear();
+		for( const SlipSample& sample : m_slipSamples )
+		{
+			m_slipAxis.push_back( sample.delta[axis] );
+		}
+		const auto middle = m_slipAxis.begin() + m_slipAxis.size() / 2;
+		std::nth_element( m_slipAxis.begin(), middle, m_slipAxis.end() );
+		m_slip[axis] = *middle;
+	}
+
+	size_t agreeing = 0;
+	for( const SlipSample& sample : m_slipSamples )
+	{
+		const double tolerance = sample.tolerance;
+		agreeing += std::fabs( sample.delta[0] - m_slip[0] ) <= tolerance
+			&& std::fabs( sample.delta[1] - m_slip[1] ) <= tolerance
+			&& std::fabs( sample.delta[2] - m_slip[2] ) <= tolerance;
+	}
+	const bool moved = std::fabs( m_slip[0] ) > 1e-2 || std::fabs( m_slip[1] ) > 1e-2 || std::fabs( m_slip[2] ) > 1e-2;
+	if( moved && agreeing >= MIN_SLIP_INSTANCES && isMost( agreeing ) )
+	{
+		++m_slips;
+		return true;
+	}
+	return false;
 }
 
 void AudGeometryManager::RemoveUnusedSetsLocked()

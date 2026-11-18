@@ -11,6 +11,7 @@
 #include "SpatialAudioSettings.h"
 #include "AudObstructionOcclusion.h"
 #include "AudRoomManager.h"
+#include "AudWorldFrame.h"
 #include "LowLevelIO/LowLevelIOHook.h"
 #include <atomic>
 #include <memory>
@@ -20,6 +21,9 @@ BLUE_DECLARE( AudConfig );
 BLUE_DECLARE( AudGameObjResource );
 BLUE_DECLARE_INTERFACE( IAudActionLog );
 BLUE_DECLARE_INTERFACE( IEveObstructionQuery2 );
+BLUE_DECLARE_INTERFACE( IEveAcousticGeometrySource );
+
+class AudAcousticGeometry;
 
 typedef std::vector<std::wstring> BankVector;
 typedef std::vector<AkGameObjectID> GameObjIDVector;
@@ -134,6 +138,26 @@ public:
 	int GetGeometryInstancesInWwise() const;
 	int GetGeometryTrianglesInWwise() const;
 	int GetGeometryInstancesRegistered() const;
+	int GetGeometrySlips() const;
+	int GetGeometrySetsSent() const;
+	int GetGeometryInstancesSent() const;
+	int GetAcousticBodies() const;
+	int GetAcousticMeshesFetched() const;
+	bool GetWorldFrameActive() const { return m_worldFrame.IsActive(); }
+	int GetWorldFrameRebases() const { return static_cast<int>( m_worldFrame.GetRebases() ); }
+	int GetRoomInstancesSent() const { return static_cast<int>( m_roomManager->GetRoomInstancesSent() ); }
+	// Where Wwise has the first acoustic geometry instance of a body, in Wwise's space. Infinite when none is in Wwise.
+	Vector3 GetAcousticInstanceWwisePosition( AkGameObjectID bodyId ) const;
+
+	// Destiny's ballpark: the world frame's reference, and the convex collision when that is the geometry. See IEveAcousticGeometrySource.h.
+	IEveAcousticGeometrySource* GetAcousticGeometrySource() const;
+	void SetAcousticGeometrySource( IEveAcousticGeometrySource* source );
+	// Whether Wwise gets destiny's convex collision instead of trinity's meshes, while a source is set.
+	bool GetCollisionGeometryEnabled() const { return m_collisionGeometryEnabled; }
+	void SetCollisionGeometryEnabled( bool enabled );
+	// Whether geometry is in the world frame, where Wwise's transmission replaces the line of sight test.
+	bool IsAcousticGeometryActive() const { return m_worldFrame.IsActive(); }
+	const AudWorldFrame& GetWorldFrame() const { return m_worldFrame; }
 
 	// Returns whether geometry or rooms need Wwise Spatial Audio.
 	bool UsesSpatialAudio() const;
@@ -258,6 +282,8 @@ private:
 	void Terminate();
 	// Update all watched audio parameters with their current values in Wwise (if they exist).
 	void UpdateMonitoredParameters();
+	// Sends the listener and every awake emitter again when the world frame moved since they were sent.
+	void FlushPlacements();
 
 	//*** Callbacks ***//
 	// Used by the AudioDeviceStatusChangeCallback
@@ -320,6 +346,17 @@ private:
 	// Set from script once per session, exposed as "obstructionQuery". See IEveObstructionQuery2.h.
 	// Weak so audio never keeps the ballpark alive after the game lets go of it.
 	BlueWeakRef<IEveObstructionQuery2> m_obstructionQuery;
+
+	// Set from script with the ballpark, exposed as "acousticGeometrySource". Weak like the obstruction query.
+	BlueWeakRef<IEveAcousticGeometrySource> m_acousticGeometrySource;
+	std::unique_ptr<AudAcousticGeometry> m_acousticGeometry;
+	bool m_collisionGeometryEnabled = false;
+	AudWorldFrame m_worldFrame;
+	uint64_t m_flushedFrameGeneration = 0;
+
+	bool UsesCollisionGeometry() const { return m_collisionGeometryEnabled && GetAcousticGeometrySource() != nullptr; }
+	// Takes the geometry that was in use out of Wwise when the other takes over.
+	void SwitchGeometryOutOfWwise( bool collision );
 
 
 

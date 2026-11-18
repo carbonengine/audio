@@ -2,6 +2,7 @@
 
 #include "stdafx.h"
 #include "AudManager.h"
+#include "IEveAcousticGeometrySource.h"
 #include "IEveObstructionQuery2.h"
 
 #include <AK/Plugin/AkCompressorFXFactory.h>
@@ -27,6 +28,7 @@
 
 #include "tbb/parallel_for.h"
 
+#include "AudAcousticGeometry.h"
 #include "AudActionLog.h"
 #include "AudEmitter.h"
 #include "AudGeometryManager.h"
@@ -84,6 +86,7 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_spatialAudioSettings = new SpatialAudioSettings();
 	m_obstructionOcclusion = std::make_unique<AudObstructionOcclusion>( this );
 	m_roomManager = std::make_unique<AudRoomManager>( this );
+	m_acousticGeometry = std::make_unique<AudAcousticGeometry>();
 }
 
 AudManager::~AudManager()
@@ -113,6 +116,13 @@ void AudManager::Process()
 
 	if( state == AudioState::Enabled )
 	{
+		const bool geometryEnabled = m_spatialAudioInitialized && GetSpatialAudioGeometryEnabled();
+		IEveAcousticGeometrySourcePtr acousticSource = GetAcousticGeometrySource();
+		const bool collision = UsesCollisionGeometry();
+		const bool pinned = collision ? m_acousticGeometry->HasInstancesInWwise() : AudGeometryManager::Get().GetInstancesInWwise() > 0;
+		m_worldFrame.Update( acousticSource, geometryEnabled && acousticSource != nullptr, pinned );
+		FlushPlacements();
+
 		if( m_soundPrioritization->GetAudioCullingEnabled() )
 		{
 			m_soundPrioritization->CullAudio();
@@ -120,13 +130,16 @@ void AudManager::Process()
 
 		m_obstructionOcclusion->Update();
 		m_roomManager->Update();
-		if( m_spatialAudioInitialized && GetSpatialAudioGeometryEnabled() )
+
+		// A listener that was never placed sits at the init position, which is not a place to measure from.
+		const AudListenerPtr listener = GetListener();
+		const bool placed = listener && listener->HasUsableWorldPosition();
+		const Vector3 listenerPosition = placed ? listener->GetPosition() : Vector3();
+		// One of the two is the geometry. Without a source, AudAcousticGeometry takes whatever it left out of Wwise.
+		m_acousticGeometry->Update( geometryEnabled && collision ? acousticSource.p : nullptr, m_worldFrame, *m_spatialAudioSettings, placed ? &listenerPosition : nullptr );
+		if( geometryEnabled && !collision )
 		{
-			// A listener that was never placed sits at the init position, which is not a place to measure from.
-			const AudListenerPtr listener = GetListener();
-			const bool placed = listener && listener->HasUsableWorldPosition();
-			const Vector3 listenerPosition = placed ? listener->GetPosition() : Vector3();
-			AudGeometryManager::Get().Update( *m_spatialAudioSettings, placed ? &listenerPosition : nullptr );
+			AudGeometryManager::Get().Update( *m_spatialAudioSettings, placed ? &listenerPosition : nullptr, m_worldFrame );
 		}
 
 		// Process bank requests, events, positions, RTPC, etc.
@@ -222,6 +235,8 @@ void AudManager::Terminate()
 
 	m_roomManager->ForgetWwiseState();
 	AudGeometryManager::Get().ForgetWwiseState();
+	m_acousticGeometry->ForgetWwiseState();
+	m_worldFrame.Reset();
 
 	m_spatialAudioInitialized = false;
 	m_spatialAudioSettings->SetInitialized( false );
@@ -523,24 +538,118 @@ bool AudManager::GetSpatialAudioRoomsEnabled() const
 	return m_spatialAudioSettings->GetSpatialAudioRoomsEnabled();
 }
 
+// The geometry counters report whichever is in use, destiny's collision or trinity's meshes.
 int AudManager::GetGeometrySetsInWwise() const
 {
-	return static_cast<int>( AudGeometryManager::Get().GetSetsInWwise() );
+	return static_cast<int>( UsesCollisionGeometry() ? m_acousticGeometry->GetSetsInWwise() : AudGeometryManager::Get().GetSetsInWwise() );
 }
 
 int AudManager::GetGeometryInstancesInWwise() const
 {
-	return static_cast<int>( AudGeometryManager::Get().GetInstancesInWwise() );
+	return static_cast<int>( UsesCollisionGeometry() ? m_acousticGeometry->GetInstancesInWwise() : AudGeometryManager::Get().GetInstancesInWwise() );
 }
 
 int AudManager::GetGeometryTrianglesInWwise() const
 {
-	return static_cast<int>( AudGeometryManager::Get().GetTrianglesInWwise() );
+	return static_cast<int>( UsesCollisionGeometry() ? m_acousticGeometry->GetTrianglesInWwise() : AudGeometryManager::Get().GetTrianglesInWwise() );
+}
+
+int AudManager::GetGeometrySetsSent() const
+{
+	return static_cast<int>( UsesCollisionGeometry() ? m_acousticGeometry->GetSetsSent() : AudGeometryManager::Get().GetSetsSent() );
+}
+
+int AudManager::GetGeometryInstancesSent() const
+{
+	return static_cast<int>( UsesCollisionGeometry() ? m_acousticGeometry->GetInstancesSent() : AudGeometryManager::Get().GetInstancesSent() );
+}
+
+int AudManager::GetAcousticBodies() const
+{
+	return static_cast<int>( m_acousticGeometry->GetBodies() );
+}
+
+int AudManager::GetAcousticMeshesFetched() const
+{
+	return static_cast<int>( m_acousticGeometry->GetMeshesFetched() );
+}
+
+Vector3 AudManager::GetAcousticInstanceWwisePosition( AkGameObjectID bodyId ) const
+{
+	double position[3];
+	if( !m_acousticGeometry->GetInstanceWwisePosition( bodyId, position ) )
+	{
+		const float infinity = std::numeric_limits<float>::infinity();
+		return Vector3( infinity, infinity, infinity );
+	}
+	return Vector3( static_cast<float>( position[0] ), static_cast<float>( position[1] ), static_cast<float>( position[2] ) );
+}
+
+IEveAcousticGeometrySource* AudManager::GetAcousticGeometrySource() const
+{
+	return m_acousticGeometrySource;
+}
+
+void AudManager::SetAcousticGeometrySource( IEveAcousticGeometrySource* source )
+{
+	const bool wasCollision = UsesCollisionGeometry();
+	m_acousticGeometrySource = source;
+	if( wasCollision != UsesCollisionGeometry() )
+	{
+		SwitchGeometryOutOfWwise( wasCollision );
+	}
+}
+
+void AudManager::SetCollisionGeometryEnabled( bool enabled )
+{
+	const bool wasCollision = UsesCollisionGeometry();
+	m_collisionGeometryEnabled = enabled;
+	if( wasCollision != UsesCollisionGeometry() )
+	{
+		SwitchGeometryOutOfWwise( wasCollision );
+	}
+}
+
+void AudManager::SwitchGeometryOutOfWwise( bool collision )
+{
+	if( collision )
+	{
+		m_acousticGeometry->RemoveAllFromWwise();
+	}
+	else
+	{
+		AudGeometryManager::Get().RemoveAllFromWwise();
+	}
+}
+
+void AudManager::FlushPlacements()
+{
+	const AudWorldFrame::Offset offset = m_worldFrame.GetOffset();
+	if( offset.generation == m_flushedFrameGeneration )
+	{
+		return;
+	}
+	m_flushedFrameGeneration = offset.generation;
+
+	CCP_STATS_ZONE( "AudManager_FlushPlacements" );
+	if( AudListenerPtr listener = GetListener() )
+	{
+		listener->ResendPlacement( offset.generation );
+	}
+	ForEachAwakeAudioEmitter( [&offset]( AudGameObjResource* emitter )
+	{
+		emitter->ResendPlacement( offset.generation );
+	} );
 }
 
 int AudManager::GetGeometryInstancesRegistered() const
 {
 	return static_cast<int>( AudGeometryManager::Get().GetInstancesRegistered() );
+}
+
+int AudManager::GetGeometrySlips() const
+{
+	return static_cast<int>( AudGeometryManager::Get().GetSlips() );
 }
 
 bool AudManager::UsesSpatialAudio() const
@@ -574,6 +683,7 @@ void AudManager::SetSpatialAudioGeometryEnabled( bool enabled )
 	{
 		m_spatialAudioSettings->SetSpatialAudioGeometryEnabled( false );
 		AudGeometryManager::Get().RemoveAllFromWwise();
+		m_acousticGeometry->RemoveAllFromWwise();
 		CCP_LOG_CH( s_ch, "Spatial audio geometry disabled." );
 	}
 	else
@@ -927,6 +1037,9 @@ void AudManager::Disable()
 	m_obstructionOcclusion->Reset();
 	m_roomManager->RemoveAllFromWwise();
 	AudGeometryManager::Get().RemoveAllFromWwise();
+	// The source stays set, so destiny's collision comes back with the next Enable.
+	m_acousticGeometry->RemoveAllFromWwise();
+	m_worldFrame.Reset();
 #ifndef AK_OPTIMIZED
 	AK::SoundEngine::UnregisterResourceMonitorCallback(ResourceMonitorCallback);
 #endif

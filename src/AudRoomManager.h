@@ -140,6 +140,9 @@ public:
 	 */
 	size_t GetTrackedGameObjectCount() const;
 
+	/// How many times a room's geometry instance went to Wwise.
+	size_t GetRoomInstancesSent() const { return m_roomInstancesSent; }
+
 private:
 	struct TrackedGameObject
 	{
@@ -299,5 +302,10 @@ private:
 	std::atomic<size_t> m_roomsInWwise;
 	/// Room tones waiting for SoundBanks.
 	size_t m_pendingRoomTones;
+	/// Each room's geometry instance as Wwise last got it.
+	std::unordered_map<AkUInt64, AkGeometryInstanceParams> m_sentRoomInstances;
+	std::atomic<size_t> m_roomInstancesSent{ 0 };
+	/// World frame epoch the rooms in Wwise were placed with.
+	uint64_t m_frameEpoch = 0;
 	mutable CcpMutex m_mutex;
 };

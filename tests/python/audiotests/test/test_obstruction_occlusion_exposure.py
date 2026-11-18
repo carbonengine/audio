@@ -182,21 +182,27 @@ class TestObstructionOcclusionExposure(BaseAudio2TestClass):
         finally:
             self.manager.spatialAudioGeometryEnabled = False
 
-    def test_sightlines_are_not_queried_while_acoustics_are_enabled(self):
-        """The answers would be thrown away, so the game is only asked again once acoustics is turned off."""
+    def test_sightlines_are_not_queried_while_acoustic_geometry_is_active(self):
+        """Wwise transmission through destiny's collision replaces them, so the game is only asked again once it stops."""
+        import blue
         self.manager.spatialAudioGeometryEnabled = True
         if not self.manager.spatialAudioGeometryEnabled:
             self.skipTest("Spatial audio geometry is not available on this platform.")
 
+        source = blue.LoadExtension("_audiotests").FakeAcousticGeometrySource()
+        source.SetOrigin(0.0, 0.0, 0.0)
+        self.manager.acousticGeometrySource = source
         try:
             self.manager.obstructionOcclusionFadeRate = SLOW_FADE_RATE
             query = self.UseFakeQuery(blocked=True)
             self.MakeAudible()
             self.Pump()
-            self.assertEqual(query.queryCount, 0, "The game was asked for sightlines while acoustics was enabled.")
-            self.assertIsNone(self.GetSightlineResult(), "An emitter was reported as checked while acoustics was enabled.")
+            self.assertTrue(self.manager.worldFrameActive)
+            self.assertEqual(query.queryCount, 0, "The game was asked for sightlines while acoustic geometry was active.")
+            self.assertIsNone(self.GetSightlineResult(), "An emitter was reported as checked while acoustic geometry was active.")
             self.assertEqual(self.GetOcclusion(), 0.0)
         finally:
+            self.manager.acousticGeometrySource = None
             self.manager.spatialAudioGeometryEnabled = False
 
         self.Pump()
