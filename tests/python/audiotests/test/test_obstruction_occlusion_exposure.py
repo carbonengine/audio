@@ -182,6 +182,31 @@ class TestObstructionOcclusionExposure(BaseAudio2TestClass):
         finally:
             self.manager.spatialAudioGeometryEnabled = False
 
+    def test_sightlines_are_not_queried_while_acoustics_are_enabled(self):
+        """The answers would be thrown away, so the game is only asked again once acoustics is turned off."""
+        self.manager.spatialAudioGeometryEnabled = True
+        if not self.manager.spatialAudioGeometryEnabled:
+            self.skipTest("Spatial audio geometry is not available on this platform.")
+
+        try:
+            self.manager.obstructionOcclusionFadeRate = SLOW_FADE_RATE
+            query = self.UseFakeQuery(blocked=True)
+            self.MakeAudible()
+            self.Pump()
+            self.assertEqual(query.queryCount, 0, "The game was asked for sightlines while acoustics was enabled.")
+            self.assertIsNone(self.GetSightlineResult(), "An emitter was reported as checked while acoustics was enabled.")
+            self.assertEqual(self.GetOcclusion(), 0.0)
+        finally:
+            self.manager.spatialAudioGeometryEnabled = False
+
+        self.Pump()
+        self.assertGreater(query.queryCount, 0, "The game was not asked again once acoustics was disabled.")
+        self.assertIs(self.GetSightlineResult(), True)
+        # The voice was already playing, so it fades in instead of snapping.
+        occlusion = self.GetOcclusion()
+        self.assertGreater(occlusion, 0.0, "The occlusion did not start fading in once acoustics was disabled.")
+        self.assertLess(occlusion, 1.0, "The occlusion snapped to blocked instead of fading in.")
+
     def test_last_sightline_results_hold_what_was_checked_until_cleared(self):
         """Only emitters with a voice are checked, a recheck replaces the results and clearing drops them."""
         import audio2
