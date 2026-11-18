@@ -224,6 +224,7 @@ void AudManager::Terminate()
 	AudGeometryManager::Get().ForgetWwiseState();
 
 	m_spatialAudioInitialized = false;
+	m_spatialAudioSettings->SetInitialized( false );
 	SetAudioState( AudioState::Uninitialized );
 }
 
@@ -464,6 +465,7 @@ bool AudManager::InitSpatialAudio()
 	}
 
 	m_spatialAudioInitialized = true;
+	m_spatialAudioSettings->SetInitialized( true );
 	CCP_LOG_CH( s_ch, "Wwise Spatial Audio initialized" );
 	return true;
 }
