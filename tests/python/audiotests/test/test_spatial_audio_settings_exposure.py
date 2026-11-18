@@ -1,6 +1,7 @@
 # Copyright © 2026 CCP ehf.
 
 from audiotests.base_test_class import BaseAudio2TestClass
+from audiotests.utils import RestoreSettings, SaveSettings
 
 
 SETTINGS = (
@@ -20,15 +21,6 @@ SETTINGS = (
 )
 
 
-def SaveSettings(manager):
-    return {name: getattr(manager, name) for name in SETTINGS}
-
-
-def RestoreSettings(manager, settings):
-    for name, value in settings.items():
-        setattr(manager, name, value)
-
-
 class TestSpatialAudioSettingsExposure(BaseAudio2TestClass):
     """Tests the Spatial Audio settings: their limits, and that the live ones can change while Wwise runs."""
 
@@ -39,7 +31,7 @@ class TestSpatialAudioSettingsExposure(BaseAudio2TestClass):
 
     def setUp(self):
         self.manager = self.audioManager.manager
-        self.settings = SaveSettings(self.manager)
+        self.settings = SaveSettings(self.manager, SETTINGS)
 
     def tearDown(self):
         RestoreSettings(self.manager, self.settings)
@@ -73,6 +65,12 @@ class TestSpatialAudioSettingsExposure(BaseAudio2TestClass):
 
         self.manager.adjacentRoomBleed = 0.0
         self.assertGreater(self.manager.adjacentRoomBleed, 0.0)
+
+    def test_nan_leaves_a_setting_as_it_was(self):
+        for name in ("cpuLimitPercentage", "smoothingConstantMs", "adjacentRoomBleed", "transmissionLoss"):
+            before = getattr(self.manager, name)
+            setattr(self.manager, name, float("nan"))
+            self.assertEqual(getattr(self.manager, name), before, name)
 
     def test_live_settings_can_change_while_spatial_audio_runs(self):
         self.audioManager.Enable()

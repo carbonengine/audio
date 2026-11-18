@@ -7,8 +7,6 @@
 
 #pragma once
 
-#include "AudWorldFrame.h"
-
 #include <ITr2AudGeometry.h>
 
 #include <AK/SpatialAudio/Common/AkSpatialAudioTypes.h>
@@ -51,8 +49,10 @@ public:
 	/**
 	 * @brief Sends what changed since the last call, keeping only the instances nearest the listener in Wwise.
 	 *
-	 * An instance that holds still in the world is not sent again when the scene origin moves, only when
-	 * the Wwise origin does (see AudWorldFrame).
+	 * Every instance is placed in Wwise from the transform trinity last handed over and the current
+	 * scene-to-Wwise offset (see AudWorldFrame). An instance that holds still in the world is not sent again
+	 * when the scene origin moves, only when the Wwise origin does, and one trinity stops handing over
+	 * because it moves along with the player moves along in Wwise.
 	 *
 	 * @param listenerPosition Listener relative to the scene origin, or null to skip the distance limit.
 	 */
@@ -99,20 +99,18 @@ private:
 		uint64_t geometrySetId = 0;
 		/// As trinity last handed it over, relative to the scene origin.
 		Matrix transform;
-		/// Where the instance is in the world, right-handed. Only moves when the instance does.
-		AkVector64 position = {};
-		/// Handed over before trinity set any scene origin, so position is still relative to the first one.
-		bool positionBeforeOrigin = false;
-		/// Furthest the mesh reaches from the instance's origin, and how far its centre is from the listener,
-		/// or -1 without a listener, as of the last Update().
+		/// Furthest the mesh reaches from the instance's origin, and how far the listener is from its bounding
+		/// sphere, or -1 without a listener, as of the last Update().
 		float extent = 0.0f;
 		float listenerDistance = -1.0f;
 		/// Times it was sent to Wwise.
 		uint64_t sends = 0;
-		/// Moved too little to send last time, but Wwise doesn't have it exactly.
-		bool heldBack = false;
+		/// What Wwise has, or refused, and the transform it was made from.
 		AkGeometryInstanceParams sent;
+		Matrix sentTransform;
 		bool inWwise = false;
+		/// Needs a look on the next Update(): it is new, trinity handed over a new transform, Wwise forgot it,
+		/// or it moved too little to hear and was held back.
 		bool dirty = false;
 		bool wanted = false;
 		/// Wwise refused it, so it is not sent again until it changes.
@@ -130,13 +128,8 @@ private:
 
 	AudGeometryManager();
 
-	/// listenerInWwise is the listener in Wwise's frame.
-	void SelectInstancesLocked( const SpatialAudioSettings& settings, const AkVector64& wwiseOrigin, const Vector3* listenerInWwise );
-
-	/// Places an instance handed over before the first scene origin relative to it, once there is one.
-	static void ResolvePosition( Instance& instance, const AudWorldFrame::State& frame );
-	/// The instance's transform with its translation in Wwise's frame.
-	static Matrix InWwiseFrame( const Instance& instance, const AkVector64& wwiseOrigin );
+	/// listenerPosition is relative to the scene origin, or null.
+	void SelectInstancesLocked( const SpatialAudioSettings& settings, const Vector3* listenerPosition );
 
 	void ReleaseSetLocked( uint64_t geometrySetId );
 	bool SendSetLocked( uint64_t geometrySetId, GeometrySet& set );
@@ -158,8 +151,9 @@ private:
 	bool m_enableDiffractionOnBoundaryEdges;
 	bool m_solid;
 	bool m_portalSubtraction;
-	/// The Wwise origin the instances in Wwise were placed from.
-	AkVector64 m_wwiseOrigin;
+	/// The AudWorldFrame offset the instances were last looked at with.
+	uint64_t m_placedOffsetGeneration;
+	uint64_t m_placedRebaseCount;
 	bool m_statsDirty;
 	std::atomic<uint64_t> m_instanceSends;
 	std::atomic<size_t> m_setsInWwise;

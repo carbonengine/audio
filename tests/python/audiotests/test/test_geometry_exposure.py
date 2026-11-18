@@ -1,6 +1,7 @@
 # Copyright © 2026 CCP ehf.
 
 from audiotests.base_test_class import BaseAudio2TestClass
+from audiotests.utils import RestoreSettings, SaveSettings
 
 
 BOX_TRIANGLES = 12
@@ -43,15 +44,6 @@ def Subtract(a, b):
     return tuple(x - y for x, y in zip(a, b))
 
 
-def SaveSettings(manager):
-    return {name: getattr(manager, name) for name in SETTINGS}
-
-
-def RestoreSettings(manager, settings):
-    for name, value in settings.items():
-        setattr(manager, name, value)
-
-
 class TestGeometryExposure(BaseAudio2TestClass):
     """Tests that meshes registered through AudGeometry reach Wwise, and stay registered while Wwise is not available."""
 
@@ -64,7 +56,7 @@ class TestGeometryExposure(BaseAudio2TestClass):
         import blue
         self.audioManager.Enable()
         self.manager = self.audioManager.manager
-        self.settings = SaveSettings(self.manager)
+        self.settings = SaveSettings(self.manager, SETTINGS)
         self.manager.spatialAudioGeometryEnabled = True
         if not self.manager.spatialAudioGeometryEnabled:
             self.skipTest("Spatial audio geometry is not available on this platform.")
@@ -425,13 +417,16 @@ class TestGeometryExposure(BaseAudio2TestClass):
         self.AssertInWwise(sets=1, instances=2)
 
     def test_the_wwise_origin_waits_for_the_player_to_arrive_after_a_warp(self):
-        """Following a warp would send every still mesh again on every frame of it."""
+        """Following a warp would send every still mesh again on every frame of it, slowing down included."""
         self.ArriveAt(SOLAR_SYSTEM_SPOT)
         rebases = self.manager.worldRebases
         destination = Add(SOLAR_SYSTEM_SPOT, (5.0e9, 0.0, 0.0))
 
         for step in range(1, 5):
             self.source.SetSceneOrigin(*Add(SOLAR_SYSTEM_SPOT, (1.0e9 * step, 0.0, 0.0)))
+            self.Update()
+        for remaining in (1.0e6, 1.0e5, 3.0e4, 1.0e4, 3.0e3):
+            self.source.SetSceneOrigin(*Subtract(destination, (remaining, 0.0, 0.0)))
             self.Update()
         self.source.SetSceneOrigin(*destination)
         self.Update()
@@ -440,6 +435,34 @@ class TestGeometryExposure(BaseAudio2TestClass):
         self.source.SetSceneOrigin(*destination)
         self.Update()
         self.assertEqual(self.manager.worldRebases, rebases + 1)
+
+    def test_a_mesh_moving_along_with_the_player_moves_in_wwise(self):
+        """Trinity only hands over a transform that changed, and one moving along with the player doesn't."""
+        self.AddBoxInWorld(HULL, 1, SOLAR_SYSTEM_SPOT, Add(SOLAR_SYSTEM_SPOT, (100.0, 0.0, 0.0)))
+        self.Update()
+        sends = self.manager.geometryInstanceSends
+
+        for step in range(1, 4):
+            self.MovePlayer(Add(SOLAR_SYSTEM_SPOT, (15.0 * step, 0.0, 0.0)), {})
+            self.Update()
+
+        self.assertEqual(self.manager.geometryInstanceSends, sends + 3)
+
+    def test_a_mesh_registered_while_the_player_moves_is_not_sent_twice(self):
+        self.ArriveAt(SOLAR_SYSTEM_SPOT)
+        mesh = Add(SOLAR_SYSTEM_SPOT, (1000.0, 0.0, 0.0))
+        origin = Add(SOLAR_SYSTEM_SPOT, (15.0, 0.0, 0.0))
+        self.source.SetSceneOrigin(*origin)
+        self.AddBox(HULL, 1, Subtract(mesh, origin))
+        self.Update()
+        sends = self.manager.geometryInstanceSends
+
+        for step in range(2, 5):
+            self.MovePlayer(Add(SOLAR_SYSTEM_SPOT, (15.0 * step, 0.0, 0.0)), {(HULL, 1): mesh})
+            self.Update()
+
+        self.assertEqual(self.manager.geometryInstanceSends, sends)
+        self.AssertInWwise(sets=1, instances=1)
 
     def test_a_far_mesh_moving_a_little_waits_until_the_move_can_be_heard(self):
         self.PlaceListener(ORIGIN)

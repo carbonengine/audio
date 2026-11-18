@@ -39,7 +39,8 @@ void AudListener::RegisterWwiseObject()
 
 			m_gameObjRegistered = true;
 			RegisterWithSpatialAudio();
-			PlaceNewWwiseObject();
+			// Wwise puts a new game object at its origin, which is only the player while the offset is zero.
+			ResendPlacement();
 		}
 	}
 	else

@@ -13,6 +13,7 @@
 #include "AudRoom.h"
 #include "AudStaticDataRepository.h"
 #include "AudWorldFrame.h"
+#include "SpatialAudioSettings.h"
 #include "Utilities.h"
 
 #include <algorithm>
@@ -54,20 +55,26 @@ namespace
 	constexpr int PORTAL_SAME_ROOM_WARNING_TICKS = 30;
 	/// Updates in a row new rooms must be found at a portal's faces before they replace the rooms in Wwise.
 	constexpr int PORTAL_ROOM_CHANGE_TICKS = 3;
-	/// Smallest adjacent room bleed sent to Wwise, which needs it above zero.
-	constexpr float MIN_ADJACENT_ROOM_BLEED = 1e-3f;
 	/// Unit box Z where a portal looks up its rooms, a quarter of its depth past each face.
 	constexpr float PORTAL_ROOM_LOOKUP_Z = 0.75f;
+	/// Trinity pushes a box once it moved 1 cm on an axis relative to the scene origin, so between pushes a box that
+	/// holds still in the world can look up to the diagonal of that off either way. Twice it, rounded up.
+	constexpr double BOX_PUSH_SLACK = 0.04;
+
+	/// The shortest move of a room or portal box that counts, in Wwise's frame.
+	double BoxStillDistance( const Matrix& sceneBox )
+	{
+		return std::max( AudWorldFrame::StillDistance( sceneBox ), BOX_PUSH_SLACK );
+	}
 
 	/**
 	 * @brief Compares positions in Wwise's frame.
 	 *
-	 * @param still The shortest move that counts, see AudWorldFrame::StillDistance().
-	 * @return True when every axis is within the tolerance.
+	 * @param still The shortest move that counts, see BoxStillDistance().
 	 */
 	bool PositionsNearlyEqual( const AkVector64& a, const AkVector64& b, AkReal64 still )
 	{
-		return std::fabs( a.X - b.X ) <= still && std::fabs( a.Y - b.Y ) <= still && std::fabs( a.Z - b.Z ) <= still;
+		return ( Ak3DVector64( a ) - Ak3DVector64( b ) ).Length() <= still;
 	}
 
 	/**
@@ -144,6 +151,7 @@ AudRoomManager::AudRoomManager( AudManager* audioManager ) :
 	m_cubeSent( false ),
 	m_outdoorConfigured( false ),
 	m_assignmentsDirty( false ),
+	m_placedOffsetGeneration( 0 ),
 	m_roomsInWwise( 0 ),
 	m_pendingRoomTones( 0 ),
 	m_mutex( "AudRoomManager", "m_mutex" )
@@ -229,7 +237,23 @@ void AudRoomManager::Update()
 		}
 	}
 
-	SyncPortalsLocked();
+	const AudWorldFrame::Offset offset = AudWorldFrame::Get().GetOffset();
+	if( offset.generation != m_placedOffsetGeneration )
+	{
+		// A room trinity didn't push moved along with the scene origin, and every room moves when the Wwise origin jumps.
+		m_placedOffsetGeneration = offset.generation;
+		for( auto& entry : m_rooms )
+		{
+			AudRoom& room = *entry.second;
+			if( room.m_sentToWwise )
+			{
+				const Matrix sceneBox = room.GetBox().GetUnitBoxToWorld();
+				PlaceRoomLocked( room, sceneBox, RH2LH::convertTransform( sceneBox, offset.sceneToWwise ) );
+			}
+		}
+	}
+
+	SyncPortalsLocked( offset );
 
 	if( !m_assignmentsDirty )
 	{
@@ -386,30 +410,10 @@ void AudRoomManager::PushLocked( AudRoom& room )
 	const AkUInt64 instanceID = GeometryInstanceIDForRoom( room );
 
 	const Matrix sceneBox = room.GetBox().GetUnitBoxToWorld();
-	AkTransform transform;
-	RH2LH::convertTransform( AudWorldFrame::Get().ToWwise( sceneBox ), transform );
-
-	AkGeometryInstanceParams instanceParams;
-	instanceParams.PositionAndOrientation = transform;
-	instanceParams.Scale = RH2LH::extractScale( sceneBox );
-	instanceParams.GeometrySetID = SHARED_CUBE_GEOMETRY_SET_ID;
-	instanceParams.UseForReflectionAndDiffraction = false;
-	instanceParams.BypassPortalSubtraction = false;
-	instanceParams.IsSolid = false;
-
-	// Trinity pushes the box whenever the scene origin moves. Wwise re-indexes the room and its portals for every
-	// SetGeometryInstance, so it only gets one when the box moved in the world.
-	AKRESULT result = AK_Success;
-	if( !room.m_sentToWwise || !InstanceParamsEqual( instanceParams, room.m_sentInstanceParams, AudWorldFrame::StillDistance( sceneBox ) ) )
+	const AkWorldTransform transform = RH2LH::convertTransform( sceneBox, AudWorldFrame::Get().GetOffset().sceneToWwise );
+	if( !PlaceRoomLocked( room, sceneBox, transform ) )
 	{
-		result = AK::SpatialAudio::SetGeometryInstance( instanceID, instanceParams );
-		if( result != AK_Success )
-		{
-			CCP_LOGERR_CH( s_ch, "Failed to set geometry instance for room '%s' (%llu), AKRESULT: %d",
-				room.GetName().c_str(), room.GetRoomID(), result );
-			return;
-		}
-		room.m_sentInstanceParams = instanceParams;
+		return;
 	}
 
 	const std::wstring roomTone = StringUtils::trim( room.GetRoomToneEvent() );
@@ -438,7 +442,7 @@ void AudRoomManager::PushLocked( AudRoom& room )
 
 	if( roomChanged )
 	{
-		result = AK::SpatialAudio::SetRoom( room.GetRoomID(), roomParams, room.GetName().c_str() );
+		const AKRESULT result = AK::SpatialAudio::SetRoom( room.GetRoomID(), roomParams, room.GetName().c_str() );
 		if( result != AK_Success )
 		{
 			CCP_LOGERR_CH( s_ch, "Failed to set room '%s' (%llu), AKRESULT: %d",
@@ -476,6 +480,34 @@ void AudRoomManager::PushLocked( AudRoom& room )
 
 	room.m_sentToWwise = true;
 	m_assignmentsDirty = true;
+}
+
+bool AudRoomManager::PlaceRoomLocked( AudRoom& room, const Matrix& sceneBox, const AkWorldTransform& transform )
+{
+	AkGeometryInstanceParams instanceParams;
+	instanceParams.PositionAndOrientation = transform;
+	instanceParams.Scale = RH2LH::extractScale( sceneBox );
+	instanceParams.GeometrySetID = SHARED_CUBE_GEOMETRY_SET_ID;
+	instanceParams.UseForReflectionAndDiffraction = false;
+	instanceParams.BypassPortalSubtraction = false;
+	instanceParams.IsSolid = false;
+
+	// Trinity pushes the box whenever the scene origin moves. Wwise re-indexes the room and its portals for every
+	// SetGeometryInstance, so it only gets one when the box moved in the world.
+	if( room.m_sentToWwise && InstanceParamsEqual( instanceParams, room.m_sentInstanceParams, BoxStillDistance( sceneBox ) ) )
+	{
+		return true;
+	}
+
+	const AKRESULT result = AK::SpatialAudio::SetGeometryInstance( GeometryInstanceIDForRoom( room ), instanceParams );
+	if( result != AK_Success )
+	{
+		CCP_LOGERR_CH( s_ch, "Failed to set geometry instance for room '%s' (%llu), AKRESULT: %d",
+			room.GetName().c_str(), room.GetRoomID(), result );
+		return false;
+	}
+	room.m_sentInstanceParams = instanceParams;
+	return true;
 }
 
 void AudRoomManager::RemoveLocked( AudRoom& room )
@@ -695,15 +727,15 @@ void AudRoomManager::RemovePortalShape( AudPortal& portal )
 	RemovePortalLocked( portal );
 }
 
-void AudRoomManager::SyncPortalsLocked()
+void AudRoomManager::SyncPortalsLocked( const AudWorldFrame::Offset& offset )
 {
 	for( auto& entry : m_portals )
 	{
-		SyncPortalLocked( *entry.second );
+		SyncPortalLocked( *entry.second, offset );
 	}
 }
 
-void AudRoomManager::SyncPortalLocked( AudPortal& portal )
+void AudRoomManager::SyncPortalLocked( AudPortal& portal, const AudWorldFrame::Offset& offset )
 {
 	if( !portal.IsEnabled() || !portal.GetBox().IsUsable() )
 	{
@@ -727,7 +759,7 @@ void AudRoomManager::SyncPortalLocked( AudPortal& portal )
 		return;
 	}
 
-	SendPortalLocked( portal, frontRoomID, backRoomID );
+	SendPortalLocked( portal, frontRoomID, backRoomID, offset );
 }
 
 void AudRoomManager::ChoosePortalRoomsLocked( AudPortal& portal, AkUInt64& frontRoomID, AkUInt64& backRoomID )
@@ -752,24 +784,22 @@ void AudRoomManager::ChoosePortalRoomsLocked( AudPortal& portal, AkUInt64& front
 	backRoomID = keepSentRooms ? portal.m_backRoomID : foundBackRoomID;
 }
 
-void AudRoomManager::SendPortalLocked( AudPortal& portal, AkUInt64 frontRoomID, AkUInt64 backRoomID )
+void AudRoomManager::SendPortalLocked( AudPortal& portal, AkUInt64 frontRoomID, AkUInt64 backRoomID, const AudWorldFrame::Offset& offset )
 {
 	const Matrix sceneBox = portal.GetBox().GetUnitBoxToWorld();
-	AkTransform transform;
-	RH2LH::convertTransform( AudWorldFrame::Get().ToWwise( sceneBox ), transform );
 	const AkVector scale = RH2LH::extractScale( sceneBox );
 
 	AkPortalParams params;
-	params.Transform = AK::ConvertAkTransformToAkWorldTransform( transform );
+	params.Transform = RH2LH::convertTransform( sceneBox, offset.sceneToWwise );
 	params.Extent = AkExtent( 0.5f * scale.X, 0.5f * scale.Y, 0.5f * scale.Z );
 	params.FrontRoom = AkRoomID( frontRoomID );
 	params.BackRoom = AkRoomID( backRoomID );
-	params.AdjacentRoomBleed = std::max( portal.GetAdjacentRoomBleed(), MIN_ADJACENT_ROOM_BLEED );
+	params.AdjacentRoomBleed = std::max( portal.GetAdjacentRoomBleed(), SpatialAudioSettings::MIN_ADJACENT_ROOM_BLEED );
 	params.bEnabled = portal.IsOpen();
 
 	const std::string name = portal.GetName().empty() ? "Portal " + std::to_string( portal.GetPortalID() ) : portal.GetName();
 	const bool portalChanged = !portal.m_sentToWwise
-		|| !PortalParamsEqual( params, portal.m_sentPortalParams, AudWorldFrame::StillDistance( sceneBox ) )
+		|| !PortalParamsEqual( params, portal.m_sentPortalParams, BoxStillDistance( sceneBox ) )
 		|| name != portal.m_sentName;
 
 	if( portalChanged )

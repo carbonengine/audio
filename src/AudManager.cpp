@@ -74,8 +74,7 @@ AudManager::AudManager( IRoot* lockobj ) :
 	m_moniteredParametersMapMutex( "AudManager", "m_monitoredParametersMapMutex" ),
 	m_soundBankMutex( "AudManager", "m_soundBankMutex" ),
 	m_callbackGameObjectsMutex( "AudManager", "m_callbackGameObjectsMutex" ),
-	m_placedOffsetGeneration( AudWorldFrame::Get().GetOffsetGeneration() ),
-	m_placedRebaseCount( AudWorldFrame::Get().GetRebaseCount() ),
+	m_placedOffsetGeneration( AudWorldFrame::Get().GetOffset().generation ),
 	m_isProfilerCapturing( false ),
 #ifndef AK_OPTIMIZED
 	m_resourceMonitorCallbackRegistered( false ),
@@ -565,7 +564,7 @@ void AudManager::SetWorldRebaseDistance( double distance )
 
 uint64_t AudManager::GetWorldRebases() const
 {
-	return AudWorldFrame::Get().GetRebaseCount();
+	return AudWorldFrame::Get().GetOffset().rebaseCount;
 }
 
 std::string AudManager::GetGeometrySendReport( int count ) const
@@ -575,28 +574,33 @@ std::string AudManager::GetGeometrySendReport( int count ) const
 
 void AudManager::FollowWorldFrame()
 {
-	const AudWorldFrame& frame = AudWorldFrame::Get();
-
-	// Rooms only go to Wwise when they change, so they go again when the origin they were placed from moves.
-	// Portals are checked against Wwise on every room manager update.
-	const uint64_t rebaseCount = frame.GetRebaseCount();
-	if( rebaseCount != m_placedRebaseCount )
+	// Game objects are placed relative to the scene origin. Trinity places most of them after it moves the scene
+	// origin, but one placed once, or the listener placed before it, still has the old offset in Wwise.
+	const AudWorldFrame::Offset offset = AudWorldFrame::Get().GetOffset();
+	if( offset.generation == m_placedOffsetGeneration )
 	{
-		m_placedRebaseCount = rebaseCount;
-		m_roomManager->ResendAll();
+		return;
 	}
+	m_placedOffsetGeneration = offset.generation;
 
-	// Game objects are placed relative to the scene origin. Trinity moves most of them every frame anyway,
-	// but one placed once stays where it was relative to the player, as it did when Wwise got scene positions.
-	const uint64_t offsetGeneration = frame.GetOffsetGeneration();
-	if( offsetGeneration != m_placedOffsetGeneration )
+	m_stalePlacements.clear();
 	{
-		m_placedOffsetGeneration = offsetGeneration;
 		CcpAutoMutex lock( m_callbackGameObjectsMutex );
 		for( const auto& entry : m_callbackGameObjects )
 		{
-			entry.second->ResendPlacement();
+			AkSoundPosition placement;
+			if( entry.second->TakeStalePlacement( offset, placement ) )
+			{
+				m_stalePlacements.emplace_back( entry.first, placement );
+			}
 		}
+	}
+
+	// Outside the lock: Wwise blocks while its command queue is full, and end-of-event callbacks on the audio
+	// thread take the lock.
+	for( const auto& stale : m_stalePlacements )
+	{
+		AK::SoundEngine::SetPosition( stale.first, stale.second );
 	}
 }
 

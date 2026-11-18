@@ -11,6 +11,7 @@
 #include <AK/SpatialAudio/Common/AkSpatialAudioTypes.h>
 
 #include <CcpMutex.h>
+#include "AudWorldFrame.h"
 #include "Matrix.h"
 #include "Vector3.h"
 
@@ -191,6 +192,17 @@ private:
 	void PushLocked( AudRoom& room );
 
 	/**
+	 * @brief Sends the room's box to Wwise unless Wwise already has it there. Caller holds m_mutex.
+	 *
+	 * @param room      The room to place.
+	 * @param sceneBox  Its unit box, relative to the scene origin.
+	 * @param transform sceneBox in Wwise's frame.
+	 *
+	 * @return False when Wwise refused it.
+	 */
+	bool PlaceRoomLocked( AudRoom& room, const Matrix& sceneBox, const AkWorldTransform& transform );
+
+	/**
 	 * @brief Removes one room with its room tone and game object assignments. Caller holds m_mutex.
 	 *
 	 * @param room The room to remove.
@@ -233,15 +245,18 @@ private:
 
 	/**
 	 * @brief Updates every portal in Wwise. Caller holds m_mutex.
+	 *
+	 * @param offset Places the portals in Wwise's frame.
 	 */
-	void SyncPortalsLocked();
+	void SyncPortalsLocked( const AudWorldFrame::Offset& offset );
 
 	/**
 	 * @brief Sends one portal between the rooms on its two sides, or removes it. Caller holds m_mutex.
 	 *
 	 * @param portal The portal to send.
+	 * @param offset Places it in Wwise's frame.
 	 */
-	void SyncPortalLocked( AudPortal& portal );
+	void SyncPortalLocked( AudPortal& portal, const AudWorldFrame::Offset& offset );
 
 	/**
 	 * @brief Finds the rooms past the portal's front and back faces. Caller holds m_mutex.
@@ -258,8 +273,9 @@ private:
 	 * @param portal      The portal to send.
 	 * @param frontRoomID Room on the front side.
 	 * @param backRoomID  Room on the back side.
+	 * @param offset      Places it in Wwise's frame.
 	 */
-	void SendPortalLocked( AudPortal& portal, AkUInt64 frontRoomID, AkUInt64 backRoomID );
+	void SendPortalLocked( AudPortal& portal, AkUInt64 frontRoomID, AkUInt64 backRoomID, const AudWorldFrame::Offset& offset );
 
 	/**
 	 * @brief Sends the portal's obstruction and occlusion when they changed. Caller holds m_mutex.
@@ -295,6 +311,8 @@ private:
 	bool m_outdoorConfigured;
 	/// Set when rooms changed, so Update() assigns game objects again.
 	bool m_assignmentsDirty;
+	/// The AudWorldFrame offset the rooms in Wwise were last placed with.
+	uint64_t m_placedOffsetGeneration;
 	/// Number of rooms in Wwise, read without the lock.
 	std::atomic<size_t> m_roomsInWwise;
 	/// Room tones waiting for SoundBanks.

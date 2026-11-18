@@ -22,8 +22,10 @@
  *
  * Audio adds the scene origin back and measures from a Wwise origin of its own, which only jumps to
  * the scene origin once the player is further than the rebase distance from it. Between jumps, a still
- * object keeps its Wwise position, and the coordinates Wwise gets stay small enough for its single
- * precision paths.
+ * object keeps its Wwise position, and the coordinates Wwise gets stay small.
+ *
+ * A position is always the last one trinity handed over plus the current offset, so something trinity
+ * stops handing over, because it moves along with the player, moves along in Wwise too.
  *
  * Right-handed, like trinity. Thread safe.
  */
@@ -33,18 +35,22 @@ public:
 	/// How far the scene origin gets from the Wwise origin before the Wwise origin moves to it, in game units.
 	static constexpr double DEFAULT_REBASE_DISTANCE = 50000.0;
 
-	/// A scene origin step longer than this is a warp or a jump, not flight. The Wwise origin waits for the
-	/// player to arrive, since following would send everything still in the world again on every frame.
-	static constexpr double TRANSIT_STEP = 20000.0;
+	/// A scene origin step longer than this, from one frame to the next, is a warp or a jump. It is far beyond any
+	/// ship's speed at any frame rate and far below warp speed. The Wwise origin waits for the player to slow down,
+	/// since following would send everything still in the world again every few frames.
+	static constexpr double TRANSIT_STEP = 2000.0;
 
-	struct State
+	/// The shortest move that counts as one, in game units.
+	static constexpr double MIN_STILL_DISTANCE = 1.0e-3;
+
+	struct Offset
 	{
-		AkVector64 sceneOrigin;
-		AkVector64 wwiseOrigin;
-		/// Whether trinity has set a scene origin yet. Until it does, both origins are zero.
-		bool hasSceneOrigin;
-		/// The first scene origin trinity set. Positions handed over before it are relative to it.
-		AkVector64 firstSceneOrigin;
+		/// What to add to a scene-relative position to get its Wwise position.
+		AkVector64 sceneToWwise;
+		/// Changes whenever sceneToWwise does.
+		uint64_t generation;
+		/// Times the Wwise origin jumped to the scene origin.
+		uint64_t rebaseCount;
 	};
 
 	static AudWorldFrame& Get();
@@ -57,36 +63,21 @@ public:
 	 */
 	void SetSceneOrigin( const AkVector64& origin );
 
-	State GetState() const;
-
-	/// What to add to a scene-relative position to get its Wwise position.
-	AkVector64 GetSceneToWwise() const;
-
-	/// A scene-relative position in Wwise's frame, still right-handed.
-	AkVector64 ToWwise( const Vector3& sceneRelative ) const;
-
-	/// A scene-relative transform with its translation moved into Wwise's frame.
-	Matrix ToWwise( const Matrix& sceneRelative ) const;
+	Offset GetOffset() const;
 
 	/**
 	 * @brief The shortest move that counts as one, for something trinity hands over at sceneRelative.
 	 *
 	 * Trinity's positions are floats relative to the scene origin, so far things jitter by a few float
-	 * steps whenever the player moves, and a far thing moving a little sounds the same. 1 mm, or 0.01%
-	 * of the distance from the scene origin, whichever is longer.
+	 * steps whenever the player moves, and a far thing moving a little sounds the same.
+	 * MIN_STILL_DISTANCE, or 0.01% of the distance from the scene origin, whichever is longer.
 	 */
 	static double StillDistance( const Matrix& sceneRelative );
 
-	/// 0 moves the Wwise origin along with the scene origin, so Wwise gets positions as trinity hands them.
-	/// Infinity never moves it, so Wwise gets absolute coordinates.
+	/// 0 moves the Wwise origin to the scene origin on every frame the player isn't in transit, so Wwise gets
+	/// positions relative to the player. Infinity never moves it from where the first scene origin was.
 	double GetRebaseDistance() const;
 	void SetRebaseDistance( double distance );
-
-	/// Changes whenever the scene-to-Wwise offset changes, so positions sent before need sending again.
-	uint64_t GetOffsetGeneration() const;
-
-	/// Times the Wwise origin jumped to the scene origin.
-	uint64_t GetRebaseCount() const;
 
 private:
 	AudWorldFrame();
@@ -94,7 +85,6 @@ private:
 	mutable CcpMutex m_mutex;
 	AkVector64 m_sceneOrigin;
 	AkVector64 m_wwiseOrigin;
-	AkVector64 m_firstSceneOrigin;
 	bool m_hasSceneOrigin;
 	double m_rebaseDistance;
 	uint64_t m_offsetGeneration;

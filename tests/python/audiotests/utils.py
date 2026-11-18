@@ -41,3 +41,12 @@ def GetAudioMetadataFromFile():
         if "eventID" in eventInfo:
             eventInfo["eventID"] = int(eventInfo["eventID"])
     return audioMetadata
+
+def SaveSettings(manager, names):
+    """The values of the named AudManager settings, for RestoreSettings."""
+    return {name: getattr(manager, name) for name in names}
+
+
+def RestoreSettings(manager, settings):
+    for name, value in settings.items():
+        setattr(manager, name, value)

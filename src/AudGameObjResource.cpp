@@ -30,7 +30,7 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 														 m_scalingFactor( 1.0 ),
 														 m_position( WWISE_INIT_POSITION ), 
 														 m_parentOrientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) ),
-														 m_effectiveOrientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) ),
+														 m_effectiveOrientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) ), m_placedOffsetGeneration( 0 ),
 														 m_authoredRotation( 0.0f, 0.0f, 0.0f, 1.0f ),
 														 m_mutex( "AudGameObjResource", "m_mutex" ),
 														 m_gameObjRegistered( false ),
@@ -69,7 +69,7 @@ AudGameObjResource::AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj
 																				   m_scalingFactor( 1.0 ),
 																				   m_position( WWISE_INIT_POSITION ), 
 																				   m_parentOrientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) ),
-																				   m_effectiveOrientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) ),
+																				   m_effectiveOrientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) ), m_placedOffsetGeneration( 0 ),
 																				   m_authoredRotation( 0.0f, 0.0f, 0.0f, 1.0f ),
 														 						   m_mutex( "AudGameObjResource", "m_mutex" ),
 																				   m_gameObjRegistered( false ),
@@ -129,40 +129,51 @@ void AudGameObjResource::RegisterWwiseObject()
 			CCP_LOGERR( "Failed to register game object %d with Wwise result code %d", m_ID, result );
 		}
 		m_gameObjRegistered = true;
-		PlaceNewWwiseObject();
-	}
-}
-
-void AudGameObjResource::PlaceNewWwiseObject()
-{
-	const AkVector64 offset = AudWorldFrame::Get().GetSceneToWwise();
-	if( offset.X != 0.0 || offset.Y != 0.0 || offset.Z != 0.0 )
-	{
-		ResendPlacement();
 	}
 }
 
 void AudGameObjResource::ResendPlacement()
 {
-	if( g_audioManager == nullptr || g_audioManager->GetState() != AudioState::Enabled || !m_gameObjRegistered )
+	// One that was never placed stays where Wwise keeps it, far from anything it would be heard at.
+	if( g_audioManager == nullptr || g_audioManager->GetState() != AudioState::Enabled || !m_gameObjRegistered
+		|| !IsUsableWorldPosition( m_position ) )
 	{
 		return;
 	}
 
-	const Vector3 position = m_position == WWISE_INIT_POSITION ? Vector3( 0.0f, 0.0f, 0.0f ) : m_position;
-	SendPlacementToWwise( m_effectiveOrientation.front, m_effectiveOrientation.top, position );
+	SendPlacementToWwise( m_effectiveOrientation.front, m_effectiveOrientation.top, m_position );
 }
 
-void AudGameObjResource::SendPlacementToWwise( const Vector3& front, const Vector3& top, const Vector3& position ) const
+bool AudGameObjResource::TakeStalePlacement( const AudWorldFrame::Offset& offset, AkSoundPosition& placement )
+{
+	if( m_placedOffsetGeneration.load( std::memory_order_relaxed ) == offset.generation
+		|| g_audioManager == nullptr || g_audioManager->GetState() != AudioState::Enabled || !m_gameObjRegistered
+		|| !IsUsableWorldPosition( m_position ) )
+	{
+		return false;
+	}
+
+	placement = ToWwisePlacement( m_effectiveOrientation.front, m_effectiveOrientation.top, m_position, offset.sceneToWwise );
+	m_placedOffsetGeneration.store( offset.generation, std::memory_order_relaxed );
+	return true;
+}
+
+AkSoundPosition AudGameObjResource::ToWwisePlacement( const Vector3& front, const Vector3& top, const Vector3& position, const AkVector64& sceneToWwise ) const
 {
 	AkSoundPosition rh;
-	rh.Set( AudWorldFrame::Get().ToWwise( position ), MakeAkVector( front ), MakeAkVector( top ) );
+	rh.Set( Ak3DVector64( position.x + sceneToWwise.X, position.y + sceneToWwise.Y, position.z + sceneToWwise.Z ), MakeAkVector( front ), MakeAkVector( top ) );
 
 	// all vectors come in RH, but WWISE is LH, so convert
 	AkSoundPosition lh;
 	ConvertPlacementToWwise( lh, rh );
+	return lh;
+}
 
-	AK::SoundEngine::SetPosition( m_ID, lh );
+void AudGameObjResource::SendPlacementToWwise( const Vector3& front, const Vector3& top, const Vector3& position )
+{
+	const AudWorldFrame::Offset offset = AudWorldFrame::Get().GetOffset();
+	AK::SoundEngine::SetPosition( m_ID, ToWwisePlacement( front, top, position, offset.sceneToWwise ) );
+	m_placedOffsetGeneration.store( offset.generation, std::memory_order_relaxed );
 }
 
 void AudGameObjResource::ConvertPlacementToWwise( AkSoundPosition& lh, const AkSoundPosition& rh ) const

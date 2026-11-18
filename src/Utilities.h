@@ -49,13 +49,17 @@ public:
 		emitterLH->Set(pos, front, top);
 	}
 
-	static void convertTransform( const Matrix& matrix, AkTransform& out )
+	/// The translation of a right-handed transform, moved by offset and made left-handed, in double precision.
+	static AkVector64 convertPosition( const Matrix& matrix, const AkVector64& offset )
+	{
+		const Ak3DVector64 position( matrix._41 + offset.X, matrix._42 + offset.Y, -( matrix._43 + offset.Z ) );
+		return position.IsFinite() ? position : Ak3DVector64( 0.0, 0.0, 0.0 );
+	}
+
+	/// A right-handed transform made left-handed, with its translation moved by offset in double precision.
+	static AkWorldTransform convertTransform( const Matrix& matrix, const AkVector64& offset )
 	{
 		constexpr float kEpsilon = 1e-10f;
-
-		Ak3DVector32 position( matrix._41, matrix._42, -matrix._43 );
-		if( !position.IsFinite() )
-			position = Ak3DVector32( 0.0f, 0.0f, 0.0f );
 
 		Ak3DVector32 front( -matrix._31, -matrix._32, matrix._33 );
 		if( !front.IsFinite() || front.LengthSquared() <= kEpsilon )
@@ -81,8 +85,9 @@ public:
 		up = front.Cross( right );
 		up.Normalize();
 
-		out.SetPosition( position );
-		out.SetOrientation( front, up );
+		AkWorldTransform out;
+		out.Set( convertPosition( matrix, offset ), front, up );
+		return out;
 	}
 
 	static AkVector extractScale( const Matrix& matrix )

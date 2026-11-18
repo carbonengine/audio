@@ -18,6 +18,9 @@ struct AkSpatialAudioInitSettings;
 class SpatialAudioSettings
 {
 public:
+	/// Smallest adjacent room bleed, which Wwise needs above zero.
+	static constexpr float MIN_ADJACENT_ROOM_BLEED = 1e-3f;
+
 	SpatialAudioSettings();
 
 	/// Tells the setters whether Spatial Audio is running, so live settings are sent to Wwise.
@@ -138,9 +141,10 @@ public:
 	bool GetGeometrySolid() const;
 	void SetGeometrySolid( bool value );
 
-	/// Live. How far a mesh moving on its own may get from where Wwise has it before it is sent again,
-	/// as a share of its distance from the listener. Each send makes Wwise re-index the mesh, so a far mesh
-	/// that turns a little every frame is sent once it has moved far enough to hear. 0 sends every move.
+	/// Live. How far any point of a mesh moving on its own may get from where Wwise has it before it is sent again,
+	/// as a share of the listener's distance from the mesh. Each send makes Wwise re-index the mesh, so a far mesh
+	/// that turns a little every frame is sent once it has moved far enough to hear. 0 sends every move longer than
+	/// float noise, see AudWorldFrame::StillDistance().
 	float GetGeometryUpdateTolerance() const;
 	void SetGeometryUpdateTolerance( float value );
 

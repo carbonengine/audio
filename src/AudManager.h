@@ -312,9 +312,10 @@ private:
 	std::unordered_map<AkGameObjectID, AudGameObjResource*> m_callbackGameObjects;
 	CcpMutex m_callbackGameObjectsMutex;
 
-	// The AudWorldFrame offset and rebase the game objects and rooms in Wwise were last placed with.
+	// The AudWorldFrame offset generation the game objects in Wwise were last placed with.
 	uint64_t m_placedOffsetGeneration;
-	uint64_t m_placedRebaseCount;
+	// Placements FollowWorldFrame() sends once it has released m_callbackGameObjectsMutex, kept to reuse the memory.
+	std::vector<std::pair<AkGameObjectID, AkSoundPosition>> m_stalePlacements;
 
 	// A boolean for the state of the profiler capture
 	bool m_isProfilerCapturing;

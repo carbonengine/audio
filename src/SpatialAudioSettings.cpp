@@ -3,14 +3,26 @@
 #include <AK/SpatialAudio/Common/AkSpatialAudio.h>
 
 #include <algorithm>
+#include <cmath>
 
 static CcpLogChannel_t s_ch = CCP_LOG_DEFINE_CHANNEL( "SpatialAudioSettings" );
 
 namespace
 {
-	/// Smallest adjacent room bleed and diffraction angle, which Wwise needs above zero.
-	constexpr float MIN_ADJACENT_ROOM_BLEED = 1e-3f;
+	/// Smallest diffraction angle, which Wwise needs above zero.
 	constexpr float MIN_DIFFRACTION_ANGLE_DEGREES = 1.0f;
+
+	/// Stores value in setting, and reports whether that changed it, so Wwise only hears about changes.
+	template<typename T>
+	bool Store( T& setting, T value )
+	{
+		if( setting == value )
+		{
+			return false;
+		}
+		setting = value;
+		return true;
+	}
 
 	void LogIfFailed( AKRESULT result, const char* setting )
 	{
@@ -68,13 +80,12 @@ bool SpatialAudioSettings::GetSpatialAudioRoomsEnabled() const { return m_spatia
 void SpatialAudioSettings::SetSpatialAudioRoomsEnabled( bool value ) { m_spatialAudioRoomsEnabled = value; }
 
 float SpatialAudioSettings::GetMovementThreshold() const { return m_movementThreshold; }
-void SpatialAudioSettings::SetMovementThreshold( float value ) { m_movementThreshold = std::max( 0.0f, value ); }
+void SpatialAudioSettings::SetMovementThreshold( float value ) { if( !std::isnan( value ) ) m_movementThreshold = std::max( 0.0f, value ); }
 
 int SpatialAudioSettings::GetNumberOfPrimaryRays() const { return m_numberOfPrimaryRays; }
 void SpatialAudioSettings::SetNumberOfPrimaryRays( int value )
 {
-	m_numberOfPrimaryRays = std::max( 0, value );
-	if( m_initialized )
+	if( Store( m_numberOfPrimaryRays, std::max( 0, value ) ) && m_initialized )
 	{
 		LogIfFailed( AK::SpatialAudio::SetNumberOfPrimaryRays( m_numberOfPrimaryRays ), "numberOfPrimaryRays" );
 	}
@@ -83,8 +94,7 @@ void SpatialAudioSettings::SetNumberOfPrimaryRays( int value )
 int SpatialAudioSettings::GetMaxReflectionOrder() const { return m_maxReflectionOrder; }
 void SpatialAudioSettings::SetMaxReflectionOrder( int value )
 {
-	m_maxReflectionOrder = std::clamp( value, 0, AK_MAX_REFLECT_ORDER );
-	if( m_initialized )
+	if( Store( m_maxReflectionOrder, std::clamp( value, 0, AK_MAX_REFLECT_ORDER ) ) && m_initialized )
 	{
 		LogIfFailed( AK::SpatialAudio::SetReflectionsOrder( m_maxReflectionOrder, true ), "maxReflectionOrder" );
 	}
@@ -93,8 +103,7 @@ void SpatialAudioSettings::SetMaxReflectionOrder( int value )
 int SpatialAudioSettings::GetMaxDiffractionOrder() const { return m_maxDiffractionOrder; }
 void SpatialAudioSettings::SetMaxDiffractionOrder( int value )
 {
-	m_maxDiffractionOrder = std::clamp( value, 0, AK_MAX_SOUND_PROPAGATION_DEPTH );
-	if( m_initialized )
+	if( Store( m_maxDiffractionOrder, std::clamp( value, 0, AK_MAX_SOUND_PROPAGATION_DEPTH ) ) && m_initialized )
 	{
 		LogIfFailed( AK::SpatialAudio::SetDiffractionOrder( m_maxDiffractionOrder, true ), "maxDiffractionOrder" );
 	}
@@ -103,8 +112,7 @@ void SpatialAudioSettings::SetMaxDiffractionOrder( int value )
 int SpatialAudioSettings::GetMaxDiffractionPaths() const { return m_maxDiffractionPaths; }
 void SpatialAudioSettings::SetMaxDiffractionPaths( int value )
 {
-	m_maxDiffractionPaths = std::clamp( value, 0, AK_MAX_SOUND_PROPAGATION_WIDTH );
-	if( m_initialized )
+	if( Store( m_maxDiffractionPaths, std::clamp( value, 0, AK_MAX_SOUND_PROPAGATION_WIDTH ) ) && m_initialized )
 	{
 		LogIfFailed( AK::SpatialAudio::SetMaxDiffractionPaths( m_maxDiffractionPaths ), "maxDiffractionPaths" );
 	}
@@ -113,8 +121,7 @@ void SpatialAudioSettings::SetMaxDiffractionPaths( int value )
 int SpatialAudioSettings::GetMaxGlobalReflectionPaths() const { return m_maxGlobalReflectionPaths; }
 void SpatialAudioSettings::SetMaxGlobalReflectionPaths( int value )
 {
-	m_maxGlobalReflectionPaths = std::max( 0, value );
-	if( m_initialized )
+	if( Store( m_maxGlobalReflectionPaths, std::max( 0, value ) ) && m_initialized )
 	{
 		LogIfFailed( AK::SpatialAudio::SetMaxGlobalReflectionPaths( m_maxGlobalReflectionPaths ), "maxGlobalReflectionPaths" );
 	}
@@ -123,8 +130,7 @@ void SpatialAudioSettings::SetMaxGlobalReflectionPaths( int value )
 int SpatialAudioSettings::GetMaxEmitterRoomAuxSends() const { return m_maxEmitterRoomAuxSends; }
 void SpatialAudioSettings::SetMaxEmitterRoomAuxSends( int value )
 {
-	m_maxEmitterRoomAuxSends = std::max( 0, value );
-	if( m_initialized )
+	if( Store( m_maxEmitterRoomAuxSends, std::max( 0, value ) ) && m_initialized )
 	{
 		LogIfFailed( AK::SpatialAudio::SetMaxEmitterRoomAuxSends( m_maxEmitterRoomAuxSends ), "maxEmitterRoomAuxSends" );
 	}
@@ -134,19 +140,18 @@ int SpatialAudioSettings::GetDiffractionOnReflectionsOrder() const { return m_di
 void SpatialAudioSettings::SetDiffractionOnReflectionsOrder( int value ) { m_diffractionOnReflectionsOrder = std::max( 0, value ); }
 
 float SpatialAudioSettings::GetMaxDiffractionAngleDegrees() const { return m_maxDiffractionAngleDegrees; }
-void SpatialAudioSettings::SetMaxDiffractionAngleDegrees( float value ) { m_maxDiffractionAngleDegrees = std::max( MIN_DIFFRACTION_ANGLE_DEGREES, value ); }
+void SpatialAudioSettings::SetMaxDiffractionAngleDegrees( float value ) { if( !std::isnan( value ) ) m_maxDiffractionAngleDegrees = std::max( MIN_DIFFRACTION_ANGLE_DEGREES, value ); }
 
 float SpatialAudioSettings::GetMaxPathLength() const { return m_maxPathLength; }
-void SpatialAudioSettings::SetMaxPathLength( float value ) { m_maxPathLength = std::max( 0.0f, value ); }
+void SpatialAudioSettings::SetMaxPathLength( float value ) { if( !std::isnan( value ) ) m_maxPathLength = std::max( 0.0f, value ); }
 
 float SpatialAudioSettings::GetCPULimitPercentage() const { return m_cpuLimitPercentage; }
-void SpatialAudioSettings::SetCPULimitPercentage( float value ) { m_cpuLimitPercentage = std::clamp( value, 0.0f, 100.0f ); }
+void SpatialAudioSettings::SetCPULimitPercentage( float value ) { if( !std::isnan( value ) ) m_cpuLimitPercentage = std::clamp( value, 0.0f, 100.0f ); }
 
 int SpatialAudioSettings::GetLoadBalancingSpread() const { return m_loadBalancingSpread; }
 void SpatialAudioSettings::SetLoadBalancingSpread( int value )
 {
-	m_loadBalancingSpread = std::max( 1, value );
-	if( m_initialized )
+	if( Store( m_loadBalancingSpread, std::max( 1, value ) ) && m_initialized )
 	{
 		LogIfFailed( AK::SpatialAudio::SetLoadBalancingSpread( m_loadBalancingSpread ), "loadBalancingSpread" );
 	}
@@ -155,8 +160,7 @@ void SpatialAudioSettings::SetLoadBalancingSpread( int value )
 float SpatialAudioSettings::GetSmoothingConstantMs() const { return m_smoothingConstantMs; }
 void SpatialAudioSettings::SetSmoothingConstantMs( float value )
 {
-	m_smoothingConstantMs = std::max( 0.0f, value );
-	if( m_initialized )
+	if( !std::isnan( value ) && Store( m_smoothingConstantMs, std::max( 0.0f, value ) ) && m_initialized )
 	{
 		LogIfFailed( AK::SpatialAudio::SetSmoothingConstant( m_smoothingConstantMs ), "smoothingConstantMs" );
 	}
@@ -165,8 +169,7 @@ void SpatialAudioSettings::SetSmoothingConstantMs( float value )
 float SpatialAudioSettings::GetAdjacentRoomBleed() const { return m_adjacentRoomBleed; }
 void SpatialAudioSettings::SetAdjacentRoomBleed( float value )
 {
-	m_adjacentRoomBleed = std::max( MIN_ADJACENT_ROOM_BLEED, value );
-	if( m_initialized )
+	if( !std::isnan( value ) && Store( m_adjacentRoomBleed, std::max( MIN_ADJACENT_ROOM_BLEED, value ) ) && m_initialized )
 	{
 		LogIfFailed( AK::SpatialAudio::SetAdjacentRoomBleed( m_adjacentRoomBleed ), "adjacentRoomBleed" );
 	}
@@ -184,8 +187,7 @@ void SpatialAudioSettings::SetCalcEmitterVirtualPosition( bool value ) { m_calcE
 int SpatialAudioSettings::GetTransmissionOperation() const { return m_transmissionOperation; }
 void SpatialAudioSettings::SetTransmissionOperation( int value )
 {
-	m_transmissionOperation = std::clamp( value, static_cast<int>( AkTransmissionOperation_Add ), static_cast<int>( AkTransmissionOperation_Max ) );
-	if( m_initialized )
+	if( Store( m_transmissionOperation, std::clamp( value, static_cast<int>( AkTransmissionOperation_Add ), static_cast<int>( AkTransmissionOperation_Max ) ) ) && m_initialized )
 	{
 		LogIfFailed( AK::SpatialAudio::SetTransmissionOperation( static_cast<AkTransmissionOperation>( m_transmissionOperation ) ), "transmissionOperation" );
 	}
@@ -195,13 +197,13 @@ int SpatialAudioSettings::GetClusteringMinPoints() const { return m_clusteringMi
 void SpatialAudioSettings::SetClusteringMinPoints( int value ) { m_clusteringMinPoints = std::max( 0, value ); }
 
 float SpatialAudioSettings::GetClusteringMaxDistance() const { return m_clusteringMaxDistance; }
-void SpatialAudioSettings::SetClusteringMaxDistance( float value ) { m_clusteringMaxDistance = std::max( 0.0f, value ); }
+void SpatialAudioSettings::SetClusteringMaxDistance( float value ) { if( !std::isnan( value ) ) m_clusteringMaxDistance = std::max( 0.0f, value ); }
 
 float SpatialAudioSettings::GetClusteringDeadZoneDistance() const { return m_clusteringDeadZoneDistance; }
-void SpatialAudioSettings::SetClusteringDeadZoneDistance( float value ) { m_clusteringDeadZoneDistance = std::max( 0.0f, value ); }
+void SpatialAudioSettings::SetClusteringDeadZoneDistance( float value ) { if( !std::isnan( value ) ) m_clusteringDeadZoneDistance = std::max( 0.0f, value ); }
 
 float SpatialAudioSettings::GetTransmissionLoss() const { return m_transmissionLoss; }
-void SpatialAudioSettings::SetTransmissionLoss( float value ) { m_transmissionLoss = std::max( 0.0f, std::min( 1.0f, value ) ); }
+void SpatialAudioSettings::SetTransmissionLoss( float value ) { if( !std::isnan( value ) ) m_transmissionLoss = std::clamp( value, 0.0f, 1.0f ); }
 
 bool SpatialAudioSettings::GetEnableDiffraction() const { return m_enableDiffraction; }
 void SpatialAudioSettings::SetEnableDiffraction( bool value ) { m_enableDiffraction = value; }
@@ -213,13 +215,13 @@ bool SpatialAudioSettings::GetGeometrySolid() const { return m_geometrySolid; }
 void SpatialAudioSettings::SetGeometrySolid( bool value ) { m_geometrySolid = value; }
 
 float SpatialAudioSettings::GetGeometryUpdateTolerance() const { return m_geometryUpdateTolerance; }
-void SpatialAudioSettings::SetGeometryUpdateTolerance( float value ) { m_geometryUpdateTolerance = std::max( 0.0f, std::min( 1.0f, value ) ); }
+void SpatialAudioSettings::SetGeometryUpdateTolerance( float value ) { if( !std::isnan( value ) ) m_geometryUpdateTolerance = std::clamp( value, 0.0f, 1.0f ); }
 
 bool SpatialAudioSettings::GetGeometryPortalSubtraction() const { return m_geometryPortalSubtraction; }
 void SpatialAudioSettings::SetGeometryPortalSubtraction( bool value ) { m_geometryPortalSubtraction = value; }
 
 float SpatialAudioSettings::GetGeometryMaxDistance() const { return m_geometryMaxDistance; }
-void SpatialAudioSettings::SetGeometryMaxDistance( float value ) { m_geometryMaxDistance = std::max( 0.0f, value ); }
+void SpatialAudioSettings::SetGeometryMaxDistance( float value ) { if( !std::isnan( value ) ) m_geometryMaxDistance = std::max( 0.0f, value ); }
 
 int SpatialAudioSettings::GetGeometryMaxTriangles() const { return m_geometryMaxTriangles; }
 void SpatialAudioSettings::SetGeometryMaxTriangles( int value ) { m_geometryMaxTriangles = std::max( 0, value ); }

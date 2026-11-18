@@ -73,7 +73,7 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		MAP_PROPERTY_READONLY( "geometryTrianglesInWwise", GetGeometryTrianglesInWwise, "Triangles of every geometry instance in Wwise as of the last tick." )
 		MAP_PROPERTY_READONLY( "geometryInstanceSends", GetGeometryInstanceSends, "Geometry instance placements sent to Wwise since startup. Each one makes Wwise re-index that instance, so it should only grow when meshes move in the world." )
 
-		MAP_PROPERTY( "geometryUpdateTolerance", GetGeometryUpdateTolerance, SetGeometryUpdateTolerance, "How far a mesh moving on its own may get from where Wwise has it before it is sent again, as a share of its distance from the listener [0-1]. Each send makes Wwise re-index the mesh. 0 sends every move.")
+		MAP_PROPERTY( "geometryUpdateTolerance", GetGeometryUpdateTolerance, SetGeometryUpdateTolerance, "How far any point of a mesh moving on its own may get from where Wwise has it before it is sent again, as a share of the listener's distance from the mesh [0-1]. Each send makes Wwise re-index the mesh. 0 sends every move longer than float noise: 1 mm, or 0.01% of the mesh's distance from the player.")
 		MAP_METHOD_AND_WRAP
 		(
 			"GetGeometrySendReport",
@@ -81,7 +81,7 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 			"The geometry instances sent to Wwise most often since startup, one per line, for finding meshes that move on their own.\n"
 			":param count: How many instances to list."
 		)
-		MAP_PROPERTY( "worldRebaseDistance", GetWorldRebaseDistance, SetWorldRebaseDistance, "How far the player gets from Wwise's origin, in game units, before the origin moves to the player and everything still in the world is sent to Wwise again. 0 moves it with the player, so Wwise gets positions relative to the player as before. Infinity never moves it.")
+		MAP_PROPERTY( "worldRebaseDistance", GetWorldRebaseDistance, SetWorldRebaseDistance, "How far the player gets from Wwise's origin, in game units, before the origin moves to the player and everything still in the world is sent to Wwise again. 0 moves it to the player on every frame the player is not warping, so Wwise gets positions relative to the player as before. Infinity never moves it from where the player first was.")
 		MAP_PROPERTY_READONLY( "worldRebases", GetWorldRebases, "Times Wwise's origin moved to the player." )
 
 		// Obstruction / occlusion
