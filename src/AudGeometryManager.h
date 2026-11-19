@@ -128,6 +128,7 @@ private:
 	bool m_enableDiffraction;
 	bool m_enableDiffractionOnBoundaryEdges;
 	bool m_solid;
+	bool m_portalSubtraction;
 	bool m_statsDirty;
 	std::atomic<size_t> m_setsInWwise;
 	std::atomic<size_t> m_instancesInWwise;

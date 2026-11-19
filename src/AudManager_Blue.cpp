@@ -52,6 +52,7 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		MAP_PROPERTY( "enableDiffraction", GetEnableDiffraction, SetEnableDiffraction, "Whether sound diffracts around mesh edges.")
 		MAP_PROPERTY( "enableDiffractionOnBoundaryEdges", GetEnableDiffractionOnBoundaryEdges, SetEnableDiffractionOnBoundaryEdges, "Whether sound diffracts around mesh edges that belong to one triangle only.")
 		MAP_PROPERTY( "geometrySolid", GetGeometrySolid, SetGeometrySolid, "Whether a mesh is a closed volume that applies transmission loss once per pass through it. Has no effect while the Wwise transmission operation is max, its default.")
+		MAP_PROPERTY( "geometryPortalSubtraction", GetGeometryPortalSubtraction, SetGeometryPortalSubtraction, "Whether portals cut openings in the meshes they overlap. Off by default because Wwise re-cuts every overlapping mesh whenever portal visibility changes, which is slow with big meshes. Turn on when a portal sits in a mesh wall.")
 
 		MAP_PROPERTY( "geometryMaxDistance", GetGeometryMaxDistance, SetGeometryMaxDistance, "Furthest a mesh can be from the listener and still be in Wwise, in game units. 0 for no limit.")
 		MAP_PROPERTY( "geometryMaxTriangles", GetGeometryMaxTriangles, SetGeometryMaxTriangles, "Most mesh triangles in Wwise at once; the meshes nearest the listener go first. 0 for no limit.")

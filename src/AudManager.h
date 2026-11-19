@@ -405,6 +405,7 @@ public:
 	DELEGATE_SA_GETTER( bool, GetEnableDiffraction )
 	DELEGATE_SA_GETTER( bool, GetEnableDiffractionOnBoundaryEdges )
 	DELEGATE_SA_GETTER( bool, GetGeometrySolid )
+	DELEGATE_SA_GETTER( bool, GetGeometryPortalSubtraction )
 	DELEGATE_SA_GETTER( float, GetGeometryMaxDistance )
 	DELEGATE_SA_GETTER( int, GetGeometryMaxTriangles )
 
@@ -424,6 +425,7 @@ public:
 	DELEGATE_SA_SETTER( bool, SetEnableDiffraction )
 	DELEGATE_SA_SETTER( bool, SetEnableDiffractionOnBoundaryEdges )
 	DELEGATE_SA_SETTER( bool, SetGeometrySolid )
+	DELEGATE_SA_SETTER( bool, SetGeometryPortalSubtraction )
 	DELEGATE_SA_SETTER( float, SetGeometryMaxDistance )
 	DELEGATE_SA_SETTER( int, SetGeometryMaxTriangles )
 

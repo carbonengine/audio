@@ -22,6 +22,7 @@ SpatialAudioSettings::SpatialAudioSettings()
 	, m_enableDiffraction( true )
 	, m_enableDiffractionOnBoundaryEdges( true )
 	, m_geometrySolid( true )
+	, m_geometryPortalSubtraction( false )
 	, m_geometryMaxDistance( 0.0f )
 	, m_geometryMaxTriangles( 1000 )
 {
@@ -77,6 +78,9 @@ void SpatialAudioSettings::SetEnableDiffractionOnBoundaryEdges( bool value ) { m
 
 bool SpatialAudioSettings::GetGeometrySolid() const { return m_geometrySolid; }
 void SpatialAudioSettings::SetGeometrySolid( bool value ) { m_geometrySolid = value; }
+
+bool SpatialAudioSettings::GetGeometryPortalSubtraction() const { return m_geometryPortalSubtraction; }
+void SpatialAudioSettings::SetGeometryPortalSubtraction( bool value ) { m_geometryPortalSubtraction = value; }
 
 float SpatialAudioSettings::GetGeometryMaxDistance() const { return m_geometryMaxDistance; }
 void SpatialAudioSettings::SetGeometryMaxDistance( float value ) { m_geometryMaxDistance = std::max( 0.0f, value ); }

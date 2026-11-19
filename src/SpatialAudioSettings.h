@@ -191,6 +191,12 @@ public:
 	bool GetGeometrySolid() const;
 	void SetGeometrySolid( bool value );
 
+	/// Live. Whether portals cut openings in the meshes they overlap. Off by default: Wwise re-cuts every mesh
+	/// a portal overlaps each time it rebuilds portal visibility, which takes long with big meshes.
+	/// Turn it on when a portal sits in a mesh wall and sound has to pass through it.
+	bool GetGeometryPortalSubtraction() const;
+	void SetGeometryPortalSubtraction( bool value );
+
 	/// Live. Furthest a mesh can be from the listener and still be in Wwise, in game units. 0 for no limit.
 	float GetGeometryMaxDistance() const;
 	void SetGeometryMaxDistance( float value );
@@ -222,6 +228,7 @@ private:
 	bool m_enableDiffraction;
 	bool m_enableDiffractionOnBoundaryEdges;
 	bool m_geometrySolid;
+	bool m_geometryPortalSubtraction;
 	float m_geometryMaxDistance;
 	int m_geometryMaxTriangles;
 };

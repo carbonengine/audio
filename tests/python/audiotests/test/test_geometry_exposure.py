@@ -20,6 +20,7 @@ SETTINGS = (
     "transmissionLoss",
     "enableDiffractionOnBoundaryEdges",
     "geometrySolid",
+    "geometryPortalSubtraction",
     "geometryMaxDistance",
     "geometryMaxTriangles",
 )
@@ -293,6 +294,11 @@ class TestGeometryExposure(BaseAudio2TestClass):
         self.manager.transmissionLoss = 0.25
         self.manager.enableDiffractionOnBoundaryEdges = False
         self.manager.geometrySolid = False
+        self.manager.geometryPortalSubtraction = not self.manager.geometryPortalSubtraction
         self.Update()
 
         self.AssertInWwise(sets=1, instances=1)
+
+    def test_portals_do_not_cut_meshes_by_default(self):
+        """Wwise re-cuts every mesh a portal overlaps on each portal visibility rebuild, which stalls the audio thread with big meshes."""
+        self.assertFalse(self.manager.geometryPortalSubtraction)

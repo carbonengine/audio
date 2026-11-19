@@ -92,7 +92,7 @@ namespace
 		return std::max( 0.0f, std::sqrt( x * x + y * y + z * z ) - mesh.radius * largestScale );
 	}
 
-	AkGeometryInstanceParams MakeInstanceParams( uint64_t geometrySetId, const Matrix& worldTransform, bool solid )
+	AkGeometryInstanceParams MakeInstanceParams( uint64_t geometrySetId, const Matrix& worldTransform, bool solid, bool portalSubtraction )
 	{
 		AkTransform transform;
 		RH2LH::convertTransform( worldTransform, transform );
@@ -107,6 +107,8 @@ namespace
 		}
 		params.GeometrySetID = geometrySetId;
 		params.IsSolid = solid;
+		// Wwise re-cuts every mesh a portal overlaps each time it rebuilds portal visibility, on the audio thread.
+		params.BypassPortalSubtraction = !portalSubtraction;
 		return params;
 	}
 
@@ -127,6 +129,7 @@ namespace
 
 		return a.GeometrySetID == b.GeometrySetID
 			&& a.IsSolid == b.IsSolid
+			&& a.BypassPortalSubtraction == b.BypassPortalSubtraction
 			&& std::fabs( pa.X - pb.X ) <= positionEpsilon
 			&& std::fabs( pa.Y - pb.Y ) <= positionEpsilon
 			&& std::fabs( pa.Z - pb.Z ) <= positionEpsilon
@@ -141,6 +144,7 @@ AudGeometryManager::AudGeometryManager() :
 	m_enableDiffraction( false ),
 	m_enableDiffractionOnBoundaryEdges( false ),
 	m_solid( false ),
+	m_portalSubtraction( false ),
 	m_statsDirty( false ),
 	m_setsInWwise( 0 ),
 	m_instancesInWwise( 0 ),
@@ -506,8 +510,10 @@ void AudGeometryManager::Update( const SpatialAudioSettings& settings, const Vec
 		}
 	}
 
-	const bool solidChanged = m_solid != settings.GetGeometrySolid();
+	const bool instanceSettingsChanged = m_solid != settings.GetGeometrySolid()
+		|| m_portalSubtraction != settings.GetGeometryPortalSubtraction();
 	m_solid = settings.GetGeometrySolid();
+	m_portalSubtraction = settings.GetGeometryPortalSubtraction();
 
 	SelectInstancesLocked( settings, listenerPosition );
 
@@ -531,7 +537,7 @@ void AudGeometryManager::Update( const SpatialAudioSettings& settings, const Vec
 			continue;
 		}
 
-		const bool dirty = instance.dirty || solidChanged;
+		const bool dirty = instance.dirty || instanceSettingsChanged;
 		instance.dirty = false;
 		if( instance.inWwise && !dirty )
 		{
@@ -544,7 +550,7 @@ void AudGeometryManager::Update( const SpatialAudioSettings& settings, const Vec
 			continue;
 		}
 
-		const AkGeometryInstanceParams params = MakeInstanceParams( instance.geometrySetId, instance.transform, m_solid );
+		const AkGeometryInstanceParams params = MakeInstanceParams( instance.geometrySetId, instance.transform, m_solid, m_portalSubtraction );
 		if( instance.inWwise && SameInstanceParams( params, instance.sent ) )
 		{
 			continue;
