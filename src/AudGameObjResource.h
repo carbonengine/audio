@@ -135,6 +135,8 @@ protected:
 
 	// Force (front, top) into a valid orientation: unit length and mutually perpendicular,
 	// keeping front's direction and snapping top square to it (Gram-Schmidt).
+	// Wwise rejects zero or parallel vectors, and some content sends them (SOF hull emitters point front along +-Y with top +Y),
+	// so those inputs get a substitute orientation instead.
 	static Orientation Orthonormalize( const Vector3& front, const Vector3& top );
 
 	enum ActionTypes
@@ -194,7 +196,7 @@ protected:
 	bool m_forceCullingState;
 	// Signals whether this audio emitter is currently muted or not.
 	bool m_muted;
-	// Set once the game has pushed a real position via SetPosition. 
+	// Set once the game has pushed a real position via SetPosition.
 	bool m_hasReceivedPosition;
 	// The distance of this game object from the listener.
 	float m_distanceSqFromListener;
