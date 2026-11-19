@@ -456,9 +456,25 @@ int AudGameObjResource::SetPlacementFromParent( const Vector3& front, const Vect
 
 AudGameObjResource::Orientation AudGameObjResource::Orthonormalize( const Vector3& front, const Vector3& top )
 {
+	// Below this, side is too short to normalize without float error swamping its direction.
+	constexpr float kParallelSinSq = 1e-6f;
 	const Vector3 correctFront = Normalize( front );
-	const Vector3 correctUp = Normalize( Cross( Cross( correctFront, Normalize( top ) ), correctFront ) );
-	return Orientation( correctFront, correctUp );
+	Vector3 side = Cross( correctFront, Normalize( top ) );
+	// Written as !(>=) because NaN compares false, so NaN input is repaired too instead of reaching Wwise.
+	if( !( LengthSq( side ) >= kParallelSinSq ) )
+	{
+		// Front has no direction to keep, so any valid orientation is as good as another.
+		if( !( LengthSq( correctFront ) >= 0.5f ) )
+		{
+			return Orientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) );
+		}
+		// The axis least aligned with front gives the most accurate cross product.
+		// Fixed tie-breaking keeps top from flipping between frames when the same input repeats.
+		const Vector3 a = Abs( correctFront );
+		const Vector3 axis = ( a.y <= a.x && a.y <= a.z ) ? Vector3( 0, 1, 0 ) : ( a.z <= a.x ? Vector3( 0, 0, 1 ) : Vector3( 1, 0, 0 ) );
+		side = Cross( correctFront, axis );
+	}
+	return Orientation( correctFront, Normalize( Cross( side, correctFront ) ) );
 }
 
 int AudGameObjResource::ApplyEffectivePlacement( const Vector3& front, const Vector3& top, const Vector3& position )
