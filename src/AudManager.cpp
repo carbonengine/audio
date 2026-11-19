@@ -29,7 +29,7 @@
 
 #include "AudActionLog.h"
 #include "AudEmitter.h"
-#include "AudGeometry.h"
+#include "AudGeometryManager.h"
 #include "AudSettings.h"
 #include "AudStaticDataRepository.h"
 #include "LogBridge.h"
@@ -120,6 +120,14 @@ void AudManager::Process()
 
 		m_obstructionOcclusion->Update();
 		m_roomManager->Update();
+		if( m_spatialAudioInitialized && GetSpatialAudioGeometryEnabled() )
+		{
+			// A listener that was never placed sits at the init position, which is not a place to measure from.
+			const AudListenerPtr listener = GetListener();
+			const bool placed = listener && listener->HasUsableWorldPosition();
+			const Vector3 listenerPosition = placed ? listener->GetPosition() : Vector3();
+			AudGeometryManager::Get().Update( *m_spatialAudioSettings, placed ? &listenerPosition : nullptr );
+		}
 
 		// Process bank requests, events, positions, RTPC, etc.
 		AK::SoundEngine::RenderAudio();
@@ -213,6 +221,7 @@ void AudManager::Terminate()
 	AK::MemoryMgr::Term();
 
 	m_roomManager->ForgetWwiseState();
+	AudGeometryManager::Get().ForgetWwiseState();
 
 	m_spatialAudioInitialized = false;
 	SetAudioState( AudioState::Uninitialized );
@@ -512,6 +521,26 @@ bool AudManager::GetSpatialAudioRoomsEnabled() const
 	return m_spatialAudioSettings->GetSpatialAudioRoomsEnabled();
 }
 
+int AudManager::GetGeometrySetsInWwise() const
+{
+	return static_cast<int>( AudGeometryManager::Get().GetSetsInWwise() );
+}
+
+int AudManager::GetGeometryInstancesInWwise() const
+{
+	return static_cast<int>( AudGeometryManager::Get().GetInstancesInWwise() );
+}
+
+int AudManager::GetGeometryTrianglesInWwise() const
+{
+	return static_cast<int>( AudGeometryManager::Get().GetTrianglesInWwise() );
+}
+
+int AudManager::GetGeometryInstancesRegistered() const
+{
+	return static_cast<int>( AudGeometryManager::Get().GetInstancesRegistered() );
+}
+
 bool AudManager::UsesSpatialAudio() const
 {
 	return GetSpatialAudioGeometryEnabled() || GetSpatialAudioRoomsEnabled();
@@ -542,7 +571,7 @@ void AudManager::SetSpatialAudioGeometryEnabled( bool enabled )
 	if( !enabled )
 	{
 		m_spatialAudioSettings->SetSpatialAudioGeometryEnabled( false );
-		AudGeometry::ClearAllGeometry();
+		AudGeometryManager::Get().RemoveAllFromWwise();
 		CCP_LOG_CH( s_ch, "Spatial audio geometry disabled." );
 	}
 	else
@@ -895,7 +924,7 @@ void AudManager::Disable()
 	m_obstructionQuery = nullptr;
 	m_obstructionOcclusion->Reset();
 	m_roomManager->RemoveAllFromWwise();
-	AudGeometry::ClearAllGeometry();
+	AudGeometryManager::Get().RemoveAllFromWwise();
 #ifndef AK_OPTIMIZED
 	AK::SoundEngine::UnregisterResourceMonitorCallback(ResourceMonitorCallback);
 #endif

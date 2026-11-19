@@ -2,6 +2,7 @@
 
 # Test-only Blue module for the Python tests. Built with the tests, never installed.
 ccp_add_library(CarbonAudioTests SHARED
+	FakeGeometrySource.cpp
 	FakeObstructionQuery.cpp
 	FakeVolumeObject.cpp
 )

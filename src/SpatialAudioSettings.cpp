@@ -2,6 +2,8 @@
 #include "SpatialAudioSettings.h"
 #include <AK/SpatialAudio/Common/AkSpatialAudio.h>
 
+#include <algorithm>
+
 SpatialAudioSettings::SpatialAudioSettings()
 	: m_spatialAudioGeometryEnabled( false )
 	, m_spatialAudioRoomsEnabled( false )
@@ -19,6 +21,10 @@ SpatialAudioSettings::SpatialAudioSettings()
 	, m_transmissionLoss( 0.7f )
 	, m_enableDiffraction( true )
 	, m_enableDiffractionOnBoundaryEdges( true )
+	, m_geometrySolid( true )
+	, m_geometryPortalSubtraction( false )
+	, m_geometryMaxDistance( 0.0f )
+	, m_geometryMaxTriangles( 1000 )
 {
 }
 
@@ -69,6 +75,18 @@ void SpatialAudioSettings::SetEnableDiffraction( bool value ) { m_enableDiffract
 
 bool SpatialAudioSettings::GetEnableDiffractionOnBoundaryEdges() const { return m_enableDiffractionOnBoundaryEdges; }
 void SpatialAudioSettings::SetEnableDiffractionOnBoundaryEdges( bool value ) { m_enableDiffractionOnBoundaryEdges = value; }
+
+bool SpatialAudioSettings::GetGeometrySolid() const { return m_geometrySolid; }
+void SpatialAudioSettings::SetGeometrySolid( bool value ) { m_geometrySolid = value; }
+
+bool SpatialAudioSettings::GetGeometryPortalSubtraction() const { return m_geometryPortalSubtraction; }
+void SpatialAudioSettings::SetGeometryPortalSubtraction( bool value ) { m_geometryPortalSubtraction = value; }
+
+float SpatialAudioSettings::GetGeometryMaxDistance() const { return m_geometryMaxDistance; }
+void SpatialAudioSettings::SetGeometryMaxDistance( float value ) { m_geometryMaxDistance = std::max( 0.0f, value ); }
+
+int SpatialAudioSettings::GetGeometryMaxTriangles() const { return m_geometryMaxTriangles; }
+void SpatialAudioSettings::SetGeometryMaxTriangles( int value ) { m_geometryMaxTriangles = std::max( 0, value ); }
 
 void SpatialAudioSettings::PopulateInitSettings( AkSpatialAudioInitSettings& out ) const
 {
