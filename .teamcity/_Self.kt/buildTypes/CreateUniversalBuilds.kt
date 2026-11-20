@@ -3,6 +3,8 @@
 package _Self.buildTypes
 
 import jetbrains.buildServer.configs.kotlin.*
+import jetbrains.buildServer.configs.kotlin.buildFeatures.PullRequests
+import jetbrains.buildServer.configs.kotlin.buildFeatures.pullRequests
 import jetbrains.buildServer.configs.kotlin.buildFeatures.vcsLabeling
 import jetbrains.buildServer.configs.kotlin.triggers.vcs
 import jetbrains.buildServer.configs.kotlin.buildSteps.python
@@ -13,7 +15,6 @@ class UniversalBuild() : BuildType({
     name = "Create MacOS Universal Binaries"
 
     params{
-        param("carbon-pipeline-tools-ref", "refs/heads/main")
         param("universal-output-dir", "%system.teamcity.build.workingDir%/output_build")
         param("universal-lib-path", "lib/macOS/universal/AppleClang/")
         param("universal-bin-path", "bin/macOS/universal/AppleClang/")
@@ -32,9 +33,10 @@ class UniversalBuild() : BuildType({
         )
     }
 
-    artifactRules = "%universal-output-dir%"
+    artifactRules = "%universal-output-dir% => artifact.zip"
 
     vcs {
+        root(DslContext.settingsRootId, "-:.")
         root(AbsoluteId("CarbonPipelineTools"), "+:carbon/.=>carbon")
 
         checkoutMode = CheckoutMode.ON_AGENT
@@ -88,7 +90,7 @@ class UniversalBuild() : BuildType({
             }
 
             artifacts {
-                artifactRules = "**/*=>%system.teamcity.build.workingDir%/arm64"
+                artifactRules = "artifact.zip!**=>%system.teamcity.build.workingDir%/arm64"
             }
         }
         dependency(MacOS.x64_Debug) {
@@ -97,7 +99,7 @@ class UniversalBuild() : BuildType({
             }
 
             artifacts {
-                artifactRules = "**/*=>%system.teamcity.build.workingDir%/x64"
+                artifactRules = "artifact.zip!**=>%system.teamcity.build.workingDir%/x64"
             }
         }
 
@@ -107,7 +109,7 @@ class UniversalBuild() : BuildType({
             }
 
             artifacts {
-                artifactRules = "**/*=>%system.teamcity.build.workingDir%/arm64"
+                artifactRules = "artifact.zip!**=>%system.teamcity.build.workingDir%/arm64"
             }
         }
         dependency(MacOS.x64_Release) {
@@ -116,7 +118,7 @@ class UniversalBuild() : BuildType({
             }
 
             artifacts {
-                artifactRules = "**/*=>%system.teamcity.build.workingDir%/x64"
+                artifactRules = "artifact.zip!**=>%system.teamcity.build.workingDir%/x64"
             }
         }
 
@@ -126,7 +128,7 @@ class UniversalBuild() : BuildType({
             }
 
             artifacts {
-                artifactRules = "**/*=>%system.teamcity.build.workingDir%/arm64"
+                artifactRules = "artifact.zip!**=>%system.teamcity.build.workingDir%/arm64"
             }
         }
         dependency(MacOS.x64_Internal) {
@@ -135,7 +137,7 @@ class UniversalBuild() : BuildType({
             }
 
             artifacts {
-                artifactRules = "**/*=>%system.teamcity.build.workingDir%/x64"
+                artifactRules = "artifact.zip!**=>%system.teamcity.build.workingDir%/x64"
             }
         }
 
@@ -145,7 +147,7 @@ class UniversalBuild() : BuildType({
             }
 
             artifacts {
-                artifactRules = "**/*=>%system.teamcity.build.workingDir%/arm64"
+                artifactRules = "artifact.zip!**=>%system.teamcity.build.workingDir%/arm64"
             }
         }
         dependency(MacOS.x64_TrinityDev) {
@@ -154,11 +156,23 @@ class UniversalBuild() : BuildType({
             }
 
             artifacts {
-                artifactRules = "**/*=>%system.teamcity.build.workingDir%/x64"
+                artifactRules = "artifact.zip!**=>%system.teamcity.build.workingDir%/x64"
             }
         }
     }
 
+    features {
+        pullRequests {
+            vcsRootExtId = "${DslContext.settingsRootId.id}"
+            provider = github {
+                authType = token {
+                    token = "%GITHUB_CARBON_PAT%"
+                }
+                filterAuthorRole = PullRequests.GitHubRoleFilter.EVERYBODY
+            }
+        }
+    }
+    
     requirements {
         startsWith("teamcity.agent.jvm.os.name", "Mac OS X")
     }

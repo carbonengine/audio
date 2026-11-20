@@ -5,12 +5,14 @@ package Windows
 import jetbrains.buildServer.configs.kotlin.DslContext
 import jetbrains.buildServer.configs.kotlin.Project
 import jetbrains.buildServer.configs.kotlin.*
-import jetbrains.buildServer.configs.kotlin.buildFeatures.PullRequests
 import jetbrains.buildServer.configs.kotlin.buildFeatures.XmlReport
 import jetbrains.buildServer.configs.kotlin.buildFeatures.commitStatusPublisher
 import jetbrains.buildServer.configs.kotlin.buildFeatures.freeDiskSpace
 import jetbrains.buildServer.configs.kotlin.buildFeatures.nuGetFeedCredentials
 import jetbrains.buildServer.configs.kotlin.buildFeatures.perfmon
+import jetbrains.buildServer.configs.kotlin.buildFeatures.PullRequests
+import jetbrains.buildServer.configs.kotlin.failureConditions.BuildFailureOnText
+import jetbrains.buildServer.configs.kotlin.failureConditions.failOnText
 import jetbrains.buildServer.configs.kotlin.buildFeatures.pullRequests
 import jetbrains.buildServer.configs.kotlin.buildFeatures.sshAgent
 import jetbrains.buildServer.configs.kotlin.buildFeatures.xmlReport
@@ -42,7 +44,12 @@ class CarbonBuildWindows(buildName: String, configType: String, preset: String, 
     id(buildName.toId())
     this.name = buildName
 
-    artifactRules = "%env.CMAKE_INSTALL_PREFIX%"
+    artifactRules = """
+        %env.CMAKE_INSTALL_PREFIX% => artifact.zip
+        %github_checkout_folder%/buildtrees/**/*.log => vcpkg-logs.zip
+        %env.CMAKE_BUILD_FOLDER%/vcpkg-manifest-install.log => vcpkg-logs.zip
+        crashdumps => crashdumps.zip
+    """.trimIndent()
 
     params {
         param("env.GIT_TAG_HASH_OVERRIDE", "")
@@ -61,6 +68,7 @@ class CarbonBuildWindows(buildName: String, configType: String, preset: String, 
         param("env.CMAKE_PRESET", preset)
         param("env.VCPKG_BINARY_SOURCES", "clear;x-aws,s3://vcpkg-binary-cache-static/cache/,readwrite")
         param("env.X_VCPKG_REGISTRIES_CACHE", "%teamcity.build.checkoutDir%/%github_checkout_folder%/regcache")
+        param("env.VCPKG_MAX_CONCURRENCY", "8")
         param("env.CMAKE_BUILD_PARALLEL_LEVEL", "8")
         param("env.CTEST_PARALLEL_LEVEL", "1")
     }
@@ -102,10 +110,30 @@ class CarbonBuildWindows(buildName: String, configType: String, preset: String, 
             path = "cmake"
             arguments = "--preset %env.CMAKE_PRESET% -S %teamcity.build.checkoutDir%/%github_checkout_folder% -B %env.CMAKE_BUILD_FOLDER% -DINSTALL_TO_MONOLITH=ON -DCMAKE_INSTALL_PREFIX=%env.CMAKE_INSTALL_PREFIX% -DVCPKG_INSTALL_OPTIONS=--x-buildtrees-root=%teamcity.build.checkoutDir%/%github_checkout_folder%/buildtrees"
         }
+        powerShell {
+            name = "Print vcpkg logs"
+            executionMode = BuildStep.ExecutionMode.RUN_ON_FAILURE
+            scriptMode = script {
+                content = """
+                    Get-ChildItem "%teamcity.build.checkoutDir%/%github_checkout_folder%/buildtrees/*/*-err.log", "%teamcity.build.checkoutDir%/%github_checkout_folder%/buildtrees/*/*-out.log", "%teamcity.build.checkoutDir%/%env.CMAKE_BUILD_FOLDER%/vcpkg-manifest-install.log" -ErrorAction SilentlyContinue | ForEach-Object {
+                        Write-Host "==> ${'$'}_ <=="
+                        Get-Content ${'$'}_ -Tail 60
+                    }
+                """.trimIndent()
+            }
+        }
         exec {
             name = "Build"
             path = "cmake"
             arguments = "--build %env.CMAKE_BUILD_FOLDER% --config %env.CMAKE_CONFIG_TYPE% --target %env.CMAKE_BUILD_TARGETS%"
+        }
+        script {
+            name = "(Windows) Enable crash dumps for tests"
+            scriptContent = """
+                set WER_KEY=HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps
+                if not exist "%teamcity.build.checkoutDir%\crashdumps" mkdir "%teamcity.build.checkoutDir%\crashdumps"
+                reg add "%%WER_KEY%%" /v DumpFolder /t REG_EXPAND_SZ /d "%teamcity.build.checkoutDir%\crashdumps" /f && reg add "%%WER_KEY%%" /v DumpType /t REG_DWORD /d 1 /f && reg add "%%WER_KEY%%" /v DumpCount /t REG_DWORD /d 10 /f || echo ##teamcity[message text='Could not enable WER LocalDumps, crashed tests will not produce dumps' status='WARNING']
+            """.trimIndent()
         }
         exec {
             name = "Run Tests"
@@ -122,12 +150,6 @@ class CarbonBuildWindows(buildName: String, configType: String, preset: String, 
             name = "Upload symbols to sentry"
             path = "sentry-cli"
             arguments = "upload-dif --wait %env.CMAKE_BUILD_FOLDER%"
-            param("script.content", """
-                #!/usr/bin/env bash -eu
-                filesWithSymbols = (
-                  # insert your binary files with symbols here!
-                )
-            """.trimIndent())
         }
         script {
             name = "(Windows) CMD Upload debug symbols to internal symbol server"
@@ -202,6 +224,16 @@ class CarbonBuildWindows(buildName: String, configType: String, preset: String, 
         }
     }
 
+    failureConditions {
+        failOnText {
+            conditionType = BuildFailureOnText.ConditionType.REGEXP
+            pattern = ".*(\\(\\d+(,\\d+)?\\) ?: (fatal )?error [A-Z]+\\d+:|:\\d+:\\d+: (fatal )?error:|error LNK\\d+:).*"
+            failureMessage = "Compiler or linker error found in the build log"
+            reverse = false
+            reportOnlyFirstMatch = false
+        }
+    }
+
     features {
         pullRequests {
             vcsRootExtId = "${DslContext.settingsRootId.id}"
@@ -241,7 +273,7 @@ class CarbonBuildWindows(buildName: String, configType: String, preset: String, 
             failBuild = true
         }
         sshAgent {
-            teamcitySshKey = "ccpgames-evetech GitHub"
+            teamcitySshKey = "ccpgames-carbon"
         }
         provideAwsCredentials {
             awsConnectionId = "Carbon_AwsVcpkgBinaryCacheServiceAccount"

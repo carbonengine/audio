@@ -5,12 +5,14 @@ package MacOS
 import jetbrains.buildServer.configs.kotlin.DslContext
 import jetbrains.buildServer.configs.kotlin.Project
 import jetbrains.buildServer.configs.kotlin.*
-import jetbrains.buildServer.configs.kotlin.buildFeatures.PullRequests
 import jetbrains.buildServer.configs.kotlin.buildFeatures.XmlReport
 import jetbrains.buildServer.configs.kotlin.buildFeatures.commitStatusPublisher
 import jetbrains.buildServer.configs.kotlin.buildFeatures.freeDiskSpace
 import jetbrains.buildServer.configs.kotlin.buildFeatures.nuGetFeedCredentials
 import jetbrains.buildServer.configs.kotlin.buildFeatures.perfmon
+import jetbrains.buildServer.configs.kotlin.buildFeatures.PullRequests
+import jetbrains.buildServer.configs.kotlin.failureConditions.BuildFailureOnText
+import jetbrains.buildServer.configs.kotlin.failureConditions.failOnText
 import jetbrains.buildServer.configs.kotlin.buildFeatures.pullRequests
 import jetbrains.buildServer.configs.kotlin.buildFeatures.sshAgent
 import jetbrains.buildServer.configs.kotlin.buildFeatures.xmlReport
@@ -53,7 +55,12 @@ class CarbonBuildMacOS(buildName: String, configType: String, preset: String, ag
     id(buildName.toId())
     name = buildName
 
-    artifactRules = "%env.CMAKE_INSTALL_PREFIX%"
+    artifactRules = """
+        %env.CMAKE_INSTALL_PREFIX% => artifact.zip
+        %github_checkout_folder%/buildtrees/**/*.log => vcpkg-logs.zip
+        %env.CMAKE_BUILD_FOLDER%/vcpkg-manifest-install.log => vcpkg-logs.zip
+        crashdumps => crashdumps.zip
+    """.trimIndent()
 
     params {
         param("env.SENTRY_CLI_DEBUG_SYMBOL_TYPE", "dsym")
@@ -63,8 +70,6 @@ class CarbonBuildMacOS(buildName: String, configType: String, preset: String, ag
         param("teamcity.vcsTrigger.runBuildInNewEmptyBranch", "true")
         param("github_checkout_folder", "github")
         param("env.CTEST_JUNIT_OUTPUT_FILE", "ctest_results.xml")
-        select("env.VISUAL_STUDIO_PLATFORM_TOOLSET", "v141", label = "Visual Studio Platform Toolset", description = "Specify the toolset for the build. e.g. v141 or v143.",
-                options = listOf("v141 (2017)" to "v141", "v143 (2022)" to "v143"))
         param("env.CMAKE_BUILD_TARGETS", "all")
         param("env.CMAKE_INSTALL_PREFIX", ".build-artifact")
         param("env.SENTRY_PROJECT", "exefile-crashes")
@@ -74,6 +79,7 @@ class CarbonBuildMacOS(buildName: String, configType: String, preset: String, ag
         param("env.CMAKE_PRESET", preset)
         param("env.VCPKG_BINARY_SOURCES", "clear;x-aws,s3://vcpkg-binary-cache-static/cache/,readwrite")
         param("env.X_VCPKG_REGISTRIES_CACHE", "%teamcity.build.checkoutDir%/%github_checkout_folder%/regcache")
+        param("env.VCPKG_MAX_CONCURRENCY", "8")
         param("env.CMAKE_BUILD_PARALLEL_LEVEL", "8")
         param("env.CTEST_PARALLEL_LEVEL", "1")
     }
@@ -108,16 +114,38 @@ class CarbonBuildMacOS(buildName: String, configType: String, preset: String, ag
             path = "cmake"
             arguments = "--preset %env.CMAKE_PRESET% -S %teamcity.build.checkoutDir%/%github_checkout_folder% -B %env.CMAKE_BUILD_FOLDER% -DINSTALL_TO_MONOLITH=ON -DCMAKE_INSTALL_PREFIX=%env.CMAKE_INSTALL_PREFIX% -DVCPKG_INSTALL_OPTIONS=--x-buildtrees-root=%teamcity.build.checkoutDir%/%github_checkout_folder%/buildtrees"
         }
+        script {
+            name = "Print vcpkg logs"
+            executionMode = BuildStep.ExecutionMode.RUN_ON_FAILURE
+            scriptContent = """
+                tail -n 60 %teamcity.build.checkoutDir%/%github_checkout_folder%/buildtrees/*/*-err.log %teamcity.build.checkoutDir%/%github_checkout_folder%/buildtrees/*/*-out.log %teamcity.build.checkoutDir%/%env.CMAKE_BUILD_FOLDER%/vcpkg-manifest-install.log || true
+            """.trimIndent()
+        }
         exec {
             name = "Build"
             path = "cmake"
             arguments = "--build %env.CMAKE_BUILD_FOLDER% --config %env.CMAKE_CONFIG_TYPE% --target %env.CMAKE_BUILD_TARGETS%"
         }
         exec {
+            name = "(macOS) Mark start of tests"
+            path = "touch"
+            arguments = ".tests-started"
+        }
+        exec {
             name = "Run Tests"
             workingDir = "%env.CMAKE_BUILD_FOLDER%"
             path = "ctest"
             arguments = "-C %env.CMAKE_CONFIG_TYPE% -V --output-on-failure --output-junit %env.CTEST_JUNIT_OUTPUT_FILE%"
+        }
+        script {
+            name = "(macOS) Collect crash reports"
+            executionMode = BuildStep.ExecutionMode.RUN_ON_FAILURE
+            scriptContent = """
+                mkdir -p crashdumps
+                if [ -f .tests-started ]; then
+                  find ~/Library/Logs/DiagnosticReports -newer .tests-started \( -name '*.ips' -o -name '*.crash' \) -exec cp {} crashdumps/ \;
+                fi
+            """.trimIndent()
         }
         exec {
             name = "Package artifact"
@@ -128,12 +156,6 @@ class CarbonBuildMacOS(buildName: String, configType: String, preset: String, ag
             name = "Upload symbols to sentry"
             path = "sentry-cli"
             arguments = "upload-dif --wait %env.CMAKE_BUILD_FOLDER%"
-            param("script.content", """
-                #!/usr/bin/env bash -eu
-                filesWithSymbols = (
-                  # insert your binary files with symbols here!
-                )
-            """.trimIndent())
         }
     }
 
@@ -144,6 +166,16 @@ class CarbonBuildMacOS(buildName: String, configType: String, preset: String, ag
                             +:<default>
                             +pr:*
                         """.trimIndent()
+        }
+    }
+
+    failureConditions {
+        failOnText {
+            conditionType = BuildFailureOnText.ConditionType.REGEXP
+            pattern = ".*(\\(\\d+(,\\d+)?\\) ?: (fatal )?error [A-Z]+\\d+:|:\\d+:\\d+: (fatal )?error:|error LNK\\d+:).*"
+            failureMessage = "Compiler or linker error found in the build log"
+            reverse = false
+            reportOnlyFirstMatch = false
         }
     }
 
@@ -186,7 +218,7 @@ class CarbonBuildMacOS(buildName: String, configType: String, preset: String, ag
             failBuild = true
         }
         sshAgent {
-            teamcitySshKey = "ccpgames-evetech GitHub"
+            teamcitySshKey = "ccpgames-carbon"
         }
         provideAwsCredentials {
             awsConnectionId = "Carbon_AwsVcpkgBinaryCacheServiceAccount"
