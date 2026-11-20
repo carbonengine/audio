@@ -27,7 +27,6 @@ SETTINGS = (
     "geometryPortalSubtraction",
     "geometryMaxDistance",
     "geometryMaxTriangles",
-    "geometryUpdateTolerance",
     "worldRebaseDistance",
     "loadBalancingSpread",
     "numberOfPrimaryRays",
@@ -464,42 +463,9 @@ class TestGeometryExposure(BaseAudio2TestClass):
         self.assertEqual(self.manager.geometryInstanceSends, sends)
         self.AssertInWwise(sets=1, instances=1)
 
-    def test_a_far_mesh_moving_a_little_waits_until_the_move_can_be_heard(self):
+    def test_a_far_mesh_is_sent_every_time_it_moves(self):
+        """Sounds sit on the meshes, so even a small move of a far mesh can put one inside it."""
         self.PlaceListener(ORIGIN)
-        self.manager.geometryUpdateTolerance = 0.01
-        self.AddBox(HULL, 1, center=(1000.0, 0.0, 0.0))
-        self.Update()
-        sends = self.manager.geometryInstanceSends
-
-        self.source.Move(HULL, 1, (1000.0, 5.0, 0.0), BOX_SIZE)
-        self.Update()
-        self.assertEqual(self.manager.geometryInstanceSends, sends)
-
-        self.source.Move(HULL, 1, (1000.0, 20.0, 0.0), BOX_SIZE)
-        self.Update()
-        self.assertEqual(self.manager.geometryInstanceSends, sends + 1)
-
-    def test_a_held_back_mesh_is_sent_when_the_listener_comes_close(self):
-        self.PlaceListener(ORIGIN)
-        self.manager.geometryUpdateTolerance = 0.01
-        self.AddBox(HULL, 1, center=(1000.0, 0.0, 0.0))
-        self.Update()
-        sends = self.manager.geometryInstanceSends
-
-        self.source.Move(HULL, 1, (1000.0, 5.0, 0.0), BOX_SIZE)
-        self.Update()
-        self.assertEqual(self.manager.geometryInstanceSends, sends)
-
-        self.PlaceListener((990.0, 0.0, 0.0))
-        self.Update()
-        self.assertEqual(self.manager.geometryInstanceSends, sends + 1)
-
-        self.Update(times=3)
-        self.assertEqual(self.manager.geometryInstanceSends, sends + 1)
-
-    def test_an_update_tolerance_of_zero_sends_every_move(self):
-        self.PlaceListener(ORIGIN)
-        self.manager.geometryUpdateTolerance = 0.0
         self.AddBox(HULL, 1, center=(1000.0, 0.0, 0.0))
         self.Update()
         sends = self.manager.geometryInstanceSends

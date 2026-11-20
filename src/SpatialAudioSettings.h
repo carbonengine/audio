@@ -141,13 +141,6 @@ public:
 	bool GetGeometrySolid() const;
 	void SetGeometrySolid( bool value );
 
-	/// Live. How far any point of a mesh moving on its own may get from where Wwise has it before it is sent again,
-	/// as a share of the listener's distance from the mesh. Each send makes Wwise re-index the mesh, so a far mesh
-	/// that turns a little every frame is sent once it has moved far enough to hear. 0 sends every move longer than
-	/// float noise, see AudWorldFrame::StillDistance().
-	float GetGeometryUpdateTolerance() const;
-	void SetGeometryUpdateTolerance( float value );
-
 	/// Live. Whether portals cut openings in the meshes they overlap. Off by default: Wwise re-cuts every mesh
 	/// a portal overlaps each time it rebuilds portal visibility, which takes long with big meshes.
 	/// Turn it on when a portal sits in a mesh wall and sound has to pass through it.
@@ -194,7 +187,6 @@ private:
 	bool m_enableDiffractionOnBoundaryEdges;
 	bool m_geometrySolid;
 	bool m_geometryPortalSubtraction;
-	float m_geometryUpdateTolerance;
 	float m_geometryMaxDistance;
 	int m_geometryMaxTriangles;
 };

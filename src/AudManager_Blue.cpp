@@ -73,7 +73,6 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		MAP_PROPERTY_READONLY( "geometryTrianglesInWwise", GetGeometryTrianglesInWwise, "Triangles of every geometry instance in Wwise as of the last tick." )
 		MAP_PROPERTY_READONLY( "geometryInstanceSends", GetGeometryInstanceSends, "Geometry instance placements sent to Wwise since startup. Each one makes Wwise re-index that instance, so it should only grow when meshes move in the world." )
 
-		MAP_PROPERTY( "geometryUpdateTolerance", GetGeometryUpdateTolerance, SetGeometryUpdateTolerance, "How far any point of a mesh moving on its own may get from where Wwise has it before it is sent again, as a share of the listener's distance from the mesh [0-1]. Each send makes Wwise re-index the mesh. 0 sends every move longer than float noise: 1 mm, or 0.01% of the mesh's distance from the player.")
 		MAP_METHOD_AND_WRAP
 		(
 			"GetGeometrySendReport",

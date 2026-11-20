@@ -65,7 +65,6 @@ SpatialAudioSettings::SpatialAudioSettings()
 	, m_enableDiffractionOnBoundaryEdges( false )
 	, m_geometrySolid( false )
 	, m_geometryPortalSubtraction( false )
-	, m_geometryUpdateTolerance( 0.01f )
 	, m_geometryMaxDistance( 0.0f )
 	, m_geometryMaxTriangles( 4000 )
 {
@@ -213,9 +212,6 @@ void SpatialAudioSettings::SetEnableDiffractionOnBoundaryEdges( bool value ) { m
 
 bool SpatialAudioSettings::GetGeometrySolid() const { return m_geometrySolid; }
 void SpatialAudioSettings::SetGeometrySolid( bool value ) { m_geometrySolid = value; }
-
-float SpatialAudioSettings::GetGeometryUpdateTolerance() const { return m_geometryUpdateTolerance; }
-void SpatialAudioSettings::SetGeometryUpdateTolerance( float value ) { if( !std::isnan( value ) ) m_geometryUpdateTolerance = std::clamp( value, 0.0f, 1.0f ); }
 
 bool SpatialAudioSettings::GetGeometryPortalSubtraction() const { return m_geometryPortalSubtraction; }
 void SpatialAudioSettings::SetGeometryPortalSubtraction( bool value ) { m_geometryPortalSubtraction = value; }

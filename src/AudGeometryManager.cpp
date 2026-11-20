@@ -161,7 +161,6 @@ AudGeometryManager::AudGeometryManager() :
 	m_solid( false ),
 	m_portalSubtraction( false ),
 	m_placedOffsetGeneration( 0 ),
-	m_placedRebaseCount( 0 ),
 	m_statsDirty( false ),
 	m_instanceSends( 0 ),
 	m_setsInWwise( 0 ),
@@ -539,15 +538,11 @@ void AudGeometryManager::Update( const SpatialAudioSettings& settings, const Vec
 	m_solid = settings.GetGeometrySolid();
 	m_portalSubtraction = settings.GetGeometryPortalSubtraction();
 
-	const double updateTolerance = settings.GetGeometryUpdateTolerance();
-
 	// An instance trinity didn't hand over moved along with the scene origin, so every instance is looked at
 	// when the offset changes. Everything in Wwise goes again when the Wwise origin jumps.
 	const AudWorldFrame::Offset offset = AudWorldFrame::Get().GetOffset();
 	const bool offsetChanged = offset.generation != m_placedOffsetGeneration;
-	const bool rebased = offset.rebaseCount != m_placedRebaseCount;
 	m_placedOffsetGeneration = offset.generation;
-	m_placedRebaseCount = offset.rebaseCount;
 
 	SelectInstancesLocked( settings, listenerPosition );
 
@@ -597,17 +592,8 @@ void AudGeometryManager::Update( const SpatialAudioSettings& settings, const Vec
 		if( instance.inWwise || instance.rejected )
 		{
 			// Wwise has it, or refused it as it is.
-			const double mismatch = Mismatch( params, instance.sent, instance.extent );
-			if( mismatch <= still )
+			if( Mismatch( params, instance.sent, instance.extent ) <= still )
 			{
-				continue;
-			}
-
-			// A rebase moves every instance in Wwise, near or far.
-			if( instance.inWwise && !rebased && instance.listenerDistance >= 0.0f && mismatch <= updateTolerance * instance.listenerDistance )
-			{
-				// Looked at again every update, the listener may come close enough to hear the difference.
-				instance.dirty = true;
 				continue;
 			}
 		}
@@ -740,9 +726,9 @@ std::string AudGeometryManager::GetSendReport( size_t count ) const
 		const Instance& instance = *instances[i].second;
 		const auto setIt = m_sets.find( instance.geometrySetId );
 		const size_t triangles = setIt != m_sets.end() ? setIt->second.mesh.triangles.size() : 0;
-		snprintf( line, sizeof( line ), "instance %" PRIu64 " set %" PRIu64 " triangles %zu sends %" PRIu64 " listener %.0f extent %.0f%s%s\n",
+		snprintf( line, sizeof( line ), "instance %" PRIu64 " set %" PRIu64 " triangles %zu sends %" PRIu64 " listener %.0f extent %.0f%s\n",
 			instances[i].first, instance.geometrySetId, triangles, instance.sends, instance.listenerDistance, instance.extent,
-			instance.inWwise ? "" : " (not in Wwise)", instance.inWwise && instance.dirty ? " (held back)" : "" );
+			instance.inWwise ? "" : " (not in Wwise)" );
 		report += line;
 	}
 	return report;

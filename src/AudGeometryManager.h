@@ -109,8 +109,7 @@ private:
 		AkGeometryInstanceParams sent;
 		Matrix sentTransform;
 		bool inWwise = false;
-		/// Needs a look on the next Update(): it is new, trinity handed over a new transform, Wwise forgot it,
-		/// or it moved too little to hear and was held back.
+		/// Needs a look on the next Update(): it is new, trinity handed over a new transform, or Wwise forgot it.
 		bool dirty = false;
 		bool wanted = false;
 		/// Wwise refused it, so it is not sent again until it changes.
@@ -153,7 +152,6 @@ private:
 	bool m_portalSubtraction;
 	/// The AudWorldFrame offset the instances were last looked at with.
 	uint64_t m_placedOffsetGeneration;
-	uint64_t m_placedRebaseCount;
 	bool m_statsDirty;
 	std::atomic<uint64_t> m_instanceSends;
 	std::atomic<size_t> m_setsInWwise;
