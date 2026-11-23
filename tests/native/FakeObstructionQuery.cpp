@@ -22,6 +22,7 @@ public:
 
 	bool QuerySightlines( const Vector3& source, const EveSightlineTarget* targets, unsigned int targetCount, bool* outBlocked ) override
 	{
+		++m_queryCount;
 		if( !m_hasAnswer )
 		{
 			return false;
@@ -37,6 +38,7 @@ public:
 private:
 	bool m_blocked = false;
 	bool m_hasAnswer = true;
+	int m_queryCount = 0;
 	IRootPtr m_clearParent;
 };
 
@@ -50,6 +52,7 @@ const Be::ClassInfo* FakeObstructionQuery::ExposeToBlue()
 		MAP_INTERFACE( FakeObstructionQuery )
 		MAP_ATTRIBUTE( "blocked", m_blocked, "Whether every sightline is reported blocked.", Be::READWRITE )
 		MAP_ATTRIBUTE( "hasAnswer", m_hasAnswer, "False makes every query return no answer, like destiny with no world loaded.", Be::READWRITE )
+		MAP_ATTRIBUTE( "queryCount", m_queryCount, "How many times a sightline query was made.", Be::READ )
 		MAP_ATTRIBUTE( "clearParent", m_clearParent, "Emitters mounted on this object are always reported clear, like destiny skipping an emitter's own ball.", Be::READWRITE )
 	EXPOSURE_END()
 }
