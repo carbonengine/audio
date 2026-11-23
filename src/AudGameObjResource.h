@@ -135,9 +135,9 @@ protected:
 
 	// Force (front, top) into a valid orientation: unit length and mutually perpendicular,
 	// keeping front's direction and snapping top square to it (Gram-Schmidt).
-	// Wwise rejects zero or parallel vectors, and some content sends them (SOF hull emitters point front along +-Y with top +Y),
-	// so those inputs get a substitute orientation instead.
 	static Orientation Orthonormalize( const Vector3& front, const Vector3& top );
+	// Below this squared length, side is too short to normalize without float error swamping its direction.
+	static constexpr float PARALLEL_SIN_SQ = 1e-6f;
 
 	enum ActionTypes
 	{

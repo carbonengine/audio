@@ -115,10 +115,11 @@ class TestAudEmitterExposure(BaseAudio2TestClass):
             self.assertVectorAlmostEqual(self.emitter.front, expected)
             self.assertValidBasis(self.emitter.front, self.emitter.top)
 
-    def test_zero_front_falls_back_to_default_basis(self):
-        self.emitter.SetPlacement((0, 0, 0), (0, 1, 0), (0, 50, 0))
-        self.assertVectorAlmostEqual(self.emitter.front, (0, 0, 1))
-        self.assertVectorAlmostEqual(self.emitter.top, (0, 1, 0))
+    def test_zero_or_non_finite_front_falls_back_to_default_basis(self):
+        for front in ((0, 0, 0), (float("nan"), 0, 0)):
+            self.emitter.SetPlacement(front, (0, 1, 0), (0, 50, 0))
+            self.assertVectorAlmostEqual(self.emitter.front, (0, 0, 1))
+            self.assertVectorAlmostEqual(self.emitter.top, (0, 1, 0))
 
     def test_valid_basis_is_unchanged(self):
         s = 0.70710678

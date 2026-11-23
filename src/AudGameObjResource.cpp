@@ -456,12 +456,10 @@ int AudGameObjResource::SetPlacementFromParent( const Vector3& front, const Vect
 
 AudGameObjResource::Orientation AudGameObjResource::Orthonormalize( const Vector3& front, const Vector3& top )
 {
-	// Below this, side is too short to normalize without float error swamping its direction.
-	constexpr float kParallelSinSq = 1e-6f;
 	const Vector3 correctFront = Normalize( front );
 	Vector3 side = Cross( correctFront, Normalize( top ) );
 	// Written as !(>=) because NaN compares false, so NaN input is repaired too instead of reaching Wwise.
-	if( !( LengthSq( side ) >= kParallelSinSq ) )
+	if( !( LengthSq( side ) >= PARALLEL_SIN_SQ ) )
 	{
 		// Front has no direction to keep, so any valid orientation is as good as another.
 		if( !( LengthSq( correctFront ) >= 0.5f ) )
@@ -471,7 +469,15 @@ AudGameObjResource::Orientation AudGameObjResource::Orthonormalize( const Vector
 		// The axis least aligned with front gives the most accurate cross product.
 		// Fixed tie-breaking keeps top from flipping between frames when the same input repeats.
 		const Vector3 a = Abs( correctFront );
-		const Vector3 axis = ( a.y <= a.x && a.y <= a.z ) ? Vector3( 0, 1, 0 ) : ( a.z <= a.x ? Vector3( 0, 0, 1 ) : Vector3( 1, 0, 0 ) );
+		Vector3 axis( 1, 0, 0 );
+		if( a.y <= a.x && a.y <= a.z )
+		{
+			axis = Vector3( 0, 1, 0 );
+		}
+		else if( a.z <= a.x )
+		{
+			axis = Vector3( 0, 0, 1 );
+		}
 		side = Cross( correctFront, axis );
 	}
 	return Orientation( correctFront, Normalize( Cross( side, correctFront ) ) );
@@ -479,6 +485,8 @@ AudGameObjResource::Orientation AudGameObjResource::Orthonormalize( const Vector
 
 int AudGameObjResource::ApplyEffectivePlacement( const Vector3& front, const Vector3& top, const Vector3& position )
 {
+	// Wwise requires front and top to be orthogonal and normalized:
+	// https://www.audiokinetic.com/library/edge/?source=SDK&id=struct_ak_transform_a3bc42dc5b00b880229c08a8ebd0db72a.html
 	const Orientation corrected = Orthonormalize( front, top );
 
 	m_position = position;
