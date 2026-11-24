@@ -136,6 +136,8 @@ protected:
 	// Force (front, top) into a valid orientation: unit length and mutually perpendicular,
 	// keeping front's direction and snapping top square to it (Gram-Schmidt).
 	static Orientation Orthonormalize( const Vector3& front, const Vector3& top );
+	// Below this squared length, side is too short to normalize without float error swamping its direction.
+	static constexpr float PARALLEL_SIN_SQ = 1e-6f;
 
 	enum ActionTypes
 	{
@@ -194,7 +196,7 @@ protected:
 	bool m_forceCullingState;
 	// Signals whether this audio emitter is currently muted or not.
 	bool m_muted;
-	// Set once the game has pushed a real position via SetPosition. 
+	// Set once the game has pushed a real position via SetPosition.
 	bool m_hasReceivedPosition;
 	// The distance of this game object from the listener.
 	float m_distanceSqFromListener;

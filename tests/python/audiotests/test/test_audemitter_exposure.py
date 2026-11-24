@@ -88,6 +88,56 @@ class TestAudEmitterExposure(BaseAudio2TestClass):
         self.assertVectorAlmostEqual(self.emitter.front, (-1, 0, 0))
         self.assertVectorAlmostEqual(self.emitter.top, (0, 1, 0))
 
+    def assertValidBasis(self, front, top):
+        dot = sum(f * t for f, t in zip(front, top))
+        self.assertAlmostEqual(sum(f * f for f in front), 1.0, places=4)
+        self.assertAlmostEqual(sum(t * t for t in top), 1.0, places=4)
+        self.assertAlmostEqual(dot, 0.0, places=4)
+
+    def test_top_parallel_to_front_gets_perpendicular_top(self):
+        """A front along +-Y with a +Y top (SOF hull emitters) must not hand Wwise a zero top."""
+        for front in ((0, 1, 0), (0, -1, 0)):
+            self.emitter.SetPlacement(front, (0, 1, 0), (0, 50, 0))
+            self.assertVectorAlmostEqual(self.emitter.front, front)
+            self.assertVectorAlmostEqual(self.emitter.top, (0, 0, 1))
+
+    def test_zero_or_non_finite_top_gets_perpendicular_top(self):
+        for top in ((0, 0, 0), (float("nan"), 0, 0)):
+            self.emitter.SetPlacement((1, 0, 0), top, (0, 50, 0))
+            self.assertVectorAlmostEqual(self.emitter.front, (1, 0, 0))
+            self.assertVectorAlmostEqual(self.emitter.top, (0, 1, 0))
+
+    def test_scaled_front_keeps_its_direction_when_top_is_degenerate(self):
+        """Very small or large fronts still have a direction, so they must not drop to the default basis."""
+        for front, top in (((0, 5, 0), (0, 1, 0)), ((1e20, 0, 0), (0, 0, 0)), ((1e-4, 0, 0), (1e-4, 0, 0))):
+            self.emitter.SetPlacement(front, top, (0, 50, 0))
+            expected = tuple(1 if c > 0 else 0 for c in front)
+            self.assertVectorAlmostEqual(self.emitter.front, expected)
+            self.assertValidBasis(self.emitter.front, self.emitter.top)
+
+    def test_zero_or_non_finite_front_falls_back_to_default_basis(self):
+        for front in ((0, 0, 0), (float("nan"), 0, 0)):
+            self.emitter.SetPlacement(front, (0, 1, 0), (0, 50, 0))
+            self.assertVectorAlmostEqual(self.emitter.front, (0, 0, 1))
+            self.assertVectorAlmostEqual(self.emitter.top, (0, 1, 0))
+
+    def test_valid_basis_is_unchanged(self):
+        s = 0.70710678
+        self.emitter.SetPlacement((s, 0, s), (0, 1, 0), (0, 50, 0))
+        self.assertVectorAlmostEqual(self.emitter.front, (s, 0, s))
+        self.assertVectorAlmostEqual(self.emitter.top, (0, 1, 0))
+
+    def test_synthesized_top_is_deterministic(self):
+        """The same degenerate input always gives the same top, so it never flips between frames."""
+        front = (0.3, 0.9, -0.2)
+        self.emitter.SetPlacement(front, front, (0, 50, 0))
+        first = tuple(self.emitter.top)
+        self.assertValidBasis(self.emitter.front, first)
+        self.assertGreater(first[2], 0.9)
+        for _ in range(3):
+            self.emitter.SetPlacement(front, front, (0, 50, 0))
+            self.assertEqual(tuple(self.emitter.top), first)
+
     def test_listener_does_not_expose_emitter_orientation_readback(self):
         import audio2
         listener = audio2.GetListener()
