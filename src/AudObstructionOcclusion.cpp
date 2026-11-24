@@ -142,7 +142,8 @@ float AudObstructionOcclusion::OcclusionForBlockage(float blockage) const
 
 void AudObstructionOcclusion::RunSightlinePass(std::chrono::steady_clock::time_point now)
 {
-	if (!m_enabled || m_audioManager == nullptr)
+	// Acoustics transmission replaces this occlusion, so the game is not asked while it is on.
+	if (!m_enabled || m_audioManager == nullptr || m_audioManager->GetSpatialAudioGeometryEnabled())
 	{
 		return;
 	}
@@ -222,18 +223,8 @@ void AudObstructionOcclusion::RunSightlinePass(std::chrono::steady_clock::time_p
 		m_blockedCapacity = count;
 	}
 
-	// Acoustics transmission replaces this occlusion, so the ray tests are skipped and every emitter is taken as clear.
-	const bool acousticsEnabled = m_audioManager->GetSpatialAudioGeometryEnabled();
-	bool answered = true;
-	if (acousticsEnabled)
-	{
-		std::fill_n(m_blocked.get(), count, false);
-	}
-	else
-	{
-		// No audio lock is held while the game runs its ray tests.
-		answered = query->QuerySightlines(source, m_targets.data(), static_cast<unsigned int>(count), m_blocked.get());
-	}
+	// No audio lock is held while the game runs its ray tests.
+	const bool answered = query->QuerySightlines(source, m_targets.data(), static_cast<unsigned int>(count), m_blocked.get());
 
 	// Audio must not keep balls alive past the query.
 	m_parentRefs.clear();
@@ -266,10 +257,7 @@ void AudObstructionOcclusion::RunSightlinePass(std::chrono::steady_clock::time_p
 	{
 		const Candidate& candidate = m_candidates[i];
 		const bool blocked = m_blocked[i];
-		if (!acousticsEnabled)
-		{
-			m_lastResults[candidate.id] = blocked;
-		}
+		m_lastResults[candidate.id] = blocked;
 		// A clear result only updates emitters we already track, Wwise has the rest as clear.
 		const auto entry = blocked ? m_emitters.try_emplace(candidate.id).first : m_emitters.find(candidate.id);
 		if (entry != m_emitters.end())

@@ -202,10 +202,29 @@ class TestObstructionOcclusionExposure(BaseAudio2TestClass):
         self.Pump()
         self.assertGreater(query.queryCount, 0, "The game was not asked again once acoustics was disabled.")
         self.assertIs(self.GetSightlineResult(), True)
-        # The voice was already playing, so it fades in instead of snapping.
-        occlusion = self.GetOcclusion()
-        self.assertGreater(occlusion, 0.0, "The occlusion did not start fading in once acoustics was disabled.")
-        self.assertLess(occlusion, 1.0, "The occlusion snapped to blocked instead of fading in.")
+        self.assertGreater(self.GetOcclusion(), 0.0, "The occlusion did not come back once acoustics was disabled.")
+
+    def test_turning_acoustics_on_clears_sightline_occlusion(self):
+        """Acoustics transmission takes over, so occlusion from the sightlines fades out and the game is not asked again."""
+        query = self.UseFakeQuery(blocked=True)
+        self.MakeAudible()
+        self.Pump()
+        self.assertEqual(self.GetOcclusion(), 1.0, "The sightline did not occlude the emitter.")
+        self.assertIs(self.GetSightlineResult(), True)
+        asked = query.queryCount
+
+        self.manager.spatialAudioGeometryEnabled = True
+        if not self.manager.spatialAudioGeometryEnabled:
+            self.skipTest("Spatial audio geometry is not available on this platform.")
+
+        try:
+            self.assertIsNone(self.GetSightlineResult(), "The last sightline results were kept once acoustics was enabled.")
+            self.manager.obstructionOcclusionFadeRate = FAST_FADE_RATE
+            self.Pump()
+            self.assertEqual(self.GetOcclusion(), 0.0, "The occlusion did not fade out once acoustics was enabled.")
+            self.assertEqual(query.queryCount, asked, "The game was asked for sightlines once acoustics was enabled.")
+        finally:
+            self.manager.spatialAudioGeometryEnabled = False
 
     def test_last_sightline_results_hold_what_was_checked_until_cleared(self):
         """Only emitters with a voice are checked, a recheck replaces the results and clearing drops them."""
