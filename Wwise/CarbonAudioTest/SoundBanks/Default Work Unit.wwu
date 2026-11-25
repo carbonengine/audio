@@ -65,6 +65,13 @@
 					<ObjectExclusionList/>
 					<GameSyncExclusionList/>
 				</SoundBank>
+				<SoundBank Name="TestPcm" ID="{A54DEFAF-BD0F-45F9-BD63-71F5EBDA3501}">
+					<ObjectInclusionList>
+						<ObjectRef Name="TestPcm" ID="{067EEAA2-980F-4C51-88C3-CD78B0E25079}" WorkUnitID="{C3703968-666D-47C8-9715-ABD3DA334A25}" Origin="Manual" Filter="6"/>
+					</ObjectInclusionList>
+					<ObjectExclusionList/>
+					<GameSyncExclusionList/>
+				</SoundBank>
 			</ChildrenList>
 		</WorkUnit>
 	</SoundBanks>

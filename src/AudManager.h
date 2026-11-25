@@ -11,6 +11,7 @@
 #include "SpatialAudioSettings.h"
 #include "AudObstructionOcclusion.h"
 #include "AudRoomManager.h"
+#include "AudPcmSource.h"
 #include "LowLevelIO/LowLevelIOHook.h"
 #include <atomic>
 #include <memory>
@@ -143,6 +144,10 @@ public:
 	bool AreRoomsReady() const;
 	// Returns the room manager.
 	AudRoomManager& GetRoomManager() { return *m_roomManager; }
+	// Returns the store of WEMs that in-memory External Sources are playing from.
+	AudPcmSourceBuffers& GetPcmSourceBuffers() { return m_pcmSourceBuffers; }
+	// How many in-memory PCM WEMs are held for events that have not ended yet. For tests and debugging.
+	unsigned int GetHeldPcmSourceCount();
 	// Set a single line-of-sight blockage ratio for an emitter [0.0, 1.0]. 0 = clear line of sight.
 	bool SetEmitterLineOfSightBlockage( AkGameObjectID emitterID, float blockage );
 	// Current, mid-fade occlusion value for an emitter. 0.0 if the emitter is clear or not tracked.
@@ -296,6 +301,8 @@ private:
 	SpatialAudioSettings* m_spatialAudioSettings;
 	std::unique_ptr<AudObstructionOcclusion> m_obstructionOcclusion;
 	std::unique_ptr<AudRoomManager> m_roomManager;
+	// WEMs played by in-memory External Sources, held until their events end.
+	AudPcmSourceBuffers m_pcmSourceBuffers;
 
 	//  Map of game objects, used to guard Wwise callbacks
 	std::unordered_map<AkGameObjectID, AudGameObjResource*> m_callbackGameObjects;

@@ -1173,6 +1173,11 @@ void AudManager::StopAll()
 	}
 }
 
+unsigned int AudManager::GetHeldPcmSourceCount()
+{
+	return static_cast<unsigned int>( m_pcmSourceBuffers.GetHeldCount() );
+}
+
 void AudManager::RegisterParameter( const std::wstring& audioParameterName )
 {
 	if( GetState() != AudioState::Uninitialized )

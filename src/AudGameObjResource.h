@@ -41,6 +41,8 @@ public:
 	void Initialize( const std::string& name, const std::wstring& prefix, const Vector3& position );
 	// Send an event to be played on this game object.
 	unsigned int PostEvent( const std::wstring& name, bool bypassPrefix = false, AkUInt32 additionalFlags = 0x0000 );
+	// Send an event that plays the given 16-bit PCM samples through the External Source called sourceName.
+	unsigned int PostEventWithPcm( const std::wstring& eventName, const std::wstring& sourceName, const uint8_t* pcm, size_t pcmSize, int sampleRate, int channels );
 	// Register a game object in Wwise.
 	virtual void RegisterWwiseObject();
 	// Unregister a game object in Wwise.
@@ -151,6 +153,9 @@ protected:
 	std::wstring PrepareEvent( const std::wstring& event, bool bypassPrefix );
 	// Propagate any wwise callbacks received for this game object.
 	static void PropagateWwiseCallback( AkCallbackType in_eType, AkEventCallbackInfo* in_pEventInfo, void* in_pCallbackInfo, void* in_pCookie );
+	// Callback for events playing in-memory PCM. Does what PropagateWwiseCallback does, then frees the PCM at the end of the event.
+	// Its cookie is the AudPcmSourceBuffers, not the game object, so it still frees the PCM after the game object is gone.
+	static void PcmSourceCallback( AkCallbackType in_eType, AkEventCallbackInfo* in_pEventInfo, void* in_pCallbackInfo, void* in_pCookie );
 	// Execute the given action on a playing ID if it is playing on this game object.
 	bool ExecuteActionOnPlayingID( const AkPlayingID playingID, const ActionTypes action, uint32_t fadeOutDuration = 1000 );
 	// Mark an explicit stop/break request so culling does not treat it as a loop that should resume on wake.
@@ -212,6 +217,8 @@ protected:
 	std::set<std::wstring> m_eventsOnWake;
 	// Playing IDs that have been explicitly stopped but have not received their Wwise end callback yet.
 	std::set<AkPlayingID> m_pendingStoppedPlayingIDs;
+	// Playing IDs that culling must stop rather than post again on wake, such as events playing PCM from memory.
+	std::set<AkPlayingID> m_nonReplayablePlayingIDs;
 	// Currently playing events on this game object.
 	std::map<unsigned int, std::wstring> m_playingEvents;
 	// Keeps track of RTPCs sent to this game object.
@@ -226,10 +233,19 @@ protected:
 	// Cleared when the last voice ends.
 	std::atomic<bool> m_occlusionOnsetPending{ false };
 
-	// A mutex to be used when working with m_playingEvents, m_pendingStoppedPlayingIDs and m_eventsOnWake as they are accessed in different threads.
+	// A mutex to be used when working with m_playingEvents, m_pendingStoppedPlayingIDs, m_nonReplayablePlayingIDs and m_eventsOnWake as they are accessed in different threads.
 	CcpMutex m_mutex;
 
 private:
+	enum class SoundBankReadiness { Loaded, Loading, Unavailable };
+	// Whether every SoundBank an event needs is loaded. If one is still loading, loadingSoundBank is set to it.
+	// Logs why if the event can't be played at all.
+	SoundBankReadiness CheckSoundBanksForEvent( const std::wstring& fullEventName, std::wstring& loadingSoundBank ) const;
+	// Bookkeeping after an event has been posted to Wwise. Call with m_mutex held, so its AK_EndOfEvent can't be handled before the event is recorded.
+	// replayable is false for events that culling must stop rather than post again on wake.
+	void RecordPostedEventLocked( const std::wstring& fullEventName, AkUniqueID eventID, AkPlayingID playingID, bool replayable );
+	// Updates what this game object knows about the events sent to it: attenuation radius, 2D and vital sounds.
+	void NoteEventUsedLocked( const std::wstring& fullEventName );
 	// Applies an already-resolved effective orientation to this game object and pushes it to Wwise.
 	int ApplyEffectivePlacement( const Vector3& front, const Vector3& top, const Vector3& position );
 	bool HasAuthoredRotation() const;

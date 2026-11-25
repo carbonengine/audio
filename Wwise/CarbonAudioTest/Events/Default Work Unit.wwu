@@ -80,6 +80,17 @@
 						</Action>
 					</ChildrenList>
 				</Event>
+				<Event Name="Play_TestPcm" ID="{1969B609-4CBC-474E-95C3-E6ADB127C81D}">
+					<ChildrenList>
+						<Action Name="" ID="{387FF0B1-C01A-4796-8608-5C4ECE5E1A4B}" ShortID="763526777">
+							<ReferenceList>
+								<Reference Name="Target">
+									<ObjectRef Name="TestPcm" ID="{067EEAA2-980F-4C51-88C3-CD78B0E25079}" WorkUnitID="{C3703968-666D-47C8-9715-ABD3DA334A25}"/>
+								</Reference>
+							</ReferenceList>
+						</Action>
+					</ChildrenList>
+				</Event>
 			</ChildrenList>
 		</WorkUnit>
 	</Events>

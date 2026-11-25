@@ -15,6 +15,22 @@ void AudEmitter::Py__init__( const std::string& name )
 	AudGameObjResource::Initialize();
 }
 
+#if BLUE_WITH_PYTHON
+unsigned int AudEmitter::SendEventWithPcm( const std::wstring& eventName, const std::wstring& sourceName, PyObject* pcm, int sampleRate, int channels )
+{
+	Py_buffer view;
+	if( PyObject_GetBuffer( pcm, &view, PyBUF_SIMPLE ) != 0 )
+	{
+		PyErr_Clear();
+		CCP_LOGERR( "Wwise event %S was not sent because its PCM is not a bytes-like object.", eventName.c_str() );
+		return AK_INVALID_PLAYING_ID;
+	}
+	const unsigned int playingID = PostEventWithPcm( eventName, sourceName, static_cast<const uint8_t*>( view.buf ), static_cast<size_t>( view.len ), sampleRate, channels );
+	PyBuffer_Release( &view );
+	return playingID;
+}
+#endif
+
 const Be::ClassInfo* AudEmitter::ExposeToBlue()
 {
 	EXPOSURE_BEGIN( AudEmitter, "RAII wrapper for Wwise gameobjects. Python constructor takes in a name of the object as a string" )
@@ -52,6 +68,23 @@ const Be::ClassInfo* AudEmitter::ExposeToBlue()
 			":param bypassPrefix: An optional argument that bypasses the audio emitters defined prefix if set to True."
 			":return: The playing ID associated with this event. 0 If sending the event failed.\n"
 		)
+#if BLUE_WITH_PYTHON
+		MAP_METHOD_AND_WRAP
+		(
+			"SendEventWithPcm",
+			SendEventWithPcm,
+			"Sends an event that plays 16-bit PCM from memory through one of its External Sources.\n"
+			"The PCM is copied and held until the event ends, so the caller doesn't need to keep it.\n"
+			"The event is never played later: if this emitter is culled, audio is disabled or a SoundBank "
+			"the event needs is not loaded, nothing is sent and 0 is returned.\n"
+			":param eventName: The event to send. It plays the External Source called sourceName.\n"
+			":param sourceName: The External Source's name in the Wwise project.\n"
+			":param pcm: A contiguous bytes-like object of interleaved signed 16-bit little-endian samples: a WAV's data chunk, with no header.\n"
+			":param sampleRate: Samples per second per channel.\n"
+			":param channels: 1 for mono, 2 for stereo.\n"
+			":return: The playing ID associated with this event. 0 if sending the event failed.\n"
+		)
+#endif
 		MAP_METHOD_AND_WRAP
 		(
 			"SetPlacement",

@@ -42,6 +42,7 @@ ccp_add_library(CarbonAudio SHARED
 	src/AudEventKey.cpp
 	src/AudEventKey_Blue.cpp
 	src/AudGameObjResource.cpp
+	src/AudPcmSource.cpp
 	src/AudGeometry.cpp
 	src/AudGeometryManager.cpp
 	src/AudGeometry_Blue.cpp
@@ -80,6 +81,7 @@ target_sources(CarbonAudio PRIVATE
 	src/AudEventCurve.h
 	src/AudEventKey.h
 	src/AudGameObjResource.h
+	src/AudPcmSource.h
 	src/Audio2.h
 	src/AudioCurveSetDriver.h
 	src/AudioInputMgr.h

@@ -99,6 +99,20 @@
     ]
    },
    {
+    "Id": "1332292683",
+    "Type": "User",
+    "Language": "SFX",
+    "Hash": "{59F3B3B6-508B-33B4-406A-20412C3EC47A}",
+    "ShortName": "TestPcm",
+    "Path": "TestPcm.bnk",
+    "ExternalSources": [
+     {
+      "Cookie": "2957016168",
+      "Name": "test_pcm"
+     }
+    ]
+   },
+   {
     "Id": "1355168291",
     "Type": "User",
     "Language": "SFX",
@@ -138,7 +152,7 @@
     "Id": "2395677314",
     "Type": "User",
     "Language": "SFX",
-    "Hash": "{7302CEB0-F85E-C7B3-D487-6724C7E771A7}",
+    "Hash": "{1BF6E75D-8CC5-B64F-F2B7-B1360125C608}",
     "ShortName": "Common",
     "Path": "Common.bnk",
     "Events": [
@@ -175,6 +189,10 @@
       "Id": "1669951674",
       "Name": "Play_TestOneShot",
       "MaxAttenuation": "100"
+     },
+     {
+      "Id": "1661318566",
+      "Name": "Play_TestPcm"
      }
     ]
    },
@@ -234,6 +252,6 @@
     ]
    }
   ],
-  "FileHash": "{F26CED5E-B778-5398-ADAE-C995F51BA336}"
+  "FileHash": "{4848ED6E-3D50-B573-3002-4F5DE3CC1E02}"
  }
 }

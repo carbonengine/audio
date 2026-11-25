@@ -22,6 +22,9 @@ NONESSENTIAL_BNK = "NonEssentialSoundBank.bnk"
 NONESSENTIAL_BNK_EVENT = "Play_NonEssentialBank"
 NONESSENTIAL_STREAM_BNK = "NonEssentialStream.bnk"
 NONESSENTIAL_STREAM_EVENT = "Play_NonEssentialStream"
+PCM_BNK = "TestPcm.bnk"
+PCM_EVENT = "Play_TestPcm"  # plays the External Source PCM_SOURCE, a 2D sound
+PCM_SOURCE = "test_pcm"
 
 
 class BaseAudio2TestClass(unittest.TestCase):
