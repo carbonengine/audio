@@ -112,7 +112,8 @@ AudGameObjResource::~AudGameObjResource()
 
 	if( g_audioManager != nullptr && g_audioManager->GetState() != AudioState::Uninitialized )
 	{
-		AK::SoundEngine::CancelEventCallbackGameObject( m_ID );
+		// Cancel only the callbacks whose cookie is this object. PcmSourceCallback must still free in-memory PCM once Wwise is done with it.
+		AK::SoundEngine::CancelEventCallbackCookie( this );
 		StopAll();
 		UnregisterWwiseObject();
 	}
@@ -166,7 +167,6 @@ void AudGameObjResource::UnregisterWwiseObject()
 //-----------------------------------------------------
 unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool bypassPrefix, AkUInt32 additionalFlags )
 {
-
 	if( eventName.empty() )
 	{
 		CCP_LOG( "An empty event string was requested to be sent to Wwise. This request has been ignored." );
@@ -181,99 +181,176 @@ unsigned int AudGameObjResource::PostEvent( const std::wstring& eventName, bool 
 
 	CcpAutoMutex mutex( m_mutex );
 	m_isUsed = true;
-	bool eventUsed = false;
 	std::wstring fullEventName = PrepareEvent( eventName, bypassPrefix );
 
-	bool eventIsVital = g_staticDataRepository->EventIsVital( fullEventName );
-	AkPlayingID playingID = AK_INVALID_PLAYING_ID;
 	if ( m_culled || g_audioManager == nullptr || g_audioManager->GetState() != AudioState::Enabled )
 	{
 		ApplyEventStopRelationships( fullEventName );
 
-		if ( g_staticDataRepository->EventIsLoop( fullEventName ) || eventIsVital )
+		if ( g_staticDataRepository->EventIsLoop( fullEventName ) || g_staticDataRepository->EventIsVital( fullEventName ) )
 		{
 			m_eventsOnWake.insert( fullEventName );
-			eventUsed = true;
 		}
 		else
 		{
 			m_waitingOneShotInRange = std::pair( std::chrono::steady_clock::now(), fullEventName );
-			eventUsed = true;
 		}
+		NoteEventUsedLocked( fullEventName );
+		return AK_INVALID_PLAYING_ID;
 	}
-	else if ( m_gameObjRegistered )
+
+	if ( !m_gameObjRegistered )
 	{
-		bool soundbanksLoaded = true;
-
-		const std::vector<std::wstring>& eventSoundBanks = g_staticDataRepository->SoundBanksRequiredForEvent( fullEventName );
-		if (eventSoundBanks.empty())
-		{
-			CCP_LOGERR( "Wwise event %S failed to send because it does not exist in any SoundBanks.", fullEventName.c_str() );
-			return AK_INVALID_PLAYING_ID;
-		}
-
-		for( auto it = eventSoundBanks.begin(); it != eventSoundBanks.end(); ++it )
-		{	
-			SoundBankStatus soundBankStatus = g_audioManager->GetSoundBankStatus( *it );
-			if( soundBankStatus != SoundBankStatus::LOADED )
-			{
-				soundbanksLoaded = false;
-				if( soundBankStatus == SoundBankStatus::LOADING )
-				{
-					std::wstring soundBank = *it;
-					g_audioManager->RegisterEventAfterSoundBankLoad(soundBank, fullEventName, this);
-				}
-				else
-				{
-					CCP_LOGERR( "Wwise event %S will not be sent to Wwise because SoundBank %S is currently not loaded.", fullEventName.c_str(), it->c_str() );
-					return AK_INVALID_PLAYING_ID;
-				}
-				break;
-			}
-		}
-
-		if( soundbanksLoaded )
-		{
-			// Set up callback info so that we get a callback when every event is finished playing.
-			AkUInt32 inFlags = AK_EndOfEvent | additionalFlags;
-			AkCallbackFunc callback = &AudGameObjResource::PropagateWwiseCallback;
-			unsigned int eventID = g_staticDataRepository->GetEventID( fullEventName );
-			playingID = AK::SoundEngine::PostEvent( eventID, m_ID, inFlags, callback, this );
-			g_audioManager->LogPostEvent( m_ID, playingID, eventID, fullEventName );
-
-			if ( playingID != AK_INVALID_PLAYING_ID )
-			{
-				ApplyEventStopRelationships( fullEventName );
-				if ( !HasLiveVoiceLocked() )
-				{
-					// First voice after silence, stopping voices don't count.
-					m_occlusionOnsetPending.store( true, std::memory_order_release );
-				}
-				m_playingEvents.insert({playingID, fullEventName});
-				m_hasPlayingVoices.store( true, std::memory_order_release );
-				eventUsed = true;
-			}
-			else
-			{
-				CCP_LOGERR( "Wwise event %S failed to play even though its SoundBanks are loaded.", fullEventName.c_str() );
-			}
-		}
+		return AK_INVALID_PLAYING_ID;
 	}
 
-	if( eventUsed )
+	std::wstring loadingSoundBank;
+	switch ( CheckSoundBanksForEvent( fullEventName, loadingSoundBank ) )
 	{
-		UpdateMaxAttenuationRadiusForEvent( fullEventName );
-		if( g_staticDataRepository->EventIs2D( fullEventName ) )
-		{
-			m_playing2DSound = true;
-		}
-
-		if( eventIsVital )
-		{
-			m_playingVitalSound = true;
-		}
+	case SoundBankReadiness::Loading:
+		g_audioManager->RegisterEventAfterSoundBankLoad( loadingSoundBank, fullEventName, this );
+		return AK_INVALID_PLAYING_ID;
+	case SoundBankReadiness::Unavailable:
+		return AK_INVALID_PLAYING_ID;
+	case SoundBankReadiness::Loaded:
+		break;
 	}
+
+	// Set up callback info so that we get a callback when every event is finished playing.
+	const AkUniqueID eventID = g_staticDataRepository->GetEventID( fullEventName );
+	const AkPlayingID playingID = AK::SoundEngine::PostEvent( eventID, m_ID, AK_EndOfEvent | additionalFlags, &AudGameObjResource::PropagateWwiseCallback, this );
+	RecordPostedEventLocked( fullEventName, eventID, playingID, true );
 	return playingID;
+}
+
+//-----------------------------------------------------
+// Description:
+//   Sends an event whose External Source plays PCM from memory.
+//   The PCM is copied into a WEM that the audio engine holds until the event ends, so the caller can let go of it.
+//   Unlike PostEvent, it never plays the event later: if this game object is culled, audio is disabled or
+//   a SoundBank the event needs is not loaded, nothing is copied or held and 0 is returned.
+//   Played late, the audio would be out of place and its PCM would be held for an unknown time.
+//   For the same reason, culling stops the event instead of posting it again on wake.
+// Arguments:
+//   eventName - The event to send. It plays the External Source called sourceName.
+//   sourceName - The External Source's name in the Wwise project. Its Wwise ID is the source's cookie.
+//   pcm, pcmSize - Interleaved signed 16-bit little-endian samples, with no WAV header.
+//   sampleRate - Samples per second per channel.
+//   channels - 1 for mono, 2 for stereo.
+// Return value:
+//   A Wwise playing ID if the event was sent to the audio engine. Otherwise 0.
+//-----------------------------------------------------
+unsigned int AudGameObjResource::PostEventWithPcm( const std::wstring& eventName, const std::wstring& sourceName, const uint8_t* pcm, size_t pcmSize, int sampleRate, int channels )
+{
+	if( eventName.empty() )
+	{
+		CCP_LOG( "An empty event string was requested to be sent to Wwise. This request has been ignored." );
+		return AK_INVALID_PLAYING_ID;
+	}
+	if( sourceName.empty() )
+	{
+		CCP_LOGERR( "Wwise event %S was not sent because it was given in-memory PCM without an External Source name.", eventName.c_str() );
+		return AK_INVALID_PLAYING_ID;
+	}
+	if( g_staticDataRepository == nullptr )
+	{
+		return AK_INVALID_PLAYING_ID;
+	}
+
+	CcpAutoMutex mutex( m_mutex );
+	const std::wstring fullEventName = PrepareEvent( eventName, false );
+	if( m_culled || !m_gameObjRegistered || g_audioManager == nullptr || g_audioManager->GetState() != AudioState::Enabled )
+	{
+		CCP_LOGERR( "Wwise event %S with in-memory PCM was not sent because game object %d is culled or unregistered, or audio is disabled.", fullEventName.c_str(), m_ID );
+		return AK_INVALID_PLAYING_ID;
+	}
+
+	std::wstring loadingSoundBank;
+	const SoundBankReadiness readiness = CheckSoundBanksForEvent( fullEventName, loadingSoundBank );
+	if( readiness == SoundBankReadiness::Loading )
+	{
+		CCP_LOGERR( "Wwise event %S with in-memory PCM was not sent because SoundBank %S is still loading.", fullEventName.c_str(), loadingSoundBank.c_str() );
+	}
+	if( readiness != SoundBankReadiness::Loaded )
+	{
+		return AK_INVALID_PLAYING_ID;
+	}
+
+	std::vector<uint8_t> wem = BuildPcmWem( pcm, pcmSize, sampleRate, channels );
+	if( wem.empty() )
+	{
+		return AK_INVALID_PLAYING_ID;
+	}
+
+	m_isUsed = true;
+	const AkUniqueID eventID = g_staticDataRepository->GetEventID( fullEventName );
+	const AkUInt32 sourceCookie = AK::SoundEngine::GetIDFromString( sourceName.c_str() );
+	const AkPlayingID playingID = g_audioManager->GetPcmSourceBuffers().PostHolding( std::move( wem ), sourceCookie, eventID, m_ID, AK_EndOfEvent, &AudGameObjResource::PcmSourceCallback );
+	RecordPostedEventLocked( fullEventName, eventID, playingID, false );
+	return playingID;
+}
+
+AudGameObjResource::SoundBankReadiness AudGameObjResource::CheckSoundBanksForEvent( const std::wstring& fullEventName, std::wstring& loadingSoundBank ) const
+{
+	const std::vector<std::wstring>& eventSoundBanks = g_staticDataRepository->SoundBanksRequiredForEvent( fullEventName );
+	if( eventSoundBanks.empty() )
+	{
+		CCP_LOGERR( "Wwise event %S failed to send because it does not exist in any SoundBanks.", fullEventName.c_str() );
+		return SoundBankReadiness::Unavailable;
+	}
+
+	for( const std::wstring& soundBank : eventSoundBanks )
+	{
+		const SoundBankStatus status = g_audioManager->GetSoundBankStatus( soundBank );
+		if( status == SoundBankStatus::LOADING )
+		{
+			loadingSoundBank = soundBank;
+			return SoundBankReadiness::Loading;
+		}
+		if( status != SoundBankStatus::LOADED )
+		{
+			CCP_LOGERR( "Wwise event %S will not be sent to Wwise because SoundBank %S is currently not loaded.", fullEventName.c_str(), soundBank.c_str() );
+			return SoundBankReadiness::Unavailable;
+		}
+	}
+	return SoundBankReadiness::Loaded;
+}
+
+void AudGameObjResource::RecordPostedEventLocked( const std::wstring& fullEventName, AkUniqueID eventID, AkPlayingID playingID, bool replayable )
+{
+	g_audioManager->LogPostEvent( m_ID, playingID, eventID, fullEventName );
+	if( playingID == AK_INVALID_PLAYING_ID )
+	{
+		CCP_LOGERR( "Wwise event %S failed to play even though its SoundBanks are loaded.", fullEventName.c_str() );
+		return;
+	}
+
+	ApplyEventStopRelationships( fullEventName );
+	if ( !HasLiveVoiceLocked() )
+	{
+		// First voice after silence, stopping voices don't count.
+		m_occlusionOnsetPending.store( true, std::memory_order_release );
+	}
+	m_playingEvents.insert( { playingID, fullEventName } );
+	if( !replayable )
+	{
+		m_nonReplayablePlayingIDs.insert( playingID );
+	}
+	m_hasPlayingVoices.store( true, std::memory_order_release );
+	NoteEventUsedLocked( fullEventName );
+}
+
+void AudGameObjResource::NoteEventUsedLocked( const std::wstring& fullEventName )
+{
+	UpdateMaxAttenuationRadiusForEvent( fullEventName );
+	if( g_staticDataRepository->EventIs2D( fullEventName ) )
+	{
+		m_playing2DSound = true;
+	}
+	if( g_staticDataRepository->EventIsVital( fullEventName ) )
+	{
+		m_playingVitalSound = true;
+	}
 }
 
 //-----------------------------------------------------
@@ -296,6 +373,15 @@ void AudGameObjResource::PropagateWwiseCallback( AkCallbackType in_eType, AkEven
 	}
 }
 
+void AudGameObjResource::PcmSourceCallback( AkCallbackType in_eType, AkEventCallbackInfo* in_pEventInfo, void* in_pCallbackInfo, void* in_pCookie )
+{
+	PropagateWwiseCallback( in_eType, in_pEventInfo, in_pCallbackInfo, in_pCookie );
+	if ( in_eType == AK_EndOfEvent )
+	{
+		static_cast<AudPcmSourceBuffers*>( in_pCookie )->Release( in_pEventInfo->playingID );
+	}
+}
+
 
 //-----------------------------------------------------
 // Description:
@@ -308,6 +394,7 @@ void AudGameObjResource::EventFinishedCallback( AkEventCallbackInfo* cbInfo )
 {
 	CcpAutoMutex mutex( m_mutex );
 	m_pendingStoppedPlayingIDs.erase( cbInfo->playingID );
+	m_nonReplayablePlayingIDs.erase( cbInfo->playingID );
 	m_playingEvents.erase( cbInfo->playingID );
 	const bool silent = m_playingEvents.empty();
 	m_hasPlayingVoices.store( !silent, std::memory_order_release );
@@ -791,7 +878,13 @@ void AudGameObjResource::Cull()
 		CcpAutoMutex mutex( m_mutex );
 		for ( auto it = m_playingEvents.begin(); it != m_playingEvents.end(); ++it )
 		{
-			if ( g_staticDataRepository->EventIsLoop( it->second ) )
+			// Some events can't be posted again on wake, such as one playing PCM from memory: static data calls it
+			// a loop, since an External Source has no known length, but posted again it would have no PCM.
+			if ( m_nonReplayablePlayingIDs.find( it->first ) != m_nonReplayablePlayingIDs.end() )
+			{
+				ExecuteActionOnPlayingID( it->first, ActionTypes::Stop );
+			}
+			else if ( g_staticDataRepository->EventIsLoop( it->second ) )
 			{
 				if ( m_pendingStoppedPlayingIDs.find( it->first ) == m_pendingStoppedPlayingIDs.end() )
 				{

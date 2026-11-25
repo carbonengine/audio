@@ -266,6 +266,13 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		)
 		MAP_METHOD_AND_WRAP
 		(
+			"GetHeldPcmSourceCount",
+			GetHeldPcmSourceCount,
+			"How many in-memory PCM buffers sent with SendEventWithPcm are held because their events have not ended yet. For tests and debugging.\n"
+			":return: The number of held buffers."
+		)
+		MAP_METHOD_AND_WRAP
+		(
 			"StartProfilerCapture",
 			StartProfilerCapture,
 			"Starts recording the sound engine profiling information into a file."

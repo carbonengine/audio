@@ -49,6 +49,10 @@ public:
 	void Mute() override;
 	void ReleaseForcedCullingState() override;
 	unsigned int SendEvent( const std::wstring& name, bool bypassPrefix = false ) override;
+#if BLUE_WITH_PYTHON
+	// SendEvent for in-memory PCM, for Python. Forwards to PostEventWithPcm. pcm can be any contiguous buffer: bytes, bytearray, memoryview or a numpy array.
+	unsigned int SendEventWithPcm( const std::wstring& eventName, const std::wstring& sourceName, PyObject* pcm, int sampleRate, int channels );
+#endif
 	int SetPosition( const Vector3& front, const Vector3& top, const Vector3& pos ) override;
 	void SetName( const std::string& name ) override;
 	void SetPrefix( const std::wstring& prefix ) override;
