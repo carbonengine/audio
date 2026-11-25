@@ -585,6 +585,8 @@ void AudManager::SetSpatialAudioGeometryEnabled( bool enabled )
 		}
 
 		m_spatialAudioSettings->SetSpatialAudioGeometryEnabled( true );
+		// Acoustics transmission takes over, so occlusion from the line of sight checks fades out.
+		ClearObstructionOcclusion();
 		CCP_LOG_CH( s_ch, "Spatial audio geometry enabled." );
 	}
 }

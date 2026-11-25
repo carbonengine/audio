@@ -142,7 +142,8 @@ float AudObstructionOcclusion::OcclusionForBlockage(float blockage) const
 
 void AudObstructionOcclusion::RunSightlinePass(std::chrono::steady_clock::time_point now)
 {
-	if (!m_enabled || m_audioManager == nullptr)
+	// Acoustics transmission replaces this occlusion, so the game is not asked while it is on.
+	if (!m_enabled || m_audioManager == nullptr || m_audioManager->GetSpatialAudioGeometryEnabled())
 	{
 		return;
 	}
