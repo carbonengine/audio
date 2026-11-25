@@ -11,6 +11,7 @@
 #include "SpatialAudioSettings.h"
 #include "AudObstructionOcclusion.h"
 #include "AudRoomManager.h"
+#include "AudJobWorkerPool.h"
 #include "LowLevelIO/LowLevelIOHook.h"
 #include <atomic>
 #include <memory>
@@ -188,6 +189,13 @@ public:
 	AKRESULT StopProfilerCapture();
 	// Returns state of the profiler capture
 	bool IsProfilerCapturing() const;
+	// Threads running Wwise's audio jobs next to its audio thread. 0 when AudSettings left them off.
+	int GetJobWorkerThreadCount() const;
+	// How many of those threads Wwise may use at once, 1 to the thread count.
+	int GetJobWorkersActive() const;
+	void SetJobWorkersActive( int value );
+	// Worker requests from Wwise that those threads have served since audio initialized.
+	long long GetJobWorkerRequestsServed() const;
 
 	bool GetAudioCullingEnabled() const;
 	bool GetAudioCullingEnabledProperty() const;
@@ -285,6 +293,8 @@ private:
 	CcpMutex m_soundBankMutex;
 	// low level IO hook for Wwise
 	LowLevelIOHook m_lowLevelIO;
+	AudJobWorkerPool m_jobWorkers;
+	int m_jobWorkersActive = 0;
 	// Initialization settings for Wwise
 	AudSettingsPtr m_settings;
 

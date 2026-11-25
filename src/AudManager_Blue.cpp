@@ -72,6 +72,10 @@ const Be::ClassInfo* AudManager::ExposeToBlue()
 		MAP_PROPERTY_READONLY( "geometryInstancesInWwise", GetGeometryInstancesInWwise, "Geometry instances in Wwise as of the last tick." )
 		MAP_PROPERTY_READONLY( "geometryTrianglesInWwise", GetGeometryTrianglesInWwise, "Triangles of every geometry instance in Wwise as of the last tick." )
 
+		MAP_PROPERTY_READONLY( "jobWorkerThreadCount", GetJobWorkerThreadCount, "Threads running Wwise's audio jobs next to its audio thread. 0 when AudSettings.jobWorkerThreads left them off." )
+		MAP_PROPERTY_READONLY( "jobWorkerRequestsServed", GetJobWorkerRequestsServed, "Worker requests from Wwise that the job worker threads have served since audio initialized. Stays 0 while jobWorkerThreadCount is 0." )
+		MAP_PROPERTY( "jobWorkersActive", GetJobWorkersActive, SetJobWorkersActive, "How many of the job worker threads Wwise may use at once [1-jobWorkerThreadCount]. Has no effect while jobWorkerThreadCount is 0." )
+
 		// Obstruction / occlusion
 		MAP_PROPERTY( "obstructionOcclusionEnabled", GetObstructionOcclusionEnabled, SetObstructionOcclusionEnabled, "Enable or disable game-driven obstruction/occlusion processing. Disabling fades all values back to clear.")
 		MAP_PROPERTY( "obstructionOcclusionFadeRate", GetObstructionOcclusionFadeRate, SetObstructionOcclusionFadeRate, "How fast obstruction/occlusion values fade towards their targets, in units per second. 0 = instantaneous.")

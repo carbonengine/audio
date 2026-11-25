@@ -27,6 +27,7 @@ public:
 	std::string m_spatialAudioDeviceName = "System";
 #endif
 	std::string m_applicationName = "Eve Online";
+	int m_jobWorkerThreads = 0;
 };
 
 
