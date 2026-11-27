@@ -582,12 +582,7 @@ void AudGeometryManager::Update( const SpatialAudioSettings& settings, const Vec
 			continue;
 		}
 
-		GeometrySet& set = m_sets.find( instance.geometrySetId )->second;
-		if( set.rejected || ( !set.inWwise && !SendSetLocked( instance.geometrySetId, set ) ) )
-		{
-			continue;
-		}
-
+		// Checked before the set is sent, so a refused instance doesn't put its set in Wwise for nothing.
 		const AkGeometryInstanceParams params = MakeInstanceParams( instance.geometrySetId, instance.transform, offset.sceneToWwise, m_solid, m_portalSubtraction );
 		if( instance.inWwise || instance.rejected )
 		{
@@ -596,6 +591,12 @@ void AudGeometryManager::Update( const SpatialAudioSettings& settings, const Vec
 			{
 				continue;
 			}
+		}
+
+		GeometrySet& set = m_sets.find( instance.geometrySetId )->second;
+		if( set.rejected || ( !set.inWwise && !SendSetLocked( instance.geometrySetId, set ) ) )
+		{
+			continue;
 		}
 
 		const AKRESULT result = AK::SpatialAudio::SetGeometryInstance( entry.first, params );
