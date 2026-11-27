@@ -435,6 +435,23 @@ class TestGeometryExposure(BaseAudio2TestClass):
         self.Update()
         self.assertEqual(self.manager.worldRebases, rebases + 1)
 
+    def test_flying_far_without_a_warp_sends_nothing_again(self):
+        """Wwise takes positions as doubles, so its origin stays put in flight. Moving it sends every mesh again."""
+        mesh = Add(SOLAR_SYSTEM_SPOT, (1000.0, 0.0, 0.0))
+        self.AddBoxInWorld(HULL, 1, SOLAR_SYSTEM_SPOT, mesh)
+        self.Update()
+        sends = self.manager.geometryInstanceSends
+        rebases = self.manager.worldRebases
+
+        # 300 km, in steps a fast ship makes in a frame.
+        for step in range(1, 201):
+            self.MovePlayer(Add(SOLAR_SYSTEM_SPOT, (1500.0 * step, 0.0, 0.0)), {(HULL, 1): mesh})
+            self.Update()
+
+        self.assertEqual(self.manager.worldRebases, rebases)
+        self.assertEqual(self.manager.geometryInstanceSends, sends)
+        self.AssertInWwise(sets=1, instances=1)
+
     def test_a_second_scene_does_not_move_the_origin(self):
         """Positions reach audio without their scene, so one scene owns the origin. Two would move everything in
         Wwise back and forth on every frame."""

@@ -22,7 +22,8 @@
  *
  * Audio adds the scene origin back and measures from a Wwise origin of its own, which only jumps to
  * the scene origin once the player is further than the rebase distance from it. Between jumps, a still
- * object keeps its Wwise position, and the coordinates Wwise gets stay small.
+ * object keeps its Wwise position. A jump sends everything to Wwise again, so the distance is one only a
+ * warp or a jump covers, and the jump waits for the player to arrive.
  *
  * One scene owns the scene origin at a time. Positions reach audio without their scene, so two origins
  * cannot both apply, and two scenes taking turns would move everything in Wwise back and forth.
@@ -36,7 +37,12 @@ class AudWorldFrame
 {
 public:
 	/// How far the scene origin gets from the Wwise origin before the Wwise origin moves to it, in game units.
-	static constexpr double DEFAULT_REBASE_DISTANCE = 50000.0;
+	/// Wwise takes positions as doubles and is made for worlds billions of units across, so the origin has no
+	/// need to follow the player in flight, where moving it would send every mesh, room and sound again in one
+	/// tick. 100,000 km is past any flight and short of any warp between places, and a double still holds a
+	/// position that far out to a hundredth of a micrometre. A solar system is too big for that, so it does move
+	/// after a warp or a jump.
+	static constexpr double DEFAULT_REBASE_DISTANCE = 1.0e8;
 
 	/// A scene origin step longer than this, from one frame to the next, is a warp or a jump. It is far beyond any
 	/// ship's speed at any frame rate and far below warp speed. The Wwise origin waits for the player to slow down,
