@@ -62,12 +62,12 @@ int AudListener::SetPlacementFromParent( const Vector3& front, const Vector3& to
 {
 	if( g_audioManager != nullptr && g_audioManager->GetState() != AudioState::Uninitialized )
 	{
-		m_position = position;
 		// Kept so the listener can be sent again when the scene-to-Wwise offset moves.
-		m_effectiveOrientation = Orthonormalize( front, top );
+		const Orientation corrected = Orthonormalize( front, top );
+		StorePlacement( corrected, position );
 		if( m_gameObjRegistered )
 		{
-			SendPlacementToWwise( m_effectiveOrientation.front, m_effectiveOrientation.top, position );
+			SendPlacementToWwise( corrected.front, corrected.top, position );
 			g_audioManager->GetRoomManager().UpdateGameObjectPosition( m_ID, position );
 		}
 	}

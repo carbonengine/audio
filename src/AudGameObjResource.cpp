@@ -32,7 +32,7 @@ AudGameObjResource::AudGameObjResource( IRoot* lockobj ) : PARENTLOCK( m_paramet
 														 m_parentOrientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) ),
 														 m_effectiveOrientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) ), m_placedOffsetGeneration( 0 ),
 														 m_authoredRotation( 0.0f, 0.0f, 0.0f, 1.0f ),
-														 m_mutex( "AudGameObjResource", "m_mutex" ),
+														 m_mutex( "AudGameObjResource", "m_mutex" ), m_placementMutex( "AudGameObjResource", "m_placementMutex" ),
 														 m_gameObjRegistered( false ),
 														 m_culled( true ),
 														 m_isVisible(false),
@@ -71,7 +71,7 @@ AudGameObjResource::AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj
 																				   m_parentOrientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) ),
 																				   m_effectiveOrientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) ), m_placedOffsetGeneration( 0 ),
 																				   m_authoredRotation( 0.0f, 0.0f, 0.0f, 1.0f ),
-														 						   m_mutex( "AudGameObjResource", "m_mutex" ),
+														 						   m_mutex( "AudGameObjResource", "m_mutex" ), m_placementMutex( "AudGameObjResource", "m_placementMutex" ),
 																				   m_gameObjRegistered( false ),
 														 						   m_culled( true ),
 														 						   m_isVisible(false),
@@ -132,28 +132,54 @@ void AudGameObjResource::RegisterWwiseObject()
 	}
 }
 
+void AudGameObjResource::StorePlacement( const Orientation& orientation, const Vector3& position )
+{
+	CcpAutoMutex lock( m_placementMutex );
+	m_position = position;
+	m_effectiveOrientation = orientation;
+}
+
+void AudGameObjResource::ReadPlacement( Orientation& orientation, Vector3& position ) const
+{
+	CcpAutoMutex lock( m_placementMutex );
+	orientation = m_effectiveOrientation;
+	position = m_position;
+}
+
 void AudGameObjResource::ResendPlacement()
 {
+	Orientation orientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) );
+	Vector3 position;
+	ReadPlacement( orientation, position );
+
 	// One that was never placed stays where Wwise keeps it, far from anything it would be heard at.
 	if( g_audioManager == nullptr || g_audioManager->GetState() != AudioState::Enabled || !m_gameObjRegistered
-		|| !IsUsableWorldPosition( m_position ) )
+		|| !IsUsableWorldPosition( position ) )
 	{
 		return;
 	}
 
-	SendPlacementToWwise( m_effectiveOrientation.front, m_effectiveOrientation.top, m_position );
+	SendPlacementToWwise( orientation.front, orientation.top, position );
 }
 
 bool AudGameObjResource::TakeStalePlacement( const AudWorldFrame::Offset& offset, AkSoundPosition& placement )
 {
 	if( m_placedOffsetGeneration.load( std::memory_order_relaxed ) == offset.generation
-		|| g_audioManager == nullptr || g_audioManager->GetState() != AudioState::Enabled || !m_gameObjRegistered
-		|| !IsUsableWorldPosition( m_position ) )
+		|| g_audioManager == nullptr || g_audioManager->GetState() != AudioState::Enabled || !m_gameObjRegistered )
 	{
 		return false;
 	}
 
-	placement = ToWwisePlacement( m_effectiveOrientation.front, m_effectiveOrientation.top, m_position, offset.sceneToWwise );
+	// Copied in one piece: another thread may be placing the object right now.
+	Orientation orientation( Vector3( 0, 0, 1 ), Vector3( 0, 1, 0 ) );
+	Vector3 position;
+	ReadPlacement( orientation, position );
+	if( !IsUsableWorldPosition( position ) )
+	{
+		return false;
+	}
+
+	placement = ToWwisePlacement( orientation.front, orientation.top, position, offset.sceneToWwise );
 	m_placedOffsetGeneration.store( offset.generation, std::memory_order_relaxed );
 	return true;
 }
@@ -539,8 +565,7 @@ int AudGameObjResource::ApplyEffectivePlacement( const Vector3& front, const Vec
 	// https://www.audiokinetic.com/library/edge/?source=SDK&id=struct_ak_transform_a3bc42dc5b00b880229c08a8ebd0db72a.html
 	const Orientation corrected = Orthonormalize( front, top );
 
-	m_position = position;
-	m_effectiveOrientation = corrected;
+	StorePlacement( corrected, position );
 
 	if( g_audioManager != nullptr && g_audioManager->GetState() == AudioState::Enabled && m_gameObjRegistered )
 	{
@@ -628,7 +653,10 @@ void AudGameObjResource::Initialize( const std::string& name, const std::wstring
 {
 	m_name = name;
 	m_eventPrefix = prefix;
-	m_position = position;
+	{
+		CcpAutoMutex lock( m_placementMutex );
+		m_position = position;
+	}
 	Initialize();
 }
 

@@ -153,6 +153,9 @@ protected:
 	AudGameObjResource( AkGameObjectID gameObjID, IRoot* lockobj = NULL );
 	// Records a new parent orientation, resolves it against any authored rotation, and applies the result.
 	virtual int SetPlacementFromParent( const Vector3& front, const Vector3& top, const Vector3& position );
+	// Keeps a placement for sending again, and reads the one kept.
+	void StorePlacement( const Orientation& orientation, const Vector3& position );
+	void ReadPlacement( Orientation& orientation, Vector3& position ) const;
 	// Sends a scene-relative placement to Wwise, moved into Wwise's frame. front and top must be orthonormal.
 	void SendPlacementToWwise( const Vector3& front, const Vector3& top, const Vector3& position );
 	// A scene-relative placement moved into Wwise's frame and made left-handed.
@@ -242,6 +245,9 @@ protected:
 
 	// A mutex to be used when working with m_playingEvents, m_pendingStoppedPlayingIDs and m_eventsOnWake as they are accessed in different threads.
 	CcpMutex m_mutex;
+	// Held only to write or copy m_position and m_effectiveOrientation together, so the tick can send a placement
+	// again while another thread places the object without mixing the old one with the new.
+	mutable CcpMutex m_placementMutex;
 
 private:
 	// Applies an already-resolved effective orientation to this game object and pushes it to Wwise.
