@@ -24,6 +24,9 @@
  * the scene origin once the player is further than the rebase distance from it. Between jumps, a still
  * object keeps its Wwise position, and the coordinates Wwise gets stay small.
  *
+ * One scene owns the scene origin at a time. Positions reach audio without their scene, so two origins
+ * cannot both apply, and two scenes taking turns would move everything in Wwise back and forth.
+ *
  * A position is always the last one trinity handed over plus the current offset, so something trinity
  * stops handing over, because it moves along with the player, moves along in Wwise too.
  *
@@ -43,6 +46,10 @@ public:
 	/// The shortest move that counts as one, in game units.
 	static constexpr double MIN_STILL_DISTANCE = 1.0e-3;
 
+	/// Calls in a row from other scenes, with none from the scene that owns the origin, before one of them
+	/// takes it over.
+	static constexpr int TAKEOVER_CALLS = 3;
+
 	struct Offset
 	{
 		/// What to add to a scene-relative position to get its Wwise position.
@@ -58,10 +65,19 @@ public:
 	/**
 	 * @brief Sets where the scene origin is, in absolute world coordinates.
 	 *
-	 * Trinity calls it once per frame, before it hands over that frame's positions. The first call
-	 * puts the Wwise origin there too, since every position so far was relative to the scene origin.
+	 * Trinity calls it once per frame for each scene with a ballpark, before it hands over that frame's
+	 * positions. The first call puts the Wwise origin there too, since every position so far was relative
+	 * to the scene origin.
+	 *
+	 * The first scene to call owns the origin. Another scene's calls are dropped while the owner keeps
+	 * calling, and one takes over once the owner has been quiet for TAKEOVER_CALLS of them or was released.
+	 *
+	 * @param source Tells the scenes apart: any value only that scene's caller uses.
 	 */
-	void SetSceneOrigin( const AkVector64& origin );
+	void SetSceneOrigin( const AkVector64& origin, uint64_t source );
+
+	/// The scene behind source is gone, so the next scene to call owns the origin.
+	void ReleaseSource( uint64_t source );
 
 	Offset GetOffset() const;
 
@@ -86,6 +102,10 @@ private:
 	AkVector64 m_sceneOrigin;
 	AkVector64 m_wwiseOrigin;
 	bool m_hasSceneOrigin;
+	/// The scene that owns the origin, while m_hasOwner, and the calls other scenes made since it last called.
+	uint64_t m_owner;
+	bool m_hasOwner;
+	int m_otherCalls;
 	double m_rebaseDistance;
 	uint64_t m_offsetGeneration;
 	uint64_t m_rebaseCount;

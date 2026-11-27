@@ -435,6 +435,61 @@ class TestGeometryExposure(BaseAudio2TestClass):
         self.Update()
         self.assertEqual(self.manager.worldRebases, rebases + 1)
 
+    def test_a_second_scene_does_not_move_the_origin(self):
+        """Positions reach audio without their scene, so one scene owns the origin. Two would move everything in
+        Wwise back and forth on every frame."""
+        import blue
+        mesh = Add(SOLAR_SYSTEM_SPOT, (1000.0, 0.0, 0.0))
+        self.AddBoxInWorld(HULL, 1, SOLAR_SYSTEM_SPOT, mesh)
+        self.Update()
+        sends = self.manager.geometryInstanceSends
+        rebases = self.manager.worldRebases
+        otherScene = blue.LoadExtension("_audiotests").FakeGeometrySource()
+        elsewhere = Add(SOLAR_SYSTEM_SPOT, (4.0e9, 0.0, 0.0))
+
+        for step in range(1, 6):
+            self.MovePlayer(Add(SOLAR_SYSTEM_SPOT, (15.0 * step, 0.0, 0.0)), {(HULL, 1): mesh})
+            otherScene.SetSceneOrigin(*elsewhere)
+            self.Update()
+
+        self.assertEqual(self.manager.geometryInstanceSends, sends)
+        self.assertEqual(self.manager.worldRebases, rebases)
+
+    def test_another_scene_takes_the_origin_over_once_its_owner_goes_quiet(self):
+        import blue
+        self.ArriveAt(SOLAR_SYSTEM_SPOT)
+        rebases = self.manager.worldRebases
+        otherScene = blue.LoadExtension("_audiotests").FakeGeometrySource()
+        elsewhere = Add(SOLAR_SYSTEM_SPOT, (4.0e9, 0.0, 0.0))
+
+        # The scene that owned the origin is no longer updated, as after a scene change.
+        for _ in range(2):
+            otherScene.SetSceneOrigin(*elsewhere)
+            self.Update()
+        self.assertEqual(self.manager.worldRebases, rebases)
+
+        # The third call takes the origin over, which is a jump, and the fourth finds the player arrived.
+        for _ in range(2):
+            otherScene.SetSceneOrigin(*elsewhere)
+            self.Update()
+        self.assertEqual(self.manager.worldRebases, rebases + 1)
+
+    def test_a_scene_that_is_gone_gives_the_origin_up_at_once(self):
+        import blue
+        self.ArriveAt(SOLAR_SYSTEM_SPOT)
+        rebases = self.manager.worldRebases
+        otherScene = blue.LoadExtension("_audiotests").FakeGeometrySource()
+        elsewhere = Add(SOLAR_SYSTEM_SPOT, (4.0e9, 0.0, 0.0))
+
+        self.source = None
+        otherScene.SetSceneOrigin(*elsewhere)
+        self.Update()
+        otherScene.SetSceneOrigin(*elsewhere)
+        self.Update()
+        self.source = otherScene
+
+        self.assertEqual(self.manager.worldRebases, rebases + 1)
+
     def test_a_mesh_moving_along_with_the_player_moves_in_wwise(self):
         """Trinity only hands over a transform that changed, and one moving along with the player doesn't."""
         self.AddBoxInWorld(HULL, 1, SOLAR_SYSTEM_SPOT, Add(SOLAR_SYSTEM_SPOT, (100.0, 0.0, 0.0)))

@@ -24,13 +24,16 @@ AudWorldFrame::AudWorldFrame() :
 	m_sceneOrigin(),
 	m_wwiseOrigin(),
 	m_hasSceneOrigin( false ),
+	m_owner( 0 ),
+	m_hasOwner( false ),
+	m_otherCalls( 0 ),
 	m_rebaseDistance( DEFAULT_REBASE_DISTANCE ),
 	m_offsetGeneration( 0 ),
 	m_rebaseCount( 0 )
 {
 }
 
-void AudWorldFrame::SetSceneOrigin( const AkVector64& origin )
+void AudWorldFrame::SetSceneOrigin( const AkVector64& origin, uint64_t source )
 {
 	if( !Ak3DVector64( origin ).IsFinite() )
 	{
@@ -38,6 +41,15 @@ void AudWorldFrame::SetSceneOrigin( const AkVector64& origin )
 	}
 
 	CcpAutoMutex lock( m_mutex );
+
+	if( m_hasOwner && source != m_owner && ++m_otherCalls < TAKEOVER_CALLS )
+	{
+		// The owner is still calling, or only just stopped.
+		return;
+	}
+	m_owner = source;
+	m_hasOwner = true;
+	m_otherCalls = 0;
 
 	if( !m_hasSceneOrigin )
 	{
@@ -61,6 +73,16 @@ void AudWorldFrame::SetSceneOrigin( const AkVector64& origin )
 	if( !( offsetBefore == Ak3DVector64( m_sceneOrigin ) - Ak3DVector64( m_wwiseOrigin ) ) )
 	{
 		++m_offsetGeneration;
+	}
+}
+
+void AudWorldFrame::ReleaseSource( uint64_t source )
+{
+	CcpAutoMutex lock( m_mutex );
+	if( m_hasOwner && m_owner == source )
+	{
+		m_hasOwner = false;
+		m_otherCalls = 0;
 	}
 }
 

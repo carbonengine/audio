@@ -2,11 +2,21 @@
 #include "AudWorld.h"
 #include "AudWorldFrame.h"
 
-AudWorld::AudWorld( IRoot* lockobj )
+#include <atomic>
+
+namespace
+{
+	std::atomic<uint64_t> s_nextSource{ 1 };
+}
+
+AudWorld::AudWorld( IRoot* lockobj ) :
+	m_source( s_nextSource++ )
 {}
 
 AudWorld::~AudWorld()
-{}
+{
+	AudWorldFrame::Get().ReleaseSource( m_source );
+}
 
 void AudWorld::SetSceneOrigin( double x, double y, double z )
 {
@@ -14,5 +24,5 @@ void AudWorld::SetSceneOrigin( double x, double y, double z )
 	origin.X = x;
 	origin.Y = y;
 	origin.Z = z;
-	AudWorldFrame::Get().SetSceneOrigin( origin );
+	AudWorldFrame::Get().SetSceneOrigin( origin, m_source );
 }
