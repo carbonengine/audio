@@ -494,9 +494,15 @@ bool AudRoomManager::PlaceRoomLocked( AudRoom& room, const Matrix& sceneBox, con
 
 	// Trinity pushes the box whenever the scene origin moves. Wwise re-indexes the room and its portals for every
 	// SetGeometryInstance, so it only gets one when the box moved in the world.
-	if( room.m_sentToWwise && InstanceParamsEqual( instanceParams, room.m_sentInstanceParams, BoxStillDistance( sceneBox ) ) )
+	const AkReal64 still = BoxStillDistance( sceneBox );
+	if( room.m_sentToWwise && InstanceParamsEqual( instanceParams, room.m_sentInstanceParams, still ) )
 	{
 		return true;
+	}
+	// A box Wwise refused is not sent or reported again until it changes.
+	if( room.m_instanceRefused && InstanceParamsEqual( instanceParams, room.m_refusedInstanceParams, still ) )
+	{
+		return false;
 	}
 
 	const AKRESULT result = AK::SpatialAudio::SetGeometryInstance( GeometryInstanceIDForRoom( room ), instanceParams );
@@ -504,8 +510,11 @@ bool AudRoomManager::PlaceRoomLocked( AudRoom& room, const Matrix& sceneBox, con
 	{
 		CCP_LOGERR_CH( s_ch, "Failed to set geometry instance for room '%s' (%llu), AKRESULT: %d",
 			room.GetName().c_str(), room.GetRoomID(), result );
+		room.m_instanceRefused = true;
+		room.m_refusedInstanceParams = instanceParams;
 		return false;
 	}
+	room.m_instanceRefused = false;
 	room.m_sentInstanceParams = instanceParams;
 	return true;
 }
@@ -688,6 +697,7 @@ void AudRoomManager::ForgetWwiseState()
 	{
 		AudRoom& room = *entry.second;
 		room.m_sentToWwise = false;
+		room.m_instanceRefused = false;
 		room.m_roomTonePlayingID = AK_INVALID_PLAYING_ID;
 		room.m_roomTonePending = false;
 		room.m_postedRoomTone.clear();

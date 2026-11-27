@@ -163,6 +163,9 @@ private:
 	AkRoomParams m_sentRoomParams;
 	/// The room's box as Wwise last got it, valid while m_sentToWwise.
 	AkGeometryInstanceParams m_sentInstanceParams;
+	/// The room's box as Wwise last refused it, valid while m_instanceRefused.
+	AkGeometryInstanceParams m_refusedInstanceParams;
+	bool m_instanceRefused = false;
 	std::string m_sentName;
 
 	/// Room tone state, owned by AudRoomManager.
